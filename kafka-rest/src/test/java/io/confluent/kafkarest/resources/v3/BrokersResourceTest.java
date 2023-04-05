@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.resources.v3;
 
-import static io.confluent.kafkarest.CompletableFutures.failedFuture;
+import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
@@ -23,11 +23,12 @@ import static org.junit.Assert.assertEquals;
 import io.confluent.kafkarest.controllers.BrokerManager;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.v3.BrokerData;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.BrokerDataList;
 import io.confluent.kafkarest.entities.v3.GetBrokerResponse;
 import io.confluent.kafkarest.entities.v3.ListBrokersResponse;
-import io.confluent.kafkarest.entities.v3.Relationship;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.Resource.Metadata;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -47,9 +48,9 @@ import org.junit.runners.JUnit4;
 public final class BrokersResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
-  private static final Broker BROKER_1 = new Broker(CLUSTER_ID, 1, "broker-1", 9091, "rack-1");
-  private static final Broker BROKER_2 = new Broker(CLUSTER_ID, 2, "broker-2", 9092, null);
-  private static final Broker BROKER_3 = new Broker(CLUSTER_ID, 3, "broker-3", 9093, null);
+  private static final Broker BROKER_1 = Broker.create(CLUSTER_ID, 1, "broker-1", 9091, "rack-1");
+  private static final Broker BROKER_2 = Broker.create(CLUSTER_ID, 2, "broker-2", 9092, null);
+  private static final Broker BROKER_3 = Broker.create(CLUSTER_ID, 3, "broker-3", 9093, null);
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
@@ -63,7 +64,9 @@ public final class BrokersResourceTest {
   public void setUp() {
     brokersResource =
         new BrokersResource(
-            brokerManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
+            () -> brokerManager,
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
   }
 
   @Test
@@ -76,39 +79,69 @@ public final class BrokersResourceTest {
     brokersResource.listBrokers(response, CLUSTER_ID);
 
     ListBrokersResponse expected =
-        new ListBrokersResponse(
-            new CollectionLink("/v3/clusters/cluster-1/brokers", /* next= */ null),
-            Arrays.asList(
-                new BrokerData(
-                    "crn:///kafka=cluster-1/broker=1",
-                    new ResourceLink("/v3/clusters/cluster-1/brokers/1"),
-                    CLUSTER_ID,
-                    BROKER_1.getBrokerId(),
-                    BROKER_1.getHost(),
-                    BROKER_1.getPort(),
-                    BROKER_1.getRack(),
-                    new Relationship("/v3/clusters/cluster-1/brokers/1/configs"),
-                    new Relationship("/v3/clusters/cluster-1/brokers/1/partition_replicas")),
-                new BrokerData(
-                    "crn:///kafka=cluster-1/broker=2",
-                    new ResourceLink("/v3/clusters/cluster-1/brokers/2"),
-                    CLUSTER_ID,
-                    BROKER_2.getBrokerId(),
-                    BROKER_2.getHost(),
-                    BROKER_2.getPort(),
-                    BROKER_2.getRack(),
-                    new Relationship("/v3/clusters/cluster-1/brokers/2/configs"),
-                    new Relationship("/v3/clusters/cluster-1/brokers/2/partition_replicas")),
-                new BrokerData(
-                    "crn:///kafka=cluster-1/broker=3",
-                    new ResourceLink("/v3/clusters/cluster-1/brokers/3"),
-                    CLUSTER_ID,
-                    BROKER_3.getBrokerId(),
-                    BROKER_3.getHost(),
-                    BROKER_3.getPort(),
-                    BROKER_3.getRack(),
-                    new Relationship("/v3/clusters/cluster-1/brokers/3/configs"),
-                    new Relationship("/v3/clusters/cluster-1/brokers/3/partition_replicas"))));
+        ListBrokersResponse.create(
+            BrokerDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/brokers")
+                        .build())
+                .setData(
+                    Arrays.asList(
+                        BrokerData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf("/v3/clusters/cluster-1/brokers/1")
+                                    .setResourceName("crn:///kafka=cluster-1/broker=1")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setBrokerId(BROKER_1.getBrokerId())
+                            .setHost(BROKER_1.getHost())
+                            .setPort(BROKER_1.getPort())
+                            .setRack(BROKER_1.getRack())
+                            .setConfigs(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/brokers/1/configs"))
+                            .setPartitionReplicas(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/brokers/1/partition-replicas"))
+                            .build(),
+                        BrokerData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf("/v3/clusters/cluster-1/brokers/2")
+                                    .setResourceName("crn:///kafka=cluster-1/broker=2")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setBrokerId(BROKER_2.getBrokerId())
+                            .setHost(BROKER_2.getHost())
+                            .setPort(BROKER_2.getPort())
+                            .setRack(BROKER_2.getRack())
+                            .setConfigs(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/brokers/2/configs"))
+                            .setPartitionReplicas(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/brokers/2/partition-replicas"))
+                            .build(),
+                        BrokerData.builder()
+                            .setMetadata(
+                                Metadata.builder()
+                                    .setSelf("/v3/clusters/cluster-1/brokers/3")
+                                    .setResourceName("crn:///kafka=cluster-1/broker=3")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setBrokerId(BROKER_3.getBrokerId())
+                            .setHost(BROKER_3.getHost())
+                            .setPort(BROKER_3.getPort())
+                            .setRack(BROKER_3.getRack())
+                            .setConfigs(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/brokers/3/configs"))
+                            .setPartitionReplicas(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/brokers/3/partition-replicas"))
+                            .build()))
+                .build());
 
     assertEquals(expected, response.getValue());
   }
@@ -134,17 +167,24 @@ public final class BrokersResourceTest {
     brokersResource.getBroker(response, CLUSTER_ID, BROKER_1.getBrokerId());
 
     GetBrokerResponse expected =
-        new GetBrokerResponse(
-            new BrokerData(
-                "crn:///kafka=cluster-1/broker=1",
-                new ResourceLink("/v3/clusters/cluster-1/brokers/1"),
-                CLUSTER_ID,
-                BROKER_1.getBrokerId(),
-                BROKER_1.getHost(),
-                BROKER_1.getPort(),
-                BROKER_1.getRack(),
-                new Relationship("/v3/clusters/cluster-1/brokers/1/configs"),
-                new Relationship("/v3/clusters/cluster-1/brokers/1/partition_replicas")));
+        GetBrokerResponse.create(
+            BrokerData.builder()
+                .setMetadata(
+                    Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/brokers/1")
+                        .setResourceName("crn:///kafka=cluster-1/broker=1")
+                        .build())
+                .setClusterId(CLUSTER_ID)
+                .setBrokerId(BROKER_1.getBrokerId())
+                .setHost(BROKER_1.getHost())
+                .setPort(BROKER_1.getPort())
+                .setRack(BROKER_1.getRack())
+                .setConfigs(
+                    Resource.Relationship.create("/v3/clusters/cluster-1/brokers/1/configs"))
+                .setPartitionReplicas(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/brokers/1/partition-replicas"))
+                .build());
 
     assertEquals(expected, response.getValue());
   }

@@ -113,7 +113,7 @@ public final class JsonConsumerRecord {
     if (offset == null || offset < 0) {
       throw new IllegalStateException();
     }
-    return new ConsumerRecord<>(topic, key, value, partition, offset);
+    return ConsumerRecord.create(topic, key, value, partition, offset);
   }
 
   @Override

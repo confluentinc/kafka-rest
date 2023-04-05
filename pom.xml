@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>5.5.15-SNAPSHOT</version>
+        <version>6.0.13-SNAPSHOT</version>
     </parent>
 
     <artifactId>kafka-rest-parent</artifactId>
@@ -42,8 +42,6 @@
     <modules>
         <module>kafka-rest</module>
         <module>kafka-rest-console-scripts</module>
-        <module>kafka-rest-common</module>
-        <module>kafka-rest-scala-consumer</module>
     </modules>
 
     <properties>
@@ -62,15 +60,24 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>io.confluent</groupId>
-                <artifactId>kafka-schema-registry-client</artifactId>
-                <version>${project.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.yaml</groupId>
-                        <artifactId>snakeyaml</artifactId>
-                    </exclusion>
-                </exclusions>
+                <groupId>com.google.auto.value</groupId>
+                <artifactId>auto-value-annotations</artifactId>
+                <version>1.7.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jdk8</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-guava</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.confluent</groupId>
@@ -86,13 +93,6 @@
         </dependencies>
     </dependencyManagement>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.github.spotbugs</groupId>
-            <artifactId>spotbugs-annotations</artifactId>
-        </dependency>
-    </dependencies>
-
     <build>
         <pluginManagement>
             <plugins>
@@ -105,6 +105,24 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
                     <version>${exec-maven-plugin.version}</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <annotationProcessorPaths>
+                            <annotationProcessorPath>
+                                <groupId>com.google.auto.value</groupId>
+                                <artifactId>auto-value</artifactId>
+                                <version>1.7.2</version>
+                            </annotationProcessorPath>
+                            <path>
+                                <groupId>com.google.auto.service</groupId>
+                                <artifactId>auto-service-annotations</artifactId>
+                                <version>1.0-rc6</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

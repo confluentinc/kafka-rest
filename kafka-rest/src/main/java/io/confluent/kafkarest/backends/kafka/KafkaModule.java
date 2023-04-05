@@ -15,12 +15,16 @@
 
 package io.confluent.kafkarest.backends.kafka;
 
+import static java.util.Objects.requireNonNull;
+
 import io.confluent.kafkarest.KafkaRestContext;
-import java.util.Objects;
+import io.confluent.kafkarest.extension.KafkaRestContextProvider;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import org.apache.kafka.clients.admin.Admin;
 import org.glassfish.hk2.api.Factory;
-import org.glassfish.hk2.api.PerLookup;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.process.internal.RequestScoped;
 
 /**
  * A module to configure access to Kafka.
@@ -31,35 +35,42 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
  */
 public final class KafkaModule extends AbstractBinder {
 
-  private final KafkaRestContext context;
-
-  public KafkaModule(KafkaRestContext context) {
-    this.context = Objects.requireNonNull(context);
-  }
-
   @Override
   protected void configure() {
-    // Reuse the AdminClient being constructed in KafkaRestContext. The per-lookup scope is needed
-    // because the Admin creation logic uses request-scoped auth information. This binding cannot
-    // use request scope because it will be injected from multiple non-inheritable threads.
-    //
-    // KafkaRestContext itself is a proxied instance, so the result will be cached there
-    // appropriately after it is created. See KafkaRestContextProvider and ContextInvocationHandler
-    // for more information.
-    bindFactory(new AdminFactory(context)).to(Admin.class).in(PerLookup.class);
+    bindFactory(KafkaRestContextFactory.class)
+        .to(KafkaRestContext.class)
+        .in(RequestScoped.class);
+
+    bindFactory(AdminFactory.class)
+        .to(Admin.class)
+        .in(RequestScoped.class);
+  }
+
+  private static final class KafkaRestContextFactory implements Factory<KafkaRestContext> {
+
+    @Override
+    public KafkaRestContext provide() {
+      return KafkaRestContextProvider.getCurrentContext();
+    }
+
+    @Override
+    public void dispose(KafkaRestContext instance) {
+      // Do nothing.
+    }
   }
 
   private static final class AdminFactory implements Factory<Admin> {
 
-    private final KafkaRestContext context;
+    private final Provider<KafkaRestContext> context;
 
-    private AdminFactory(KafkaRestContext context) {
-      this.context = Objects.requireNonNull(context);
+    @Inject
+    private AdminFactory(Provider<KafkaRestContext> context) {
+      this.context = requireNonNull(context);
     }
 
     @Override
     public Admin provide() {
-      return context.getAdmin();
+      return context.get().getAdmin();
     }
 
     @Override

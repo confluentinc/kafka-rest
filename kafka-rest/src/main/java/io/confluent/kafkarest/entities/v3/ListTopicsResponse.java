@@ -15,58 +15,25 @@
 
 package io.confluent.kafkarest.entities.v3;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
+@AutoValue
+public abstract class ListTopicsResponse {
 
-/**
- * Response body for {@code GET /v3/clusters/<clusterId>/topics} requests.
- */
-public final class ListTopicsResponse {
-
-  private final CollectionLink links;
-
-  private final List<TopicData> data;
-
-  public ListTopicsResponse(CollectionLink links, List<TopicData> data) {
-    this.links = Objects.requireNonNull(links);
-    this.data = Objects.requireNonNull(data);
+  ListTopicsResponse() {
   }
 
-  @JsonProperty("links")
-  public CollectionLink getLinks() {
-    return links;
+  @JsonValue
+  public abstract TopicDataList getValue();
+
+  public static ListTopicsResponse create(TopicDataList value) {
+    return new AutoValue_ListTopicsResponse(value);
   }
 
-  @JsonProperty("data")
-  public List<TopicData> getData() {
-    return data;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ListTopicsResponse that = (ListTopicsResponse) o;
-    return Objects.equals(links, that.links) && Objects.equals(data, that.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(links, data);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ListTopicsResponse.class.getSimpleName() + "[", "]")
-        .add("links=" + links)
-        .add("data=" + data)
-        .toString();
+  @JsonCreator
+  static ListTopicsResponse fromJson(TopicDataList value) {
+    return create(value);
   }
 }

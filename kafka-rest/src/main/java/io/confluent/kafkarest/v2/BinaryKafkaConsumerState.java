@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.v2;
 
+import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -26,7 +27,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
  * Binary implementation of KafkaConsumerState that does no decoding, returning the raw bytes
  * directly.
  */
-public class BinaryKafkaConsumerState extends KafkaConsumerState<byte[], byte[], byte[], byte[]> {
+public class BinaryKafkaConsumerState
+    extends KafkaConsumerState<byte[], byte[], ByteString, ByteString> {
 
   public BinaryKafkaConsumerState(KafkaRestConfig config,
       ConsumerInstanceId instanceId,
@@ -35,14 +37,18 @@ public class BinaryKafkaConsumerState extends KafkaConsumerState<byte[], byte[],
   }
 
   @Override
-  public ConsumerRecordAndSize<byte[], byte[]> createConsumerRecord(
+  public ConsumerRecordAndSize<ByteString, ByteString> createConsumerRecord(
       ConsumerRecord<byte[], byte[]> record) {
     long approxSize = (record.key() != null ? record.key().length : 0)
         + (record.value() != null ? record.value().length : 0);
 
-    return new ConsumerRecordAndSize<byte[], byte[]>(
-        new io.confluent.kafkarest.entities.ConsumerRecord<>(
-            record.topic(), record.key(), record.value(), record.partition(), record.offset()),
+    return new ConsumerRecordAndSize<>(
+        io.confluent.kafkarest.entities.ConsumerRecord.create(
+            record.topic(),
+            record.key() != null ? ByteString.copyFrom(record.key()) : null,
+            record.value() != null ? ByteString.copyFrom(record.value()) : null,
+            record.partition(),
+            record.offset()),
         approxSize);
   }
 }

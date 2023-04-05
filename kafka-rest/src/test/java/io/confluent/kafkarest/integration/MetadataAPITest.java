@@ -17,6 +17,7 @@ package io.confluent.kafkarest.integration;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static io.confluent.kafkarest.TestUtils.tryReadEntityOrLog;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.Errors;
@@ -24,9 +25,10 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.v1.BrokerList;
-import io.confluent.kafkarest.entities.v1.GetPartitionResponse;
-import io.confluent.kafkarest.entities.v1.GetTopicResponse;
+import io.confluent.kafkarest.entities.v2.BrokerList;
+import io.confluent.kafkarest.entities.v2.GetPartitionResponse;
+import io.confluent.kafkarest.entities.v2.GetTopicResponse;
+import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -34,7 +36,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 /**
  * Tests metadata access against a real cluster. This isn't exhaustive since the unit tests cover
@@ -43,24 +45,34 @@ import scala.collection.JavaConversions;
 public class MetadataAPITest extends ClusterTestHarness {
 
   private static final String topic1Name = "topic1";
-  private static final List<Partition> topic1Partitions = Arrays.asList(
-      new Partition(/* clusterId= */ "", "topic1", 0, Arrays.asList(
-          new PartitionReplica(/* clusterId= */ "", "topic1", 0, 0, true, true),
-          new PartitionReplica(/* clusterId= */ "", "topic1", 0, 1, false, false)
-      ))
-  );
-  private static final Topic topic1 = new Topic(topic1Name, new Properties(), topic1Partitions);
+  private static final List<Partition> topic1Partitions =
+      singletonList(
+          Partition.create(
+              /* clusterId= */ "",
+              "topic1",
+              /* partitionId= */ 0,
+              Arrays.asList(
+                  PartitionReplica.create(/* clusterId= */ "", "topic1", 0, 0, true, true),
+                  PartitionReplica.create(/* clusterId= */ "", "topic1", 0, 1, false, false))));
+  private static final Topic topic1 =
+      Topic.create("", topic1Name, topic1Partitions, (short) 2, false);
   private static final String topic2Name = "topic2";
-  private static final List<Partition> topic2Partitions = Arrays.asList(
-      new Partition(/* clusterId= */ "", "topic2", 0, Arrays.asList(
-          new PartitionReplica(/* clusterId= */ "", "topic2", 0, 0, true, true),
-          new PartitionReplica(/* clusterId= */ "", "topic2", 0, 1, false, false)
-      )),
-      new Partition(/* clusterId= */ "", "topic2", 1, Arrays.asList(
-          new PartitionReplica(/* clusterId= */ "", "topic2", 1, 0, false, true),
-          new PartitionReplica(/* clusterId= */ "", "topic2", 1, 1, true, true)
-      ))
-  );
+  private static final List<Partition> topic2Partitions =
+      Arrays.asList(
+          Partition.create(
+              /* clusterId= */ "",
+              "topic2",
+              /* partitionId= */ 0,
+              Arrays.asList(
+                  PartitionReplica.create(/* clusterId= */ "", "topic2", 0, 0, true, true),
+                  PartitionReplica.create(/* clusterId= */ "", "topic2", 0, 1, false, false))),
+          Partition.create(
+              /* clusterId= */ "",
+              "topic2",
+              /* partitionId= */ 1,
+              Arrays.asList(
+                  PartitionReplica.create(/* clusterId= */ "", "topic2", 1, 0, false, true),
+                  PartitionReplica.create(/* clusterId= */ "", "topic2", 1, 1, true, true))));
   private static final Properties topic2Configs;
 
   static {
@@ -79,16 +91,16 @@ public class MetadataAPITest extends ClusterTestHarness {
   public void setUp() throws Exception {
     super.setUp();
     kafka.utils.TestUtils.createTopic(zkClient, topic1Name, topic1Partitions.size(), numReplicas,
-                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+        JavaConverters.asScalaBuffer(this.servers), new Properties());
     kafka.utils.TestUtils.createTopic(zkClient, topic2Name, topic2Partitions.size(), numReplicas,
-                          JavaConversions.asScalaBuffer(this.servers), topic2Configs);
+        JavaConverters.asScalaBuffer(this.servers), topic2Configs);
   }
 
   @Test
   public void testBrokers() throws InterruptedException {
     // Listing
     Response response = request("/brokers").get();
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final BrokerList brokers = tryReadEntityOrLog(response, BrokerList.class);
     assertEquals(new BrokerList(Arrays.asList(0, 1)), brokers);
   }
@@ -115,7 +127,7 @@ public class MetadataAPITest extends ClusterTestHarness {
   public void testTopicsList() throws InterruptedException {
     // Listing
     Response response = request("/topics").get();
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final List<String> topicsResponse = tryReadEntityOrLog(response, new GenericType<List<String>>() {
     });
     assertEquals(
@@ -124,7 +136,7 @@ public class MetadataAPITest extends ClusterTestHarness {
 
     // Get topic
     Response response1 = request("/topics/{topic}", "topic", topic1Name).get();
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final GetTopicResponse topic1Response = tryReadEntityOrLog(response1, GetTopicResponse.class);
     // Just verify some basic properties because the exact values can vary based on replica
     // assignment, leader election
@@ -137,16 +149,16 @@ public class MetadataAPITest extends ClusterTestHarness {
     // Get invalid topic
     final Response invalidResponse = request("/topics/{topic}", "topic", "topicdoesntexist").get();
     assertErrorResponse(Response.Status.NOT_FOUND, invalidResponse,
-                        Errors.TOPIC_NOT_FOUND_ERROR_CODE,
-                        Errors.TOPIC_NOT_FOUND_MESSAGE,
-                        Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+                        KafkaExceptionMapper.KAFKA_UNKNOWN_TOPIC_PARTITION_CODE,
+                        null,
+                        Versions.KAFKA_V2_JSON);
   }
 
   @Test
   public void testPartitionsList() throws InterruptedException {
     // Listing
     Response response = request("/topics/" + topic1Name + "/partitions").get();
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     List<GetPartitionResponse> partitions1Response =
             tryReadEntityOrLog(response, new GenericType<List<GetPartitionResponse>>() {});
     // Just verify some basic properties because the exact values can vary based on replica
@@ -155,7 +167,7 @@ public class MetadataAPITest extends ClusterTestHarness {
     assertEquals(numReplicas, partitions1Response.get(0).getReplicas().size());
 
     response = request("/topics/" + topic2Name + "/partitions").get();
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     List<GetPartitionResponse> partitions2Response =
         tryReadEntityOrLog(response, new GenericType<List<GetPartitionResponse>>() {});
     assertEquals(topic2Partitions.size(), partitions2Response.size());
@@ -164,7 +176,7 @@ public class MetadataAPITest extends ClusterTestHarness {
 
     // Get single partition
     response = request("/topics/" + topic1Name + "/partitions/0").get();
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final GetPartitionResponse getPartitionResponse =
         tryReadEntityOrLog(response, GetPartitionResponse.class);
     assertEquals((Integer) 0, getPartitionResponse.getPartition());
@@ -175,6 +187,6 @@ public class MetadataAPITest extends ClusterTestHarness {
     assertErrorResponse(Response.Status.NOT_FOUND, invalidResponse,
         Errors.PARTITION_NOT_FOUND_ERROR_CODE,
         Errors.PARTITION_NOT_FOUND_MESSAGE,
-        Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        Versions.KAFKA_V2_JSON);
   }
 }

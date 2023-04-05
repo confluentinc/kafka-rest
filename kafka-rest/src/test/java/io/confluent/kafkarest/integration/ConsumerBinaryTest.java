@@ -19,8 +19,8 @@ import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import java.util.Arrays;
 import java.util.List;
@@ -69,14 +69,13 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     // so we can test that both will result in binary consumers. We also us varying accept
     // parameters to test that we default to Binary for various values.
     String instanceUri = startConsumeMessages(groupName, topicName, null,
-                                              Versions.KAFKA_V1_JSON_BINARY);
+                                              Versions.KAFKA_V2_JSON_BINARY);
     produceBinaryMessages(recordsOnlyValues);
     consumeMessages(
         instanceUri,
-        topicName,
         recordsOnlyValues,
-        Versions.KAFKA_V1_JSON_BINARY,
-        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V2_JSON_BINARY,
+        Versions.KAFKA_V2_JSON_BINARY,
         binaryConsumerRecordType,
         /* converter= */ null,
         BinaryConsumerRecord::toConsumerRecord);
@@ -86,14 +85,13 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   @Test
   public void testConsumeWithKeys() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
-                                              Versions.KAFKA_V1_JSON_BINARY);
+                                              Versions.KAFKA_V2_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
     consumeMessages(
         instanceUri,
-        topicName,
         recordsWithKeys,
-        Versions.KAFKA_V1_JSON_BINARY,
-        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V2_JSON_BINARY,
+        Versions.KAFKA_V2_JSON_BINARY,
         binaryConsumerRecordType,
         /* converter= */ null,
         BinaryConsumerRecord::toConsumerRecord);
@@ -104,14 +102,13 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   public void testConsumeWithAcceptAllHeader() {
     // This test ensures that Accept: */* defaults to binary
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
-        Versions.KAFKA_V1_JSON_BINARY);
+        Versions.KAFKA_V2_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
     consumeMessages(
         instanceUri,
-        topicName,
         recordsWithKeys,
         Versions.ANYTHING,
-        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V2_JSON_BINARY,
         binaryConsumerRecordType,
         /* converter= */ null,
         BinaryConsumerRecord::toConsumerRecord);
@@ -119,44 +116,35 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   }
 
   @Test
-  public void testConsumeInvalidTopic() {
-    startConsumeMessages(groupName, "nonexistenttopic", null,
-                         Versions.KAFKA_V1_JSON_BINARY, true);
-  }
-
-  @Test
   public void testConsumeTimeout() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
-                                              Versions.KAFKA_V1_JSON_BINARY);
+                                              Versions.KAFKA_V2_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
     consumeMessages(
         instanceUri,
-        topicName,
         recordsWithKeys,
-        Versions.KAFKA_V1_JSON_BINARY,
-        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V2_JSON_BINARY,
+        Versions.KAFKA_V2_JSON_BINARY,
         binaryConsumerRecordType,
         /* converter= */ null,
         BinaryConsumerRecord::toConsumerRecord);
     consumeForTimeout(
         instanceUri,
-        topicName,
-        Versions.KAFKA_V1_JSON_BINARY,
-        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V2_JSON_BINARY,
+        Versions.KAFKA_V2_JSON_BINARY,
         binaryConsumerRecordType);
   }
 
   @Test
   public void testDeleteConsumer() {
     String instanceUri = startConsumeMessages(groupName, topicName, null,
-                                              Versions.KAFKA_V1_JSON_BINARY);
+                                              Versions.KAFKA_V2_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
     consumeMessages(
         instanceUri,
-        topicName,
         recordsWithKeys,
-        Versions.KAFKA_V1_JSON_BINARY,
-        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V2_JSON_BINARY,
+        Versions.KAFKA_V2_JSON_BINARY,
         binaryConsumerRecordType,
         /* converter= */ null,
         BinaryConsumerRecord::toConsumerRecord);
@@ -178,18 +166,18 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
             /* responseMinBytes= */ null,
             /* requestWaitMs= */ null);
     Response response = request("/consumers/" + groupName)
-        .post(Entity.entity(config, Versions.KAFKA_V1_JSON));
+        .post(Entity.entity(config, Versions.KAFKA_V2_JSON));
     assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response,
                         Errors.INVALID_CONSUMER_CONFIG_ERROR_CODE,
                         Errors.INVALID_CONSUMER_CONFIG_MESSAGE,
-                        Versions.KAFKA_V1_JSON);
+                        Versions.KAFKA_V2_JSON);
   }
 
 
   @Test
   public void testDuplicateConsumerID() {
     String instanceUrl = startConsumeMessages(groupName, topicName, null,
-                                              Versions.KAFKA_V1_JSON_BINARY);
+                                              Versions.KAFKA_V2_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
 
     // Duplicate the same instance, which should cause a conflict
@@ -198,6 +186,6 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     assertErrorResponse(Response.Status.CONFLICT, createResponse,
                         Errors.CONSUMER_ALREADY_EXISTS_ERROR_CODE,
                         Errors.CONSUMER_ALREADY_EXISTS_MESSAGE,
-                        Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+                        Versions.KAFKA_V2_JSON);
   }
 }

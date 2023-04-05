@@ -22,12 +22,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v1.AvroPartitionProduceRequest;
-import io.confluent.kafkarest.entities.v1.AvroPartitionProduceRequest.AvroPartitionProduceRecord;
-import io.confluent.kafkarest.entities.v1.AvroTopicProduceRequest;
-import io.confluent.kafkarest.entities.v1.AvroTopicProduceRequest.AvroTopicProduceRecord;
-import io.confluent.kafkarest.entities.v1.PartitionOffset;
-import io.confluent.kafkarest.entities.v1.ProduceResponse;
+import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest.SchemaPartitionProduceRecord;
+import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.ProduceResponse;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -38,17 +38,17 @@ import javax.ws.rs.core.Response;
 import org.apache.avro.Schema;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 // This test is much lighter than the Binary one which exercises all variants. Since binary
-// covers most code paths well, this just tries to exercise Avro-specific parts.
+// covers most code paths well, this just tries to exercise Schema-specific parts.
 public class AvroProducerTest extends ClusterTestHarness {
 
   private static final String topicName = "topic1";
 
   protected Properties deserializerProps;
 
-  // This test assumes that AvroConverterTest is good enough and testing one primitive type for
+  // This test assumes that SchemaConverterTest is good enough and testing one primitive type for
   // keys and one complex type for records is sufficient.
   private static final String keySchemaStr = "{\"name\":\"int\",\"type\": \"int\"}";
   private static final String valueSchemaStr = "{\"type\": \"record\", "
@@ -75,11 +75,11 @@ public class AvroProducerTest extends ClusterTestHarness {
 
   // Produce to topic inputs & results
 
-  protected final List<AvroTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
-      new AvroTopicProduceRecord(testKeys[0], testValues[0], 0),
-      new AvroTopicProduceRecord(testKeys[1], testValues[1], 1),
-      new AvroTopicProduceRecord(testKeys[2], testValues[2], 1),
-      new AvroTopicProduceRecord(testKeys[3], testValues[3], 2)
+  protected final List<SchemaTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
+      new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0),
+      new SchemaTopicProduceRecord(testKeys[1], testValues[1], 1),
+      new SchemaTopicProduceRecord(testKeys[2], testValues[2], 1),
+      new SchemaTopicProduceRecord(testKeys[3], testValues[3], 2)
   );
   protected final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),
@@ -89,11 +89,11 @@ public class AvroProducerTest extends ClusterTestHarness {
   );
 
   // Produce to partition inputs & results
-  protected final List<AvroPartitionProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
-      new AvroPartitionProduceRecord(null, testValues[0]),
-      new AvroPartitionProduceRecord(null, testValues[1]),
-      new AvroPartitionProduceRecord(null, testValues[2]),
-      new AvroPartitionProduceRecord(null, testValues[3])
+  protected final List<SchemaPartitionProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
+      new SchemaPartitionProduceRecord(null, testValues[0]),
+      new SchemaPartitionProduceRecord(null, testValues[1]),
+      new SchemaPartitionProduceRecord(null, testValues[2]),
+      new SchemaPartitionProduceRecord(null, testValues[3])
   );
   protected final List<PartitionOffset> producePartitionOffsetOnlyValues = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),
@@ -113,7 +113,7 @@ public class AvroProducerTest extends ClusterTestHarness {
     final int numPartitions = 3;
     final int replicationFactor = 1;
     kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-        JavaConversions.asScalaBuffer(this.servers),
+        JavaConverters.asScalaBuffer(this.servers),
         new Properties());
 
     deserializerProps = new Properties();
@@ -121,26 +121,26 @@ public class AvroProducerTest extends ClusterTestHarness {
   }
 
   protected <K, V> void testProduceToTopic(
-      List<AvroTopicProduceRecord> records, List<PartitionOffset> offsetResponses
+      List<SchemaTopicProduceRecord> records, List<PartitionOffset> offsetResponses
   ) {
     testProduceToTopic(records, offsetResponses, Collections.emptyMap());
   }
 
   protected <K, V> void testProduceToTopic(
-      List<AvroTopicProduceRecord> records,
+      List<SchemaTopicProduceRecord> records,
       List<PartitionOffset> offsetResponses,
       Map<String, String> queryParams
   ) {
-    AvroTopicProduceRequest payload =
-        AvroTopicProduceRequest.create(
+    SchemaTopicProduceRequest payload =
+        SchemaTopicProduceRequest.create(
             records,
             keySchemaStr,
             /* keySchemaId= */ null,
             valueSchemaStr,
             /* valueSchemaId= */ null);
     Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(payload, Versions.KAFKA_V1_JSON_AVRO));
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        .post(Entity.entity(payload, Versions.KAFKA_V2_JSON_AVRO));
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final ProduceResponse produceResponse = TestUtils
         .tryReadEntityOrLog(response, ProduceResponse.class);
     TestUtils.assertPartitionOffsetsEqual(offsetResponses, produceResponse.getOffsets());
@@ -163,24 +163,24 @@ public class AvroProducerTest extends ClusterTestHarness {
   }
 
   protected <K, V> void testProduceToPartition(
-      List<AvroPartitionProduceRecord> records, List<PartitionOffset> offsetResponse
+      List<SchemaPartitionProduceRecord> records, List<PartitionOffset> offsetResponse
   ) {
     testProduceToPartition(records, offsetResponse, Collections.emptyMap());
   }
 
-  protected <K, V> void testProduceToPartition(List<AvroPartitionProduceRecord> records,
+  protected <K, V> void testProduceToPartition(List<SchemaPartitionProduceRecord> records,
       List<PartitionOffset> offsetResponse,
       Map<String, String> queryParams) {
-    AvroPartitionProduceRequest payload =
-        AvroPartitionProduceRequest.create(
+    SchemaPartitionProduceRequest payload =
+        SchemaPartitionProduceRequest.create(
             records,
             /* keySchema= */ null,
             /* keySchemaId= */ null,
             /* valueSchema= */ valueSchemaStr,
             /* valueSchemaId= */ null);
     Response response = request("/topics/" + topicName + "/partitions/0", queryParams)
-        .post(Entity.entity(payload, Versions.KAFKA_V1_JSON_AVRO));
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        .post(Entity.entity(payload, Versions.KAFKA_V2_JSON_AVRO));
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final ProduceResponse poffsetResponse
         = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     assertEquals(offsetResponse, poffsetResponse.getOffsets());

@@ -21,7 +21,6 @@ import io.confluent.kafkarest.config.ConfigModule.HostNameConfig;
 import io.confluent.kafkarest.config.ConfigModule.ListenersConfig;
 import io.confluent.kafkarest.config.ConfigModule.PortConfig;
 import java.util.List;
-import java.util.StringJoiner;
 import javax.inject.Inject;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
@@ -46,15 +45,20 @@ final class UrlFactoryImpl implements UrlFactory {
   }
 
   @Override
-  public String create(String... components) {
-    StringJoiner joiner = new StringJoiner(String.valueOf(SEPARATOR)).add(baseUrl);
-    for (String component : components) {
+  public String create(String... segments) {
+    UrlBuilder urlBuilder = newUrlBuilder();
+    for (String component : segments) {
       String stripped = trimSeparator(component);
       if (!stripped.isEmpty()) {
-        joiner.add(stripped);
+        urlBuilder.appendPathSegment(stripped);
       }
     }
-    return joiner.toString();
+    return urlBuilder.build();
+  }
+
+  @Override
+  public UrlBuilder newUrlBuilder() {
+    return new UrlBuilder(baseUrl);
   }
 
   private static String computeBaseUrl(
@@ -89,15 +93,12 @@ final class UrlFactoryImpl implements UrlFactory {
       List<String> listenersConfig,
       UriInfo requestUriInfo) {
     // Preferences are, in order:
-    // 1. hostNameConfig:portConfig
-    // 2. listener.authority, where listener in advertisedListenersConfig and
+    // 1. listener.authority, where listener in advertisedListenersConfig and
     //                        listener.scheme = request.scheme
-    // 3. listener.authority, where listener in listenersConfig and
+    // 2. listener.authority, where listener in listenersConfig and
     //                        listener.scheme = request.scheme
+    // 3. hostNameConfig:portConfig
     // 4. request.authority
-    if (!hostNameConfig.isEmpty()) {
-      return String.format("%s:%s", hostNameConfig, portConfig);
-    }
     String requestScheme = requestUriInfo.getAbsolutePath().getScheme();
     for (String listener : Iterables.concat(advertisedListenersConfig, listenersConfig)) {
       int protocolSeparator = listener.indexOf("://");
@@ -105,6 +106,9 @@ final class UrlFactoryImpl implements UrlFactory {
       if (requestScheme.equals(listenerScheme)) {
         return listener.substring(protocolSeparator + 3);
       }
+    }
+    if (hostNameConfig != null && !hostNameConfig.isEmpty() && portConfig != null) {
+      return String.format("%s:%s", hostNameConfig, portConfig);
     }
     return requestUriInfo.getAbsolutePath().getAuthority();
   }

@@ -42,7 +42,7 @@ public class UriUtilsTest {
   }
 
   @Test
-  public void testAbsoluteURIBuilderDefaultHost() throws RestConfigException {
+  public void testAbsoluteURIBuilderDefaultHost()  {
     KafkaRestConfig config = new KafkaRestConfig();
     EasyMock.expect(uriInfo.getAbsolutePathBuilder())
         .andReturn(UriBuilder.fromUri("http://foo.com"));
@@ -52,7 +52,7 @@ public class UriUtilsTest {
   }
 
   @Test
-  public void testAbsoluteURIBuilderOverrideHost() throws RestConfigException {
+  public void testAbsoluteURIBuilderOverrideHost() {
     Properties props = new Properties();
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
     KafkaRestConfig config = new KafkaRestConfig(props);
@@ -65,7 +65,7 @@ public class UriUtilsTest {
   }
 
   @Test
-  public void testAbsoluteURIBuilderWithPort() throws RestConfigException {
+  public void testAbsoluteURIBuilderWithPort() {
     Properties props = new Properties();
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
     props.put(KafkaRestConfig.PORT_CONFIG, 5000);
@@ -80,7 +80,7 @@ public class UriUtilsTest {
   }
 
   @Test(expected=ConfigException.class)
-  public void testAbsoluteURIBuilderWithInvalidListener() throws RestConfigException {
+  public void testAbsoluteURIBuilderWithInvalidListener() {
     Properties props = new Properties();
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
     props.put(KafkaRestConfig.LISTENERS_CONFIG, "http:||0.0.0.0:9091");
@@ -94,7 +94,7 @@ public class UriUtilsTest {
   }
 
   @Test
-  public void testAbsoluteURIBuilderWithListenerForHttp() throws RestConfigException {
+  public void testAbsoluteURIBuilderWithListenerForHttp() {
     Properties props = new Properties();
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
     props.put(KafkaRestConfig.LISTENERS_CONFIG, "http://0.0.0.0:9091,https://0.0.0.0:9092");
@@ -109,7 +109,7 @@ public class UriUtilsTest {
   }
 
   @Test
-  public void testAbsoluteURIBuilderWithListenerForHttps() throws RestConfigException {
+  public void testAbsoluteURIBuilderWithListenerForHttps() {
     Properties props = new Properties();
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
     props.put(KafkaRestConfig.LISTENERS_CONFIG, "http://0.0.0.0:9091,https://0.0.0.0:9092");
@@ -124,7 +124,7 @@ public class UriUtilsTest {
   }
 
   @Test
-  public void testAbsoluteURIBuilderWithIPV6Listener() throws RestConfigException {
+  public void testAbsoluteURIBuilderWithIPV6Listener() {
     Properties props = new Properties();
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
     props.put(KafkaRestConfig.LISTENERS_CONFIG, "http://[fe80:0:1:2:3:4:5:6]:9092");
@@ -140,7 +140,7 @@ public class UriUtilsTest {
 
 
   @Test
-  public void testAbsoluteURIBuilderWithTruncatedIPV6Listener() throws RestConfigException {
+  public void testAbsoluteURIBuilderWithTruncatedIPV6Listener() {
     Properties props = new Properties();
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
     props.put(KafkaRestConfig.LISTENERS_CONFIG, "http://[fe80::1]:9092");

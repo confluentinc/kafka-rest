@@ -56,7 +56,7 @@ public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], O
     }
 
     return new ConsumerRecordAndSize<>(
-        new io.confluent.kafkarest.entities.ConsumerRecord<>(
+        io.confluent.kafkarest.entities.ConsumerRecord.create(
             record.topic(), key, value, record.partition(), record.offset()), approxSize);
   }
 

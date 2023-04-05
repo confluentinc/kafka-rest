@@ -15,25 +15,28 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.ConfigSource;
+import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicConfigData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import java.util.Arrays;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.Before;
 import org.junit.Test;
 
 public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
-
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private static final String TOPIC_1 = "topic-1";
 
@@ -50,89 +53,127 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void listTopicConfigs_existingTopic_returnsConfigs() throws Exception {
+  public void listTopicConfigs_existingTopic_returnsConfigs() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
-    String expectedLinks =
-        OBJECT_MAPPER.writeValueAsString(
-            new CollectionLink(
+    ResourceCollection.Metadata expectedMetadata =
+        ResourceCollection.Metadata.builder()
+            .setSelf(
                 baseUrl
                     + "/v3/clusters/" + clusterId
                     + "/topics/" + TOPIC_1
-                    + "/configs",
-                /* next= */ null));
-    String expectedConfig1 =
-        OBJECT_MAPPER.writeValueAsString(
-            new TopicConfigData(
-                "crn:///kafka=" + clusterId + "/topic=" + TOPIC_1 + "/config=cleanup.policy",
-                new ResourceLink(
-                    baseUrl
-                        + "/v3/clusters/" + clusterId
-                        + "/topics/" + TOPIC_1
-                        + "/configs/cleanup.policy"),
-                clusterId,
-                TOPIC_1,
-                "cleanup.policy",
-                "delete",
-                /* isDefault= */ true,
-                /* isReadOnly= */ false,
-                /* isSensitive= */ false));
-    String expectedConfig2 =
-        OBJECT_MAPPER.writeValueAsString(
-            new TopicConfigData(
-                "crn:///kafka=" + clusterId
-                    + "/topic=" + TOPIC_1
-                    + "/config=compression.type",
-                new ResourceLink(
-                    baseUrl
-                        + "/v3/clusters/" + clusterId
-                        + "/topics/" + TOPIC_1
-                        + "/configs/compression.type"),
-                clusterId,
-                TOPIC_1,
-                "compression.type",
-                "producer",
-                /* isDefault= */ true,
-                /* isReadOnly= */ false,
-                /* isSensitive= */ false));
-    String expectedConfig3 =
-        OBJECT_MAPPER.writeValueAsString(
-            new TopicConfigData(
-                "crn:///kafka=" + clusterId
-                    + "/topic=" + TOPIC_1
-                    + "/config=delete.retention.ms",
-                new ResourceLink(
-                    baseUrl
-                        + "/v3/clusters/" + clusterId
-                        + "/topics/" + TOPIC_1
-                        + "/configs/delete.retention.ms"),
-                clusterId,
-                TOPIC_1,
-                "delete.retention.ms",
-                "86400000",
-                /* isDefault= */ true,
-                /* isReadOnly= */ false,
-                /* isSensitive= */ false));
+                    + "/configs")
+            .build();
+
+    TopicConfigData expectedConfig1 =
+        TopicConfigData.builder()
+            .setMetadata(
+                Resource.Metadata.builder()
+                    .setSelf(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + TOPIC_1
+                            + "/configs/cleanup.policy")
+                    .setResourceName(
+                        "crn:///kafka="
+                            + clusterId + "/topic="
+                            + TOPIC_1 + "/config=cleanup.policy")
+                    .build())
+            .setClusterId(clusterId)
+            .setTopicName(TOPIC_1)
+            .setName("cleanup.policy")
+            .setValue("delete")
+            .setDefault(true)
+            .setReadOnly(false)
+            .setSensitive(false)
+            .setSource(ConfigSource.DEFAULT_CONFIG)
+            .setSynonyms(
+                singletonList(
+                    ConfigSynonymData.builder()
+                        .setName("log.cleanup.policy")
+                        .setValue("delete")
+                        .setSource(ConfigSource.DEFAULT_CONFIG)
+                        .build()))
+            .build();
+    TopicConfigData expectedConfig2 =
+        TopicConfigData.builder()
+            .setMetadata(
+                Resource.Metadata.builder()
+                    .setSelf(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + TOPIC_1
+                            + "/configs/compression.type")
+                    .setResourceName(
+                        "crn:///kafka=" + clusterId
+                            + "/topic=" + TOPIC_1
+                            + "/config=compression.type")
+                    .build())
+            .setClusterId(clusterId)
+            .setTopicName(TOPIC_1)
+            .setName("compression.type")
+            .setValue("producer")
+            .setDefault(true)
+            .setReadOnly(false)
+            .setSensitive(false)
+            .setSource(ConfigSource.DEFAULT_CONFIG)
+            .setSynonyms(
+                singletonList(
+                    ConfigSynonymData.builder()
+                        .setName("compression.type")
+                        .setValue("producer")
+                        .setSource(ConfigSource.DEFAULT_CONFIG)
+                        .build()))
+            .build();
+    TopicConfigData expectedConfig3 =
+        TopicConfigData.builder()
+            .setMetadata(
+                Resource.Metadata.builder()
+                    .setSelf(
+
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + TOPIC_1
+                            + "/configs/delete.retention.ms")
+                    .setResourceName(
+                        "crn:///kafka=" + clusterId
+                            + "/topic=" + TOPIC_1
+                            + "/config=delete.retention.ms")
+                    .build())
+            .setClusterId(clusterId)
+            .setTopicName(TOPIC_1)
+            .setName("delete.retention.ms")
+            .setValue("86400000")
+            .setDefault(true)
+            .setReadOnly(false)
+            .setSensitive(false)
+            .setSource(ConfigSource.DEFAULT_CONFIG)
+            .setSynonyms(
+                singletonList(
+                    ConfigSynonymData.builder()
+                        .setName("log.cleaner.delete.retention.ms")
+                        .setValue("86400000")
+                        .setSource(ConfigSource.DEFAULT_CONFIG)
+                        .build()))
+            .build();
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    String responseBody = response.readEntity(String.class);
-    assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedLinks),
-        responseBody.contains(expectedLinks));
+    ListTopicConfigsResponse responseBody = response.readEntity(ListTopicConfigsResponse.class);
+    assertEquals(expectedMetadata, responseBody.getValue().getMetadata());
     assertTrue(
         String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig1),
-        responseBody.contains(expectedConfig1));
+        responseBody.getValue().getData().contains(expectedConfig1));
     assertTrue(
         String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig2),
-        responseBody.contains(expectedConfig2));
+        responseBody.getValue().getData().contains(expectedConfig2));
     assertTrue(
         String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig3),
-        responseBody.contains(expectedConfig3));
+        responseBody.getValue().getData().contains(expectedConfig3));
   }
 
   @Test
@@ -141,7 +182,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar/configs")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -150,45 +191,61 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
   public void listTopicConfigs_nonExistingCluster_throwsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void getTopicConfig_existingConfig_returnsConfig() throws Exception {
+  public void getTopicConfig_existingConfig_returnsConfig() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
-            new GetTopicConfigResponse(
-                new TopicConfigData(
-                    "crn:///kafka=" + clusterId
-                        + "/topic=" + TOPIC_1
-                        + "/config=cleanup.policy",
-                    new ResourceLink(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_1
-                            + "/configs/cleanup.policy"),
-                    clusterId,
-                    TOPIC_1,
-                    "cleanup.policy",
-                    "delete",
-                    /* isDefault= */ true,
-                    /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+    GetTopicConfigResponse expected =
+        GetTopicConfigResponse.create(
+            TopicConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/topics/" + TOPIC_1
+                                + "/configs/cleanup.policy")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/topic=" + TOPIC_1
+                                + "/config=cleanup.policy")
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_1)
+                .setName("cleanup.policy")
+                .setValue("delete")
+                .setDefault(true)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DEFAULT_CONFIG)
+                .setSynonyms(
+                    singletonList(
+                        ConfigSynonymData.builder()
+                            .setName("log.cleanup.policy")
+                            .setValue("delete")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
 
     Response response =
         request(
             "/v3/clusters/" + clusterId
                 + "/topics/" + TOPIC_1
                 + "/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+
+    GetTopicConfigResponse actual =
+        response.readEntity(GetTopicConfigResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -197,7 +254,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/foobar")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -208,7 +265,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -217,123 +274,179 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
   public void getTopicConfig_nonExistingCluster_throwsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void
-  getThenUpdateThenGetThenResetThenGet_existingConfig_returnsDefaultThenUpdatesThenReturnsUpdatedThenResetsThenReturnsDefault
-      () throws Exception {
+  public void getUpdateReset_withExistingConfig() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
-    String expectedBeforeUpdate =
-        OBJECT_MAPPER.writeValueAsString(
-            new GetTopicConfigResponse(
-                new TopicConfigData(
-                    "crn:///kafka=" + clusterId
-                        + "/topic=" + TOPIC_1
-                        + "/config=cleanup.policy",
-                    new ResourceLink(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_1
-                            + "/configs/cleanup.policy"),
-                    clusterId,
-                    TOPIC_1,
-                    "cleanup.policy",
-                    "delete",
-                    /* isDefault= */ true,
-                    /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+    GetTopicConfigResponse expectedBeforeUpdate =
+        GetTopicConfigResponse.create(
+            TopicConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/topics/" + TOPIC_1
+                                + "/configs/cleanup.policy")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/topic=" + TOPIC_1
+                                + "/config=cleanup.policy")
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_1)
+                .setName("cleanup.policy")
+                .setValue("delete")
+                .setDefault(true)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DEFAULT_CONFIG)
+                .setSynonyms(
+                    singletonList(
+                        ConfigSynonymData.builder()
+                            .setName("log.cleanup.policy")
+                            .setValue("delete")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
 
     Response responseBeforeUpdate =
         request(
             "/v3/clusters/" + clusterId
                 + "/topics/" + TOPIC_1
                 + "/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseBeforeUpdate.getStatus());
-    assertEquals(expectedBeforeUpdate, responseBeforeUpdate.readEntity(String.class));
+
+    GetTopicConfigResponse actualResponseBeforeUpdate =
+        responseBeforeUpdate.readEntity(GetTopicConfigResponse.class);
+
+    assertEquals(expectedBeforeUpdate, actualResponseBeforeUpdate);
 
     Response updateResponse =
         request(
             "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
-            .put(
-                Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"compact\"}}}", Versions.JSON_API));
+            .accept(MediaType.APPLICATION_JSON)
+            .put(Entity.entity("{\"value\":\"compact\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
 
-    String expectedAfterUpdate =
-        OBJECT_MAPPER.writeValueAsString(
-            new GetTopicConfigResponse(
-                new TopicConfigData(
-                    "crn:///kafka=" + clusterId
-                        + "/topic=" + TOPIC_1
-                        + "/config=cleanup.policy",
-                    new ResourceLink(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_1
-                            + "/configs/cleanup.policy"),
-                    clusterId,
-                    TOPIC_1,
-                    "cleanup.policy",
-                    "compact",
-                    /* isDefault= */ false,
-                    /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+    GetTopicConfigResponse expectedAfterUpdate =
+        GetTopicConfigResponse.create(
+            TopicConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
 
-    Response responseAfterUpdate =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/topics/" + TOPIC_1
-                + "/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
-    assertEquals(expectedAfterUpdate, responseAfterUpdate.readEntity(String.class));
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/topics/" + TOPIC_1
+                                + "/configs/cleanup.policy")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/topic=" + TOPIC_1
+                                + "/config=cleanup.policy")
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_1)
+                .setName("cleanup.policy")
+                .setValue("compact")
+                .setDefault(false)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                .setSynonyms(
+                    Arrays.asList(
+                        ConfigSynonymData.builder()
+                            .setName("cleanup.policy")
+                            .setValue("compact")
+                            .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                            .build(),
+                        ConfigSynonymData.builder()
+                            .setName("log.cleanup.policy")
+                            .setValue("delete")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
+
+    testWithRetry(
+        () -> {
+          Response responseAfterUpdate =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/topics/" + TOPIC_1
+                      + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
+
+          GetTopicConfigResponse actualResponseAfterUpdate =
+              responseAfterUpdate.readEntity(GetTopicConfigResponse.class);
+          assertEquals(expectedAfterUpdate, actualResponseAfterUpdate);
+        });
 
     Response resetResponse =
         request(
             "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NO_CONTENT.getStatusCode(), resetResponse.getStatus());
 
-    String expectedAfterReset =
-        OBJECT_MAPPER.writeValueAsString(
-            new GetTopicConfigResponse(
-                new TopicConfigData(
-                    "crn:///kafka=" + clusterId
-                        + "/topic=" + TOPIC_1
-                        + "/config=cleanup.policy",
-                    new ResourceLink(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_1
-                            + "/configs/cleanup.policy"),
-                    clusterId,
-                    TOPIC_1,
-                    "cleanup.policy",
-                    "delete",
-                    /* isDefault= */ true,
-                    /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+    GetTopicConfigResponse expectedAfterReset =
+        GetTopicConfigResponse.create(
+            TopicConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
 
-    Response responseAfterReset =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/topics/" + TOPIC_1
-                + "/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
-    assertEquals(expectedAfterReset, responseAfterReset.readEntity(String.class));
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/topics/" + TOPIC_1
+                                + "/configs/cleanup.policy")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/topic=" + TOPIC_1
+                                + "/config=cleanup.policy")
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_1)
+                .setName("cleanup.policy")
+                .setValue("delete")
+                .setDefault(true)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DEFAULT_CONFIG)
+                .setSynonyms(
+                    singletonList(
+                        ConfigSynonymData.builder()
+                            .setName("log.cleanup.policy")
+                            .setValue("delete")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
+
+    testWithRetry(
+        () -> {
+          Response responseAfterReset =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/topics/" + TOPIC_1
+                      + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
+
+          GetTopicConfigResponse actualResponseAfterReset =
+              responseAfterReset.readEntity(GetTopicConfigResponse.class);
+          assertEquals(expectedAfterReset, actualResponseAfterReset);
+        });
   }
 
   @Test
@@ -342,10 +455,8 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/foobar")
-            .accept(Versions.JSON_API)
-            .put(
-                Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"compact\"}}}", Versions.JSON_API));
+            .accept(MediaType.APPLICATION_JSON)
+            .put(Entity.entity("{\"value\":\"compact\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -355,10 +466,8 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
-            .put(
-                Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"compact\"}}}", Versions.JSON_API));
+            .accept(MediaType.APPLICATION_JSON)
+            .put(Entity.entity("{\"value\":\"compact\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -366,10 +475,8 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
   public void updateTopicConfig_nonExistingCluster_throwsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
-            .put(
-                Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"compact\"}}}", Versions.JSON_API));
+            .accept(MediaType.APPLICATION_JSON)
+            .put(Entity.entity("{\"value\":\"compact\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -377,9 +484,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
   public void updateTopicConfig_nonExistingCluster_noContentType_throwsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
-            .put(
-                Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"compact\"}}}", Versions.JSON_API));
+            .put(Entity.entity("{\"value\":\"compact\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -389,7 +494,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/foobar")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -400,7 +505,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -409,7 +514,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
   public void resetTopicConfig_nonExistingCluster_throwsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -420,5 +525,126 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void alterConfigBatch_withExistingConfig() {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+
+    Response updateResponse =
+        request(
+            "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":["
+                        + "{\"name\": \"cleanup.policy\",\"value\":\"compact\"},"
+                        + "{\"name\": \"compression.type\",\"value\":\"gzip\"}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
+
+    GetTopicConfigResponse expectedAfterUpdate1 =
+        GetTopicConfigResponse.create(
+            TopicConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/topics/" + TOPIC_1
+                                + "/configs/cleanup.policy")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/topic=" + TOPIC_1
+                                + "/config=cleanup.policy")
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_1)
+                .setName("cleanup.policy")
+                .setValue("compact")
+                .setDefault(false)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                .setSynonyms(
+                    Arrays.asList(
+                        ConfigSynonymData.builder()
+                            .setName("cleanup.policy")
+                            .setValue("compact")
+                            .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                            .build(),
+                        ConfigSynonymData.builder()
+                            .setName("log.cleanup.policy")
+                            .setValue("delete")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
+    GetTopicConfigResponse expectedAfterUpdate2 =
+        GetTopicConfigResponse.create(
+            TopicConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/topics/" + TOPIC_1
+                                + "/configs/compression.type")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/topic=" + TOPIC_1
+                                + "/config=compression.type")
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_1)
+                .setName("compression.type")
+                .setValue("gzip")
+                .setDefault(false)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                .setSynonyms(
+                    Arrays.asList(
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("gzip")
+                            .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                            .build(),
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("producer")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
+
+    testWithRetry(
+        () -> {
+          Response responseAfterUpdate1 =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/topics/" + TOPIC_1
+                      + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterUpdate1.getStatus());
+          GetTopicConfigResponse actualResponseAfterUpdate1 =
+              responseAfterUpdate1.readEntity(GetTopicConfigResponse.class);
+          assertEquals(expectedAfterUpdate1, actualResponseAfterUpdate1);
+        });
+
+    testWithRetry(
+        () -> {
+          Response responseAfterUpdate2 =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/topics/" + TOPIC_1
+                      + "/configs/compression.type")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterUpdate2.getStatus());
+          GetTopicConfigResponse actualResponseAfterUpdate2 =
+              responseAfterUpdate2.readEntity(GetTopicConfigResponse.class);
+          assertEquals(expectedAfterUpdate2, actualResponseAfterUpdate2);
+        });
   }
 }

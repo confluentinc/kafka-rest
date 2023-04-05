@@ -39,4 +39,8 @@
             checks="(MethodLength)"
             files="(KafkaRestConfig).java"
     />
+    <suppress
+            checks="(ParameterNumber)"
+            files="(ClusterData).java"
+    />
 </suppressions>

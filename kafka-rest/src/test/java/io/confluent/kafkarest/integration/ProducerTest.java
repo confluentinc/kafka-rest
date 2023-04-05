@@ -23,11 +23,11 @@ import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest;
-import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest.BinaryPartitionProduceRecord;
-import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest;
-import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.v1.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest.BinaryPartitionProduceRecord;
+import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +39,7 @@ import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 public class ProducerTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
@@ -130,8 +130,8 @@ public class ProducerTest
     final int numPartitions = 3;
     final int replicationFactor = 1;
     kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                                      JavaConversions.asScalaBuffer(this.servers),
-                                      new Properties());
+        JavaConverters.asScalaBuffer(this.servers),
+        new Properties());
   }
 
   // This should really be a unit test, but producer settings aren't accessible and any requests
@@ -265,11 +265,8 @@ public class ProducerTest
   @Test
   public void testNullPayload() {
 
-    List<String> versions = Arrays.asList(Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
-        Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST,
-        Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V2_JSON_AVRO, Versions.KAFKA_V1_JSON_JSON,
-        Versions.KAFKA_V2_JSON_JSON, Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON_JSON,
-        Versions.KAFKA_V2_JSON_AVRO
+    List<String> versions = Arrays.asList(
+        Versions.KAFKA_V2_JSON_AVRO, Versions.KAFKA_V2_JSON_JSON, Versions.KAFKA_V2_JSON_BINARY
     );
 
     for (String version : versions) {

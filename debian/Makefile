@@ -64,7 +64,7 @@ else
 endif
 
 BINPATH=$(PREFIX)/bin
-LIBPATH=$(PREFIX)/share/java/$(PACKAGE_TITLE)
+LIBPATHS=$(PREFIX)/share/java/$(PACKAGE_TITLE)-bin $(PREFIX)/share/java/$(PACKAGE_TITLE)-lib
 DOCPATH=$(PREFIX)/share/doc/$(PACKAGE_TITLE)
 
 INSTALL=install -D -m 644
@@ -76,6 +76,9 @@ install: build
 	rm -rf $(DESTDIR)$(PREFIX)
 	mkdir -p $(DESTDIR)$(PREFIX)
 	mkdir -p $(DESTDIR)$(BINPATH)
+	for libpath in $(LIBPATHS) ; do \
+		mkdir -p $(DESTDIR)$$libpath ; \
+	done
 	mkdir -p $(DESTDIR)$(LIBPATH)
 	mkdir -p $(DESTDIR)$(SYSCONFDIR)
 	for svc in debian/*.service ; do \

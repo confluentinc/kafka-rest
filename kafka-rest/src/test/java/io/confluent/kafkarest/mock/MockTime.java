@@ -17,6 +17,7 @@ package io.confluent.kafkarest.mock;
 import java.util.concurrent.TimeUnit;
 
 import io.confluent.kafkarest.Time;
+import java.util.function.Supplier;
 
 public class MockTime implements Time {
 
@@ -35,6 +36,11 @@ public class MockTime implements Time {
   @Override
   public void sleep(long ms) {
     currentMs += ms;
+  }
+
+  @Override
+  public void waitObject(Object o, Supplier<Boolean> supplier, long l) throws InterruptedException {
+
   }
 
   @Override

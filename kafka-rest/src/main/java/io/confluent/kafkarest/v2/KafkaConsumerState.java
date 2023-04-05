@@ -63,7 +63,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   private ConsumerInstanceId instanceId;
   private Consumer<KafkaKeyT, KafkaValueT> consumer;
 
-  private Queue<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecords = new ArrayDeque<>();
+  private final Queue<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecords = new ArrayDeque<>();
 
   volatile long expiration;
   private final Object expirationLock = new Object();
@@ -181,7 +181,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
 
       for (io.confluent.kafkarest.entities.v2.TopicPartition t
-            : assignmentRequest.getPartitions()) {
+          : assignmentRequest.getPartitions()) {
         topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
       }
       consumer.assign(topicPartitions);
@@ -386,7 +386,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * invoked with the lock held, i.e. after startRead().
    */
   private synchronized void getOrCreateConsumerRecords() {
-    consumerRecords = new ArrayDeque<>();
     ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(0);
     //drain the iterator and buffer to list
     for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : polledRecords) {

@@ -34,9 +34,21 @@ public interface TopicManager {
   CompletableFuture<List<Topic>> listTopics(String clusterId);
 
   /**
+   * Returns the list of Kafka {@link Topic Topics} belonging to the {@link
+   * io.confluent.kafkarest.entities.Cluster} that this application is connected to.
+   */
+  CompletableFuture<List<Topic>> listLocalTopics();
+
+  /**
    * Returns the Kafka {@link Topic} with the given {@code topicName}.
    */
   CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName);
+
+  /**
+   * Returns the Kafka {@link Topic} with the given {@code topicName}, belonging to the {@link
+   * io.confluent.kafkarest.entities.Cluster} that this application is connected to.
+   */
+  CompletableFuture<Optional<Topic>> getLocalTopic(String topicName);
 
   /**
    * Creates a new Kafka {@link Topic}.
@@ -44,9 +56,9 @@ public interface TopicManager {
   CompletableFuture<Void> createTopic(
       String clusterId,
       String topicName,
-      int partitionsCount,
-      short replicationFactor,
-      Map<String, String> configs);
+      Optional<Integer> partitionsCount,
+      Optional<Short> replicationFactor,
+      Map<String, Optional<String>> configs);
 
   /**
    * Deletes the Kafka {@link Topic} with the given {@code topicName}.

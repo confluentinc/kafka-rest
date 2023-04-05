@@ -107,9 +107,9 @@ public final class SchemaPartitionProduceRequest {
     if (records == null || records.isEmpty()) {
       throw new IllegalStateException();
     }
-    return new ProduceRequest<>(
+    return ProduceRequest.create(
         records.stream()
-            .map(record -> new ProduceRecord<>(record.key, record.value, null))
+            .map(record -> ProduceRecord.create(record.key, record.value, null))
             .collect(Collectors.toList()),
         keySchema,
         keySchemaId,

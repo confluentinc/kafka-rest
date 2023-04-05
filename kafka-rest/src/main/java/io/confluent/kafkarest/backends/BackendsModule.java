@@ -15,9 +15,7 @@
 
 package io.confluent.kafkarest.backends;
 
-import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.backends.kafka.KafkaModule;
-import java.util.Objects;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 /**
@@ -25,14 +23,8 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
  */
 public final class BackendsModule extends AbstractBinder {
 
-  private final KafkaRestContext context;
-
-  public BackendsModule(KafkaRestContext context) {
-    this.context = Objects.requireNonNull(context);
-  }
-
   @Override
   protected void configure() {
-    install(new KafkaModule(context));
+    install(new KafkaModule());
   }
 }
