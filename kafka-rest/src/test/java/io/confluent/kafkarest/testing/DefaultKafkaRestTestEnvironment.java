@@ -25,11 +25,15 @@ public final class DefaultKafkaRestTestEnvironment
 
   private boolean manageRest = true;
 
-  public DefaultKafkaRestTestEnvironment() {}
+  public DefaultKafkaRestTestEnvironment() {
+  }
 
-  // If manageRest is set to true, this will manage starting & stopping rest-instance of this test.
-  // If manageRest is set to false, the user of this class is expected to start & stop rest-instance
-  // appropriately, example - ProduceActionItegrationTest.java
+  // If manageRest is set to true, this will manage the life-cycle of the rest-instance through the
+  // junit-extensions(BeforeEach & AfterEach). This includes starting & stopping rest-instance of
+  // this test.
+  // If manageRest is set to false, the user of this class is taking the responsibility of managing
+  // rest-instance for the overall test. Example - ProduceActionIntegrationTest.java, manages
+  // the rest-instance, and sets custom KafkaRestConfigs for different test-case.
   public DefaultKafkaRestTestEnvironment(boolean manageRest) {
     this.manageRest = manageRest;
   }
