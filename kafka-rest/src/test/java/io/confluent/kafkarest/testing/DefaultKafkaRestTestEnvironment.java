@@ -25,8 +25,7 @@ public final class DefaultKafkaRestTestEnvironment
 
   private boolean manageRest = true;
 
-  public DefaultKafkaRestTestEnvironment() {
-  }
+  public DefaultKafkaRestTestEnvironment() {}
 
   // If manageRest is set to true, this will manage the life-cycle of the rest-instance through the
   // junit-extensions(BeforeEach & AfterEach). This includes starting & stopping rest-instance of
