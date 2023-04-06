@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Confluent Inc.
+ * Copyright 2022 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,9 +15,18 @@
 
 package io.confluent.kafkarest.ratelimit;
 
-/** A {@link FixedCostRateLimiter} that doesn't rate-limit anything. */
-final class NullFixedCostRateLimiter implements FixedCostRateLimiter {
+import io.confluent.kafkarest.config.ConfigModule.RateLimitPerClusterPermitsPerSecConfig;
+import io.confluent.kafkarest.config.ConfigModule.RateLimitTimeoutConfig;
+import java.time.Duration;
+import javax.inject.Inject;
 
-  @Override
-  public void rateLimit() {}
+final class RequestRateLimiterPerClusterFactory extends RequestRateLimiterFactory {
+
+  @Inject
+  public RequestRateLimiterPerClusterFactory(
+      RateLimitBackend backend,
+      @RateLimitPerClusterPermitsPerSecConfig Integer permitsPerSecond,
+      @RateLimitTimeoutConfig Duration timeout) {
+    super(backend, permitsPerSecond, timeout);
+  }
 }

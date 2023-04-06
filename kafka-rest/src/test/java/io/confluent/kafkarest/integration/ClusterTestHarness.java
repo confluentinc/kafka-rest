@@ -76,6 +76,9 @@ import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.eclipse.jetty.server.Server;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -376,22 +379,47 @@ public abstract class ClusterTestHarness {
     zookeeper.shutdown();
   }
 
+  protected Invocation.Builder request(String path, boolean useAlternateConnectorProvider) {
+    return request(path, null, null, null, true);
+  }
+
   protected Invocation.Builder request(String path) {
-    return request(path, null, null, null);
+    return request(path, null, null, null, false);
   }
 
   protected Invocation.Builder request(String path, Map<String, String> queryParams) {
-    return request(path, null, null, queryParams);
+    return request(path, null, null, queryParams, false);
   }
 
   protected Invocation.Builder request(String path, String templateName, Object templateValue) {
-    return request(path, templateName, templateValue, null);
+    return request(path, templateName, templateValue, null, false);
   }
 
   protected Invocation.Builder request(
-      String path, String templateName, Object templateValue, Map<String, String> queryParams) {
+      String path,
+      String templateName,
+      Object templateValue,
+      Map<String, String> queryParams,
+      boolean useAlternateConnectorProvider) {
 
-    Client client = getClient();
+    Client client;
+    if (useAlternateConnectorProvider) {
+      // The PATCH method requires a workaround of
+      // .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true) to be set for the
+      // Jersey client we use for testing to recognise the PATCH call.
+      // The default client does not support this property at Java 17 (it does at Java 8)
+      // so we need to use an alternative provider for any tests that use PATCH.
+      // Leaving existing client behaviour for other integration tests so we don't unintentionally
+      // change other test behaviour
+      ClientConfig clientConfig = new ClientConfig();
+      clientConfig.connectorProvider(new ApacheConnectorProvider());
+      client =
+          ClientBuilder.newClient(clientConfig)
+              .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true);
+    } else {
+      client = getClient();
+    }
+
     // Only configure base application here because as a client we shouldn't need the resources
     // registered
     restApp.configureBaseApplication(client);

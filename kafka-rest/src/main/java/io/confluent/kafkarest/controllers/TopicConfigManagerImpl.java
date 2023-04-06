@@ -115,4 +115,15 @@ final class TopicConfigManagerImpl extends AbstractConfigManager<TopicConfig, To
         TopicConfig.builder().setClusterId(clusterId).setTopicName(topicName),
         commands);
   }
+
+  @Override
+  public CompletableFuture<Void> alterTopicConfigs(
+      String clusterId, String topicName, List<AlterConfigCommand> commands, boolean validateOnly) {
+    return safeAlterOrValidateConfigs(
+        clusterId,
+        new ConfigResource(ConfigResource.Type.TOPIC, topicName),
+        TopicConfig.builder().setClusterId(clusterId).setTopicName(topicName),
+        commands,
+        validateOnly);
+  }
 }

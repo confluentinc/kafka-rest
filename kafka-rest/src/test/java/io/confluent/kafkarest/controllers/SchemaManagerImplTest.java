@@ -664,6 +664,7 @@ public class SchemaManagerImplTest {
     expect(schemaMock.getSchemaType())
         .andThrow(new UnsupportedOperationException("exception message"));
     expect(schemaMock.getSchemaType()).andReturn("JSON");
+    expect(schemaMock.getSchema()).andReturn("testSchema");
 
     replay(schemaRegistryClientMock, schemaMock);
 

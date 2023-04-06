@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Objects.requireNonNull;
 
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
@@ -26,6 +27,7 @@ import io.confluent.kafkarest.entities.v3.CreateTopicRequest.ConfigEntry;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
+import io.confluent.kafkarest.entities.v3.PartitionsCountRequest;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicData;
@@ -51,6 +53,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -66,14 +69,14 @@ import javax.ws.rs.core.Response.Status;
 @ResourceName("api.v3.topics.*")
 public final class TopicsResource {
 
-  private final Provider<TopicManager> topicManager;
+  private final Provider<TopicManager> topicManagerProvider;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
   public TopicsResource(
       Provider<TopicManager> topicManager, CrnFactory crnFactory, UrlFactory urlFactory) {
-    this.topicManager = requireNonNull(topicManager);
+    this.topicManagerProvider = requireNonNull(topicManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
   }
@@ -88,7 +91,7 @@ public final class TopicsResource {
       @QueryParam("includeAuthorizedOperations") @DefaultValue("false")
           boolean includeAuthorizedOperations) {
     CompletableFuture<ListTopicsResponse> response =
-        topicManager
+        topicManagerProvider
             .get()
             .listTopics(clusterId, includeAuthorizedOperations)
             .thenApply(
@@ -122,11 +125,41 @@ public final class TopicsResource {
       @QueryParam("include_authorized_operations") @DefaultValue("false")
           boolean includeAuthorizedOperations) {
     CompletableFuture<GetTopicResponse> response =
-        topicManager
+        topicManagerProvider
             .get()
             .getTopic(clusterId, topicName, includeAuthorizedOperations)
             .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
             .thenApply(topic -> GetTopicResponse.create(toTopicData(topic)));
+
+    AsyncResponses.asyncResume(asyncResponse, response);
+  }
+
+  @PATCH
+  @Path("/{topicName}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.topics.partitions")
+  @ResourceName("api.v3.topics.partitions")
+  public void updatePartitionsCount(
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("clusterId") String clusterId,
+      @PathParam("topicName") String topicName,
+      @Valid PartitionsCountRequest partitionsCount) {
+
+    if (partitionsCount == null) {
+      throw Errors.invalidPayloadException("Request body is empty. Partitions_count is required.");
+    }
+
+    TopicManager topicManager = topicManagerProvider.get();
+
+    CompletableFuture<GetTopicResponse> response =
+        topicManager
+            .updateTopicPartitionsCount(topicName, partitionsCount.getPartitionsCount())
+            .thenCompose(
+                nothing ->
+                    topicManager
+                        .getTopic(clusterId, topicName)
+                        .thenApply(topic -> GetTopicResponse.create(toTopicData(topic.get()))));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
@@ -140,6 +173,11 @@ public final class TopicsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @Valid CreateTopicRequest request) {
+
+    if (request == null) {
+      throw Errors.invalidPayloadException("Request body is empty. Data is required.");
+    }
+
     String topicName = request.getTopicName();
     Optional<Integer> partitionsCount = request.getPartitionsCount();
     Optional<Short> replicationFactor = request.getReplicationFactor();
@@ -167,20 +205,35 @@ public final class TopicsResource {
                 /* isInternal= */ false,
                 /* authorizedOperations= */ emptySet()));
 
+    boolean validateOnly = request.getValidateOnly().orElse(false);
     CompletableFuture<CreateTopicResponse> response =
-        topicManager
-            .get()
-            .createTopic(
-                clusterId,
-                topicName,
-                partitionsCount,
-                replicationFactor,
-                replicasAssignments,
-                configs)
-            .thenApply(none -> CreateTopicResponse.create(topicData));
+        validateOnly
+            ? topicManagerProvider
+                .get()
+                .createTopic(
+                    clusterId,
+                    topicName,
+                    partitionsCount,
+                    replicationFactor,
+                    replicasAssignments,
+                    configs,
+                    true)
+                .thenApply(none -> CreateTopicResponse.create(topicData))
+            : topicManagerProvider
+                .get()
+                .createTopic(
+                    clusterId,
+                    topicName,
+                    partitionsCount,
+                    replicationFactor,
+                    replicasAssignments,
+                    configs)
+                .thenApply(none -> CreateTopicResponse.create(topicData));
 
+    // The response status will differ depending on whether a topic has actually been created.
+    Response.Status responseStatus = validateOnly ? Status.OK : Status.CREATED;
     AsyncResponseBuilder.from(
-            Response.status(Status.CREATED).location(URI.create(topicData.getMetadata().getSelf())))
+            Response.status(responseStatus).location(URI.create(topicData.getMetadata().getSelf())))
         .entity(response)
         .asyncResume(asyncResponse);
   }
@@ -194,7 +247,7 @@ public final class TopicsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName) {
-    CompletableFuture<Void> response = topicManager.get().deleteTopic(clusterId, topicName);
+    CompletableFuture<Void> response = topicManagerProvider.get().deleteTopic(clusterId, topicName);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)

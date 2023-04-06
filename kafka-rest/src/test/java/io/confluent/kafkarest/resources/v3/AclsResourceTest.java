@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.resources.v3;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -181,6 +182,7 @@ public class AclsResourceTest {
                 Acl.Operation.READ,
                 Acl.Permission.ALLOW))
         .andReturn(completedFuture(/* value= */ null));
+    expect(aclManager.validateAclCreateParameters(anyObject())).andReturn(aclManager);
     replay(aclManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();

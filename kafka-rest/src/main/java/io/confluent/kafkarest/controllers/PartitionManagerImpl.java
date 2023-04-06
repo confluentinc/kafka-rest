@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2020 - 2022 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -31,18 +31,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListOffsetsOptions;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class PartitionManagerImpl implements PartitionManager {
 
   private final Admin adminClient;
   private final TopicManager topicManager;
+
+  private static final Logger log = LoggerFactory.getLogger(PartitionManagerImpl.class);
 
   @Inject
   PartitionManagerImpl(Admin adminClient, TopicManager topicManager) {
@@ -79,7 +86,24 @@ final class PartitionManagerImpl implements PartitionManager {
             partitions -> findEntityByKey(partitions, Partition::getPartitionId, partitionId))
         .thenApply(partition -> partition.map(Collections::singletonList).orElse(emptyList()))
         .thenCompose(this::withOffsets)
-        .thenApply(partitions -> partitions.stream().findAny());
+        .thenApply(partitions -> partitions.stream().findAny())
+        .exceptionally(
+            exception -> {
+              if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
+                String exceptionMessage =
+                    String.format(
+                        "This server does not host topic-partition %d for topic %s",
+                        partitionId, topicName);
+                throw new UnknownTopicOrPartitionException(exceptionMessage, exception);
+              } else if (exception instanceof NotFoundException
+                  || exception.getCause() instanceof NotFoundException) {
+                throw new NotFoundException(exception.getCause());
+              } else if (exception instanceof RuntimeException
+                  || exception.getCause() instanceof RuntimeException) {
+                throw (RuntimeException) exception;
+              }
+              throw new CompletionException(exception.getCause());
+            });
   }
 
   @Override

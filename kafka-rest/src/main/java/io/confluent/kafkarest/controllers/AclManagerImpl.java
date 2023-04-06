@@ -25,6 +25,7 @@ import io.confluent.kafkarest.entities.Acl.Operation;
 import io.confluent.kafkarest.entities.Acl.PatternType;
 import io.confluent.kafkarest.entities.Acl.Permission;
 import io.confluent.kafkarest.entities.Acl.ResourceType;
+import io.confluent.kafkarest.entities.v3.CreateAclRequest;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -32,6 +33,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DeleteAclsResult.FilterResult;
 import org.apache.kafka.common.KafkaFuture;
@@ -175,5 +177,33 @@ final class AclManagerImpl implements AclManager {
                       .collect(Collectors.toList())
                       .toArray(new CompletableFuture[results.size()]));
             });
+  }
+
+  @Override
+  public AclManager validateAclCreateParameters(List<CreateAclRequest> requests)
+      throws BadRequestException {
+
+    requests.forEach(
+        request -> {
+          if (request.getResourceType() == Acl.ResourceType.ANY
+              || request.getResourceType() == Acl.ResourceType.UNKNOWN) {
+            throw new BadRequestException("resource_type cannot be ANY");
+          }
+          if (request.getPatternType() == Acl.PatternType.ANY
+              || request.getPatternType() == Acl.PatternType.MATCH
+              || request.getPatternType() == Acl.PatternType.UNKNOWN) {
+            throw new BadRequestException(
+                String.format("pattern_type cannot be %s", request.getPatternType()));
+          }
+          if (request.getOperation() == Acl.Operation.ANY
+              || request.getOperation() == Acl.Operation.UNKNOWN) {
+            throw new BadRequestException("operation cannot be ANY");
+          }
+          if (request.getPermission() == Acl.Permission.ANY
+              || request.getPermission() == Acl.Permission.UNKNOWN) {
+            throw new BadRequestException("permission cannot be ANY");
+          }
+        });
+    return this;
   }
 }

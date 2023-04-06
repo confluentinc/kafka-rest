@@ -58,10 +58,17 @@ public final class AlterTopicConfigBatchAction {
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
       @Valid AlterTopicConfigBatchRequest request) {
+    boolean validateOnly = request.getValue().getValidateOnly().orElse(false);
     CompletableFuture<Void> response =
-        topicConfigManager
-            .get()
-            .alterTopicConfigs(clusterId, topicName, request.getValue().toAlterConfigCommands());
+        validateOnly
+            ? topicConfigManager
+                .get()
+                .alterTopicConfigs(
+                    clusterId, topicName, request.getValue().toAlterConfigCommands(), true)
+            : topicConfigManager
+                .get()
+                .alterTopicConfigs(
+                    clusterId, topicName, request.getValue().toAlterConfigCommands());
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)

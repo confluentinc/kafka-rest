@@ -149,6 +149,14 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new RateLimitDefaultCostConfigImpl())
         .to(Integer.class);
 
+    bind(config.getInt(KafkaRestConfig.RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_CONFIG))
+        .qualifiedBy(new RateLimitPerClusterPermitsPerSecConfigImpl())
+        .to(Integer.class);
+
+    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.RATE_LIMIT_PER_CLUSTER_CACHE_EXPIRY_MS)))
+        .qualifiedBy(new RateLimitPerClusterCacheExpiryConfigImpl())
+        .to(Duration.class);
+
     bind(config.isRateLimitEnabled())
         .qualifiedBy(new RateLimitEnabledConfigImpl())
         .to(Boolean.class);
@@ -377,6 +385,15 @@ public final class ConfigModule extends AbstractBinder {
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface RateLimitPerClusterCacheExpiryConfig {}
+
+  private static final class RateLimitPerClusterCacheExpiryConfigImpl
+      extends AnnotationLiteral<RateLimitPerClusterCacheExpiryConfig>
+      implements RateLimitPerClusterCacheExpiryConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface RateLimitEnabledConfig {}
 
   private static final class RateLimitEnabledConfigImpl
@@ -390,6 +407,15 @@ public final class ConfigModule extends AbstractBinder {
   private static final class RateLimitPermitsPerSecConfigImpl
       extends AnnotationLiteral<RateLimitPermitsPerSecConfig>
       implements RateLimitPermitsPerSecConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface RateLimitPerClusterPermitsPerSecConfig {}
+
+  private static final class RateLimitPerClusterPermitsPerSecConfigImpl
+      extends AnnotationLiteral<RateLimitPerClusterPermitsPerSecConfig>
+      implements RateLimitPerClusterPermitsPerSecConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)

@@ -37,6 +37,12 @@ public final class RateLimitModule extends AbstractBinder {
         .to(RequestRateLimiter.class)
         .in(Singleton.class);
 
+    bindFactory(RequestRateLimiterPerClusterFactory.class)
+        .qualifiedBy(new RequestRateLimiterPerClusterImpl())
+        .to(RequestRateLimiter.class)
+        .in(PerLookup.class);
+
+    // For producer rate limiter
     bindFactory(RequestRateLimiterProduceCountFactory.class)
         .qualifiedBy(new ProduceRateLimiterCountImpl())
         .to(RequestRateLimiter.class)
@@ -99,4 +105,13 @@ public final class RateLimitModule extends AbstractBinder {
 
   private static final class RequestRateLimiterGenericImpl
       extends AnnotationLiteral<RequestRateLimiterGeneric> implements RequestRateLimiterGeneric {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface RequestRateLimiterPerCluster {}
+
+  private static final class RequestRateLimiterPerClusterImpl
+      extends AnnotationLiteral<RequestRateLimiterPerCluster>
+      implements RequestRateLimiterPerCluster {}
 }

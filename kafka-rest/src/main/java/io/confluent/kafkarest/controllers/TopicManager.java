@@ -75,6 +75,26 @@ public interface TopicManager {
       Map<Integer, List<Integer>> replicasAssignments,
       Map<String, Optional<String>> configs);
 
+  /**
+   * Creates a new Kafka {@link Topic} with either partitions count and replication factor or
+   * explicitly specified partition-to-replicas assignments. If the {@code validateOnly} flag is
+   * set, the operation is only dry-ran (a topic does not get created as a result).
+   */
+  // KREST-8518 A separate overload is provided instead of changing the pre-existing createTopic
+  // method in order to minimize any risks related to external usage of that method (as TopicManager
+  // can be injected in projects inheriting from kafka-rest) and to minimize the amount of necessary
+  // changes (e.g. by avoiding the need to heavily refactor tests).
+  CompletableFuture<Void> createTopic(
+      String clusterId,
+      String topicName,
+      Optional<Integer> partitionsCount,
+      Optional<Short> replicationFactor,
+      Map<Integer, List<Integer>> replicasAssignments,
+      Map<String, Optional<String>> configs,
+      boolean validateOnly);
+
   /** Deletes the Kafka {@link Topic} with the given {@code topicName}. */
   CompletableFuture<Void> deleteTopic(String clusterId, String topicName);
+
+  CompletableFuture<Void> updateTopicPartitionsCount(String topicName, Integer partitionsCount);
 }

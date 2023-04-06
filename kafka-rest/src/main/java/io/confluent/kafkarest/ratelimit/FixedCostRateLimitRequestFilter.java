@@ -15,26 +15,43 @@
 
 package io.confluent.kafkarest.ratelimit;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.cache.LoadingCache;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 
 /**
  * A {@link ContainerRequestFilter} that automatically applies a request rate-limit at a fixed cost
- * based on the resource/method being requested, according to the {@link
+ * based on the resource/method being requested per cluster, according to the {@link
  * io.confluent.kafkarest.KafkaRestConfig#RATE_LIMIT_COSTS_CONFIG} and {@link
  * io.confluent.kafkarest.KafkaRestConfig#RATE_LIMIT_DEFAULT_COST_CONFIG} configs.
  */
 final class FixedCostRateLimitRequestFilter implements ContainerRequestFilter {
-  private final FixedCostRateLimiter rateLimiter;
+  private final RequestRateLimiter genericRateLimiter;
+  private final int cost;
+  private final LoadingCache<String, RequestRateLimiter> perClusterRateLimiterCache;
 
-  FixedCostRateLimitRequestFilter(FixedCostRateLimiter rateLimiter) {
-    this.rateLimiter = requireNonNull(rateLimiter);
+  FixedCostRateLimitRequestFilter(
+      RequestRateLimiter genericRateLimiter,
+      int cost,
+      LoadingCache<String, RequestRateLimiter> perClusterRateLimiterCache) {
+    checkArgument(cost > 0, "Cost must be positive");
+    this.genericRateLimiter = requireNonNull(genericRateLimiter);
+    this.cost = cost;
+    this.perClusterRateLimiterCache = requireNonNull(perClusterRateLimiterCache);
   }
 
   @Override
   public void filter(ContainerRequestContext requestContext) {
-    rateLimiter.rateLimit();
+    // apply per cluster rate limiter
+    String clusterId = requestContext.getUriInfo().getPathParameters(true).getFirst("clusterId");
+    if (clusterId != null) {
+      RequestRateLimiter rateLimiter = perClusterRateLimiterCache.getUnchecked(clusterId);
+      rateLimiter.rateLimit(cost);
+    }
+    // apply generic (global) rate limiter
+    genericRateLimiter.rateLimit(cost);
   }
 }

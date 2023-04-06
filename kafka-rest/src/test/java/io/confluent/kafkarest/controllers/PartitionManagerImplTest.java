@@ -38,6 +38,7 @@ import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.junit.jupiter.api.BeforeEach;
@@ -367,6 +368,26 @@ public class PartitionManagerImplTest {
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
+  }
+
+  @Test
+  public void getPartition_nonExistingCluster_throwsUnknownTopicOrPartition() throws Exception {
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
+        .andReturn(
+            failedFuture(
+                new UnknownTopicOrPartitionException(
+                    "This server does not host this topic-partition.")));
+    replay(topicManager);
+
+    try {
+      partitionManager.getPartition(CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId()).get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
+      assertEquals(
+          String.format("This server does not host topic-partition %d for topic %s", 0, TOPIC_NAME),
+          e.getCause().getMessage());
     }
   }
 

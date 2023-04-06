@@ -116,7 +116,7 @@ public final class ProduceAction {
       throws Exception {
 
     if (requests == null) {
-      throw Errors.invalidPayloadException("Null input provided. Data is required.");
+      throw Errors.invalidPayloadException("Request body is empty. Data is required.");
     }
 
     ProduceController controller = produceControllerProvider.get();
