@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 import javax.ws.rs.core.GenericType;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ConsumerJsonTest extends AbstractConsumerTest {
 
@@ -71,7 +71,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   private static final GenericType<List<JsonConsumerRecord>> jsonConsumerRecordType =
       new GenericType<List<JsonConsumerRecord>>() {};
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();

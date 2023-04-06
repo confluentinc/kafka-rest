@@ -2,8 +2,8 @@ package io.confluent.kafkarest.integration.v3;
 
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.BrokerConfigData;
@@ -18,8 +18,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -153,17 +152,17 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     ListBrokerConfigsResponse actual = response.readEntity(ListBrokerConfigsResponse.class);
     assertEquals(expectedMetadata, actual.getValue().getMetadata());
     assertTrue(
+        actual.getValue().getData().contains(expectedConfig1),
         String.format(
-            "Not true that `%s' contains `%s'.", actual.getValue().getData(), expectedConfig1),
-        actual.getValue().getData().contains(expectedConfig1));
+            "Not true that `%s' contains `%s'.", actual.getValue().getData(), expectedConfig1));
     assertTrue(
+        actual.getValue().getData().contains(expectedConfig2),
         String.format(
-            "Not true that `%s' contains `%s'.", actual.getValue().getData(), expectedConfig2),
-        actual.getValue().getData().contains(expectedConfig2));
+            "Not true that `%s' contains `%s'.", actual.getValue().getData(), expectedConfig2));
     assertTrue(
+        actual.getValue().getData().contains(expectedConfig3),
         String.format(
-            "Not true that `%s' contains `%s'.", actual.getValue().getData(), expectedConfig3),
-        actual.getValue().getData().contains(expectedConfig3));
+            "Not true that `%s' contains `%s'.", actual.getValue().getData(), expectedConfig3));
   }
 
   @Test
@@ -184,7 +183,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/foobar/brokers/" + brokerId + "/configs")
             .accept(MediaType.APPLICATION_JSON)
             .get();
-    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -248,7 +247,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/foobar")
             .accept(MediaType.APPLICATION_JSON)
             .get();
-    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -259,7 +258,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/" + clusterId + "/brokers/foobar/configs/max.connections")
             .accept(MediaType.APPLICATION_JSON)
             .get();
-    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -269,7 +268,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/max.connections")
             .accept(MediaType.APPLICATION_JSON)
             .get();
-    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test

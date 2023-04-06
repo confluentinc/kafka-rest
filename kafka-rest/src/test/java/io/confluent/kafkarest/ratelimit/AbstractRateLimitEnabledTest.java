@@ -15,8 +15,8 @@
 
 package io.confluent.kafkarest.ratelimit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Properties;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 abstract class AbstractRateLimitEnabledTest extends AbstractRateLimitTest {
 
@@ -85,8 +85,8 @@ abstract class AbstractRateLimitEnabledTest extends AbstractRateLimitTest {
 
   private static void assertInRange(int lower, int upper, int actual) {
     assertTrue(
-        String.format("%d not in [%d, %d]", actual, lower, upper),
-        actual >= lower && actual <= upper);
+        actual >= lower && actual <= upper,
+        String.format("%d not in [%d, %d]", actual, lower, upper));
   }
 
   @Path("foobar")

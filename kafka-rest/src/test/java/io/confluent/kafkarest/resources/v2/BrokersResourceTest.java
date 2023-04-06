@@ -21,7 +21,7 @@ import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -37,12 +37,13 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.common.errors.SaslAuthenticationException;
 import org.apache.kafka.common.protocol.Errors;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(EasyMockExtension.class)
 public class BrokersResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
@@ -51,15 +52,13 @@ public class BrokersResourceTest
   private static final Broker BROKER_2 = Broker.create(CLUSTER_ID, 2, "host2", 2, /* rack= */ null);
   private static final Broker BROKER_3 = Broker.create(CLUSTER_ID, 3, "host3", 3, /* rack= */ null);
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private BrokerManager brokerManager;
 
   public BrokersResourceTest() throws RestConfigException {
     super();
   }
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     addResource(new BrokersResource(() -> brokerManager));
     super.setUp();

@@ -15,12 +15,12 @@
 package io.confluent.kafkarest.v2;
 
 import static java.util.Collections.singletonMap;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.ConsumerReadCallback;
@@ -46,19 +46,19 @@ import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.easymock.EasyMockRunner;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Tests basic create/read/commit/delete functionality of ConsumerManager. This only exercises the
  * functionality for binary data because it uses a mock consumer that only works with byte[] data.
  */
-@RunWith(EasyMockRunner.class)
+@ExtendWith(EasyMockExtension.class)
 public class KafkaConsumerManagerTest {
 
   private static final String TOPIC = "topic";
@@ -69,7 +69,9 @@ public class KafkaConsumerManagerTest {
   private static final Instant OFFSET_TIMESTAMP = Instant.ofEpochMilli(1000L);
 
   private KafkaRestConfig config;
+
   @Mock private KafkaConsumerManager.KafkaConsumerFactory consumerFactory;
+
   private KafkaConsumerManager consumerManager;
 
   private static final String groupName = "testgroup";
@@ -85,7 +87,7 @@ public class KafkaConsumerManagerTest {
 
   private MockConsumer<byte[], byte[]> consumer;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     setUpConsumer(setUpProperties());
   }
@@ -114,7 +116,7 @@ public class KafkaConsumerManagerTest {
     return props;
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     consumerManager.shutdown();
   }
@@ -189,10 +191,10 @@ public class KafkaConsumerManagerTest {
 
     readFromDefault(cid);
     Thread.sleep((long) (config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) * 0.5));
-    assertFalse("Callback failed early", sawCallback);
+    assertFalse(sawCallback, "Callback failed early");
     Thread.sleep((long) (config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) * 0.7));
-    assertTrue("Callback failed to fire", sawCallback);
-    assertNull("No exception in callback", actualException);
+    assertTrue(sawCallback, "Callback failed to fire");
+    assertNull(actualException, "No exception in callback");
   }
 
   /** Response should return no sooner than KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG */
@@ -222,8 +224,8 @@ public class KafkaConsumerManagerTest {
       Thread.sleep(40);
     }
     Thread.sleep((long) (expectedRequestTimeoutms * 0.5));
-    assertTrue("Callback failed to fire", sawCallback);
-    assertNull("No exception in callback", actualException);
+    assertTrue(sawCallback, "Callback failed to fire");
+    assertNull(actualException, "No exception in callback");
   }
 
   /**
@@ -256,18 +258,18 @@ public class KafkaConsumerManagerTest {
       Thread.sleep(100);
     }
     Thread.sleep(200);
-    assertTrue("Callback failed to fire", sawCallback);
-    assertNull("No exception in callback", actualException);
-    assertTrue("Records returned not empty", actualRecords.isEmpty());
+    assertTrue(sawCallback, "Callback failed to fire");
+    assertNull(actualException, "No exception in callback");
+    assertTrue(actualRecords.isEmpty(), "Records returned not empty");
 
     sawCallback = false;
     final List<ConsumerRecord<ByteString, ByteString>> referenceRecords = schedulePoll();
     readFromDefault(cid);
     Thread.sleep(expectedRequestTimeoutms / 2); // should return in less time
 
-    assertEquals("Records returned not as expected", referenceRecords, actualRecords);
-    assertTrue("Callback not called", sawCallback);
-    assertNull("Callback exception", actualException);
+    assertEquals(referenceRecords, actualRecords, "Records returned not as expected");
+    assertTrue(sawCallback, "Callback not called");
+    assertNull(actualException, "Callback exception");
   }
 
   /**
@@ -306,9 +308,9 @@ public class KafkaConsumerManagerTest {
             (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT)
                 * 0.5)); // should return sooner since min bytes hit
 
-    assertTrue("Callback failed to fire", sawCallback);
-    assertNull("No exception in callback", actualException);
-    assertEquals("Records returned not as expected", referenceRecords, actualRecords);
+    assertTrue(sawCallback, "Callback failed to fire");
+    assertNull(actualException, "No exception in callback");
+    assertEquals(referenceRecords, actualRecords, "Records returned not as expected");
   }
 
   @Test
@@ -353,9 +355,9 @@ public class KafkaConsumerManagerTest {
             (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT)
                 * 0.5)); // should return sooner since min bytes hit
 
-    assertTrue("Callback failed to fire", sawCallback);
-    assertNull("No exception in callback", actualException);
-    assertEquals("Records returned not as expected", referenceRecords, actualRecords);
+    assertTrue(sawCallback, "Callback failed to fire");
+    assertNull(actualException, "No exception in callback");
+    assertEquals(referenceRecords, actualRecords, "Records returned not as expected");
   }
 
   @Test
@@ -370,9 +372,9 @@ public class KafkaConsumerManagerTest {
     Thread.sleep(
         (long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10));
 
-    assertTrue("Callback failed to fire", sawCallback);
-    assertNull("No exception in callback", actualException);
-    assertEquals("Records returned not as expected", referenceRecords, actualRecords);
+    assertTrue(sawCallback, "Callback failed to fire");
+    assertNull(actualException, "No exception in callback");
+    assertEquals(referenceRecords, actualRecords, "Records returned not as expected");
     sawCallback = false;
     actualException = null;
     actualOffsets = null;
@@ -393,11 +395,11 @@ public class KafkaConsumerManagerTest {
               }
             })
         .get();
-    assertTrue("Callback not called", sawCallback);
-    assertNull("Callback exception", actualException);
+    assertTrue(sawCallback, "Callback not called");
+    assertNull(actualException, "Callback exception");
     // Mock consumer doesn't handle offsets, so we just check we get some output for the
     // right partitions
-    assertNotNull("Callback Offsets", actualOffsets);
+    assertNotNull(actualOffsets, "Callback Offsets");
     // TODO: Currently the values are not actually returned in the callback nor in the response.
     // assertEquals("Callback Offsets Size", 3, actualOffsets.size());
 
@@ -406,7 +408,7 @@ public class KafkaConsumerManagerTest {
 
   // TODO ddimitrov This continues being way too flaky, even after some fix attempts.
   //  Until we fix it (KREST-2300), we should ignore it, as it might be hiding even worse errors.
-  @Ignore
+  @Disabled
   @Test
   public void testBackoffMsControlsPollCalls() throws Exception {
     long timeoutMillis = 5000L;
@@ -442,9 +444,9 @@ public class KafkaConsumerManagerTest {
     //   2..N-1. wait backoffMillis, poll() returns empty, repeat
     //   N. wait max(backoffMillis, remainder of timeoutMillis), poll() returns empty
     assertTrue(
+        pollTimestampsMillis.size() >= 2,
         String.format(
-            "Expected at least 2 poll calls, but got %d instead.", pollTimestampsMillis.size()),
-        pollTimestampsMillis.size() >= 2);
+            "Expected at least 2 poll calls, but got %d instead.", pollTimestampsMillis.size()));
 
     // We need to verify that there's no window of size backoffMillis with more than 2 poll calls,
     // and no window of size 2 * backofMillis with no poll call at all.
@@ -461,25 +463,25 @@ public class KafkaConsumerManagerTest {
         }
       }
       assertTrue(
+          smallWindowCount <= 2,
           String.format(
               "Expected at most 2 poll calls in window [%d, %d], but got %d instead.",
-              pollTimestampsMillis.get(i), lastTimestampMillis, smallWindowCount),
-          smallWindowCount <= 2);
+              pollTimestampsMillis.get(i), lastTimestampMillis, smallWindowCount));
 
       assertTrue(
+          pollTimestampsMillis.get(i + 1) - pollTimestampsMillis.get(i) <= 2 * backoffMillis,
           String.format(
               "Expected at least 1 poll call in window (%d, %d), but got none instead.",
-              pollTimestampsMillis.get(i), pollTimestampsMillis.get(i + 1)),
-          pollTimestampsMillis.get(i + 1) - pollTimestampsMillis.get(i) <= 2 * backoffMillis);
+              pollTimestampsMillis.get(i), pollTimestampsMillis.get(i + 1)));
     }
 
     long lastTimestampMillis = pollTimestampsMillis.get(pollTimestampsMillis.size() - 1);
     long timeoutTimestampMillis = pollTimestampsMillis.get(0) + timeoutMillis;
     assertTrue(
+        timeoutTimestampMillis - lastTimestampMillis < 2 * backoffMillis,
         String.format(
             "Expected at least 1 poll call in window (%d, %d], but got none instead.",
-            lastTimestampMillis, timeoutTimestampMillis),
-        timeoutTimestampMillis - lastTimestampMillis < 2 * backoffMillis);
+            lastTimestampMillis, timeoutTimestampMillis));
   }
 
   @Test
@@ -540,7 +542,7 @@ public class KafkaConsumerManagerTest {
     assertTrue(state.expiration.isAfter(initialExpiration));
     initialExpiration = state.expiration;
     awaitRead();
-    assertTrue("Callback failed to fire", sawCallback);
+    assertTrue(sawCallback, "Callback failed to fire");
     assertTrue(state.expiration.isAfter(initialExpiration));
     initialExpiration = state.expiration;
 
@@ -568,7 +570,7 @@ public class KafkaConsumerManagerTest {
         (long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10));
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void testReadRecordsPopulatesDelayedReadTaskWhenExecutorFull() throws Exception {
     Properties props = setUpProperties();

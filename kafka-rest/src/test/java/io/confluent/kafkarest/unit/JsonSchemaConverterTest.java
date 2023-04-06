@@ -15,14 +15,14 @@
 
 package io.confluent.kafkarest.unit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.confluent.kafkarest.converters.JsonSchemaConverter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JsonSchemaConverterTest {
 
