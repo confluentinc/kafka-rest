@@ -23,9 +23,9 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Partition;
@@ -43,15 +43,13 @@ import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.requests.DescribeLogDirsResponse.LogDirInfo;
 import org.apache.kafka.common.requests.DescribeLogDirsResponse.ReplicaInfo;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class ReplicaManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -116,8 +114,6 @@ public class ReplicaManagerImplTest {
       Partition.create(
           CLUSTER_ID, TOPIC_NAME, PARTITION_ID_2, Arrays.asList(REPLICA_2_1, REPLICA_2_2));
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private Admin adminClient;
 
   @Mock private DescribeLogDirsResult describeLogDirsResult;
@@ -128,7 +124,7 @@ public class ReplicaManagerImplTest {
 
   private ReplicaManagerImpl replicaManager;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     replicaManager = new ReplicaManagerImpl(adminClient, brokerManager, partitionManager);
   }

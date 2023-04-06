@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.entities.v3.ConsumerAssignmentData;
 import io.confluent.kafkarest.entities.v3.ConsumerAssignmentDataList;
@@ -35,7 +35,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.RoundRobinAssignor;
 import org.apache.kafka.common.serialization.BytesDeserializer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarness {
 

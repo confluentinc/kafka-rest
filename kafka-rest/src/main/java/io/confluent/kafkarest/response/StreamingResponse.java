@@ -21,16 +21,20 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.fasterxml.jackson.jaxrs.base.JsonMappingExceptionMapper;
 import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.common.CompletableFutures;
+import io.confluent.kafkarest.exceptions.BadRequestException;
+import io.confluent.kafkarest.exceptions.RestConstraintViolationExceptionMapper;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
+import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import java.io.IOException;
 import java.util.List;
@@ -80,6 +84,11 @@ public abstract class StreamingResponse<T> {
               response -> ((ErrorResponse) response.getEntity()).getErrorCode(),
               response -> ((ErrorResponse) response.getEntity()).getMessage())
           .putMapper(
+              RestConstraintViolationException.class,
+              new RestConstraintViolationExceptionMapper(),
+              response -> ((ErrorResponse) response.getEntity()).getErrorCode(),
+              response -> ((ErrorResponse) response.getEntity()).getMessage())
+          .putMapper(
               WebApplicationException.class,
               new WebApplicationExceptionMapper(/* restConfig= */ null),
               response -> ((ErrorMessage) response.getEntity()).getErrorCode(),
@@ -116,11 +125,19 @@ public abstract class StreamingResponse<T> {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
-    while (hasNext() && !responseQueue.isClosed()) {
-      responseQueue.push(next().handle(this::handleNext));
+    try {
+      while (hasNext() && !responseQueue.isClosed()) {
+        responseQueue.push(next().handle(this::handleNext));
+      }
+    } catch (Exception e) {
+      log.debug("Exception thrown when processing stream ", e);
+      responseQueue.push(
+          CompletableFuture.completedFuture(
+              ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(e))));
+    } finally {
+      close();
+      responseQueue.close();
     }
-    close();
-    responseQueue.close();
   }
 
   private ResultOrError handleNext(T result, @Nullable Throwable error) {
@@ -158,7 +175,16 @@ public abstract class StreamingResponse<T> {
 
     @Override
     public boolean hasNext() {
-      return mappingIteratorInput.hasNext();
+      try {
+        return mappingIteratorInput.hasNext();
+      } catch (RuntimeJsonMappingException jme) {
+        // jersey returns a 400 in both these cases first, so we should match this
+        throw new BadRequestException(
+            String.format("Error processing JSON: %s", jme.getMessage()), jme);
+      } catch (RuntimeException re) {
+        throw new BadRequestException(
+            String.format("Error processing message: %s", re.getMessage()), re);
+      }
     }
 
     @Override
@@ -246,14 +272,6 @@ public abstract class StreamingResponse<T> {
                       ResultOrError res = result.join();
                       log.debug("Writing to sink");
                       sink.write(res);
-                      if (res instanceof ErrorHolder
-                          && ((ErrorHolder) res).getError().getErrorCode() == 429) {
-                        log.warn(
-                            "Connection closed as a result of rate limiting being exceeded "
-                                + "for longer than grace period.");
-                        sinkClosed = true;
-                        sink.close();
-                      }
                     } catch (IOException e) {
                       log.error("Error when writing streaming result to response channel.", e);
                     }
@@ -328,17 +346,7 @@ public abstract class StreamingResponse<T> {
     @SuppressWarnings("unchecked")
     private ErrorResponse toErrorResponse(Throwable error) {
       Response response = mapper.toResponse((T) error);
-      String originalMessage = message.apply(response);
-      // The example of exception message is `{"error_code":400,"message":"Bad Request: Error
-      // processing message: Unexpected character ('o' (code 111)): was expecting comma to separate
-      // Object entries\n at [Source:
-      // (org.glassfish.jersey.message.internal.ReaderInterceptorExecutor$UnCloseableInputStream);
-      // line: 1, column: 4]"}`
-      // We don't want to show users the source information, so we need to remove everything after
-      // the newline.
-      String messageWithoutSource =
-          originalMessage == null ? "" : originalMessage.split("\\n")[0].trim();
-      return ErrorResponse.create(errorCode.apply(response), messageWithoutSource);
+      return ErrorResponse.create(errorCode.apply(response), message.apply(response));
     }
   }
 

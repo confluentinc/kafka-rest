@@ -19,8 +19,8 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import io.confluent.common.utils.IntegrationTest;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
@@ -74,10 +74,9 @@ import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.eclipse.jetty.server.Server;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
@@ -88,7 +87,7 @@ import scala.collection.JavaConverters;
  * Kafka's ZookeeperTestHarness and KafkaServerTestHarness traits combined and ported to Java with
  * the addition of the REST proxy. Defaults to a 1-ZK, 3-broker, 1 REST proxy cluster.
  */
-@Category(IntegrationTest.class)
+@Tag("IntegrationTest")
 public abstract class ClusterTestHarness {
 
   private static final Logger log = LoggerFactory.getLogger(ClusterTestHarness.class);
@@ -168,7 +167,7 @@ public abstract class ClusterTestHarness {
     return props;
   }
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     log.info("Starting setup of {}", getClass().getSimpleName());
     zookeeper = new EmbeddedZookeeper();
@@ -329,7 +328,7 @@ public abstract class ClusterTestHarness {
     return props;
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     log.info("Starting teardown of {}", getClass().getSimpleName());
     stopRest();
@@ -464,7 +463,7 @@ public abstract class ClusterTestHarness {
     try {
       result.all().get();
     } catch (InterruptedException | ExecutionException e) {
-      Assert.fail(String.format("Failed to create topic: %s", e.getMessage()));
+      fail(String.format("Failed to create topic: %s", e.getMessage()));
     }
   }
 
@@ -483,7 +482,7 @@ public abstract class ClusterTestHarness {
     try {
       result.all().get();
     } catch (InterruptedException | ExecutionException e) {
-      Assert.fail(
+      fail(
           String.format(
               "Failed to alter config %s for topic %s: %s", configName, topicName, e.getMessage()));
     }
@@ -502,7 +501,7 @@ public abstract class ClusterTestHarness {
     try {
       result.all().get();
     } catch (InterruptedException | ExecutionException e) {
-      Assert.fail(String.format("Failed to create topic: %s", e.getMessage()));
+      fail(String.format("Failed to create topic: %s", e.getMessage()));
     }
   }
 

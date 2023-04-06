@@ -16,8 +16,8 @@
 package io.confluent.kafkarest.integration.v3;
 
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.entities.ConfigSource;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ListAllBrokersConfigsActionIntegrationTest extends ClusterTestHarness {
 
@@ -150,26 +150,26 @@ public class ListAllBrokersConfigsActionIntegrationTest extends ClusterTestHarne
     assertEquals(expectedMetadata, responseBody.getValue().getMetadata());
 
     assertEquals(
-        "Unexpected number of brokers in response",
         2,
         responseBody.getValue().getData().stream()
             .collect(Collectors.toMap(BrokerConfigData::getBrokerId, config -> config, (o, n) -> n))
-            .size());
+            .size(),
+        "Unexpected number of brokers in response");
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker1Config1),
-        responseBody.getValue().getData().contains(expectedBroker1Config1));
+        responseBody.getValue().getData().contains(expectedBroker1Config1),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker1Config1));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker1Config2),
-        responseBody.getValue().getData().contains(expectedBroker1Config2));
+        responseBody.getValue().getData().contains(expectedBroker1Config2),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker1Config2));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker2Config1),
-        responseBody.getValue().getData().contains(expectedBroker2Config1));
+        responseBody.getValue().getData().contains(expectedBroker2Config1),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker2Config1));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker2Config2),
-        responseBody.getValue().getData().contains(expectedBroker2Config2));
+        responseBody.getValue().getData().contains(expectedBroker2Config2),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker2Config2));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker2Config3),
-        responseBody.getValue().getData().contains(expectedBroker2Config3));
+        responseBody.getValue().getData().contains(expectedBroker2Config3),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker2Config3));
   }
 
   @Test

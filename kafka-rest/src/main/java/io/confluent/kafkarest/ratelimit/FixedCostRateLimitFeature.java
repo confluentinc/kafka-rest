@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafkarest.config.ConfigModule.RateLimitCostsConfig;
 import io.confluent.kafkarest.config.ConfigModule.RateLimitDefaultCostConfig;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
+import io.confluent.kafkarest.ratelimit.RateLimitModule.RequestRateLimiterGeneric;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.container.DynamicFeature;
@@ -36,7 +37,7 @@ final class FixedCostRateLimitFeature implements DynamicFeature {
   FixedCostRateLimitFeature(
       @RateLimitCostsConfig Map<String, Integer> costs,
       @RateLimitDefaultCostConfig Integer defaultCost,
-      @Context RequestRateLimiter requestRateLimiter) {
+      @Context @RequestRateLimiterGeneric RequestRateLimiter requestRateLimiter) {
     this.costs = requireNonNull(costs);
     this.defaultCost = defaultCost;
     this.requestRateLimiter = requireNonNull(requestRateLimiter);

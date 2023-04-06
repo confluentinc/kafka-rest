@@ -19,7 +19,7 @@ import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.controllers.ConsumerManager;
 import io.confluent.kafkarest.entities.Broker;
@@ -40,15 +40,13 @@ import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class ConsumersResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -146,13 +144,11 @@ public class ConsumersResourceTest {
           .setConsumers(Arrays.asList(CONSUMERS))
           .build();
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private ConsumerManager consumerManager;
 
   private ConsumersResource consumersResource;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     consumersResource =
         new ConsumersResource(() -> consumerManager, new CrnFactoryImpl(""), new FakeUrlFactory());

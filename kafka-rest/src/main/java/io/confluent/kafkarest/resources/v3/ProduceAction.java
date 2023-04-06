@@ -21,8 +21,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
-import io.confluent.kafkarest.ProducerMetrics;
-import io.confluent.kafkarest.ProducerMetricsRegistry;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
@@ -35,17 +34,17 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
+import io.confluent.kafkarest.exceptions.StacklessCompletionException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
+import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -59,6 +58,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
+import org.apache.kafka.common.errors.SerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,32 +118,26 @@ public final class ProduceAction {
       MappingIterator<ProduceRequest> requests)
       throws Exception {
 
+    if (requests == null) {
+      throw Errors.invalidPayloadException("Null input provided. Data is required.");
+    }
+
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
-        .compose(
-            request -> {
-              Optional<Long> messageSize = request.getOriginalSize();
-              if (messageSize.isPresent()) {
-                return produce(
-                    clusterId,
-                    topicName,
-                    request,
-                    controller,
-                    produceRateLimiters.calculateGracePeriodExceeded(clusterId, messageSize.get()));
-              } else {
-                return produce(clusterId, topicName, request, controller, Optional.empty());
-              }
-            })
+        .compose(request -> produce(clusterId, topicName, request, controller))
         .resume(asyncResponse);
   }
 
   private CompletableFuture<ProduceResponse> produce(
-      String clusterId,
-      String topicName,
-      ProduceRequest request,
-      ProduceController controller,
-      Optional<Duration> waitFor) {
+      String clusterId, String topicName, ProduceRequest request, ProduceController controller) {
+
+    try {
+      produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
+    } catch (RateLimitExceededException e) {
+      // KREST-4356 Use our own CompletionException that will avoid the costly stack trace fill.
+      throw new StacklessCompletionException(e);
+    }
 
     Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
@@ -164,7 +158,7 @@ public final class ProduceAction {
     Optional<ByteString> serializedValue =
         serialize(topicName, valueFormat, valueSchema, request.getValue(), /* isKey= */ false);
 
-    recordRequestMetrics(request.getOriginalSize().orElse(0L));
+    recordRequestMetrics(request.getOriginalSize());
 
     CompletableFuture<ProduceResult> produceResult =
         controller.produce(
@@ -182,7 +176,7 @@ public final class ProduceAction {
               if (error != null) {
                 long latency = Duration.between(requestInstant, Instant.now()).toMillis();
                 recordErrorMetrics(latency);
-                throw new CompletionException(error);
+                throw new StacklessCompletionException(error);
               }
               return result;
             },
@@ -191,14 +185,7 @@ public final class ProduceAction {
             result -> {
               ProduceResponse response =
                   toProduceResponse(
-                      clusterId,
-                      topicName,
-                      keyFormat,
-                      keySchema,
-                      valueFormat,
-                      valueSchema,
-                      result,
-                      waitFor);
+                      clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
               long latency =
                   Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
               recordResponseMetrics(latency);
@@ -226,8 +213,10 @@ public final class ProduceAction {
                   data.getSchemaVersion(),
                   data.getRawSchema(),
                   isKey));
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(e.getMessage(), e);
+    } catch (SerializationException se) {
+      throw Errors.messageSerializationException(se.getMessage());
+    } catch (IllegalArgumentException iae) {
+      throw new BadRequestException(iae.getMessage(), iae);
     }
   }
 
@@ -254,8 +243,7 @@ public final class ProduceAction {
       Optional<RegisteredSchema> keySchema,
       Optional<EmbeddedFormat> valueFormat,
       Optional<RegisteredSchema> valueSchema,
-      ProduceResult result,
-      Optional<Duration> waitFor) {
+      ProduceResult result) {
     return ProduceResponse.builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -282,41 +270,22 @@ public final class ProduceAction {
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
                         .build()))
-        .setWaitForMs(waitFor.map(Duration::toMillis))
         .build();
   }
 
   private void recordResponseMetrics(long latency) {
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordResponse();
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordRequestLatency(latency);
+    producerMetrics.get().recordResponse();
+    producerMetrics.get().recordRequestLatency(latency);
   }
 
   private void recordErrorMetrics(long latency) {
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordError();
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordRequestLatency(latency);
+    producerMetrics.get().recordError();
+    producerMetrics.get().recordRequestLatency(latency);
   }
 
   private void recordRequestMetrics(long size) {
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordRequest();
+    producerMetrics.get().recordRequest();
     // record request size
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordRequestSize(size);
+    producerMetrics.get().recordRequestSize(size);
   }
 }

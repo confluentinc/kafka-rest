@@ -40,9 +40,11 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import org.apache.kafka.common.config.types.Password;
 import org.glassfish.jersey.SslConfigurator;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
-public final class SslFixture extends ExternalResource {
+public final class SslFixture implements BeforeEachCallback, AfterEachCallback {
   private static final String SSL_PROTOCOL = "TLSv1.2";
   private static final String SSL_ENABLED_PROTOCOLS = "TLSv1.2";
   private static final String TRUST_STORE_TYPE = "JKS";
@@ -61,7 +63,7 @@ public final class SslFixture extends ExternalResource {
   }
 
   @Override
-  public void before() throws Exception {
+  public void beforeEach(ExtensionContext extensionContext) throws Exception {
     keys = generateKeys();
     trustStoreLocation = createTempFile("truststore", ".jks");
     trustStorePassword = "truststore-pass";
@@ -94,7 +96,7 @@ public final class SslFixture extends ExternalResource {
   }
 
   @Override
-  public void after() {
+  public void afterEach(ExtensionContext extensionContext) {
     if (trustStoreLocation != null) {
       try {
         Files.delete(trustStoreLocation);

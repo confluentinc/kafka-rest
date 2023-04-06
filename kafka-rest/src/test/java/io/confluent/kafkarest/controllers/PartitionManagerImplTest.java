@@ -20,9 +20,9 @@ import static java.util.Collections.emptySet;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
@@ -38,15 +38,13 @@ import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class PartitionManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -149,8 +147,6 @@ public class PartitionManagerImplTest {
           /* isInternal= */ false,
           /* authorizedOperations= */ emptySet());
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private Admin adminClient;
 
   @Mock private ListOffsetsResult earliestResult;
@@ -173,7 +169,7 @@ public class PartitionManagerImplTest {
 
   private PartitionManagerImpl partitionManager;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     partitionManager = new PartitionManagerImpl(adminClient, topicManager);
   }

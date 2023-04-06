@@ -17,7 +17,7 @@ package io.confluent.kafkarest.integration.v3;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -38,12 +38,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-@RunWith(JUnit4.class)
 public class AclsResourceIntegrationTest extends ClusterTestHarness {
 
   private static final AclData.Builder ALICE_ACL_DATA =
@@ -110,7 +107,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
     props.put("client.security.protocol", "SASL_PLAINTEXT");
   }
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     super.setUp();
 

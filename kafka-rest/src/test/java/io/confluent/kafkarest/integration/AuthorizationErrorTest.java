@@ -17,8 +17,8 @@ package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -41,9 +41,9 @@ import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.common.security.auth.KafkaPrincipal;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import scala.Option;
 
 public class AuthorizationErrorTest
@@ -68,7 +68,7 @@ public class AuthorizationErrorTest
           new PartitionOffset(0, 2L, null, null),
           new PartitionOffset(0, 3L, null, null));
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     super.setUp();
     Properties properties = restConfig.getAdminProperties();
@@ -174,8 +174,8 @@ public class AuthorizationErrorTest
         TestUtils.tryReadEntityOrLog(createResponse, CreateConsumerInstanceResponse.class);
     assertNotNull(instanceResponse.getInstanceId());
     assertTrue(
-        "Base URI should contain the consumer instance ID",
-        instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
+        instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()),
+        "Base URI should contain the consumer instance ID");
 
     String topicJson = "{\"topics\":[\"" + TOPIC_NAME + "\"]}";
 
@@ -219,7 +219,7 @@ public class AuthorizationErrorTest
     SecureTestUtils.setConsumerAcls(zkConnect, TOPIC_NAME, KafkaPrincipal.ANONYMOUS.getName(), "*");
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     super.tearDown();
   }

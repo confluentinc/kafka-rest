@@ -15,8 +15,8 @@
 
 package io.confluent.kafkarest.integration.v3;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.entities.v3.SearchReassignmentsByTopicResponse;
@@ -30,12 +30,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.common.TopicPartition;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-@RunWith(JUnit4.class)
 public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTestHarness {
 
   private static final String TOPIC_NAME = "topic-1";
@@ -44,7 +41,7 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
     super(/* numBrokers= */ 6, /* withSchemaRegistry= */ false);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     super.setUp();
     Map<Integer, List<Integer>> replicaAssignments = createAssignment(Arrays.asList(0, 1, 2), 100);

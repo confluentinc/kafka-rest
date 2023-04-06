@@ -162,6 +162,29 @@ public class Errors {
         INVALID_SCHEMA_MESSAGE + schema, INVALID_SCHEMA_ERROR_CODE);
   }
 
+  public static final String INVALID_PAYLOAD_MESSAGE = "Payload error. ";
+  public static final int INVALID_PAYLOAD_ERROR_CODE = 42206;
+
+  public static RestConstraintViolationException invalidPayloadException(String cause) {
+    return new RestConstraintViolationException(
+        INVALID_PAYLOAD_MESSAGE + cause, INVALID_PAYLOAD_ERROR_CODE);
+  }
+
+  public static final String SERIALIZATION_EXCEPTION_MESSAGE = "Error serializing message. ";
+  public static final int SERIALIZATION_EXCEPTION_ERROR_CODE = 42207;
+
+  public static RestConstraintViolationException messageSerializationException(String cause) {
+    return new RestConstraintViolationException(
+        SERIALIZATION_EXCEPTION_MESSAGE + cause, SERIALIZATION_EXCEPTION_ERROR_CODE);
+  }
+
+  public static RestConstraintViolationException messageSerializationException(
+      String cause, Exception e) {
+    return new RestConstraintViolationException(
+        SERIALIZATION_EXCEPTION_MESSAGE + cause + "\n" + e.getMessage(),
+        SERIALIZATION_EXCEPTION_ERROR_CODE);
+  }
+
   public static final String ZOOKEEPER_ERROR_MESSAGE = "Zookeeper error: ";
   public static final int ZOOKEEPER_ERROR_ERROR_CODE = 50001;
 

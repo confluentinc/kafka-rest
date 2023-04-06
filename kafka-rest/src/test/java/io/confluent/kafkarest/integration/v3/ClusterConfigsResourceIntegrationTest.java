@@ -2,7 +2,7 @@ package io.confluent.kafkarest.integration.v3;
 
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.entities.ClusterConfig;
 import io.confluent.kafkarest.entities.ConfigSource;
@@ -18,8 +18,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -31,7 +30,7 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
   public void listClusterConfigs_nonExistingCluster_throwsNotFound() {
     Response response =
         request("/v3/clusters/foobar/broker-configs").accept(MediaType.APPLICATION_JSON).get();
-    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -42,7 +41,7 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/" + clusterId + "/broker-configs/foobar")
             .accept(MediaType.APPLICATION_JSON)
             .get();
-    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -51,7 +50,7 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/foobar/broker-configs/max.connections")
             .accept(MediaType.APPLICATION_JSON)
             .get();
-    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
