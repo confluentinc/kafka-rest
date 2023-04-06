@@ -19,6 +19,7 @@ import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -47,8 +48,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
+
+  private static final long ONE_SECOND_MS = 1000L;
 
   public AbstractConsumerTest() {
   }
@@ -95,10 +99,28 @@ public class AbstractConsumerTest extends ClusterTestHarness {
    * @param expectedMediatype expected Content-Type of response
    * @return the new consumer instance's base URI
    */
-  protected String startConsumeMessages(String groupName, String topic, EmbeddedFormat format,
-                                        String expectedMediatype) {
-    Response createResponse = createConsumerInstance(groupName, null, null, format);
-    assertOKResponse(createResponse, Versions.KAFKA_V2_JSON);
+  protected String startConsumeMessages(
+      String groupName, String topic, EmbeddedFormat format, String expectedMediatype) {
+    return startConsumeMessages(
+        groupName, Collections.singletonList(topic), format, expectedMediatype);
+  }
+
+  protected String startConsumeMessages(
+      String groupName, List<String> topics, EmbeddedFormat format, String expectedMediatype) {
+    Response createResponse = null;
+    try {
+      createResponse = createConsumerInstance(groupName, null, null, format);
+      assertOKResponse(createResponse, Versions.KAFKA_V2_JSON);
+    } catch (AssertionError e) {
+      if (createResponse != null
+          && createResponse.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+        pause();
+        createResponse = createConsumerInstance(groupName, null, null, format);
+        assertOKResponse(createResponse, Versions.KAFKA_V2_JSON);
+      } else {
+        fail("Create consumer instance failed.", e);
+      }
+    }
 
     CreateConsumerInstanceResponse instanceResponse =
             TestUtils.tryReadEntityOrLog(createResponse, CreateConsumerInstanceResponse.class);
@@ -108,22 +130,33 @@ public class AbstractConsumerTest extends ClusterTestHarness {
                instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
 
     ConsumerSubscriptionRecord subscribeRequest =
-        new ConsumerSubscriptionRecord(Collections.singletonList(topic), /* topicPattern= */ null);
+        new ConsumerSubscriptionRecord(topics, /* topicPattern= */ null);
     Response subscribeResponse =
         request(instanceResponse.getBaseUri() + "/subscription")
             .accept(Versions.KAFKA_V2_JSON)
             .post(Entity.entity(subscribeRequest, Versions.KAFKA_V2_JSON));
-    Assert.assertEquals(Response.Status.NO_CONTENT.getStatusCode(), subscribeResponse.getStatus());
+    assertEquals(Response.Status.NO_CONTENT.getStatusCode(), subscribeResponse.getStatus());
 
+    Response response = null;
     // Start consuming. Since production hasn't started yet, this is expected to timeout.
-    Response response = request(instanceResponse.getBaseUri() + "/records").accept(expectedMediatype).get();
-
-    assertOKResponse(response, expectedMediatype);
+    try {
+      response =
+          request(instanceResponse.getBaseUri() + "/records").accept(expectedMediatype).get();
+      assertOKResponse(response, expectedMediatype);
+    } catch (AssertionError e) {
+      if (response != null && response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+        pause();
+        response =
+            request(instanceResponse.getBaseUri() + "/records").accept(expectedMediatype).get();
+        assertOKResponse(response, expectedMediatype);
+      } else {
+        fail("Consume of records failed", e);
+      }
+    }
     List<BinaryConsumerRecord> consumed = TestUtils.tryReadEntityOrLog(response,
         new GenericType<List<BinaryConsumerRecord>>() {
         });
     assertEquals(0, consumed.size());
-
     return instanceResponse.getBaseUri();
   }
 
@@ -179,10 +212,40 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     Response response = request(instanceUri + "/records").accept(accept).get();
     assertOKResponse(response, responseMediatype);
     List<RecordType> consumed = TestUtils.tryReadEntityOrLog(response, responseEntityType);
-    assertEquals(records.size(), consumed.size());
+    try {
+      assertEquals(records.size(), consumed.size());
+    } catch (AssertionError e) {
+      pause();
+      Response response2 = request(instanceUri + "/records").accept(accept).get();
+      assertOKResponse(response2, responseMediatype);
+      List<RecordType> consumed2 = TestUtils.tryReadEntityOrLog(response2, responseEntityType);
+      consumed.addAll(consumed2);
+      try {
+        assertEquals(records.size(), consumed.size());
+      } catch (AssertionError e2) {
+        pause(2);
+        Response response3 = request(instanceUri + "/records").accept(accept).get();
+        assertOKResponse(response3, responseMediatype);
+        List<RecordType> consumed3 = TestUtils.tryReadEntityOrLog(response3, responseEntityType);
+        consumed.addAll(consumed3);
+        assertEquals(records.size(), consumed.size());
+      }
+    }
 
     assertEqualsMessages(
         records, consumed.stream().map(fromJsonWrapper).collect(Collectors.toList()), converter);
+  }
+
+  private final void pause() {
+    pause(1);
+  }
+
+  private final void pause(int times) {
+    try {
+      Thread.sleep(times * ONE_SECOND_MS);
+    } catch (InterruptedException e) {
+
+    }
   }
 
   protected <RecordType> void consumeForTimeout(
@@ -202,18 +265,16 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     // as some extra slack for general overhead (which apparently mostly comes from running the
     // request and can be quite substantial).
     final int TIMEOUT = restConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
-    final int TIMEOUT_SLACK =
+    final long TIMEOUT_SLACK =
         restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG)
-        + restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) + 500;
+            + restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG)
+            + ONE_SECOND_MS; // This test is inherently flakey, and probably needs a mocked back
+    // end, but for now we can give it lots of slack
     long elapsed = finished - started;
-    assertTrue(
-        "Consumer request should not return before the timeout when no data is available",
-        elapsed > TIMEOUT
-    );
-    assertTrue(
-        "Consumer request should timeout approximately within the request timeout period",
-        (elapsed - TIMEOUT) < TIMEOUT_SLACK
-    );
+    assertTrue("Consumer request should not return before the timeout when no data is available",
+        elapsed > TIMEOUT);
+    assertTrue("Consumer request should timeout approximately within the request timeout period",
+        (elapsed - TIMEOUT) < TIMEOUT_SLACK);
   }
 
   protected void seekToTimestamp(

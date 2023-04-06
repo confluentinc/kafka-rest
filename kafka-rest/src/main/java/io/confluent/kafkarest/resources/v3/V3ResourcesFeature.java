@@ -31,12 +31,15 @@ public final class V3ResourcesFeature implements Feature {
     configurable.register(ClusterConfigsResource.class);
     configurable.register(ClustersResource.class);
     configurable.register(ConsumerAssignmentsResource.class);
+    configurable.register(ConsumerGroupLagSummariesResource.class);
     configurable.register(ConsumerGroupsResource.class);
     configurable.register(ConsumersResource.class);
+    configurable.register(ConsumerLagsResource.class);
     configurable.register(GetReassignmentAction.class);
     configurable.register(ListAllReassignmentsAction.class);
     configurable.register(SearchReassignmentsByTopicAction.class);
     configurable.register(PartitionsResource.class);
+    configurable.register(ProduceAction.class);
     configurable.register(ReplicasResource.class);
     configurable.register(SearchReplicasByBrokerAction.class);
     configurable.register(TopicConfigsResource.class);

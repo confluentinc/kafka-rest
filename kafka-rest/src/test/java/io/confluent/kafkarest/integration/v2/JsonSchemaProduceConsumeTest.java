@@ -46,10 +46,6 @@ public final class JsonSchemaProduceConsumeTest extends SchemaProduceConsumeTest
     return root;
   }
 
-  public JsonSchemaProduceConsumeTest() {
-    super(/* numBrokers= */ 1, /* withSchemaRegistry= */ true);
-  }
-
   @Override
   protected EmbeddedFormat getFormat() {
     return EmbeddedFormat.JSONSCHEMA;

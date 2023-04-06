@@ -19,7 +19,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -38,24 +40,32 @@ public abstract class CreateTopicRequest {
   @JsonProperty("replication_factor")
   public abstract Optional<Short> getReplicationFactor();
 
+  @JsonProperty("replicas_assignments")
+  public abstract Map<Integer, List<Integer>> getReplicasAssignments();
+
   @JsonProperty("configs")
   public abstract ImmutableList<ConfigEntry> getConfigs();
 
   public static Builder builder() {
-    return new AutoValue_CreateTopicRequest.Builder();
+    return new AutoValue_CreateTopicRequest.Builder()
+        .setReplicasAssignments(Collections.emptyMap());
   }
 
   @JsonCreator
   static CreateTopicRequest fromJson(
       @JsonProperty("topic_name") String topicName,
-      @JsonProperty("partitions_count") @Nullable  Integer partitionsCount,
+      @JsonProperty("partitions_count") @Nullable Integer partitionsCount,
       @JsonProperty("replication_factor") @Nullable Short replicationFactor,
+      @JsonProperty("replicas_assignments") @Nullable
+          Map<Integer, List<Integer>> replicasAssignments,
       @JsonProperty("configs") @Nullable List<ConfigEntry> configs
   ) {
     return builder()
         .setTopicName(topicName)
         .setPartitionsCount(partitionsCount)
         .setReplicationFactor(replicationFactor)
+        .setReplicasAssignments(
+            replicasAssignments != null ? replicasAssignments : Collections.emptyMap())
         .setConfigs(configs != null ? configs : ImmutableList.of())
         .build();
   }
@@ -71,6 +81,8 @@ public abstract class CreateTopicRequest {
     public abstract Builder setPartitionsCount(@Nullable Integer partitionsCount);
 
     public abstract Builder setReplicationFactor(@Nullable Short replicationFactor);
+
+    public abstract Builder setReplicasAssignments(Map<Integer, List<Integer>> replicasAssignments);
 
     public abstract Builder setConfigs(List<ConfigEntry> configs);
 

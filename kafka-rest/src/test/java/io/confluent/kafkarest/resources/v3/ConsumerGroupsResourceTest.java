@@ -295,6 +295,9 @@ public class ConsumerGroupsResourceTest {
                                 Relationship.create(
                                     "/v3/clusters/cluster-1/consumer-groups/consumer-group-1"
                                         + "/consumers"))
+                            .setLagSummary(
+                                Relationship.create(
+                                    "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag-summary"))
                             .build(),
                         ConsumerGroupData.fromConsumerGroup(CONSUMER_GROUPS[1])
                             .setMetadata(
@@ -310,6 +313,10 @@ public class ConsumerGroupsResourceTest {
                                 Relationship.create(
                                     "/v3/clusters/cluster-1/consumer-groups/consumer-group-2"
                                         + "/consumers"))
+                            .setLagSummary(
+                                Relationship.create(
+                                    "/v3/clusters/cluster-1/consumer-groups/consumer-group-2"
+                                        + "/lag-summary"))
                             .build()))
                 .build());
 
@@ -342,8 +349,10 @@ public class ConsumerGroupsResourceTest {
                     Relationship.create("/v3/clusters/cluster-1/brokers/1"))
                 .setConsumers(
                     Relationship.create(
-                        "/v3/clusters/cluster-1/consumer-groups/consumer-group-1"
-                            + "/consumers"))
+                        "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers"))
+                .setLagSummary(
+                    Relationship.create(
+                        "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag-summary"))
                 .build());
 
     assertEquals(expected, response.getValue());

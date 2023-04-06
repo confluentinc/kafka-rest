@@ -42,6 +42,9 @@ docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-zookeep
 # Download latest cp-server image.
 docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:master-latest
 
+# Download latest cp-schema-registry image.
+docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-schema-registry:master-latest
+
 # Download latest cp-kafka-rest image.
 docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-kafka-rest:master-latest
 

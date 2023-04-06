@@ -16,15 +16,11 @@
 package io.confluent.kafkarest.v2;
 
 import static io.confluent.kafkarest.KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG;
-import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_CONFIG;
-import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_VALUE;
 
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.RestConfigUtils;
-import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.converters.JsonSchemaConverter;
 import io.confluent.kafkarest.converters.ProtobufConverter;
@@ -42,8 +38,12 @@ import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -91,8 +91,7 @@ public class KafkaConsumerManager {
   private static final Logger log = LoggerFactory.getLogger(KafkaConsumerManager.class);
 
   private final KafkaRestConfig config;
-  private final Time time;
-  private final String bootstrapServers;
+  private final Clock clock = Clock.systemUTC();
 
   // KafkaConsumerState is generic, but we store them untyped here. This allows many operations to
   // work without having to know the types for the consumer, only requiring type information
@@ -112,8 +111,6 @@ public class KafkaConsumerManager {
 
   public KafkaConsumerManager(final KafkaRestConfig config) {
     this.config = config;
-    this.time = config.getTime();
-    this.bootstrapServers = RestConfigUtils.bootstrapBrokers(config);
 
     // Cached thread pool
     int maxThreadCount = config.getInt(CONSUMER_MAX_THREADS_CONFIG) < 0 ? Integer.MAX_VALUE
@@ -125,12 +122,19 @@ public class KafkaConsumerManager {
             new RejectedExecutionHandler() {
             @Override
             public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-              log.debug("The runnable {} was rejected execution. "
-                  + "The thread pool must be satured or shutiing down", r);
               if (r instanceof ReadFutureTask) {
                 RunnableReadTask readTask = ((ReadFutureTask)r).readTask;
-                readTask.delayFor(ThreadLocalRandom.current().nextInt(25, 76));
+                Duration retry = Duration.ofMillis(ThreadLocalRandom.current().nextInt(25, 76));
+                log.debug(
+                    "The runnable {} was rejected execution because the thread pool is saturated. "
+                        + "Delaying execution for {}ms.",
+                    r, retry.toMillis());
+                readTask.delayFor(retry);
               } else {
+                log.debug(
+                    "The runnable {} was rejected execution because the thread pool is saturated. "
+                        + "Executing on calling thread.",
+                    r);
                 // run commitOffset and consumer close tasks from the caller thread
                 if (!executor.isShutdown()) {
                   r.run();
@@ -200,8 +204,6 @@ public class KafkaConsumerManager {
       // intentionally name differently in our own configs).
       //Properties props = (Properties) config.getOriginalProperties().clone();
       Properties props = config.getConsumerProperties();
-      props.setProperty(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServers);
-      props.setProperty(MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS_VALUE);
       props.setProperty("group.id", group);
       // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
       // was passed in. This generally shouldn't be used, but is maintained for compatibility.
@@ -219,11 +221,6 @@ public class KafkaConsumerManager {
       // how much time the proxy should wait before returning a response
       // and should not be propagated to the consumer
       props.setProperty("request.timeout.ms", "30000");
-
-      props.setProperty(
-          "schema.registry.url",
-          config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG)
-      );
 
       switch (instanceConfig.getFormat()) {
         case AVRO:
@@ -285,19 +282,20 @@ public class KafkaConsumerManager {
           ConsumerInstanceConfig instanceConfig,
           ConsumerInstanceId cid, Consumer consumer
   ) throws RestServerErrorException {
-    KafkaRestConfig newConfig = KafkaRestConfig.newConsumerConfig(this.config, instanceConfig);
-
     switch (instanceConfig.getFormat()) {
       case BINARY:
-        return new BinaryKafkaConsumerState(newConfig, cid, consumer);
+        return new BinaryKafkaConsumerState(config, instanceConfig, cid, consumer);
       case AVRO:
-        return new SchemaKafkaConsumerState(newConfig, cid, consumer, new AvroConverter());
+        return new SchemaKafkaConsumerState(
+            config, instanceConfig, cid, consumer, new AvroConverter());
       case JSON:
-        return new JsonKafkaConsumerState(newConfig, cid, consumer);
+        return new JsonKafkaConsumerState(config, instanceConfig, cid, consumer);
       case JSONSCHEMA:
-        return new SchemaKafkaConsumerState(newConfig, cid, consumer, new JsonSchemaConverter());
+        return new SchemaKafkaConsumerState(
+            config, instanceConfig, cid, consumer, new JsonSchemaConverter());
       case PROTOBUF:
-        return new SchemaKafkaConsumerState(newConfig, cid, consumer, new ProtobufConverter());
+        return new SchemaKafkaConsumerState(
+            config, instanceConfig, cid, consumer, new ProtobufConverter());
       default:
         throw new RestServerErrorException(
                 String.format("Invalid embedded format %s for new consumer.",
@@ -315,7 +313,7 @@ public class KafkaConsumerManager {
       final String instance,
       Class<? extends KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
           consumerStateType,
-      final long timeout,
+      final Duration timeout,
       final long maxBytes,
       final ConsumerReadCallback<ClientKeyT, ClientValueT> callback
   ) {
@@ -332,14 +330,10 @@ public class KafkaConsumerManager {
       return;
     }
 
-    final KafkaConsumerReadTask task = new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT,
-          ClientKeyT, ClientValueT>(
-          state,
-          timeout,
-          maxBytes,
-          callback
-    );
-    executor.submit(new RunnableReadTask(new ReadTaskState(task, state, callback)));
+    final KafkaConsumerReadTask<?, ?, ?, ?> task =
+        new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>(
+            state, timeout, maxBytes, callback, config);
+    executor.submit(new RunnableReadTask(new ReadTaskState(task, state, callback), config));
   }
 
   private class ReadFutureTask<V> extends FutureTask<V> {
@@ -373,29 +367,30 @@ public class KafkaConsumerManager {
 
   class RunnableReadTask implements Runnable, Delayed {
     private final ReadTaskState taskState;
-    private final KafkaRestConfig consumerConfig;
-    private final long started;
-    private final long requestExpiration;
-    private final int backoffMs;
+    private final Instant started;
+    private final Instant requestExpiration;
+    private final Duration backoff;
     // Expiration if this task is waiting, considering both the expiration of the whole task and
     // a single backoff, if one is in progress
-    private long waitExpirationMs;
+    private Instant waitExpiration;
+    private final Clock clock = Clock.systemUTC();
 
-    public RunnableReadTask(ReadTaskState taskState) {
+    public RunnableReadTask(ReadTaskState taskState, KafkaRestConfig config) {
       this.taskState = taskState;
-      this.started = config.getTime().milliseconds();
-      this.consumerConfig = taskState.consumerState.getConfig();
-      this.requestExpiration = this.started
-              + consumerConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
-      this.backoffMs = consumerConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
-      this.waitExpirationMs = 0;
+      this.started = clock.instant();
+      this.requestExpiration =
+          this.started.plus(
+              Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)));
+      this.backoff =
+          Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG));
+      this.waitExpiration = Instant.EPOCH;
     }
 
     /**
      * Delays for a minimum of {@code delayMs} or until the read request expires
      */
-    public void delayFor(long delayMs) {
-      if (requestExpiration <= config.getTime().milliseconds()) {
+    public void delayFor(Duration delay) {
+      if (!requestExpiration.isAfter(clock.instant())) {
         // no need to delay if the request has expired
         taskState.task.finish();
         log.trace("Finished executing  consumer read task ({}) due to request expiry",
@@ -403,8 +398,8 @@ public class KafkaConsumerManager {
         return;
       }
 
-      long delay = delayMs + config.getTime().milliseconds();
-      waitExpirationMs = Math.min(delay, requestExpiration);
+      Instant delayTo = clock.instant().plus(delay);
+      waitExpiration = Collections.min(Arrays.asList(delayTo, requestExpiration));
       // add to delayedReadTasks so the scheduler thread can re-schedule another partial read later
       delayedReadTasks.add(this);
     }
@@ -412,8 +407,8 @@ public class KafkaConsumerManager {
     @Override
     public String toString() {
       return String.format("RunnableReadTask consumer id: %s; Read task: %s; "
-              + "Request expiration time: %d; Wait expiration: %d",
-          taskState.consumerState.getId(), taskState.task, requestExpiration, waitExpirationMs);
+              + "Request expiration time: %s; Wait expiration: %s",
+          taskState.consumerState.getId(), taskState.task, requestExpiration, waitExpiration);
     }
 
     @Override
@@ -424,7 +419,7 @@ public class KafkaConsumerManager {
         taskState.task.doPartialRead();
         taskState.consumerState.updateExpiration();
         if (!taskState.task.isDone()) {
-          delayFor(this.backoffMs);
+          delayFor(this.backoff);
         } else {
           log.trace("Finished executing consumer read task ({})", taskState.task);
         }
@@ -437,8 +432,8 @@ public class KafkaConsumerManager {
 
     @Override
     public long getDelay(TimeUnit unit) {
-      long delayMs = waitExpirationMs - config.getTime().milliseconds();
-      return unit.convert(delayMs, TimeUnit.MILLISECONDS);
+      Duration delay = Duration.between(clock.instant(), waitExpiration);
+      return unit.convert(delay.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -757,7 +752,7 @@ public class KafkaConsumerManager {
       try {
         while (isRunning.get()) {
           synchronized (KafkaConsumerManager.this) {
-            long now = time.milliseconds();
+            Instant now = clock.instant();
             Iterator itr = consumers.values().iterator();
             while (itr.hasNext()) {
               final KafkaConsumerState state = (KafkaConsumerState) itr.next();

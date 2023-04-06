@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -22,7 +22,9 @@ import io.confluent.kafkarest.extension.KafkaRestContextProvider;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.producer.Producer;
 import org.glassfish.hk2.api.Factory;
+import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.process.internal.RequestScoped;
 
@@ -43,6 +45,10 @@ public final class KafkaModule extends AbstractBinder {
 
     bindFactory(AdminFactory.class)
         .to(Admin.class)
+        .in(RequestScoped.class);
+
+    bindFactory(ProducerFactory.class)
+        .to(new TypeLiteral<Producer<byte[], byte[]>>() { })
         .in(RequestScoped.class);
   }
 
@@ -75,6 +81,26 @@ public final class KafkaModule extends AbstractBinder {
 
     @Override
     public void dispose(Admin instance) {
+      // Do nothing.
+    }
+  }
+
+  private static final class ProducerFactory implements Factory<Producer<?, ?>> {
+
+    private final Provider<KafkaRestContext> context;
+
+    @Inject
+    private ProducerFactory(Provider<KafkaRestContext> context) {
+      this.context = requireNonNull(context);
+    }
+
+    @Override
+    public Producer<byte[], byte[]> provide() {
+      return context.get().getProducer();
+    }
+
+    @Override
+    public void dispose(Producer<?, ?> producer) {
       // Do nothing.
     }
   }

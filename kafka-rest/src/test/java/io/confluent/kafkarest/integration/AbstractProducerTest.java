@@ -130,16 +130,23 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
   }
 
   protected void testProduceToAuthorizationError(String topicName, TopicRequestT request) {
-    testProduceToAuthorizationError(topicName, request, Collections.emptyMap());
+    testProduceToAuthorizationError(
+        topicName, request, Versions.KAFKA_V2_JSON_BINARY);
+  }
+
+  protected void testProduceToAuthorizationError(
+      String topicName, TopicRequestT request, String contentType) {
+    testProduceToAuthorizationError(topicName, request, contentType, Collections.emptyMap());
   }
 
   protected void testProduceToAuthorizationError(
       String topicName,
       TopicRequestT request,
+      String contentType,
       Map<String, String> queryParams
   ) {
     Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
+        .post(Entity.entity(request, contentType));
 
     assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
     final ProduceResponse produceResponse =

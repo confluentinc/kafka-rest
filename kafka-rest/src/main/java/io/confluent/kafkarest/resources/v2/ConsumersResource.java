@@ -44,6 +44,7 @@ import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.kafkarest.v2.KafkaConsumerState;
 import io.confluent.kafkarest.v2.SchemaKafkaConsumerState;
 import io.confluent.rest.annotations.PerformanceMetric;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -173,14 +174,14 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
     readRecords(
         asyncResponse,
         group,
         instance,
-        timeout,
+        Duration.ofMillis(timeoutMs),
         maxBytes,
         BinaryKafkaConsumerState.class,
         BinaryConsumerRecord::fromConsumerRecord);
@@ -195,14 +196,14 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
     readRecords(
         asyncResponse,
         group,
         instance,
-        timeout,
+        Duration.ofMillis(timeoutMs),
         maxBytes,
         JsonKafkaConsumerState.class,
         JsonConsumerRecord::fromConsumerRecord);
@@ -217,14 +218,14 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
     readRecords(
         asyncResponse,
         group,
         instance,
-        timeout,
+        Duration.ofMillis(timeoutMs),
         maxBytes,
         SchemaKafkaConsumerState.class,
         SchemaConsumerRecord::fromConsumerRecord);
@@ -239,14 +240,14 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
     readRecords(
         asyncResponse,
         group,
         instance,
-        timeout,
+        Duration.ofMillis(timeoutMs),
         maxBytes,
         SchemaKafkaConsumerState.class,
         SchemaConsumerRecord::fromConsumerRecord);
@@ -261,14 +262,14 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
     readRecords(
         asyncResponse,
         group,
         instance,
-        timeout,
+        Duration.ofMillis(timeoutMs),
         maxBytes,
         SchemaKafkaConsumerState.class,
         SchemaConsumerRecord::fromConsumerRecord);
@@ -405,7 +406,7 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       String group,
       String instance,
-      long timeout,
+      Duration timeout,
       long maxBytes,
       Class<? extends KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
           consumerStateType,
