@@ -56,6 +56,7 @@ paths:
     x-audience: component-internal
     get:
       summary: 'List Clusters'
+      operationId: listKafkaClusters
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -114,6 +115,8 @@ paths:
       summary: 'Batch Create ACLs'
       operationId: batchCreateKafkaAcls
       description: |-
+        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+
         Creates ACLs.
       tags:
         - ACL (v3)
@@ -138,7 +141,7 @@ paths:
       - $ref: '#/components/parameters/ClusterId'
 
     get:
-      summary: 'Search ACLs'
+      summary: 'List ACLs'
       operationId: getKafkaAcls
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
@@ -225,17 +228,18 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/broker-configs:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
     get:
-      summary: 'List Cluster Configs'
+      summary: 'List Dynamic Broker Configs'
       operationId: listKafkaClusterConfigs
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns a list of configuration parameters for the specified Kafka
-        cluster.
+        Returns a list of dynamic cluster-wide broker configuration parameters for the specified Kafka
+        cluster. Returns an empty list if there are no dynamic cluster-wide broker configuration parameters.
       tags:
         - Configs (v3)
       responses:
@@ -253,16 +257,17 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/broker-configs:alter:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
     post:
-      summary: 'Batch Alter Cluster Configs'
+      summary: 'Batch Alter Dynamic Broker Configs'
       operationId: updateKafkaClusterConfigs
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Updates or deletes a set of Kafka cluster configuration parameters.
+        Updates or deletes a set of dynamic cluster-wide broker configuration parameters.
       tags:
         - Configs (v3)
       requestBody:
@@ -282,17 +287,18 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/broker-configs/{name}:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConfigName'
 
     get:
-      summary: 'Get Cluster Config'
+      summary: 'Get Dynamic Broker Config'
       operationId: getKafkaClusterConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the configuration parameter specified by ``name``.
+        Returns the dynamic cluster-wide broker configuration parameter specified by ``name``.
       tags:
         - Configs (v3)
       responses:
@@ -310,12 +316,12 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
     put:
-      summary: 'Update Cluster Config'
+      summary: 'Update Dynamic Broker Config'
       operationId: updateKafkaClusterConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Updates the configuration parameter specified by ``name``.
+        Updates the dynamic cluster-wide broker configuration parameter specified by ``name``.
       tags:
         - Configs (v3)
       requestBody:
@@ -335,13 +341,13 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
     delete:
-      summary: 'Reset Cluster Config'
+      summary: 'Reset Dynamic Broker Config'
       operationId: deleteKafkaClusterConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
         Resets the configuration parameter specified by ``name`` to its
-        default value.
+        default value by deleting a dynamic cluster-wide configuration.
       tags:
         - Configs (v3)
       responses:
@@ -581,7 +587,7 @@ paths:
       - $ref: '#/components/parameters/BrokerId'
 
     get:
-      summary: 'Search Replicas by Broker'
+      summary: 'List Replicas by Broker'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -723,8 +729,8 @@ paths:
       - $ref: '#/components/parameters/ConsumerGroupId'
 
     get:
-      operationId: listKafkaConsumerLags
       summary: 'List Consumer Lags'
+      operationId: listKafkaConsumerLags
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Available in dedicated clusters only](https://img.shields.io/badge/-Available%20in%20dedicated%20clusters%20only-%23bc8540)](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#dedicated-cluster)
 
@@ -754,8 +760,8 @@ paths:
       - $ref: '#/components/parameters/PartitionId'
 
     get:
-      operationId: getKafkaConsumerLag
       summary: 'Get Consumer Lag'
+      operationId: getKafkaConsumerLag
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Available in dedicated clusters only](https://img.shields.io/badge/-Available%20in%20dedicated%20clusters%20only-%23bc8540)](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#dedicated-cluster)
 
@@ -930,7 +936,6 @@ paths:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
-      - $ref: '#/components/parameters/IncludeAuthorizedOperations'
 
     get:
       summary: 'Get Topic'
@@ -941,6 +946,8 @@ paths:
         Returns the topic with the given `topic_name`.
       tags:
         - Topic (v3)
+      parameters:
+        - $ref: '#/components/parameters/IncludeAuthorizedOperations'
       responses:
         '200':
           $ref: '#/components/responses/GetTopicResponse'
@@ -958,7 +965,7 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
     patch:
-      summary: 'Update partition count'
+      summary: 'Update Partition Count'
       operationId: updatePartitionCountKafkaTopic
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
@@ -1252,7 +1259,7 @@ paths:
       - $ref: '#/components/parameters/TopicName'
 
     get:
-      summary: 'Search Replica Reassignments By Topic'
+      summary: 'List Replica Reassignments By Topic'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -2775,7 +2782,7 @@ components:
                   schema: '{\"type\":\"string\"}'
                   data: 'foobar'
                 timestamp: '2021-02-05T19:14:42Z'
-            binary_and_json:
+            string:
               description: 'If using type, one of "BINARY", "JSON" or "STRING" is required.'
               value:
                 value:
