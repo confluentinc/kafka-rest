@@ -3783,6 +3783,9 @@ public class ProduceActionIntegrationTest {
                     .setFormat(EmbeddedFormat.JSON)
                     .setData(TextNode.valueOf(value))
                     .build())
+            // 0 value here is meaningless as setting originalSize is mandatory for AutoValue.
+            // Value set here is ignored any-ways, as "true" originalSize is calculated & set,
+            // when the JSON request is de-serialized into an ProduceRecord object.
             .setOriginalSize(0L)
             .build();
 
