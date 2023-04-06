@@ -60,7 +60,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        'Returns a list of known Kafka clusters. Currently both Kafka and Kafka REST
+        'Return a list of known Kafka clusters. Currently both Kafka and Kafka REST
         Proxy are only aware of the Kafka cluster pointed at by the
         ``bootstrap.servers`` configuration. Therefore only one Kafka cluster will be returned in the
         response.'
@@ -90,7 +90,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the Kafka cluster with the specified ``cluster_id``.
+        Return the Kafka cluster with the specified ``cluster_id``.
       tags:
         - Cluster (v3)
       responses:
@@ -117,7 +117,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Creates ACLs.
+        Create ACLs.
       tags:
         - ACL (v3)
       requestBody:
@@ -146,7 +146,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns a list of ACLs that match the search criteria.
+        Return a list of ACLs that match the search criteria.
       tags:
         - ACL (v3)
       parameters:
@@ -177,7 +177,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Creates an ACL.
+        Create an ACL.
       tags:
         - ACL (v3)
       requestBody:
@@ -202,7 +202,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Deletes the list of ACLs that matches the search criteria.
+        Delete the ACLs that matches the search criteria.
       tags:
         - ACL (v3)
       parameters:
@@ -238,7 +238,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns a list of dynamic cluster-wide broker configuration parameters for the specified Kafka
+        Return a list of dynamic cluster-wide broker configuration parameters for the specified Kafka
         cluster. Returns an empty list if there are no dynamic cluster-wide broker configuration parameters.
       tags:
         - Configs (v3)
@@ -267,7 +267,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Updates or deletes a set of dynamic cluster-wide broker configuration parameters.
+        Update or delete a set of dynamic cluster-wide broker configuration parameters.
       tags:
         - Configs (v3)
       requestBody:
@@ -298,7 +298,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the dynamic cluster-wide broker configuration parameter specified by ``name``.
+        Return the dynamic cluster-wide broker configuration parameter specified by ``name``.
       tags:
         - Configs (v3)
       responses:
@@ -321,7 +321,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Updates the dynamic cluster-wide broker configuration parameter specified by ``name``.
+        Update the dynamic cluster-wide broker configuration parameter specified by ``name``.
       tags:
         - Configs (v3)
       requestBody:
@@ -346,7 +346,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Resets the configuration parameter specified by ``name`` to its
+        Reset the configuration parameter specified by ``name`` to its
         default value by deleting a dynamic cluster-wide configuration.
       tags:
         - Configs (v3)
@@ -403,7 +403,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the broker specified by ``broker_id``.
+        Return the broker specified by ``broker_id``.
       tags:
         - Broker (v3)
       responses:
@@ -486,7 +486,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Updates or deletes a set of broker configuration parameters.
+        Update or delete a set of broker configuration parameters.
       tags:
         - Configs (v3)
       requestBody:
@@ -539,7 +539,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Updates the configuration parameter specified by ``name``.
+        Update the configuration parameter specified by ``name``.
       tags:
         - Configs (v3)
       requestBody:
@@ -563,7 +563,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Resets the configuration parameter specified by ``name`` to its default value.
+        Reset the configuration parameter specified by ``name`` to its default value.
       tags:
         - Configs (v3)
       responses:
@@ -591,7 +591,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the list of replicas assigned to the specified broker.
+        Return the list of replicas assigned to the specified broker.
       tags:
         - Broker (v3)
         - Replica (v3)
@@ -619,7 +619,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the list of consumer groups that belong to the specified
+        Return the list of consumer groups that belong to the specified
         Kafka cluster.
       tags:
         - Consumer Group (v3)
@@ -648,7 +648,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the consumer group specified by the ``consumer_group_id``.
+        Return the consumer group specified by the ``consumer_group_id``.
       tags:
         - Consumer Group (v3)
       responses:
@@ -676,7 +676,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns a list of consumers that belong to the specified consumer
+        Return a list of consumers that belong to the specified consumer
         group.
       tags:
         - Consumer Group (v3)
@@ -705,7 +705,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Available in dedicated clusters only](https://img.shields.io/badge/-Available%20in%20dedicated%20clusters%20only-%23bc8540)](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#dedicated-cluster)
 
-        Returns the max and total lag of the consumers belonging to the
+        Return the maximum and total lag of the consumers belonging to the
         specified consumer group.
       tags:
         - Consumer Group (v3)
@@ -734,7 +734,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Available in dedicated clusters only](https://img.shields.io/badge/-Available%20in%20dedicated%20clusters%20only-%23bc8540)](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#dedicated-cluster)
 
-        Returns a list of consumer lags of the consumers belonging to the
+        Return a list of consumer lags of the consumers belonging to the
         specified consumer group.
       tags:
         - Consumer Group (v3)
@@ -765,7 +765,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Available in dedicated clusters only](https://img.shields.io/badge/-Available%20in%20dedicated%20clusters%20only-%23bc8540)](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#dedicated-cluster)
 
-        Returns the consumer lag on a partition with the given `partition_id`.
+        Return the consumer lag on a partition with the given `partition_id`.
       tags:
         - Consumer Group (v3)
       responses:
@@ -794,7 +794,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the consumer specified by the ``consumer_id``.
+        Return the consumer specified by the ``consumer_id``.
       tags:
         - Consumer Group (v3)
       responses:
@@ -824,7 +824,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns a list of partition assignments for the specified consumer.
+        Return a list of partition assignments for the specified consumer.
       tags:
         - Consumer Group (v3)
       responses:
@@ -856,7 +856,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns information about the assignment for the specified consumer
+        Return information about the assignment for the specified consumer
         to the specified partition.
       tags:
         - Consumer Group (v3)
@@ -884,7 +884,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the list of topics that belong to the specified Kafka cluster.
+        Return the list of topics that belong to the specified Kafka cluster.
       tags:
         - Topic (v3)
       responses:
@@ -907,7 +907,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Creates a topic.
+        Create a topic.
         Also supports a dry-run mode that only validates whether the topic creation would succeed
         if the ``validate_only`` request property is explicitly specified and set to true.
       tags:
@@ -943,7 +943,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the topic with the given `topic_name`.
+        Return the topic with the given `topic_name`.
       tags:
         - Topic (v3)
       parameters:
@@ -970,7 +970,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Increases number of partitions on a topic.  
+        Increase the number of partitions for a topic.  
       tags:
         - Topic (v3)
       requestBody:
@@ -995,7 +995,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Deletes the topic with the given `topic_name`.
+        Delete the topic with the given `topic_name`.
       tags:
         - Topic (v3)
       responses:
@@ -1025,7 +1025,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Return the list of configs that belong to the specified topic.
+        Return the list of configuration parameters that belong to the specified topic.
       tags:
         - Configs (v3)
       responses:
@@ -1055,7 +1055,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Updates or deletes a set of topic configs.
+        Update or delete a set of topic configuration parameters.
         Also supports a dry-run mode that only validates whether the operation would succeed if the
         ``validate_only`` request property is explicitly specified and set to true.
       tags:
@@ -1091,7 +1091,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Return the config with the given `name`.
+        Return the configuration parameter with the given `name`.
       tags:
         - Configs (v3)
       responses:
@@ -1116,7 +1116,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Updates the config with given `name`.
+        Update the configuration parameter with given `name`.
       tags:
         - Configs (v3)
       requestBody:
@@ -1143,7 +1143,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Resets the config with given `name` to its default value.
+        Reset the configuration parameter with given `name` to its default value.
       tags:
         - Configs (v3)
       responses:
@@ -1173,7 +1173,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the list of partitions that belong to the specified topic.
+        Return the list of partitions that belong to the specified topic.
       tags:
         - Partition (v3)
       responses:
@@ -1204,7 +1204,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the partition with the given `partition_id`.
+        Return the partition with the given `partition_id`.
       tags:
         - Partition (v3)
       responses:
@@ -1233,7 +1233,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the list of all ongoing replica reassignments in the given Kafka cluster.
+        Return the list of all ongoing replica reassignments in the given Kafka cluster.
       tags:
         - Partition (v3)
       responses:
@@ -1263,7 +1263,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the list of ongoing replica reassignments for the given topic.
+        Return the list of ongoing replica reassignments for the given topic.
       tags:
         - Partition (v3)
       responses:
@@ -1294,7 +1294,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the list of ongoing replica reassignments for the given partition.
+        Return the list of ongoing replica reassignments for the given partition.
       tags:
         - Partition (v3)
       responses:
@@ -1325,7 +1325,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the list of replicas for the specified partition.
+        Return the list of replicas for the specified partition.
       tags:
         - Replica (v3)
       responses:
@@ -1357,7 +1357,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns the replica for the specified partition assigned to the specified broker.
+        Return the replica for the specified partition assigned to the specified broker.
       tags:
         - Replica (v3)
       responses:
@@ -1381,12 +1381,12 @@ paths:
       - $ref: '#/components/parameters/ClusterId'
 
     get:
-      summary: 'Get All Topic Configs'
+      summary: 'List All Topic Configs'
       operationId: listKafkaAllTopicConfigs
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Returns all topic configurations for topics hosted by the specified
+        Return the list of configuration parameters for all topics hosted by the specified
         cluster.
       tags:
         - Configs (v3)
