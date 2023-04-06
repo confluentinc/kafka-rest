@@ -41,7 +41,6 @@ public class ProduceRateLimitersTest {
   @Test
   @Inject
   public void test_thatRateLimitingCanBeDisabled() {
-
     Properties properties = new Properties();
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "false");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
@@ -87,7 +86,6 @@ public class ProduceRateLimitersTest {
   @Test
   @Inject
   public void test_whenBelowThreshold_CallsArentRateLimited() {
-
     Properties properties = new Properties();
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));

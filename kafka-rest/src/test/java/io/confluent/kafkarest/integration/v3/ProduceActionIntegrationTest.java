@@ -3851,13 +3851,14 @@ public class ProduceActionIntegrationTest {
             .request()
             .accept(MediaType.APPLICATION_JSON)
             .post(Entity.entity(request, MediaType.APPLICATION_JSON));
-    assertEquals(Status.OK.getStatusCode(), response2.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response1.getStatus());
 
+    assertEquals(Status.OK.getStatusCode(), response2.getStatus());
     List<ErrorResponse> actual = readErrorResponses(response2);
     assertEquals(actual.size(), 1);
     // Check request was rate-limited, so return http error-code is 429.
     // NOTE - Count rate-limit is set as 1 in setup() making sure 2nd request fails
-    // deteministically.
+    // deterministically.
     assertEquals(actual.get(0).getErrorCode(), 429);
   }
 
