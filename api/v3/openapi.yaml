@@ -10,7 +10,7 @@ info:
   x-api-id: 499e3476-71e0-4d6f-b4f9-6776cec6df27
   x-api-group: v3
   x-audience: external-public
-  x-tag-group: Cluster Admin for Kafka (%s)
+  x-tag-group: Kafka API (%s)
 
 servers:
   - url: "{protocol}://{address}:{port}/v3"
@@ -202,7 +202,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Delete the ACLs that matches the search criteria.
+        Delete the ACLs that match the search criteria.
       tags:
         - ACL (v3)
       parameters:
@@ -228,7 +228,6 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/broker-configs:
-    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -257,7 +256,6 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/broker-configs:alter:
-    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -287,7 +285,6 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/broker-configs/{name}:
-    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConfigName'
@@ -2311,6 +2308,7 @@ components:
       properties:
         size:
           type: integer
+          format: int64
         type:
           type: string
           x-extensible-enum:
