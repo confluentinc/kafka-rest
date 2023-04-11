@@ -69,17 +69,23 @@ public final class KafkaRestFixture implements BeforeEachCallback, AfterEachCall
     this.schemaRegistry = schemaRegistry;
   }
 
-  @Override
-  public void beforeEach(ExtensionContext extensionContext) throws Exception {
+  // Start the REST APP with configs seeded from input rest-configs.
+  public void startApp(Properties restConfigs) throws Exception {
     checkState(server == null);
-    application = new KafkaRestApplication(createConfigs());
+    application = new KafkaRestApplication(createConfigs(restConfigs));
     server = application.createServer();
     server.start();
     baseUri = server.getURI();
   }
 
-  private KafkaRestConfig createConfigs() {
+  @Override
+  public void beforeEach(ExtensionContext extensionContext) throws Exception {
+    startApp(new Properties());
+  }
+
+  private KafkaRestConfig createConfigs(Properties restConfigs) {
     Properties properties = new Properties();
+    properties.putAll(restConfigs);
     properties.put(
         RestConfig.LISTENERS_CONFIG,
         String.format("%s://localhost:0", certificates != null ? "https" : "http"));
@@ -127,8 +133,7 @@ public final class KafkaRestFixture implements BeforeEachCallback, AfterEachCall
     return properties;
   }
 
-  @Override
-  public void afterEach(ExtensionContext extensionContext) {
+  public void closeApp() {
     if (server != null) {
       try {
         server.stop();
@@ -139,6 +144,11 @@ public final class KafkaRestFixture implements BeforeEachCallback, AfterEachCall
     server = null;
     application = null;
     baseUri = null;
+  }
+
+  @Override
+  public void afterEach(ExtensionContext extensionContext) {
+    closeApp();
   }
 
   public ObjectMapper getObjectMapper() {

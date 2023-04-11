@@ -23,6 +23,20 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public final class DefaultKafkaRestTestEnvironment
     implements BeforeEachCallback, AfterEachCallback {
 
+  private boolean manageRest = true;
+
+  public DefaultKafkaRestTestEnvironment() {}
+
+  // If manageRest is set to true, this will manage the life-cycle of the rest-instance through the
+  // junit-extensions(BeforeEach & AfterEach). This includes starting & stopping rest-instance of
+  // this test.
+  // If manageRest is set to false, the user of this class is taking the responsibility of managing
+  // rest-instance for the overall test. Example - ProduceActionIntegrationTest.java, manages
+  // the rest-instance, and sets custom KafkaRestConfigs for different test-case.
+  public DefaultKafkaRestTestEnvironment(boolean manageRest) {
+    this.manageRest = manageRest;
+  }
+
   private final SslFixture certificates =
       SslFixture.builder()
           .addKey("kafka-1")
@@ -72,12 +86,16 @@ public final class DefaultKafkaRestTestEnvironment
     zookeeper.beforeEach(extensionContext);
     kafkaCluster.beforeEach(extensionContext);
     schemaRegistry.beforeEach(extensionContext);
-    kafkaRest.beforeEach(extensionContext);
+    if (this.manageRest) {
+      kafkaRest.beforeEach(extensionContext);
+    }
   }
 
   @Override
   public void afterEach(ExtensionContext extensionContext) {
-    kafkaRest.afterEach(extensionContext);
+    if (this.manageRest) {
+      kafkaRest.afterEach(extensionContext);
+    }
     schemaRegistry.afterEach(extensionContext);
     kafkaCluster.afterEach(extensionContext);
     zookeeper.afterEach(extensionContext);
