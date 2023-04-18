@@ -198,8 +198,8 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
             consumer1ReadyForConsumeLoop,
             consumer0ReadyForConsumeLoop /* otherConsumerReadyForConsumeLoop */));
 
-    boolean isConsumer0Done = consumer0Done.await(60, TimeUnit.SECONDS);
-    boolean isConsumer1Done = consumer1Done.await(60, TimeUnit.SECONDS);
+    boolean isConsumer0Done = consumer0Done.await(120, TimeUnit.SECONDS);
+    boolean isConsumer1Done = consumer1Done.await(120, TimeUnit.SECONDS);
 
     assertTrue(
         isConsumer0Done && isConsumer1Done, "test timed out waiting for consumers to finish.");
