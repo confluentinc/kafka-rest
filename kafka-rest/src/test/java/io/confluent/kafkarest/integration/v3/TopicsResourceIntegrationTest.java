@@ -48,6 +48,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   private static final String TOPIC_1 = "topic-1";
   private static final String TOPIC_2 = "topic-2";
   private static final String TOPIC_3 = "topic-3";
+  private static final String TOPIC_NON_EXISTENT = "no-such-topic";
 
   private static final boolean USE_ALTERNATE_CLIENT_PROVIDER = true;
 
@@ -874,7 +875,6 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
   @Test
   public void updateTopicPartitions_decreasePartitionsCount_returns40002() {
-    String baseUrl = restConnect;
     String clusterId = getClusterId();
 
     Response getTopicResponse =
@@ -888,7 +888,6 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
   @Test
   public void updateTopicPartitions_samePartitionsCount_returns40002() {
-    String baseUrl = restConnect;
     String clusterId = getClusterId();
 
     Response getTopicResponse =
@@ -896,21 +895,22 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .accept(MediaType.APPLICATION_JSON)
             .method(
                 HttpMethod.PATCH,
-                Entity.entity("{\"partitions_count\":1}", MediaType.APPLICATION_JSON));
+                Entity.entity("{\"partitions_count\":2}", MediaType.APPLICATION_JSON));
     assertEquals(Status.BAD_REQUEST.getStatusCode(), getTopicResponse.getStatus());
   }
 
   @Test
-  public void updateTopicPartitions_topicDoesntExist_returns40002() {
-    String baseUrl = restConnect;
+  public void updateTopicPartitions_topicDoesntExist_returns404() {
     String clusterId = getClusterId();
 
     Response getTopicResponse =
-        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1, USE_ALTERNATE_CLIENT_PROVIDER)
+        request(
+                "/v3/clusters/" + clusterId + "/topics/" + TOPIC_NON_EXISTENT,
+                USE_ALTERNATE_CLIENT_PROVIDER)
             .accept(MediaType.APPLICATION_JSON)
             .method(
                 HttpMethod.PATCH,
                 Entity.entity("{\"partitions_count\":1}", MediaType.APPLICATION_JSON));
-    assertEquals(Status.BAD_REQUEST.getStatusCode(), getTopicResponse.getStatus());
+    assertEquals(Status.NOT_FOUND.getStatusCode(), getTopicResponse.getStatus());
   }
 }

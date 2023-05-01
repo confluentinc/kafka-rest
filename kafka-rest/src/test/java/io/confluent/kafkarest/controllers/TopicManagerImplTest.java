@@ -65,6 +65,7 @@ import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.acl.AclOperation;
 import org.apache.kafka.common.errors.TimeoutException;
+import org.apache.kafka.common.errors.TopicAuthorizationException;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.easymock.EasyMockExtension;
@@ -109,32 +110,6 @@ public class TopicManagerImplTest {
                   /* leader= */ null,
                   Arrays.asList(NODE_1, NODE_2, NODE_3),
                   singletonList(NODE_3))),
-          /* authorizedOperations= */ new HashSet<>());
-
-  private static final TopicDescription TOPIC_DESCRIPTION_2 =
-      new TopicDescription(
-          "topic-2",
-          /* internal= */ true,
-          Arrays.asList(
-              new TopicPartitionInfo(
-                  0, NODE_3, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_3)),
-              new TopicPartitionInfo(
-                  1, NODE_1, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_1)),
-              new TopicPartitionInfo(
-                  2, NODE_2, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_2))),
-          /* authorizedOperations= */ new HashSet<>());
-
-  private static final TopicDescription TOPIC_DESCRIPTION_3 =
-      new TopicDescription(
-          "topic-3",
-          /* internal= */ false,
-          Arrays.asList(
-              new TopicPartitionInfo(
-                  0, NODE_2, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_2)),
-              new TopicPartitionInfo(
-                  1, NODE_3, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_3)),
-              new TopicPartitionInfo(
-                  2, NODE_1, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_1))),
           /* authorizedOperations= */ new HashSet<>());
 
   private static final Topic TOPIC_1 =
@@ -224,6 +199,34 @@ public class TopicManagerImplTest {
           /* isInternal= */ true,
           /* authorizedOperations= */ emptySet());
 
+  private static final Topic TOPIC_1_EMPTY_REPLICAS =
+      Topic.create(
+          CLUSTER_ID,
+          "topic-1",
+          Arrays.asList(
+              Partition.create(
+                  CLUSTER_ID, "topic-1", /* partitionId= */ 0, Collections.emptyList()),
+              Partition.create(
+                  CLUSTER_ID, "topic-1", /* partitionId= */ 1, Collections.emptyList()),
+              Partition.create(
+                  CLUSTER_ID, "topic-1", /* partitionId= */ 2, Collections.emptyList())),
+          /* replicationFactor= */ (short) 3,
+          /* isInternal= */ true,
+          /* authorizedOperations= */ emptySet());
+
+  private static final TopicDescription TOPIC_DESCRIPTION_2 =
+      new TopicDescription(
+          "topic-2",
+          /* internal= */ true,
+          Arrays.asList(
+              new TopicPartitionInfo(
+                  0, NODE_3, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_3)),
+              new TopicPartitionInfo(
+                  1, NODE_1, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_1)),
+              new TopicPartitionInfo(
+                  2, NODE_2, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_2))),
+          /* authorizedOperations= */ new HashSet<>());
+
   private static final Topic TOPIC_2 =
       Topic.create(
           CLUSTER_ID,
@@ -310,6 +313,19 @@ public class TopicManagerImplTest {
           /* replicationFactor= */ (short) 3,
           /* isInternal= */ true,
           /* authorizedOperations= */ emptySet());
+
+  private static final TopicDescription TOPIC_DESCRIPTION_3 =
+      new TopicDescription(
+          "topic-3",
+          /* internal= */ false,
+          Arrays.asList(
+              new TopicPartitionInfo(
+                  0, NODE_2, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_2)),
+              new TopicPartitionInfo(
+                  1, NODE_3, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_3)),
+              new TopicPartitionInfo(
+                  2, NODE_1, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_1))),
+          /* authorizedOperations= */ new HashSet<>());
 
   private static final Topic TOPIC_3 =
       Topic.create(
@@ -638,6 +654,7 @@ public class TopicManagerImplTest {
   public void createTopic_nonExistingTopic_createsTopic() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
     expect(createTopicsResult.numPartitions(anyObject()))
         .andReturn(KafkaFuture.completedFuture(TOPIC_1.getPartitions().size()));
     expect(createTopicsResult.replicationFactor(anyObject()))
@@ -661,48 +678,68 @@ public class TopicManagerImplTest {
   public void createTopic2_nonExistingTopic_createsTopic() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
     expect(createTopicsResult.numPartitions(anyObject()))
         .andReturn(KafkaFuture.completedFuture(TOPIC_1.getPartitions().size()));
     expect(createTopicsResult.replicationFactor(anyObject()))
         .andReturn(KafkaFuture.completedFuture((int) (TOPIC_1.getReplicationFactor())));
     replay(clusterManager, adminClient, createTopicsResult);
 
-    topicManager
-        .createTopic2(
-            CLUSTER_ID,
-            TOPIC_1.getName(),
-            Optional.of(TOPIC_1.getPartitions().size()),
-            Optional.of(TOPIC_1.getReplicationFactor()),
-            /* replicasAssignments= */ emptyMap(),
-            singletonMap("cleanup.policy", Optional.of("compact")),
-            false)
-        .get();
+    Topic createTopicResponse =
+        topicManager
+            .createTopic2(
+                CLUSTER_ID,
+                TOPIC_1.getName(),
+                Optional.of(TOPIC_1.getPartitions().size()),
+                Optional.of(TOPIC_1.getReplicationFactor()),
+                /* replicasAssignments= */ emptyMap(),
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false)
+            .get();
 
     verify(adminClient);
+    assertEquals(
+        Topic.create(
+            CLUSTER_ID,
+            TOPIC_1_EMPTY_REPLICAS.getName(),
+            TOPIC_1_EMPTY_REPLICAS.getPartitions(),
+            TOPIC_1_EMPTY_REPLICAS.getReplicationFactor(),
+            false),
+        createTopicResponse);
   }
 
   @Test
   public void createTopic2_nonExistingTopic_defaultPartitionsCount_createsTopic() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
     expect(createTopicsResult.numPartitions(anyObject()))
         .andReturn(KafkaFuture.completedFuture(TOPIC_1.getPartitions().size()));
     expect(createTopicsResult.replicationFactor(anyObject()))
         .andReturn(KafkaFuture.completedFuture((int) (TOPIC_1.getReplicationFactor())));
     replay(clusterManager, adminClient, createTopicsResult);
 
-    topicManager
-        .createTopic2(
-            CLUSTER_ID,
-            TOPIC_1.getName(),
-            /* partitionsCount= */ Optional.empty(),
-            Optional.of(TOPIC_1.getReplicationFactor()),
-            /* replicasAssignments= */ emptyMap(),
-            singletonMap("cleanup.policy", Optional.of("compact")),
-            false)
-        .get();
+    Topic createTopicResponse =
+        topicManager
+            .createTopic2(
+                CLUSTER_ID,
+                TOPIC_1.getName(),
+                /* partitionsCount= */ Optional.empty(),
+                Optional.of(TOPIC_1.getReplicationFactor()),
+                /* replicasAssignments= */ emptyMap(),
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false)
+            .get();
 
     verify(adminClient);
+    assertEquals(
+        Topic.create(
+            CLUSTER_ID,
+            TOPIC_1_EMPTY_REPLICAS.getName(),
+            TOPIC_1_EMPTY_REPLICAS.getPartitions(),
+            TOPIC_1_EMPTY_REPLICAS.getReplicationFactor(),
+            false),
+        createTopicResponse);
   }
 
   @Test
@@ -710,24 +747,34 @@ public class TopicManagerImplTest {
       throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
     expect(createTopicsResult.numPartitions(anyObject()))
         .andReturn(KafkaFuture.completedFuture(TOPIC_1.getPartitions().size()));
     expect(createTopicsResult.replicationFactor(anyObject()))
         .andReturn(KafkaFuture.completedFuture((int) (TOPIC_1.getReplicationFactor())));
     replay(clusterManager, adminClient, createTopicsResult);
 
-    topicManager
-        .createTopic2(
-            CLUSTER_ID,
-            TOPIC_1.getName(),
-            Optional.of(TOPIC_1.getPartitions().size()),
-            /* replicationFactor= */ Optional.empty(),
-            /* replicasAssignments= */ emptyMap(),
-            singletonMap("cleanup.policy", Optional.of("compact")),
-            false)
-        .get();
+    Topic createTopicResponse =
+        topicManager
+            .createTopic2(
+                CLUSTER_ID,
+                TOPIC_1.getName(),
+                Optional.of(TOPIC_1.getPartitions().size()),
+                /* replicationFactor= */ Optional.empty(),
+                /* replicasAssignments= */ emptyMap(),
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false)
+            .get();
 
     verify(adminClient);
+    assertEquals(
+        Topic.create(
+            CLUSTER_ID,
+            TOPIC_1_EMPTY_REPLICAS.getName(),
+            TOPIC_1_EMPTY_REPLICAS.getPartitions(),
+            TOPIC_1_EMPTY_REPLICAS.getReplicationFactor(),
+            false),
+        createTopicResponse);
   }
 
   @Test
@@ -747,31 +794,42 @@ public class TopicManagerImplTest {
 
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
     expect(createTopicsResult.numPartitions(anyObject()))
         .andReturn(KafkaFuture.completedFuture(TOPIC_1.getPartitions().size()));
     expect(createTopicsResult.replicationFactor(anyObject()))
         .andReturn(KafkaFuture.completedFuture((int) (TOPIC_1.getReplicationFactor())));
     replay(clusterManager, adminClient, createTopicsResult);
 
-    topicManager
-        .createTopic2(
-            CLUSTER_ID,
-            TOPIC_1.getName(),
-            /* partitionsCount= */ Optional.empty(),
-            /* replicationFactor= */ Optional.empty(),
-            replicasAssignments,
-            singletonMap("cleanup.policy", Optional.of("compact")),
-            false)
-        .get();
+    Topic createTopicResponse =
+        topicManager
+            .createTopic2(
+                CLUSTER_ID,
+                TOPIC_1.getName(),
+                /* partitionsCount= */ Optional.empty(),
+                /* replicationFactor= */ Optional.empty(),
+                replicasAssignments,
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false)
+            .get();
 
     verify(adminClient);
+    assertEquals(
+        Topic.create(
+            CLUSTER_ID,
+            TOPIC_1_EMPTY_REPLICAS.getName(),
+            TOPIC_1_EMPTY_REPLICAS.getPartitions(),
+            TOPIC_1_EMPTY_REPLICAS.getReplicationFactor(),
+            false),
+        createTopicResponse);
   }
 
-  // Test for the deprecated createTopic method making sure it work for exceptional completion
+  // Test for the deprecated createTopic method making sure it works for exceptional completion
   @Test
   public void createTopic_existingTopic_throwsTopicExists() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(failedFuture(new TopicExistsException("")));
     expect(createTopicsResult.numPartitions(anyObject()))
         .andReturn(failedFuture(new TopicExistsException("")));
     expect(createTopicsResult.replicationFactor(anyObject()))
@@ -800,6 +858,7 @@ public class TopicManagerImplTest {
   public void createTopic2_existingTopic_throwsTopicExists() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(failedFuture(new TopicExistsException("")));
     expect(createTopicsResult.numPartitions(anyObject()))
         .andReturn(failedFuture(new TopicExistsException("")));
     expect(createTopicsResult.replicationFactor(anyObject()))
@@ -845,6 +904,185 @@ public class TopicManagerImplTest {
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
     }
+  }
+
+  // Test for the deprecated createTopic method making sure it work for successful completion
+  @Test
+  public void createTopic_nonExistingTopic_noAuthDescribeConfigs_createsTopic() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
+    expect(createTopicsResult.numPartitions(anyObject()))
+        .andReturn(failedFuture(new TopicAuthorizationException("")));
+    expect(createTopicsResult.replicationFactor(anyObject()))
+        .andReturn(failedFuture(new TopicAuthorizationException("")));
+    replay(clusterManager, adminClient, createTopicsResult);
+
+    topicManager
+        .createTopic(
+            CLUSTER_ID,
+            TOPIC_1.getName(),
+            Optional.of(TOPIC_1.getPartitions().size()),
+            Optional.of(TOPIC_1.getReplicationFactor()),
+            /* replicasAssignments= */ emptyMap(),
+            singletonMap("cleanup.policy", Optional.of("compact")))
+        .get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void createTopic2_nonExistingTopic_noAuthDescribeConfigs_createsTopic() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
+    expect(createTopicsResult.numPartitions(anyObject()))
+        .andReturn(failedFuture(new TopicAuthorizationException("")));
+    expect(createTopicsResult.replicationFactor(anyObject()))
+        .andReturn(failedFuture(new TopicAuthorizationException("")));
+    replay(clusterManager, adminClient, createTopicsResult);
+
+    Topic createTopicResponse =
+        topicManager
+            .createTopic2(
+                CLUSTER_ID,
+                TOPIC_1.getName(),
+                Optional.of(TOPIC_1.getPartitions().size()),
+                Optional.of(TOPIC_1.getReplicationFactor()),
+                /* replicasAssignments= */ emptyMap(),
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false)
+            .get();
+
+    verify(adminClient);
+    assertEquals(
+        Topic.create(
+            CLUSTER_ID,
+            TOPIC_1_EMPTY_REPLICAS.getName(),
+            TOPIC_1_EMPTY_REPLICAS.getPartitions(),
+            TOPIC_1_EMPTY_REPLICAS.getReplicationFactor(),
+            false),
+        createTopicResponse);
+  }
+
+  @Test
+  public void
+      createTopic2_nonExistingTopic_noAuthDescribeConfigs_defaultPartitionsCount_createsTopic()
+          throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
+    expect(createTopicsResult.numPartitions(anyObject()))
+        .andReturn(failedFuture(new TopicAuthorizationException("")));
+    expect(createTopicsResult.replicationFactor(anyObject()))
+        .andReturn(failedFuture(new TopicAuthorizationException("")));
+    replay(clusterManager, adminClient, createTopicsResult);
+
+    Topic createTopicResponse =
+        topicManager
+            .createTopic2(
+                CLUSTER_ID,
+                TOPIC_1.getName(),
+                /* partitionsCount= */ Optional.empty(),
+                Optional.of(TOPIC_1.getReplicationFactor()),
+                /* replicasAssignments= */ emptyMap(),
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false)
+            .get();
+
+    verify(adminClient);
+    assertEquals(
+        Topic.create(
+            CLUSTER_ID,
+            TOPIC_1_EMPTY_REPLICAS.getName(),
+            Collections.emptyList(),
+            TOPIC_1_EMPTY_REPLICAS.getReplicationFactor(),
+            false),
+        createTopicResponse);
+  }
+
+  @Test
+  public void
+      createTopic2_nonExistingTopic_noAuthDescribeConfigs_defaultReplicationFactor_createsTopic()
+          throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
+    expect(createTopicsResult.numPartitions(anyObject()))
+        .andReturn(failedFuture(new TopicAuthorizationException("")));
+    expect(createTopicsResult.replicationFactor(anyObject()))
+        .andReturn(failedFuture(new TopicAuthorizationException("")));
+    replay(clusterManager, adminClient, createTopicsResult);
+
+    Topic createTopicResponse =
+        topicManager
+            .createTopic2(
+                CLUSTER_ID,
+                TOPIC_1.getName(),
+                Optional.of(TOPIC_1.getPartitions().size()),
+                /* replicationFactor= */ Optional.empty(),
+                /* replicasAssignments= */ emptyMap(),
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false)
+            .get();
+
+    verify(adminClient);
+    assertEquals(
+        Topic.create(
+            CLUSTER_ID,
+            TOPIC_1_EMPTY_REPLICAS.getName(),
+            TOPIC_1_EMPTY_REPLICAS.getPartitions(),
+            (short) 0,
+            false),
+        createTopicResponse);
+  }
+
+  @Test
+  public void
+      createTopic2_nonExistingTopic_noAuthDescribeConfigs_customReplicasAssignments_createsTopic()
+          throws Exception {
+    List<Integer> allReplicas = new ArrayList<>();
+    for (int replicaId = 1; replicaId <= TOPIC_1.getReplicationFactor(); replicaId++) {
+      allReplicas.add(replicaId);
+    }
+    ImmutableMap.Builder<Integer, List<Integer>> builder = new Builder<>();
+    for (int partitionId = 0; partitionId < TOPIC_1.getPartitions().size(); partitionId++) {
+      List<Integer> replicas = new ArrayList<>(allReplicas);
+      replicas.remove(partitionId % replicas.size());
+      builder.put(partitionId, replicas);
+    }
+    Map<Integer, List<Integer>> replicasAssignments = builder.build();
+
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
+    expect(createTopicsResult.numPartitions(anyObject()))
+        .andReturn(failedFuture(new TopicAuthorizationException("")));
+    expect(createTopicsResult.replicationFactor(anyObject()))
+        .andReturn(failedFuture(new TopicAuthorizationException("")));
+    replay(clusterManager, adminClient, createTopicsResult);
+
+    Topic createTopicResponse =
+        topicManager
+            .createTopic2(
+                CLUSTER_ID,
+                TOPIC_1.getName(),
+                /* partitionsCount= */ Optional.of(replicasAssignments.size()),
+                /* replicationFactor= */ Optional.of((short) (allReplicas.size() - 1)),
+                replicasAssignments,
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false)
+            .get();
+
+    verify(adminClient);
+    assertEquals(
+        Topic.create(
+            CLUSTER_ID,
+            TOPIC_1_EMPTY_REPLICAS.getName(),
+            TOPIC_1_EMPTY_REPLICAS.getPartitions(),
+            (short) (TOPIC_1_EMPTY_REPLICAS.getReplicationFactor() - 1),
+            false),
+        createTopicResponse);
   }
 
   @Test

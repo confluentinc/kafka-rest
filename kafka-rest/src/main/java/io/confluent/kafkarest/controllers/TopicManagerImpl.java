@@ -45,6 +45,7 @@ import org.apache.kafka.clients.admin.NewPartitions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
+import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
 
@@ -243,11 +244,23 @@ final class TopicManagerImpl implements TopicManager {
         .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
-            cluster -> createTopicInternal(clusterId, topicName, createTopicRequest, validateOnly));
+            cluster ->
+                createTopicInternal(
+                    clusterId,
+                    topicName,
+                    createTopicRequest,
+                    partitionsCount,
+                    replicationFactor,
+                    validateOnly));
   }
 
   private CompletableFuture<Topic> createTopicInternal(
-      String clusterId, String topicName, NewTopic createTopicRequest, boolean validateOnly) {
+      String clusterId,
+      String topicName,
+      NewTopic createTopicRequest,
+      Optional<Integer> requestPartitionsCount,
+      Optional<Short> requestReplicationFactor,
+      boolean validateOnly) {
 
     CreateTopicsResult createTopicsResult =
         adminClient.createTopics(
@@ -255,15 +268,18 @@ final class TopicManagerImpl implements TopicManager {
             new CreateTopicsOptions().validateOnly(validateOnly));
 
     return CompletableFuture.completedFuture(Topic.builder())
-        .thenApply(
-            topicBuilder ->
-                topicBuilder
-                    .setClusterId(clusterId)
-                    .setName(topicName)
-                    .setInternal(false)
-                    .setAuthorizedOperations(emptySet()))
         .thenCombine(
-            KafkaFutures.toCompletableFuture(createTopicsResult.numPartitions(topicName)),
+            KafkaFutures.toCompletableFuture(createTopicsResult.all()),
+            (topicBuilder, unused) -> {
+              return topicBuilder
+                  .setClusterId(clusterId)
+                  .setName(topicName)
+                  .setInternal(false)
+                  .setAuthorizedOperations(emptySet());
+            })
+        .thenCombine(
+            extractConfigFromResultUnlessNotAuthorized(
+                createTopicsResult.numPartitions(topicName), requestPartitionsCount),
             (topicBuilder, responseNumPartitions) -> {
               ArrayList<Partition> dummyPartitions = new ArrayList<>(responseNumPartitions);
               for (int i = 0; i < responseNumPartitions; i++) {
@@ -272,11 +288,36 @@ final class TopicManagerImpl implements TopicManager {
               return topicBuilder.addAllPartitions(dummyPartitions);
             })
         .thenCombine(
-            KafkaFutures.toCompletableFuture(createTopicsResult.replicationFactor(topicName)),
+            extractConfigFromResultUnlessNotAuthorized(
+                createTopicsResult.replicationFactor(topicName), requestReplicationFactor),
             (topicBuilder, responseReplicationFactor) -> {
               return topicBuilder.setReplicationFactor(responseReplicationFactor.shortValue());
             })
         .thenApply(Topic.Builder::build);
+  }
+
+  // In KIP-525, the behavior of the CreateTopicsResult is that the config, including the
+  // replication factor and number of partitions, is only returned if the creating principal had
+  // DESCRIBE_CONFIGS authority. If it does not, the methods throw TopicAuthorizationException, even
+  // when the request to create the topic actually succeeded. So, we need to make sure that these
+  // exceptions do not fail the entire request, because the creation has actually worked. If the
+  // value cannot be extracted from the actual result, we take the value from the original request,
+  // if supplied, or else zero. The schema for the response says that the values are required, so
+  // just omitting them if not present is not allowed.
+  private CompletableFuture<Integer> extractConfigFromResultUnlessNotAuthorized(
+      KafkaFuture<Integer> configFuture, Optional<? extends Number> defaultValue) {
+    CompletableFuture<Integer> completableFuture = new CompletableFuture<>();
+    configFuture.whenComplete(
+        (value, exception) -> {
+          if (exception == null) {
+            completableFuture.complete(value);
+          } else if (defaultValue.isPresent()) {
+            completableFuture.complete(defaultValue.get().intValue());
+          } else {
+            completableFuture.complete(0);
+          }
+        });
+    return completableFuture;
   }
 
   @Override
