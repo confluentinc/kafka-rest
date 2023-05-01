@@ -593,8 +593,8 @@ public class TopicsResourceTest {
             topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
-                /* partitionsCount= */ Optional.empty(),
-                /* replicationFactor= */ Optional.empty(),
+                /* partitionsCount= */ Optional.of((int) 3),
+                /* replicationFactor= */ Optional.of((short) 2),
                 replicasAssignments,
                 singletonMap("cleanup.policy", Optional.of("compact")),
                 false))
