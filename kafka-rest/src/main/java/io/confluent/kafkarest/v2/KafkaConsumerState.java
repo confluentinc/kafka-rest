@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   private final Clock clock = Clock.systemUTC();
   private final Duration consumerInstanceTimeout;
   private final ConsumerInstanceConfig consumerInstanceConfig;
+  private final boolean pollWithDuration;
 
   private final Queue<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecords = new ArrayDeque<>();
 
@@ -85,6 +87,8 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG));
     this.expiration = clock.instant().plus(consumerInstanceTimeout);
     this.consumerInstanceConfig = consumerInstanceConfig;
+    this.pollWithDuration =
+        config.getBoolean(KafkaRestConfig.CONSUMER_POLL_WAITS_FOR_METADATA_CONFIG);
   }
 
   public ConsumerInstanceId getId() {
@@ -269,8 +273,10 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     if (consumer != null) {
       for (io.confluent.kafkarest.entities.v2.TopicPartition t : request.getPartitions()) {
         TopicPartition partition = new TopicPartition(t.getTopic(), t.getPartition());
-        OffsetAndMetadata offsetMetadata = consumer.committed(partition);
-        if (offsetMetadata != null) {
+        Map<TopicPartition, OffsetAndMetadata> offsetsAndMetadataMap =
+            consumer.committed(Collections.singleton(partition));
+        if (offsetsAndMetadataMap.get(partition) != null) {
+          OffsetAndMetadata offsetMetadata = offsetsAndMetadataMap.get(partition);
           offsets.add(
               new TopicPartitionOffsetMetadata(
                   partition.topic(),
@@ -362,7 +368,11 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       return true;
     }
     // If none are available, try checking for any records already fetched by the consumer.
-    getOrCreateConsumerRecords();
+    if (pollWithDuration) {
+      getOrCreateConsumerRecordsWithoutIndefiniteBlocking();
+    } else {
+      getOrCreateConsumerRecords();
+    }
 
     return hasNextCached();
   }
@@ -378,10 +388,28 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   /**
    * Initiate poll(0) request to retrieve consumer records that are available immediately, or return
    * the existing consumer records if the records have not been fully consumed by client yet. Must
-   * be invoked with the lock held, i.e. after startRead().
+   * be invoked with the lock held, i.e. after startRead(). This deprecated poll method has the
+   * unfortunate side-effect that it can block indefinitely waiting for metadata responses.
+   * Unfortunately, the REST API has been in existence for a long time and we know that this
+   * unpleasant side-effect is depended upon by some users.
    */
   private synchronized void getOrCreateConsumerRecords() {
     ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(0);
+    // drain the iterator and buffer to list
+    for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : polledRecords) {
+      consumerRecords.add(consumerRecord);
+    }
+  }
+
+  /**
+   * Initiate poll(Duration.ZERO) request to retrieve consumer records that are available
+   * immediately, or return the existing consumer records if the records have not been fully
+   * consumed by client yet. Must be invoked with the lock held, i.e. after startRead(). In the
+   * event that metadata is required, the request is issued asynchronously without blocking
+   * indefinitely awaiting the response.
+   */
+  private synchronized void getOrCreateConsumerRecordsWithoutIndefiniteBlocking() {
+    ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(Duration.ZERO);
     // drain the iterator and buffer to list
     for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : polledRecords) {
       consumerRecords.add(consumerRecord);

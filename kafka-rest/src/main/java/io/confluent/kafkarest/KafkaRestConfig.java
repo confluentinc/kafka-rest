@@ -257,6 +257,17 @@ public class KafkaRestConfig extends RestConfig {
       "Amount of idle time before a consumer instance " + "is automatically destroyed.";
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT = "300000";
 
+  // The default for this is 'true' although 'false' is much desirable behavior. There is a chance
+  // that users of the v2 consume API depend upon the waiting behavior, so it is necessary to set a
+  // configuration property.
+  public static final String CONSUMER_POLL_WAITS_FOR_METADATA_CONFIG =
+      "consumer.poll.waits.for.metadata";
+  private static final String CONSUMER_POLL_WAITS_FOR_METADATA_DOC =
+      "Whether polling for records waits indefinitely for required metadata responses. If true, "
+          + "requests for records can wait longer than the configured timeout if required "
+          + "metadata is being awaited.";
+  public static final boolean CONSUMER_POLL_WAITS_FOR_METADATA_DEFAULT = true;
+
   public static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG = "simpleconsumer.pool.size.max";
   private static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC =
       "Maximum number of SimpleConsumers that can be instantiated per broker."
@@ -621,6 +632,12 @@ public class KafkaRestConfig extends RestConfig {
             CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
             Importance.LOW,
             CONSUMER_INSTANCE_TIMEOUT_MS_DOC)
+        .define(
+            CONSUMER_POLL_WAITS_FOR_METADATA_CONFIG,
+            Type.BOOLEAN,
+            CONSUMER_POLL_WAITS_FOR_METADATA_DEFAULT,
+            Importance.LOW,
+            CONSUMER_POLL_WAITS_FOR_METADATA_DOC)
         .define(
             SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG,
             Type.INT,
