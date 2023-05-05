@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.GenericType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,6 +128,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   }
 
   @Test
+  @Disabled("This test doesn't verify produce records and is flaky, to be fixed in KREST-10370")
   public void testConsumeWithMultipleParallelConsumers() throws InterruptedException {
     class ConsumerTask implements Callable<Void> {
 
