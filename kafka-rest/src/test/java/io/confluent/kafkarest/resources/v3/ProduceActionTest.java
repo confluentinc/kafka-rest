@@ -720,7 +720,8 @@ public class ProduceActionTest {
     return recordSerializerProvider;
   }
 
-  private static ProduceController getProduceControllerMock(Provider produceControllerProvider) {
+  private static ProduceController getProduceControllerMock(
+      Provider<ProduceController> produceControllerProvider) {
     ProduceController produceController = mock(ProduceController.class);
     expect(produceControllerProvider.get()).andReturn(produceController).anyTimes();
     return produceController;

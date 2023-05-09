@@ -215,6 +215,109 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
+  public void produceStringCharsetUtf8() throws Exception {
+    String clusterId = getClusterId();
+    String key = "foo";
+    String value = "bar";
+    ProduceRequest request =
+        ProduceRequest.builder()
+            .setKey(
+                ProduceRequestData.builder()
+                    .setFormat(EmbeddedFormat.STRING)
+                    .setData(TextNode.valueOf(key))
+                    .build())
+            .setValue(
+                ProduceRequestData.builder()
+                    .setFormat(EmbeddedFormat.STRING)
+                    .setData(TextNode.valueOf(value))
+                    .build())
+            .setOriginalSize(0L)
+            .build();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(Entity.entity(request, MediaType.APPLICATION_JSON + "; charset=UTF-8"));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+
+    ProduceResponse actual = readProduceResponse(response);
+    ConsumerRecord<String, String> produced =
+        getMessage(
+            TOPIC_NAME,
+            actual.getPartitionId(),
+            actual.getOffset(),
+            new StringDeserializer(),
+            new StringDeserializer());
+    assertEquals(key, produced.key());
+    assertEquals(value, produced.value());
+  }
+
+  @Test
+  public void produceStringCharsetIso88591() throws Exception {
+    String clusterId = getClusterId();
+    String key = "foo";
+    String value = "bar";
+    ProduceRequest request =
+        ProduceRequest.builder()
+            .setKey(
+                ProduceRequestData.builder()
+                    .setFormat(EmbeddedFormat.STRING)
+                    .setData(TextNode.valueOf(key))
+                    .build())
+            .setValue(
+                ProduceRequestData.builder()
+                    .setFormat(EmbeddedFormat.STRING)
+                    .setData(TextNode.valueOf(value))
+                    .build())
+            .setOriginalSize(0L)
+            .build();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(Entity.entity(request, MediaType.APPLICATION_JSON + "; charset=ISO-8859-1"));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+
+    ProduceResponse actual = readProduceResponse(response);
+    ConsumerRecord<String, String> produced =
+        getMessage(
+            TOPIC_NAME,
+            actual.getPartitionId(),
+            actual.getOffset(),
+            new StringDeserializer(),
+            new StringDeserializer());
+    assertEquals(key, produced.key());
+    assertEquals(value, produced.value());
+  }
+
+  @Test
+  public void produceStringCharsetInvalid() throws Exception {
+    String clusterId = getClusterId();
+    String key = "foo";
+    String value = "bar";
+    ProduceRequest request =
+        ProduceRequest.builder()
+            .setKey(
+                ProduceRequestData.builder()
+                    .setFormat(EmbeddedFormat.STRING)
+                    .setData(TextNode.valueOf(key))
+                    .build())
+            .setValue(
+                ProduceRequestData.builder()
+                    .setFormat(EmbeddedFormat.STRING)
+                    .setData(TextNode.valueOf(value))
+                    .build())
+            .setOriginalSize(0L)
+            .build();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(Entity.entity(request, MediaType.APPLICATION_JSON + "; charset=DEADBEEF"));
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+
+  @Test
   public void produceStringWithEmptyData() throws Exception {
     String clusterId = getClusterId();
     ProduceRequest request =
