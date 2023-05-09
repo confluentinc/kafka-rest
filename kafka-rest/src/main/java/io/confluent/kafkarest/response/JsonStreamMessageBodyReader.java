@@ -63,7 +63,8 @@ public final class JsonStreamMessageBodyReader implements MessageBodyReader<Json
       if (charset != null) {
         if (!charset.equalsIgnoreCase("UTF-8") && !charset.equalsIgnoreCase("ISO-8859-1")) {
           throw new WebApplicationException(
-              "Unsupported charset in Content-Type header.", Status.BAD_REQUEST);
+              "Unsupported charset in Content-Type header. Supports \"UTF-8\" and \"ISO-8859-1\".",
+              Status.BAD_REQUEST);
         }
       }
     }
