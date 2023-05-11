@@ -36,13 +36,9 @@ import org.apache.kafka.common.metrics.stats.Percentiles;
 import org.apache.kafka.common.metrics.stats.Rate;
 import org.apache.kafka.common.metrics.stats.WindowedCount;
 import org.apache.kafka.common.utils.Time;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 // CHECKSTYLE:OFF:ClassDataAbstractionCoupling
 final class ProducerMetrics {
-
-  private static final Logger log = LoggerFactory.getLogger(ProducerMetrics.class);
 
   private static final String GROUP_NAME = "produce-api-metrics";
   public static final long EXPIRY_SECONDS = TimeUnit.HOURS.toSeconds(1);
@@ -152,8 +148,6 @@ final class ProducerMetrics {
     setupRecordErrorSensor(metricsTags, sensorTags);
     setupRecordRateLimitedSensor(metricsTags, sensorTags);
     setupRequestLatencySensor(metricsTags, sensorTags);
-
-    log.info("Successfully registered kafka-rest produce metrics with JMX");
   }
 
   private void setupRequestSensor(Map<String, String> metricsTags, String sensorTags) {
