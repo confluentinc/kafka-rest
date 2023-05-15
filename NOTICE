@@ -113,3 +113,8 @@ The following libraries are included in packaged versions of this project:
 * ZkClient
  * LICENSE: licenses/LICENSE.apache2.txt
  * HOMEPAGE: https://github.com/sgroschupf/zkclient
+
+* http-parser
+ * LICENSE: licenses/LICENSE.http-parser.txt
+ * NOTICE: licenses/NOTICE.http-parser.txt
+ * HOMEPAGE: https://github.com/benoitc/http-parser
