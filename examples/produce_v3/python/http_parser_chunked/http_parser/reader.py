@@ -3,6 +3,7 @@
 # Taken as it is from https://github.com/benoitc/http-parser/blob/d6ce4b5c58e68d5cf3be0676d9b97c3bd9ca88df/http_parser/reader.py#L1
 
 from io import DEFAULT_BUFFER_SIZE, RawIOBase
+from socket import SocketIO
 
 from http_parser_chunked.http_parser.util import StringIO
 
@@ -100,8 +101,6 @@ class StringReader(IterReader):
         else:
             iterable = string
         IterReader.__init__(self, iterable)
-
-from http_parser_chunked.http_parser._socketio import SocketIO
 
 class SocketReader(SocketIO):
     def __init__(self, sock):
