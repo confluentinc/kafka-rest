@@ -815,7 +815,7 @@ public class ProduceActionTest {
         .setClusterId("clusterId")
         .setTopicName("topicName")
         .setPartitionId(partitionId)
-        .setOffset(offset)
+        .setOffset((long) offset)
         .setTimestamp(Instant.ofEpochMilli(0))
         .setErrorCode(HttpStatus.OK_200)
         .build();

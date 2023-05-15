@@ -1,0 +1,54 @@
+/*
+ * Copyright 2023 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
+package io.confluent.kafkarest.entities.v3;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
+import java.util.List;
+import javax.annotation.Nullable;
+
+@AutoValue
+public abstract class ProduceBatchRequest {
+
+  ProduceBatchRequest() {}
+
+  @JsonProperty("records")
+  public abstract ImmutableList<ProduceRequest> getRecords();
+
+  public static Builder builder() {
+    return new AutoValue_ProduceBatchRequest.Builder();
+  }
+
+  @JsonCreator
+  static ProduceBatchRequest fromJson(
+      @JsonProperty("records") @Nullable List<ProduceRequest> records) {
+    return builder()
+        .setRecords(records != null ? ImmutableList.copyOf(records) : ImmutableList.of())
+        .build();
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+
+    Builder() {}
+
+    public abstract Builder setRecords(List<ProduceRequest> records);
+
+    public abstract ProduceBatchRequest build();
+  }
+}
