@@ -1,11 +1,8 @@
 import json
 import queue
-import socket
 import time
 from threading import Thread
-import urllib3
-
-from http_parser_chunked.http_response import HttpResponse
+import http.client
 
 # Class that holds a records to be produced.
 class ProduceRecord:
@@ -81,14 +78,14 @@ class Producer:
 
 
     def __produce_records(self):
-        self.connection = urllib3.connection.HTTPConnection(
+        self.connection = http.client.HTTPConnection(
             host=self.__host,
             port=self.__port
         )
-        headers = urllib3.make_headers(
-        )
+        headers: dict[str, str] = {}
         headers.update({
             "Content-Type": "application/json",
+            "Accept": "application/json",
         })
         print("Establishing connection with headers:", headers)
         self.connection.request(
@@ -99,7 +96,7 @@ class Producer:
             ),
             body=self.__record_generator(),
             headers=headers,
-            chunked=True,
+            encode_chunked=True,
         )
         print("Done producing-records, exiting __produce_records")
 
@@ -109,26 +106,28 @@ class Producer:
             time.sleep(.1)
         print("Connection established, will read responses.")
 
-        http_response_stream = HttpResponse(socket.SocketIO(self.connection.sock, "rb"))
-        print("Http-stream has status-code %d" % http_response_stream.status_code())
-        if http_response_stream.status_code() != 200:
-            raise Exception("Failed to produce records as recieved error with http status code %d, error %s" % (http_response_stream.status_code(), http_response_stream.body_string))
+        # Directly access the connection/socket, and start read the http-response(record-receipts) to be fully-duplex.
+        # Else most traditionaly Http-libraries would allow reading the request when the entire response is written.
+        http_response = http.client.HTTPResponse(self.connection.sock)
+        http_response.begin()
+        print("Http-stream has status-code %d" % http_response.getcode())
+        if http_response.getcode() != 200:
+            raise Exception("Failed to produce records as recieved error with http status code %d, error %s" % (http_response.getcode(), http_response.read()))
 
         record_receipt_counter = 0
-        for chunk in http_response_stream:
-            if chunk == b'\r\n':
-                # There is an extra "empty-chunk after each response". Don't see it in offical http 1.1 rfc, likely coming in from Jetty. Ignore it for now.
-                # https://confluentinc.atlassian.net/browse/KREST-10286?focusedCommentId=1603058
-                continue
+        while True:
+            chunk = http_response.readline()
+            if chunk == b'':
+                break
             record_receipt_counter += 1
-            record_receipt = json.dumps(chunk.decode("utf-8"))
-            print("Receipt for record #%d is ******\n%s" % (record_receipt_counter, record_receipt))
+            print("Receipt for record #%d is ******\n%s" % (record_receipt_counter, chunk))
+        http_response.close()
         print("Done reading record-receipts, exiting __handle_record_receipts")
 
 # This is simple producer that will produce records in a loop.
 def produce_records(producer: Producer, record_count: int):
     for idx in range(0, record_count):
-        print("Sleeping for 1 second, before producing record #%d" %(idx+1))
+        # Sleep for 1 second, so that the record-receipts can be received for previosly produced records.
         time.sleep(1)
         producer.produce(ProduceRecord("key_" + str(idx), "value_" + str(idx)))
     
