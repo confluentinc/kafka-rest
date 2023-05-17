@@ -18,4 +18,4 @@ The code assumes there is a Kafka-rest proxy exposing http-interface( on "localh
 Now run the main driver script:
 `python3 streaming_produce_v3_main.py`
 
-**This scipt will work with python-version >= 3.0**
+**This script will work with python-version >= 3.0**
