@@ -4,9 +4,13 @@ import time
 from threading import Thread
 import http.client
 
-# Class that holds a records to be produced.
 class ProduceRecord:
+    """A class that represents a record to be produced to a Kafka topic."""
     def __init__(self, key, value):
+        """
+        :param key: The key of the record.
+        :param value: The value of the record.
+        """
         self.key = key
         self.value = value
 
@@ -26,12 +30,22 @@ class ProduceRecord:
 
         return json.dumps(ret).encode("utf-8")
 
-# This will produce records to Kafka topic, using confluent's REST API
-# in full-duplex fashion on the http-connection.
-# NOTE: This is simply only printing the record-receipts. But it can 
-# be easily extended to do process the record-receipts.
 class Producer:
+    """
+    A class that produces records to a Kafka topic, using Kafka REST's produce API -
+    /v3/clusters/{cluster_name}/topics/{topic_name}/records.
+    This assumes Kafka REST proxy is running on localhost:8082 on http interface.
+    The records are produced in full-duplex fashion on the http-connection.
+    NOTE: This is simply only printing the record-receipts. But it can
+    be easily extended to do process the record-receipts.
+    """
     def __init__(self, topic, cluster_id, host, port):
+        """
+        :param topic: The topic to produce to.
+        :param cluster_id: The cluster-id of the cluster to produce to.
+        :param host: The host of the Kafka REST proxy.
+        :param port: The port of the Kafka REST proxy.
+        """
         self.__topic = topic
         self.__cluster_id = cluster_id
         self.__host = host
@@ -52,13 +66,16 @@ class Producer:
         )
         self.__handle_record_receipts_thread.start()
 
-    # Produce a single record to the topic.
     def produce(self, record: ProduceRecord):
+        """
+        Produce a record to the topic.
+        :param record: The record to produce.
+        """
         self.__record_counter +=1 
         self.__record_queue.put(record)
 
-    # Shutdown the producer.
     def shutdown(self):
+        """Shutdown the producer."""
         self.__close = True
         self.__produce_records_thread.join()
         self.__handle_record_receipts_thread.join()
@@ -71,9 +88,9 @@ class Producer:
                 print("No more records to produce, exiting __record_generator")
                 break
             finally:
-                if(self.__close):
+                if self.__close:
                     break
-            print("Writing a record #%d with json %s" % (self.__record_counter, record.to_json()))
+            print("Writing a record #{} with json {}".format(self.__record_counter, record.to_json()))
             yield record.to_json()
 
 
@@ -82,12 +99,11 @@ class Producer:
             host=self.__host,
             port=self.__port
         )
-        headers: dict[str, str] = {}
-        headers.update({
+        headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-        })
-        print("Establishing connection with headers:", headers)
+        }
+        print("Establishing connection with headers:{}".format(headers))
         self.connection.request(
             method='POST',
             url="/v3/clusters/{}/topics/{}/records".format(
@@ -106,11 +122,13 @@ class Producer:
             time.sleep(.1)
         print("Connection established, will read responses.")
 
-        # Directly access the connection/socket, and start read the http-response(record-receipts) to be fully-duplex.
-        # Else most traditionaly Http-libraries would allow reading the request when the entire response is written.
+        # Directly access the connection/socket, and start read the
+        # http-response(record-receipts) to be fully-duplex
+        # Else most traditionaly Http-libraries would allow reading
+        # the request when the entire response is written.
         http_response = http.client.HTTPResponse(self.connection.sock)
         http_response.begin()
-        print("Http-stream has status-code %d" % http_response.getcode())
+        print("Http-stream has status-code {}".format(http_response.getcode()))
         if http_response.getcode() != 200:
             raise Exception("Failed to produce records as recieved error with http status code %d, error %s" % (http_response.getcode(), http_response.read()))
 
@@ -120,14 +138,15 @@ class Producer:
             if chunk == b'':
                 break
             record_receipt_counter += 1
-            print("Receipt for record #%d is ******\n%s" % (record_receipt_counter, chunk))
+            print("Receipt for record #{} is ******\n{}".format(record_receipt_counter, chunk))
         http_response.close()
         print("Done reading record-receipts, exiting __handle_record_receipts")
 
 # This is simple producer that will produce records in a loop.
 def produce_records(producer: Producer, record_count: int):
     for idx in range(0, record_count):
-        # Sleep for 1 second, so that the record-receipts can be received for previosly produced records.
+        # Sleep for 1 second, so that the record-receipts can be received
+        # for previosly produced records.
         time.sleep(1)
         producer.produce(ProduceRecord("key_" + str(idx), "value_" + str(idx)))
     

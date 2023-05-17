@@ -13,6 +13,8 @@ b'{"error_code":200,"cluster_id":"EV-5o5e3SViiGP0hpgKn1g","topic_name":"topic_1"
 
 ## Running the code
 
+The code assumes there is a Kafka-rest proxy exposing http-interface( on "localhost", "8082" default port). Follow the instructions kafka-rest [repo](https://github.com/confluentinc/kafka-rest) to run the proxy.
+
 Now run the main driver script:
 `python3 streaming_produce_v3_main.py`
 
