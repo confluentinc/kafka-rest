@@ -27,15 +27,17 @@ import io.confluent.kafkarest.controllers.SchemaManager;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.ProduceResult;
 import io.confluent.kafkarest.entities.RegisteredSchema;
+import io.confluent.kafkarest.entities.v3.ProduceBatchErrorEntry;
 import io.confluent.kafkarest.entities.v3.ProduceBatchRequest;
+import io.confluent.kafkarest.entities.v3.ProduceBatchRequestEntry;
 import io.confluent.kafkarest.entities.v3.ProduceBatchResponse;
-import io.confluent.kafkarest.entities.v3.ProduceRequest;
+import io.confluent.kafkarest.entities.v3.ProduceBatchResultEntry;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
-import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.exceptions.StacklessCompletionException;
+import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
@@ -44,6 +46,7 @@ import io.confluent.rest.annotations.PerformanceMetric;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -69,12 +72,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Providers;
 import org.apache.kafka.common.errors.SerializationException;
-import org.eclipse.jetty.http.HttpStatus;
 
 @DoNotRateLimit
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/records:batch")
-@ResourceName("api.v3.produce.*")
+@ResourceName("api.v3.batch-produce.*")
 public final class ProduceBatchAction {
+
+  public static final int BATCH_ID_MINIMUM_LENGTH = 1;
+  public static final int BATCH_ID_MAXIMUM_LENGTH = 80;
+  public static final int BATCH_MAXIMUM_ENTRIES = 10;
 
   @Context private Providers providers;
 
@@ -128,15 +134,32 @@ public final class ProduceBatchAction {
       throw Errors.invalidPayloadException("Request body is empty. Data is required.");
     }
 
-    if (request.getRecords().size() > 100) {
-      throw Errors.invalidPayloadException("Request body contains more than 100 records.");
+    // First, pre-process the batch ensuring it's non-empty, not too large and the entry
+    // IDs are distinct
+    HashSet<String> entrySet = new HashSet<>();
+    request.getEntries().stream()
+        .forEach(
+            (e) -> {
+              if (!entrySet.add(e.getId().textValue())) {
+                throw Errors.invalidPayloadException("Batch entry IDs not distinct.");
+              }
+            });
+
+    if (request.getEntries().size() == 0) {
+      throw Errors.invalidPayloadException("Empty batch.");
     }
 
-    List<ProduceResponse> responses = new LinkedList<>();
+    if (request.getEntries().size() > BATCH_MAXIMUM_ENTRIES) {
+      throw Errors.invalidPayloadException(
+          "More than " + BATCH_MAXIMUM_ENTRIES + " entries in batch.");
+    }
+
+    List<ProduceBatchResultEntry> successes = new LinkedList<>();
+    List<ProduceBatchErrorEntry> failures = new LinkedList<>();
 
     ProduceController controller = produceControllerProvider.get();
     CompletableFuture.allOf(
-            request.getRecords().stream()
+            request.getEntries().stream()
                 .map(
                     entry ->
                         produce(
@@ -145,26 +168,34 @@ public final class ProduceBatchAction {
                                 entry,
                                 controller,
                                 producerMetricsProvider.get())
-                            .exceptionally((error) -> toProduceResponseForException(error))
-                            .thenAccept(
-                                (response) -> {
-                                  responses.add(response);
+                            .whenComplete(
+                                (result, error) -> {
+                                  if (error != null) {
+                                    failures.add(
+                                        toErrorEntryForException(entry.getId().textValue(), error));
+                                  } else {
+                                    successes.add(result);
+                                  }
                                 }))
                 .toArray(CompletableFuture[]::new))
         .whenCompleteAsync(
             (result, error) -> {
               asyncResponse.resume(
                   Response.status(207, "Multi-Status")
-                      .entity(ProduceBatchResponse.builder().setRecords(responses).build())
+                      .entity(
+                          ProduceBatchResponse.builder()
+                              .setSuccesses(successes)
+                              .setFailures(failures)
+                              .build())
                       .build());
             },
             executorService);
   }
 
-  private CompletableFuture<ProduceResponse> produce(
+  private CompletableFuture<ProduceBatchResultEntry> produce(
       String clusterId,
       String topicName,
-      ProduceRequest request,
+      ProduceBatchRequestEntry request,
       ProduceController controller,
       ProducerMetrics metrics) {
     final long requestStartNs = System.nanoTime();
@@ -232,8 +263,9 @@ public final class ProduceBatchAction {
               executorService)
           .thenApplyAsync(
               result -> {
-                ProduceResponse response =
-                    toProduceResponse(
+                ProduceBatchResultEntry batchResult =
+                    toProduceBatchResultEntry(
+                        request.getId().textValue(),
                         clusterId,
                         topicName,
                         keyFormat,
@@ -243,11 +275,11 @@ public final class ProduceBatchAction {
                         result);
                 long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
                 recordResponseMetrics(metrics, latency);
-                return response;
+                return batchResult;
               },
               executorService);
     } catch (Throwable t) {
-      CompletableFuture<ProduceResponse> failedResult = new CompletableFuture<>();
+      CompletableFuture<ProduceBatchResultEntry> failedResult = new CompletableFuture<>();
       failedResult.completeExceptionally(t);
       return failedResult;
     }
@@ -295,7 +327,8 @@ public final class ProduceBatchAction {
             isKey);
   }
 
-  private static ProduceResponse toProduceResponse(
+  private static ProduceBatchResultEntry toProduceBatchResultEntry(
+      String id,
       String clusterId,
       String topicName,
       Optional<EmbeddedFormat> keyFormat,
@@ -303,7 +336,8 @@ public final class ProduceBatchAction {
       Optional<EmbeddedFormat> valueFormat,
       Optional<RegisteredSchema> valueSchema,
       ProduceResult result) {
-    return ProduceResponse.builder()
+    return ProduceBatchResultEntry.builder()
+        .setId(id)
         .setClusterId(clusterId)
         .setTopicName(topicName)
         .setPartitionId(result.getPartitionId())
@@ -329,27 +363,28 @@ public final class ProduceBatchAction {
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
                         .build()))
-        .setErrorCode(HttpStatus.OK_200)
         .build();
   }
 
-  private ProduceResponse toProduceResponseForException(Throwable t) {
-    ProduceResponse response = null;
+  private ProduceBatchErrorEntry toErrorEntryForException(String id, Throwable t) {
+    ProduceBatchErrorEntry response = null;
 
     if (providers != null) {
       if (t instanceof CompletionException) {
         CompletionException ce = (CompletionException) t;
-        response = responseHelper(ce.getCause().getClass(), ce.getCause());
+        response = responseHelper(id, ce.getCause().getClass(), ce.getCause());
       } else {
-        response = responseHelper(t.getClass(), t);
+        response = responseHelper(id, t.getClass(), t);
       }
     }
 
     return response;
   }
 
-  private <E extends Throwable> ProduceResponse responseHelper(Class<E> klass, Throwable t) {
-    ProduceResponse.Builder builder = ProduceResponse.builder();
+  private <E extends Throwable> ProduceBatchErrorEntry responseHelper(
+      String id, Class<E> klass, Throwable t) {
+    ProduceBatchErrorEntry.Builder builder = ProduceBatchErrorEntry.builder();
+    builder.setId(id);
 
     ExceptionMapper<? super E> mapper = providers.getExceptionMapper(klass);
     if (mapper != null) {
@@ -360,6 +395,12 @@ public final class ProduceBatchAction {
         builder.setErrorCode(errMsg.getErrorCode());
         if (errMsg.getMessage() != null) {
           builder.setMessage(errMsg.getMessage());
+        }
+      } else if (entity instanceof ErrorResponse) {
+        ErrorResponse errResp = (ErrorResponse) entity;
+        builder.setErrorCode(errResp.getErrorCode());
+        if (errResp.getMessage() != null) {
+          builder.setMessage(errResp.getMessage());
         }
       } else {
         builder.setErrorCode(response.getStatus());

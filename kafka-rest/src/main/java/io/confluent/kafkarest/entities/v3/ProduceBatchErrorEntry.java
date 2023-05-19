@@ -16,34 +16,30 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableList;
-import java.util.List;
-import java.util.StringJoiner;
+import java.util.Optional;
 
 @AutoValue
-public abstract class ProduceBatchResponse {
+public abstract class ProduceBatchErrorEntry {
 
   @JsonCreator
-  ProduceBatchResponse() {}
+  public ProduceBatchErrorEntry() {}
 
-  @JsonProperty("successes")
-  public abstract ImmutableList<ProduceBatchResultEntry> getSuccesses();
+  @JsonProperty("id")
+  public abstract String getId();
 
-  @JsonProperty("failures")
-  public abstract ImmutableList<ProduceBatchErrorEntry> getFailures();
+  @JsonProperty("error_code")
+  public abstract int getErrorCode();
 
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ProduceBatchResponse.class.getSimpleName() + "[", "]")
-        .add(getSuccesses().toString())
-        .add(getFailures().toString())
-        .toString();
-  }
+  @JsonProperty("message")
+  @JsonInclude(Include.NON_ABSENT)
+  public abstract Optional<String> getMessage();
 
   public static Builder builder() {
-    return new AutoValue_ProduceBatchResponse.Builder();
+    return new AutoValue_ProduceBatchErrorEntry.Builder();
   }
 
   @AutoValue.Builder
@@ -51,10 +47,12 @@ public abstract class ProduceBatchResponse {
 
     Builder() {}
 
-    public abstract Builder setSuccesses(List<ProduceBatchResultEntry> successes);
+    public abstract Builder setId(String id);
 
-    public abstract Builder setFailures(List<ProduceBatchErrorEntry> failures);
+    public abstract Builder setErrorCode(int errorCode);
 
-    public abstract ProduceBatchResponse build();
+    public abstract Builder setMessage(String message);
+
+    public abstract ProduceBatchErrorEntry build();
   }
 }

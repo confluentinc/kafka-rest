@@ -2302,16 +2302,68 @@ components:
               items:
                 $ref: '#/components/schemas/PartitionData'
 
+    ProduceBatchErrorEntry:
+      type: object
+      required:
+        - id
+        - error_code
+      properties:
+        id:
+          description: Batch entry ID.
+          type: string
+          minLength: 1
+          maxLength: 80
+        error_code:
+          description: Error code.
+          type: integer
+          format: int32
+        message:
+          description: Error message.
+          type: string
+
     ProduceBatchResponse:
       description: Response for producing a batch of records.
       type: object
-      required:
-        - records
       properties:
-        records:
+        successes:
+          description: Successful batch results.
           type: array
           items:
-            $ref: '#/components/schemas/ProduceResponse'
+            $ref: '#/components/schemas/ProduceBatchResultEntry'
+        failures:
+          description: Failed batch results.
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduceBatchErrorEntry'
+
+    ProduceBatchResultEntry:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Batch entry ID.
+          type: string
+          minLength: 1
+          maxLength: 80
+        cluster_id:
+          type: string
+        topic_name:
+          type: string
+        partition_id:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
+        key:
+          $ref: '#/components/schemas/ProduceResponseData'
+        value:
+          $ref: '#/components/schemas/ProduceResponseData'
 
     ProduceResponse:
       type: object
@@ -2376,12 +2428,39 @@ components:
       description: Request for producing a batch of records.
       type: object
       required:
-        - records
+        - entries
       properties:
-        records:
+        entries:
           type: array
           items:
-            $ref: '#/components/schemas/ProduceRequest'
+            $ref: '#/components/schemas/ProduceBatchRequestEntry'
+
+    ProduceBatchRequestEntry:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Batch entry ID.
+          type: string
+          minLength: 1
+          maxLength: 80
+        partition_id:
+          type: integer
+          nullable: true
+          format: int32
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduceRequestHeader'
+        key:
+          $ref: '#/components/schemas/ProduceRequestData'
+        value:
+          $ref: '#/components/schemas/ProduceRequestData'
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
 
     ProduceRequest:
       type: object
@@ -2798,16 +2877,18 @@ components:
           schema:
             $ref: '#/components/schemas/ProduceBatchRequest'
           examples:
-            string:
+            string_batch:
               description: 'If using type, one of "BINARY", "JSON" or "STRING" is required.'
               value:
-                records:
-                  - value:
-                    type: 'STRING'
-                    data: 'My first message'
-                  - value:
-                    type: 'STRING'
-                    data: 'My second message'
+                entries:
+                  - id: "1"
+                    value:
+                      type: 'STRING'
+                      data: 'My first message'
+                  - id: "2"
+                    value:
+                      type: 'STRING'
+                      data: 'My second message'
 
     ProduceRequest:
       description: 'A single record to be produced to Kafka. To produce multiple records in the same
@@ -3993,31 +4074,52 @@ components:
             produce_batch_record_success:
               description: The records were successfully produced to the topic.
               value:
-                records:
-                - error_code: 200
-                  cluster_id: 'cluster-1'
-                  topic_name: 'topic-1'
-                  partition_id: 1
-                  offset: 0
-                  timestamp: '2021-02-05T19:14:42Z'
-                  key:
-                    type: BINARY
-                    size: 7
-                  value:
-                    type: JSON
-                    size: 15
-                - error_code: 200
-                  cluster_id: 'cluster-1'
-                  topic_name: 'topic-1'
-                  partition_id: 1
-                  offset: 1
-                  timestamp: '2021-02-05T19:14:43Z'
-                  key:
-                    type: BINARY
-                    size: 7
-                  value:
-                    type: JSON
-                    size: 15
+                successes:
+                  - id: "1"
+                    cluster_id: 'cluster-1'
+                    topic_name: 'topic-1'
+                    partition_id: 1
+                    offset: 0
+                    timestamp: '2021-02-05T19:14:42Z'
+                    key:
+                      type: BINARY
+                      size: 7
+                    value:
+                      type: JSON
+                      size: 15
+                  - id: "2"
+                    cluster_id: 'cluster-1'
+                    topic_name: 'topic-1'
+                    partition_id: 1
+                    offset: 1
+                    timestamp: '2021-02-05T19:14:43Z'
+                    key:
+                      type: BINARY
+                      size: 7
+                    value:
+                      type: JSON
+                      size: 15
+                failures: []
+            produce_batch_record_success_and_failure:
+              description: One record was produced to the topic successfully, and one failed.
+              value:
+                successes:
+                  - id: "1"
+                    cluster_id: 'cluster-1'
+                    topic_name: 'topic-1'
+                    partition_id: 1
+                    offset: 0
+                    timestamp: '2021-02-05T19:14:42Z'
+                    key:
+                      type: BINARY
+                      size: 7
+                    value:
+                      type: JSON
+                      size: 15
+                failures:
+                  - id: "2"
+                    error_code: 400
+                    message: "Bad Request: data=1 is not a base64 string."
 
     ProduceResponse:
       description: |-

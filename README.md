@@ -156,8 +156,69 @@ Response:
   }
 ```
 
-The data is treated as string in UTF-8 encoding and follows JSON rules for escaping special characters.
+The data is treated as a string in UTF-8 encoding and follows JSON rules for escaping special characters.
 
+### Produce records in a batch
+
+As an alternative to streaming mode, you can produce multiple records in a batch. This is not streaming, but it is easier to use with HTTP libraries that expect a straightforward request-response behavior.
+
+Each entry in the batch has a unique identifier (a string of up to 80 characters) which can be used to correlate the responses. The identifiers of the entries in a batch must be unique.
+
+```bash
+$ curl -X POST -H "Content-Type: application/json" \
+       -d '{"entries":[{"id":"first","value":{"type":"JSON","data":"ONE"}}, {"id":"second","value":{"type":"JSON","data":"TWO"}}]}' \
+       http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics/jsontest/records:batch
+
+Response:
+  {"successes":[
+    {"id":"first",
+     "cluster_id":"xFhUvurESIeeCI87SXWR-Q",
+     "topic_name":"jsontest",
+     "partition_id":0,
+     "offset":3,
+     "timestamp":"2023-03-09T14:07:23.592Z",
+     "value":{"type":"JSON","size":5}
+    },
+    {"id":"second",
+     "cluster_id":"xFhUvurESIeeCI87SXWR-Q",
+     "topic_name":"jsontest",
+     "partition_id":0,
+     "offset":4,
+     "timestamp":"2023-03-09T14:07:23.592Z",
+     "value":{"type":"JSON","size":5}
+    }
+   ],
+   "failures":[]
+  }
+```
+
+Successes and failures are returned in the response in separate arrays like this:
+
+```json
+{
+  "successes": [
+    {
+      "id": "1",
+      "cluster_id": "xFhUvurESIeeCI87SXWR-Q",
+      "topic_name": "jsontest",
+      "partition_id": 0,
+      "offset": 5,
+      "timestamp": "2023-03-09T14:07:23.592Z",
+      "value": {
+        "type": "STRING",
+        "size": 7
+      }
+    }
+  ],
+  "failures": [
+    {
+      "id": "2",
+      "error_code": 400,
+      "message": "Bad Request: data=\"Message$\" is not a valid base64 string."
+    }
+  ]
+}
+```
 
 ## Quickstart (v2 API)
 The earlier v2 API is a bit more concise.

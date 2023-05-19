@@ -27,8 +27,8 @@ public abstract class ProduceBatchRequest {
 
   ProduceBatchRequest() {}
 
-  @JsonProperty("records")
-  public abstract ImmutableList<ProduceRequest> getRecords();
+  @JsonProperty("entries")
+  public abstract ImmutableList<ProduceBatchRequestEntry> getEntries();
 
   public static Builder builder() {
     return new AutoValue_ProduceBatchRequest.Builder();
@@ -36,9 +36,9 @@ public abstract class ProduceBatchRequest {
 
   @JsonCreator
   static ProduceBatchRequest fromJson(
-      @JsonProperty("records") @Nullable List<ProduceRequest> records) {
+      @JsonProperty("entries") @Nullable List<ProduceBatchRequestEntry> entries) {
     return builder()
-        .setRecords(records != null ? ImmutableList.copyOf(records) : ImmutableList.of())
+        .setEntries(entries != null ? ImmutableList.copyOf(entries) : ImmutableList.of())
         .build();
   }
 
@@ -47,7 +47,7 @@ public abstract class ProduceBatchRequest {
 
     Builder() {}
 
-    public abstract Builder setRecords(List<ProduceRequest> records);
+    public abstract Builder setEntries(List<ProduceBatchRequestEntry> entries);
 
     public abstract ProduceBatchRequest build();
   }
