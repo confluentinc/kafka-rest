@@ -30,10 +30,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
 import io.confluent.kafkarest.resources.v3.ProduceBatchAction;
-import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
@@ -123,20 +123,20 @@ public abstract class ProduceBatchRequestEntry {
 
       // To check for null and also non-strings coerced into strings, we check the JsonNode type
       if (idNode.getNodeType() != JsonNodeType.STRING) {
-        throw new RestConstraintViolationException(
-            "Batch entry identifier not a valid string.", 422);
+        throw Errors.produceBatchException(
+            Errors.PRODUCE_BATCH_EXCEPTION_IDENTIFIER_NOT_VALID_MESSAGE);
       }
 
       String idString = idNode.asText();
       if (idString.length() < ProduceBatchAction.BATCH_ID_MINIMUM_LENGTH
           || idString.length() > ProduceBatchAction.BATCH_ID_MAXIMUM_LENGTH) {
-        throw new RestConstraintViolationException(
-            "Batch entry identifier not a valid string.", 422);
+        throw Errors.produceBatchException(
+            Errors.PRODUCE_BATCH_EXCEPTION_IDENTIFIER_NOT_VALID_MESSAGE);
       }
 
       if (!idString.matches("[0-9a-zA-Z-_]+")) {
-        throw new RestConstraintViolationException(
-            "Batch entry identifier not a valid string.", 422);
+        throw Errors.produceBatchException(
+            Errors.PRODUCE_BATCH_EXCEPTION_IDENTIFIER_NOT_VALID_MESSAGE);
       }
 
       return entry;

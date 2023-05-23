@@ -26,9 +26,9 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 @AutoValue
-public abstract class ProduceBatchResultEntry {
+public abstract class ProduceBatchResponseSuccessEntry {
 
-  ProduceBatchResultEntry() {}
+  ProduceBatchResponseSuccessEntry() {}
 
   @JsonProperty("id")
   public abstract String getId();
@@ -62,7 +62,7 @@ public abstract class ProduceBatchResultEntry {
   public abstract Optional<ProduceResponseData> getValue();
 
   @JsonCreator
-  static ProduceBatchResultEntry fromJson(
+  static ProduceBatchResponseSuccessEntry fromJson(
       @JsonProperty("id") String id,
       @JsonProperty("cluster_id") @Nullable String clusterId,
       @JsonProperty("topic_name") @Nullable String topicName,
@@ -84,7 +84,7 @@ public abstract class ProduceBatchResultEntry {
   }
 
   public static Builder builder() {
-    return new AutoValue_ProduceBatchResultEntry.Builder();
+    return new AutoValue_ProduceBatchResponseSuccessEntry.Builder();
   }
 
   @AutoValue.Builder
@@ -118,6 +118,6 @@ public abstract class ProduceBatchResultEntry {
 
     public abstract Builder setValue(@Nullable ProduceResponseData value);
 
-    public abstract ProduceBatchResultEntry build();
+    public abstract ProduceBatchResponseSuccessEntry build();
   }
 }

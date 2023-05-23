@@ -29,10 +29,10 @@ public abstract class ProduceBatchResponse {
   ProduceBatchResponse() {}
 
   @JsonProperty("successes")
-  public abstract ImmutableList<ProduceBatchResultEntry> getSuccesses();
+  public abstract ImmutableList<ProduceBatchResponseSuccessEntry> getSuccesses();
 
   @JsonProperty("failures")
-  public abstract ImmutableList<ProduceBatchErrorEntry> getFailures();
+  public abstract ImmutableList<ProduceBatchResponseFailureEntry> getFailures();
 
   @Override
   public String toString() {
@@ -40,6 +40,13 @@ public abstract class ProduceBatchResponse {
         .add(getSuccesses().toString())
         .add(getFailures().toString())
         .toString();
+  }
+
+  @JsonCreator
+  static ProduceBatchResponse fromJson(
+      @JsonProperty("successes") List<ProduceBatchResponseSuccessEntry> successes,
+      @JsonProperty("failures") List<ProduceBatchResponseFailureEntry> failures) {
+    return builder().setSuccesses(successes).setFailures(failures).build();
   }
 
   public static Builder builder() {
@@ -51,9 +58,9 @@ public abstract class ProduceBatchResponse {
 
     Builder() {}
 
-    public abstract Builder setSuccesses(List<ProduceBatchResultEntry> successes);
+    public abstract Builder setSuccesses(List<ProduceBatchResponseSuccessEntry> successes);
 
-    public abstract Builder setFailures(List<ProduceBatchErrorEntry> failures);
+    public abstract Builder setFailures(List<ProduceBatchResponseFailureEntry> failures);
 
     public abstract ProduceBatchResponse build();
   }

@@ -21,12 +21,13 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 @AutoValue
-public abstract class ProduceBatchErrorEntry {
+public abstract class ProduceBatchResponseFailureEntry {
 
   @JsonCreator
-  public ProduceBatchErrorEntry() {}
+  public ProduceBatchResponseFailureEntry() {}
 
   @JsonProperty("id")
   public abstract String getId();
@@ -38,8 +39,16 @@ public abstract class ProduceBatchErrorEntry {
   @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<String> getMessage();
 
+  @JsonCreator
+  static ProduceBatchResponseFailureEntry fromJson(
+      @JsonProperty("id") String id,
+      @JsonProperty("error_code") int errorCode,
+      @JsonProperty("message") Optional<String> message) {
+    return builder().setId(id).setErrorCode(errorCode).setMessage(message).build();
+  }
+
   public static Builder builder() {
-    return new AutoValue_ProduceBatchErrorEntry.Builder();
+    return new AutoValue_ProduceBatchResponseFailureEntry.Builder();
   }
 
   @AutoValue.Builder
@@ -51,8 +60,10 @@ public abstract class ProduceBatchErrorEntry {
 
     public abstract Builder setErrorCode(int errorCode);
 
-    public abstract Builder setMessage(String message);
+    public abstract Builder setMessage(Optional<String> message);
 
-    public abstract ProduceBatchErrorEntry build();
+    public abstract Builder setMessage(@Nullable String message);
+
+    public abstract ProduceBatchResponseFailureEntry build();
   }
 }

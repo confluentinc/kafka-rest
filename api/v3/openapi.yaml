@@ -2302,7 +2302,22 @@ components:
               items:
                 $ref: '#/components/schemas/PartitionData'
 
-    ProduceBatchErrorEntry:
+    ProduceBatchResponse:
+      description: Response for producing a batch of records.
+      type: object
+      properties:
+        successes:
+          description: Successful batch results.
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduceBatchResponseSuccessEntry'
+        failures:
+          description: Failed batch results.
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduceBatchResponseFailureEntry'
+
+    ProduceBatchResponseFailureEntry:
       type: object
       required:
         - id
@@ -2321,22 +2336,7 @@ components:
           description: Error message.
           type: string
 
-    ProduceBatchResponse:
-      description: Response for producing a batch of records.
-      type: object
-      properties:
-        successes:
-          description: Successful batch results.
-          type: array
-          items:
-            $ref: '#/components/schemas/ProduceBatchResultEntry'
-        failures:
-          description: Failed batch results.
-          type: array
-          items:
-            $ref: '#/components/schemas/ProduceBatchErrorEntry'
-
-    ProduceBatchResultEntry:
+    ProduceBatchResponseSuccessEntry:
       type: object
       required:
         - id
