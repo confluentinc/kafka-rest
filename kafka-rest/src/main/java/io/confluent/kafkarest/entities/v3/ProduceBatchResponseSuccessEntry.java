@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Confluent Inc.
+ * Copyright 2023 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -20,22 +20,18 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import java.time.Instant;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
 @AutoValue
-public abstract class ProduceResponse {
+public abstract class ProduceBatchResponseSuccessEntry {
 
-  ProduceResponse() {}
+  ProduceBatchResponseSuccessEntry() {}
 
-  @JsonProperty("error_code")
-  public abstract int getErrorCode();
-
-  @JsonProperty("message")
-  @JsonInclude(Include.NON_ABSENT)
-  public abstract Optional<String> getMessage();
+  @JsonProperty("id")
+  public abstract String getId();
 
   @JsonProperty("cluster_id")
   @JsonInclude(Include.NON_ABSENT)
@@ -66,9 +62,8 @@ public abstract class ProduceResponse {
   public abstract Optional<ProduceResponseData> getValue();
 
   @JsonCreator
-  static ProduceResponse fromJson(
-      @JsonProperty("error_code") int errorCode,
-      @JsonProperty("message") @Nullable String message,
+  static ProduceBatchResponseSuccessEntry fromJson(
+      @JsonProperty("id") String id,
       @JsonProperty("cluster_id") @Nullable String clusterId,
       @JsonProperty("topic_name") @Nullable String topicName,
       @JsonProperty("partition_id") @Nullable Integer partitionId,
@@ -77,8 +72,7 @@ public abstract class ProduceResponse {
       @JsonProperty("key") @Nullable ProduceResponseData key,
       @JsonProperty("value") @Nullable ProduceResponseData value) {
     return builder()
-        .setErrorCode(errorCode)
-        .setMessage(message)
+        .setId(id)
         .setClusterId(clusterId)
         .setTopicName(topicName)
         .setPartitionId(partitionId)
@@ -90,7 +84,7 @@ public abstract class ProduceResponse {
   }
 
   public static Builder builder() {
-    return new AutoValue_ProduceResponse.Builder();
+    return new AutoValue_ProduceBatchResponseSuccessEntry.Builder();
   }
 
   @AutoValue.Builder
@@ -98,11 +92,7 @@ public abstract class ProduceResponse {
 
     Builder() {}
 
-    public abstract Builder setErrorCode(int errorCode);
-
-    public abstract Builder setMessage(Optional<String> message);
-
-    public abstract Builder setMessage(@Nullable String message);
+    public abstract Builder setId(String id);
 
     public abstract Builder setClusterId(Optional<String> clusterId);
 
@@ -128,77 +118,6 @@ public abstract class ProduceResponse {
 
     public abstract Builder setValue(@Nullable ProduceResponseData value);
 
-    public abstract ProduceResponse build();
-  }
-
-  @AutoValue
-  public abstract static class ProduceResponseData {
-
-    ProduceResponseData() {}
-
-    @JsonProperty("type")
-    @JsonInclude(Include.NON_ABSENT)
-    public abstract Optional<EmbeddedFormat> getType();
-
-    @JsonProperty("subject")
-    @JsonInclude(Include.NON_ABSENT)
-    public abstract Optional<String> getSubject();
-
-    @JsonProperty("schema_id")
-    @JsonInclude(Include.NON_ABSENT)
-    public abstract Optional<Integer> getSchemaId();
-
-    @JsonProperty("schema_version")
-    @JsonInclude(Include.NON_ABSENT)
-    public abstract Optional<Integer> getSchemaVersion();
-
-    @JsonProperty("size")
-    public abstract int getSize();
-
-    @JsonCreator
-    static ProduceResponseData fromJson(
-        @JsonProperty("type") @Nullable EmbeddedFormat type,
-        @JsonProperty("subject") @Nullable String subject,
-        @JsonProperty("schema_id") @Nullable Integer schemaId,
-        @JsonProperty("schema_version") @Nullable Integer schemaVersion,
-        @JsonProperty("size") int size) {
-      return builder()
-          .setType(type)
-          .setSubject(subject)
-          .setSchemaId(schemaId)
-          .setSchemaVersion(schemaVersion)
-          .setSize(size)
-          .build();
-    }
-
-    public static Builder builder() {
-      return new AutoValue_ProduceResponse_ProduceResponseData.Builder();
-    }
-
-    @AutoValue.Builder
-    public abstract static class Builder {
-
-      Builder() {}
-
-      public abstract Builder setType(Optional<EmbeddedFormat> type);
-
-      public abstract Builder setType(@Nullable EmbeddedFormat type);
-
-      public abstract Builder setSubject(Optional<String> subject);
-
-      public abstract Builder setSubject(@Nullable String subject);
-
-      public abstract Builder setSchemaId(Optional<Integer> schemaId);
-
-      public abstract Builder setSchemaId(@Nullable Integer schemaId);
-
-      public abstract Builder setSchemaVersion(Optional<Integer> schemaVersion);
-
-      public abstract Builder setSchemaVersion(@Nullable Integer schemaVersion);
-
-      public abstract Builder setSize(int size);
-
-      public abstract ProduceResponseData build();
-    }
+    public abstract ProduceBatchResponseSuccessEntry build();
   }
 }

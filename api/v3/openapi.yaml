@@ -1441,6 +1441,37 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
+  /clusters/{cluster_id}/topics/{topic_name}/records:batch:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+
+    post:
+      summary: 'Produce Records Batch'
+      operationId: produceRecordsBatch
+      description: |-
+        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+
+        Produce a batch of records to the given topic, returning delivery reports for each record produced.
+        To identify records that have encountered an error, check the error_code of each delivery report.
+      tags:
+        - Records (v3)
+      requestBody:
+        $ref: '#/components/requestBodies/ProduceBatchRequest'
+      responses:
+        '207':
+          $ref: '#/components/responses/ProduceBatchResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
+
 components:
   parameters:
     AclHost:
@@ -2271,6 +2302,69 @@ components:
               items:
                 $ref: '#/components/schemas/PartitionData'
 
+    ProduceBatchResponse:
+      description: Response for producing a batch of records.
+      type: object
+      properties:
+        successes:
+          description: Successful batch results.
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduceBatchResponseSuccessEntry'
+        failures:
+          description: Failed batch results.
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduceBatchResponseFailureEntry'
+
+    ProduceBatchResponseFailureEntry:
+      type: object
+      required:
+        - id
+        - error_code
+      properties:
+        id:
+          description: Batch entry ID.
+          type: string
+          minLength: 1
+          maxLength: 80
+        error_code:
+          description: Error code.
+          type: integer
+          format: int32
+        message:
+          description: Error message.
+          type: string
+
+    ProduceBatchResponseSuccessEntry:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Batch entry ID.
+          type: string
+          minLength: 1
+          maxLength: 80
+        cluster_id:
+          type: string
+        topic_name:
+          type: string
+        partition_id:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
+        key:
+          $ref: '#/components/schemas/ProduceResponseData'
+        value:
+          $ref: '#/components/schemas/ProduceResponseData'
+
     ProduceResponse:
       type: object
       required:
@@ -2329,6 +2423,44 @@ components:
           type: integer
           nullable: true
       nullable: true
+
+    ProduceBatchRequest:
+      description: Request for producing a batch of records.
+      type: object
+      required:
+        - entries
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduceBatchRequestEntry'
+
+    ProduceBatchRequestEntry:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Batch entry ID.
+          type: string
+          minLength: 1
+          maxLength: 80
+        partition_id:
+          type: integer
+          nullable: true
+          format: int32
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduceRequestHeader'
+        key:
+          $ref: '#/components/schemas/ProduceRequestData'
+        value:
+          $ref: '#/components/schemas/ProduceRequestData'
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
 
     ProduceRequest:
       type: object
@@ -2736,6 +2868,27 @@ components:
                 partitions_count: 64
                 replication_factor: 3
                 validate_only: true
+
+    ProduceBatchRequest:
+      description: 'A batch of records to be produced to Kafka. The delivery reports are sent in the response
+                    in the same order as the records in the request.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProduceBatchRequest'
+          examples:
+            string_batch:
+              description: 'If using type, one of "BINARY", "JSON" or "STRING" is required.'
+              value:
+                entries:
+                  - id: "1"
+                    value:
+                      type: 'STRING'
+                      data: 'My first message'
+                  - id: "2"
+                    value:
+                      type: 'STRING'
+                      data: 'My second message'
 
     ProduceRequest:
       description: 'A single record to be produced to Kafka. To produce multiple records in the same
@@ -3908,6 +4061,65 @@ components:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/topics/topic-3/configs'
                 partition_reassignments:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/topics/topic-3/partitions/-/reassignments'
+
+    ProduceBatchResponse:
+      description: |-
+        The response containing a delivery report for each record produced to a topic.
+        A separate delivery report will be returned, in the same order, each with its own error_code.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProduceBatchResponse'
+          examples:
+            produce_batch_record_success:
+              description: The records were successfully produced to the topic.
+              value:
+                successes:
+                  - id: "1"
+                    cluster_id: 'cluster-1'
+                    topic_name: 'topic-1'
+                    partition_id: 1
+                    offset: 0
+                    timestamp: '2021-02-05T19:14:42Z'
+                    key:
+                      type: BINARY
+                      size: 7
+                    value:
+                      type: JSON
+                      size: 15
+                  - id: "2"
+                    cluster_id: 'cluster-1'
+                    topic_name: 'topic-1'
+                    partition_id: 1
+                    offset: 1
+                    timestamp: '2021-02-05T19:14:43Z'
+                    key:
+                      type: BINARY
+                      size: 7
+                    value:
+                      type: JSON
+                      size: 15
+                failures: []
+            produce_batch_record_success_and_failure:
+              description: One record was produced to the topic successfully, and one failed.
+              value:
+                successes:
+                  - id: "1"
+                    cluster_id: 'cluster-1'
+                    topic_name: 'topic-1'
+                    partition_id: 1
+                    offset: 0
+                    timestamp: '2021-02-05T19:14:42Z'
+                    key:
+                      type: BINARY
+                      size: 7
+                    value:
+                      type: JSON
+                      size: 15
+                failures:
+                  - id: "2"
+                    error_code: 400
+                    message: "Bad Request: data=1 is not a base64 string."
 
     ProduceResponse:
       description: |-
