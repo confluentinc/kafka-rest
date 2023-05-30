@@ -158,7 +158,7 @@ final class ProducerMetrics {
 
   private void setupRequestSensor(Map<String, String> metricsTags, String sensorTags) {
     Sensor requestSensor = createSensor(REQUEST_SENSOR_NAME, sensorTags);
-    addAvg(requestSensor, REQUEST_RATE_METRIC_NAME, REQUEST_RATE_METRIC_DOC, metricsTags);
+    addRate(requestSensor, REQUEST_RATE_METRIC_NAME, REQUEST_RATE_METRIC_DOC, metricsTags);
     addWindowedCount(
         requestSensor,
         REQUEST_COUNT_WINDOWED_METRIC_NAME,
