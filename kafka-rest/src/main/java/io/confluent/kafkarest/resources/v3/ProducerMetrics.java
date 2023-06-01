@@ -17,6 +17,7 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
 import java.util.Map;
@@ -152,7 +153,7 @@ final class ProducerMetrics {
 
   private void setupRequestSensor(Map<String, String> metricsTags, String sensorTags) {
     Sensor requestSensor = createSensor(REQUEST_SENSOR_NAME, sensorTags);
-    addAvg(requestSensor, REQUEST_RATE_METRIC_NAME, REQUEST_RATE_METRIC_DOC, metricsTags);
+    addRate(requestSensor, REQUEST_RATE_METRIC_NAME, REQUEST_RATE_METRIC_DOC, metricsTags);
     addWindowedCount(
         requestSensor,
         REQUEST_COUNT_WINDOWED_METRIC_NAME,
@@ -286,7 +287,8 @@ final class ProducerMetrics {
                 .toArray(Percentile[]::new)));
   }
 
-  private MetricName getMetricName(String name, String doc, Map<String, String> metricsTags) {
+  @VisibleForTesting
+  protected MetricName getMetricName(String name, String doc, Map<String, String> metricsTags) {
     return metrics.metricInstance(
         new MetricNameTemplate(name, GROUP_NAME, doc, metricsTags.keySet()), metricsTags);
   }
