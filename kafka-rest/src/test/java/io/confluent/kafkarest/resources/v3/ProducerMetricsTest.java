@@ -62,7 +62,7 @@ public class ProducerMetricsTest {
   private ProducerMetrics producerMetrics;
   private KafkaRestConfig config;
 
-  private Map tags = ImmutableMap.of("tag", "value");
+  private final Map<String, String> tags = ImmutableMap.of("tag", "value");
 
   @BeforeEach
   public void setUp()
