@@ -15,8 +15,13 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import org.eclipse.jetty.server.CustomRequestLog;
+import org.eclipse.jetty.server.Slf4jRequestLogWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +48,15 @@ public class KafkaRestMain {
     try {
       KafkaRestConfig config = new KafkaRestConfig((args.length > 0 ? args[0] : null));
 
-      KafkaRestApplication app = new KafkaRestApplication(config);
+      Slf4jRequestLogWriter logWriter = new Slf4jRequestLogWriter();
+      logWriter.setLoggerName(config.getString(RestConfig.REQUEST_LOGGER_NAME_CONFIG));
+      RestCustomRequestLog requestLog =
+          new RestCustomRequestLog(logWriter, CustomRequestLog.EXTENDED_NCSA_FORMAT + " %{ms}T");
+      requestLog.setRequestAttributesToLog(new String[] {CustomLogFields.REST_ERROR_CODE_FIELD});
+      KafkaRestApplication app = new KafkaRestApplication(config, "", null, requestLog);
+      app.setNonGlobalDosfilterListeners(
+          new ArrayList(Arrays.asList(new PerConnectionDosFilterListener())));
+      app.setGlobalDosfilterListeners(new ArrayList(Arrays.asList(new GlobalDosFilterListener())));
       app.start();
       log.info("Server started, listening for requests...");
       app.join();

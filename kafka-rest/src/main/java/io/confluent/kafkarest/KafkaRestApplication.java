@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
 import javax.ws.rs.core.Configurable;
+import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.StringUtil;
 import org.glassfish.jersey.server.ServerProperties;
@@ -69,7 +70,12 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   }
 
   public KafkaRestApplication(KafkaRestConfig config, String path, String listenerName) {
-    super(config, path, listenerName);
+    this(config, path, listenerName, null /* requestLog */);
+  }
+
+  public KafkaRestApplication(
+      KafkaRestConfig config, String path, String listenerName, RequestLog requestLog) {
+    super(config, path, listenerName, requestLog);
 
     restResourceExtensions =
         config.getConfiguredInstances(

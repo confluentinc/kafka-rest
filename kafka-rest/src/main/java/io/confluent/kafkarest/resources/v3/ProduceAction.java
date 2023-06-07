@@ -50,6 +50,7 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -57,6 +58,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.errors.SerializationException;
 import org.eclipse.jetty.http.HttpStatus;
@@ -84,6 +86,8 @@ public final class ProduceAction {
   private final StreamingResponseFactory streamingResponseFactory;
   private final ProduceRateLimiters produceRateLimiters;
   private final ExecutorService executorService;
+
+  @Context private HttpServletRequest httpServletRequest;
 
   @Inject
   public ProduceAction(
@@ -137,7 +141,7 @@ public final class ProduceAction {
     final long requestStartNs = System.nanoTime();
 
     try {
-      produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
+      produceRateLimiters.rateLimit(clusterId, request.getOriginalSize(), httpServletRequest);
     } catch (RateLimitExceededException e) {
       recordRateLimitedMetrics(metrics);
       // KREST-4356 Use our own CompletionException that will avoid the costly stack trace fill.

@@ -35,7 +35,7 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>rest-utils</artifactId>
-            <version>${io.confluent.rest-utils.version}</version>
+            <version>7.5.0-0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
@@ -98,7 +98,7 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>rest-utils-test</artifactId>
-            <version>${io.confluent.rest-utils.version}</version>
+            <version>7.5.0-0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -173,6 +173,14 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <excludes>**/RestCustomRequestLog.java,**/RestCustomRequestLogTest.java</excludes>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
