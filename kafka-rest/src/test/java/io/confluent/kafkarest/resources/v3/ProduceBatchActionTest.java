@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_BATCH_MAXIMUM_ENTRIES_DEFAULT;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS;
@@ -172,6 +173,7 @@ public class ProduceBatchActionTest {
             produceControllerProvider,
             () -> new ProducerMetrics(kafkaRestConfig, emptyMap()),
             produceRateLimiters,
+            Integer.valueOf(PRODUCE_BATCH_MAXIMUM_ENTRIES_DEFAULT),
             executorService);
     produceRateLimiters.clear();
   }
@@ -228,8 +230,10 @@ public class ProduceBatchActionTest {
     ProduceBatchResponseFailureEntry error =
         ProduceBatchResponseFailureEntry.builder()
             .setId("1")
-            .setErrorCode(42206)
-            .setMessage("Payload error. Schema Registry must be configured when using schemas.")
+            .setErrorCode(422)
+            .setMessage(
+                "Error: 42206 : Payload error. Schema Registry must be configured when "
+                    + "using schemas.")
             .build();
     ProduceBatchResponse expected =
         ProduceBatchResponse.builder()
@@ -680,6 +684,7 @@ public class ProduceBatchActionTest {
           ProduceBatchResponseFailureEntry.builder()
               .setId(Integer.toString(i))
               .setErrorCode(400)
+              .setMessage("Bad Request: Invalid base64 string")
               .build();
 
       results.add(result);
@@ -763,6 +768,7 @@ public class ProduceBatchActionTest {
                     ProduceBatchResponseFailureEntry.builder()
                         .setId("1")
                         .setErrorCode(400)
+                        .setMessage("Bad Request: Invalid base64 string")
                         .build()))
             .build();
 
@@ -923,7 +929,26 @@ public class ProduceBatchActionTest {
 
   private void assertProduceBatchResponse(
       ProduceBatchResponse expected, ProduceBatchResponse actual) {
+    int successesCount = actual.getSuccesses().size();
     assertEquals(expected.getSuccesses().size(), actual.getSuccesses().size());
+    for (int i = 0; i < successesCount; i++) {
+      ProduceBatchResponseSuccessEntry expectedSuccess = expected.getSuccesses().get(i);
+      ProduceBatchResponseSuccessEntry actualSuccess = actual.getSuccesses().get(i);
+      assertEquals(expectedSuccess.getId(), actualSuccess.getId());
+      assertEquals(expectedSuccess.getClusterId(), actualSuccess.getClusterId());
+      assertEquals(expectedSuccess.getTopicName(), actualSuccess.getTopicName());
+      assertEquals(expectedSuccess.getPartitionId(), actualSuccess.getPartitionId());
+      assertEquals(expectedSuccess.getOffset(), actualSuccess.getOffset());
+    }
+
+    int failuresCount = actual.getFailures().size();
     assertEquals(expected.getFailures().size(), actual.getFailures().size());
+    for (int i = 0; i < failuresCount; i++) {
+      ProduceBatchResponseFailureEntry expectedFailure = expected.getFailures().get(i);
+      ProduceBatchResponseFailureEntry actualFailure = actual.getFailures().get(i);
+      assertEquals(expectedFailure.getId(), actualFailure.getId());
+      assertEquals(expectedFailure.getErrorCode(), actualFailure.getErrorCode());
+      assertEquals(expectedFailure.getMessage(), actualFailure.getMessage());
+    }
   }
 }
