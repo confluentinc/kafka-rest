@@ -373,7 +373,9 @@ public final class ProduceBatchAction {
     ErrorResponse errorResponse;
     if (t instanceof CompletionException) {
       errorResponse = StreamingResponse.toErrorResponse(((CompletionException) t).getCause());
-        } else { errorResponse = StreamingResponse.toErrorResponse(t);}
+    } else {
+      errorResponse = StreamingResponse.toErrorResponse(t);
+    }
 
     ProduceBatchResponseFailureEntry.Builder builder = ProduceBatchResponseFailureEntry.builder();
     builder.setId(id);
