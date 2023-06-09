@@ -135,6 +135,7 @@
   <allow class="org.apache.kafka.common.network.ListenerName" />
   <allow class="org.apache.kafka.common.protocol.Errors" />
   <allow class="org.apache.kafka.common.security.JaasUtils" />
+  <allow class="org.apache.kafka.server.util.MockTime" />
   <allow class="org.apache.kafka.test.TestSslUtils" />
   <!-- c. Non-public Confluent Community Kafka APIs -->
   <allow class="kafka.admin.AclCommand" />
@@ -142,7 +143,6 @@
   <allow class="kafka.server.KafkaConfig" />
   <allow class="kafka.server.KafkaServer" />
   <allow class="kafka.utils.CoreUtils" />
-  <allow class="kafka.utils.MockTime" />
   <allow class="kafka.utils.TestUtils" />
   <allow class="kafka.zk.EmbeddedZookeeper" />
 
