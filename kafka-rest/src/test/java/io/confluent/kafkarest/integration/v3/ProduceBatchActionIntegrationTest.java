@@ -1713,9 +1713,6 @@ public class ProduceBatchActionIntegrationTest {
     ConsumerRecords<Object, Object> producedRecords =
         testEnv.kafkaCluster().getRecords(TOPIC_NAME, deserializer, deserializer, 10);
 
-    // The result entries in the response are not necessarily in the same order as the entries in
-    // the request. Rearrange the records for easy matching. This depends upon the request entries
-    // having ids 0..9, and the record offsets also being 0..9.
     assertEquals(10, producedRecords.count());
     ArrayList<ConsumerRecord<Object, Object>> recordsList = new ArrayList<>();
     producedRecords.forEach(recordsList::add);
@@ -1725,6 +1722,7 @@ public class ProduceBatchActionIntegrationTest {
           int id = Integer.parseInt(result.getId());
           ConsumerRecord<Object, Object> record = recordsList.get(id);
 
+          assertEquals(id, record.offset());
           assertEquals(result.getPartitionId(), record.partition());
           assertEquals(result.getOffset(), record.offset());
 
@@ -1788,9 +1786,6 @@ public class ProduceBatchActionIntegrationTest {
     ConsumerRecords<String, String> producedRecords =
         testEnv.kafkaCluster().getRecords(TOPIC_NAME, deserializer, deserializer, 10);
 
-    // The result entries in the response are not necessarily in the same order as the entries in
-    // the request. Rearrange the records for easy matching. This depends upon the request entries
-    // having ids 0..9, and the record offsets also being 0..9.
     assertEquals(10, producedRecords.count());
     ArrayList<ConsumerRecord<String, String>> recordsList = new ArrayList<>();
     producedRecords.forEach(recordsList::add);
@@ -1800,6 +1795,7 @@ public class ProduceBatchActionIntegrationTest {
           int id = Integer.parseInt(result.getId());
           ConsumerRecord<String, String> record = recordsList.get(id);
 
+          assertEquals(id, record.offset());
           assertEquals(result.getPartitionId(), record.partition());
           assertEquals(result.getOffset(), record.offset());
 
@@ -1941,12 +1937,9 @@ public class ProduceBatchActionIntegrationTest {
                                 .setData(TextNode.valueOf(value))
                                 .build())
                         // 0 value here is meaningless and only set as originalSize is mandatory for
-                        // AutoValue.
-                        // Value set here is ignored anyway, as "true" originalSize is calculated &
-                        // set,
-                        // when the JSON request is de-serialized into an ProduceRecord object on
-                        // the
-                        // server-side.
+                        // AutoValue. Value set here is ignored anyway, as "true" originalSize is
+                        // calculated & set, when the JSON request is deserialized into a
+                        // ProduceRecord object on the server.
                         .setOriginalSize(0L)
                         .build()))
             .build();
@@ -1962,10 +1955,10 @@ public class ProduceBatchActionIntegrationTest {
     assertEquals(207, response.getStatus());
 
     List<ProduceBatchResponseFailureEntry> actual = readResponseFailures(response);
-    assertEquals(actual.size(), 1);
+    assertEquals(1, actual.size());
     // Check request was rate-limited, so return http error-code is 429.
     // NOTE - Byte rate-limit is set as 1 in setup() making sure 1st request fails.
-    assertEquals(actual.get(0).getErrorCode(), 429);
+    assertEquals(429, actual.get(0).getErrorCode());
   }
 
   @Test

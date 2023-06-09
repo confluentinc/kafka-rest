@@ -220,6 +220,13 @@ public class KafkaRestConfig extends RestConfig {
   public static final ConfigDef.Range PRODUCE_RESPONSE_THREAD_POOL_SIZE_VALIDATOR =
       ConfigDef.Range.between(1, Integer.MAX_VALUE);
 
+  public static final String PRODUCE_BATCH_MAXIMUM_ENTRIES = "api.v3.produce.batch.maximum.entries";
+  private static final String PRODUCE_BATCH_MAXIMUM_ENTRIES_DOC =
+      "The maximum number of entries in a batch produce request.";
+  public static final String PRODUCE_BATCH_MAXIMUM_ENTRIES_DEFAULT = "10";
+  public static final ConfigDef.Range PRODUCE_BATCH_MAXIMUM_ENTRIES_VALIDATOR =
+      ConfigDef.Range.between(1, 50);
+
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
   private static final String CONSUMER_ITERATOR_TIMEOUT_MS_DOC =
       "Timeout for blocking consumer iterator operations. This should be set to a small enough "
@@ -591,6 +598,13 @@ public class KafkaRestConfig extends RestConfig {
             PRODUCE_RESPONSE_THREAD_POOL_SIZE_VALIDATOR,
             Importance.LOW,
             PRODUCE_RESPONSE_THREAD_POOL_SIZE_DOC)
+        .define(
+            PRODUCE_BATCH_MAXIMUM_ENTRIES,
+            Type.INT,
+            PRODUCE_BATCH_MAXIMUM_ENTRIES_DEFAULT,
+            PRODUCE_BATCH_MAXIMUM_ENTRIES_VALIDATOR,
+            Importance.LOW,
+            PRODUCE_BATCH_MAXIMUM_ENTRIES_DOC)
         .define(
             CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG,
             Type.INT,
