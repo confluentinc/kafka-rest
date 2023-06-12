@@ -35,7 +35,7 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>rest-utils</artifactId>
-            <version>7.5.0-0</version>
+            <version>${io.confluent.rest-utils.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
@@ -98,7 +98,7 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>rest-utils-test</artifactId>
-            <version>7.5.0-0</version>
+            <version>${io.confluent.rest-utils.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
