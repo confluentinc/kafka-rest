@@ -82,7 +82,6 @@ import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.server.util.MockTime;
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
@@ -301,11 +300,7 @@ public abstract class ClusterTestHarness {
                     .map(
                         config ->
                             CompletableFuture.supplyAsync(
-                                () ->
-                                    TestUtils.createServer(
-                                        config,
-                                        new MockTime(
-                                            System.currentTimeMillis(), System.nanoTime()))))
+                                () -> TestUtils.createServer(config, Option.empty())))
                     .collect(toList()))
             .join();
     log.info("Started all {} brokers for {}", numBrokers, getClass().getSimpleName());
