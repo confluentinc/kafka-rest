@@ -57,7 +57,6 @@ import javax.ws.rs.client.WebTarget;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
-import kafka.utils.MockTime;
 import kafka.utils.TestUtils;
 import kafka.zk.EmbeddedZookeeper;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -301,11 +300,7 @@ public abstract class ClusterTestHarness {
                     .map(
                         config ->
                             CompletableFuture.supplyAsync(
-                                () ->
-                                    TestUtils.createServer(
-                                        config,
-                                        new MockTime(
-                                            System.currentTimeMillis(), System.nanoTime()))))
+                                () -> TestUtils.createServer(config, Option.empty())))
                     .collect(toList()))
             .join();
     log.info("Started all {} brokers for {}", numBrokers, getClass().getSimpleName());
