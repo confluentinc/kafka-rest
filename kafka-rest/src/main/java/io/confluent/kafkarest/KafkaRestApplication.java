@@ -36,22 +36,36 @@ import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.JsonStreamMessageBodyReader;
 import io.confluent.kafkarest.response.ResponseModule;
 import io.confluent.rest.Application;
+import io.confluent.rest.RestConfig;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
 import javax.ws.rs.core.Configurable;
+import org.eclipse.jetty.server.CustomRequestLog;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.RequestLog;
+import org.eclipse.jetty.server.Slf4jRequestLogWriter;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.StringUtil;
 import org.glassfish.jersey.server.ServerProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Utilities for configuring and running an embedded Kafka server. */
 public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
+  private static final Logger log = LoggerFactory.getLogger(KafkaRestApplication.class);
+
   List<RestResourceExtension> restResourceExtensions;
+
+  protected RequestLog.Writer requestLogWriter;
+
+  protected String requestLogFormat;
 
   public KafkaRestApplication() {
     this(new Properties());
@@ -70,17 +84,55 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   }
 
   public KafkaRestApplication(KafkaRestConfig config, String path, String listenerName) {
-    this(config, path, listenerName, null /* requestLog */);
+    this(config, path, listenerName, null /* requestLogWriter */, null /* requestLogFormat */);
   }
 
+  /* This public-constructor exists to facilitate testing with a custom requestLogWriter, and
+   * requestLogFormat in an integration test in a different package.
+   */
   public KafkaRestApplication(
-      KafkaRestConfig config, String path, String listenerName, RequestLog requestLog) {
-    super(config, path, listenerName, requestLog);
+      KafkaRestConfig config,
+      String path,
+      String listenerName,
+      RequestLog.Writer requestLogWriter,
+      String requestLogFormat) {
+    super(config, path, listenerName);
+
+    this.requestLogWriter = requestLogWriter;
+    this.requestLogFormat = requestLogFormat;
 
     restResourceExtensions =
         config.getConfiguredInstances(
             KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG, RestResourceExtension.class);
     config.setMetrics(metrics);
+  }
+
+  @Override
+  public Handler configureHandler() {
+    // kafka-rest's custom-request-logging should be setup before calling super.configureHandler()
+    if (config.getBoolean(KafkaRestConfig.USE_CUSTOM_REQUEST_LOGGING_CONFIG)) {
+      log.info(
+          "For rest-app with listener {}, configuring custom request logging", getListenerName());
+      if (this.requestLogWriter == null) {
+        Slf4jRequestLogWriter logWriter = new Slf4jRequestLogWriter();
+        logWriter.setLoggerName(config.getString(RestConfig.REQUEST_LOGGER_NAME_CONFIG));
+        this.requestLogWriter = logWriter;
+      }
+
+      if (this.requestLogFormat == null) {
+        this.requestLogFormat = CustomRequestLog.EXTENDED_NCSA_FORMAT + " %{ms}T";
+      }
+
+      RestCustomRequestLog customRequestLog =
+          new RestCustomRequestLog(this.requestLogWriter, this.requestLogFormat);
+      customRequestLog.setRequestAttributesToLog(
+          new String[] {CustomLogFields.REST_ERROR_CODE_FIELD});
+      this.requestLog = customRequestLog;
+      this.setNonGlobalDosfilterListeners(
+          new ArrayList(Arrays.asList(new PerConnectionDosFilterListener())));
+      this.setGlobalDosfilterListeners(new ArrayList(Arrays.asList(new GlobalDosFilterListener())));
+    }
+    return super.configureHandler();
   }
 
   @Override

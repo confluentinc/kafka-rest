@@ -84,7 +84,6 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlets.DoSFilter.Listener;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
@@ -243,16 +242,13 @@ public abstract class ClusterTestHarness {
     }
 
     if (manageRest) {
-      startRest(null, null, null);
+      startRest(null, null);
     }
 
     log.info("Completed setup of {}", getClass().getSimpleName());
   }
 
-  protected void startRest(
-      RequestLog requestLog,
-      List<Listener> globalDosFilterListeners,
-      List<Listener> nonGlobalDosFilterListeners)
+  protected void startRest(RequestLog.Writer requestLogWriter, String requestLogFormat)
       throws Exception {
     log.info("Setting up REST.");
     int restPort = choosePort();
@@ -272,13 +268,7 @@ public abstract class ClusterTestHarness {
         "producer." + ProducerConfig.MAX_REQUEST_SIZE_CONFIG, String.valueOf((2 << 20) * 10));
 
     restConfig = new KafkaRestConfig(restProperties);
-    restApp = new KafkaRestApplication(restConfig, "", null, requestLog);
-    if (globalDosFilterListeners != null) {
-      restApp.setGlobalDosfilterListeners(globalDosFilterListeners);
-    }
-    if (nonGlobalDosFilterListeners != null) {
-      restApp.setNonGlobalDosfilterListeners(nonGlobalDosFilterListeners);
-    }
+    restApp = new KafkaRestApplication(restConfig, "", null, requestLogWriter, requestLogFormat);
 
     try {
       restServer = restApp.createServer();
@@ -288,7 +278,7 @@ public abstract class ClusterTestHarness {
       stopRest();
       Thread.sleep(ONE_SECOND_MS);
       try {
-        startRest(null, null, null);
+        startRest(null, null);
       } catch (IOException e2) {
         log.error("Restart of rest server failed", e2);
         throw e2;

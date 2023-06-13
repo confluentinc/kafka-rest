@@ -22,18 +22,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.databind.node.BinaryNode;
 import com.google.protobuf.ByteString;
-import io.confluent.kafkarest.CustomLogFields;
-import io.confluent.kafkarest.GlobalDosFilterListener;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.PerConnectionDosFilterListener;
-import io.confluent.kafkarest.RestCustomRequestLog;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -99,6 +93,24 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
         .getDisplayName()
         .contains("test_whenJettyGlobalRateLimitTriggered_ThenRequestLogHasRelevantInfo")) {
       restConfigs.put("dos.filter.enabled", "true");
+      restConfigs.put("dos.filter.max.requests.per.sec", 1);
+      restConfigs.put("dos.filter.max.requests.per.connection.per.sec", 99999);
+    } else if (testInfo
+        .getDisplayName()
+        .contains("test_whenNoRateLimitTriggered_ThenRequestLogHasRelevantInfo")) {
+      // Set all rate-limits very high
+      restConfigs.put("dos.filter.enabled", "true");
+      restConfigs.put("dos.filter.max.requests.per.sec", 99999);
+      restConfigs.put("dos.filter.max.requests.per.connection.per.sec", 99999);
+      restConfigs.put(KafkaRestConfig.RATE_LIMIT_ENABLE_CONFIG, "true");
+      restConfigs.put(KafkaRestConfig.RATE_LIMIT_BACKEND_CONFIG, "resilience4j");
+      restConfigs.put(KafkaRestConfig.RATE_LIMIT_PERMITS_PER_SEC_CONFIG, 99999);
+      restConfigs.put(KafkaRestConfig.RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_CONFIG, 99999);
+    } else if (testInfo
+        .getDisplayName()
+        .contains("test_whenCustomLoggingDisabled_ThenRequestLogDoesntHaveCustomInfo")) {
+      restConfigs.put("dos.filter.enabled", "true");
+      restConfigs.put(KafkaRestConfig.USE_CUSTOM_REQUEST_LOGGING_CONFIG, "false");
       restConfigs.put("dos.filter.max.requests.per.sec", 1);
       restConfigs.put("dos.filter.max.requests.per.connection.per.sec", 99999);
     } else if (testInfo
@@ -193,12 +205,7 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
     logEntries.clear();
     RestCustomRequestLogIntegrationTest.TestRequestLogWriter logWriter =
         new RestCustomRequestLogIntegrationTest.TestRequestLogWriter();
-    RestCustomRequestLog requestLog = new RestCustomRequestLog(logWriter, "%s");
-    requestLog.setRequestAttributesToLog(new String[] {CustomLogFields.REST_ERROR_CODE_FIELD});
-    startRest(
-        requestLog,
-        new ArrayList(Arrays.asList(new GlobalDosFilterListener())),
-        new ArrayList(Arrays.asList(new PerConnectionDosFilterListener())));
+    startRest(logWriter, "%s");
 
     createTopic(topicName, 1, (short) 1);
   }
@@ -285,8 +292,12 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
   }
 
   private void verifyLog(
-      int expectedNumOfEntries, int errorCodeInLog, int expectedRateLimitLogs, boolean isProduce) {
-    // Sleep so all request-logs are logged before reading and validting them here.
+      int expectedNumOfEntries,
+      int errorCodeInLog,
+      int expectedRateLimitLogs,
+      boolean isProduce,
+      boolean isCustomLoggingDisabled) {
+    // Sleep so all request-logs are logged before reading and validating them here.
     try {
       TimeUnit.SECONDS.sleep(2);
     } catch (InterruptedException e) {
@@ -320,8 +331,52 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
       }
       totalRequests++;
     }
+    if (isCustomLoggingDisabled) {
+      // Custom logging is disabled, Jetty's CustomRequestLog.java would be used, which is
+      // configured to log to stdout, so expect 0 entries in the queue logEntries.
+      assertEquals(0, totalRequests);
+      return;
+    }
     assertEquals(expectedRateLimitLogs, rateLimitedRequests);
     assertEquals(expectedNumOfEntries, totalRequests);
+  }
+
+  @Test
+  @DisplayName("test_whenCustomLoggingDisabled_ThenRequestLogDoesntHaveCustomInfo")
+  public void test_whenCustomLoggingDisabled_ThenRequestLogDoesntHaveCustomInfo() {
+    int totalRequests = 100;
+    // Since rate-limit is 1.
+    int requestsWithStatusOk = 1;
+    String url = "/v3/clusters/" + getClusterId() + "/topics/";
+    hammerAtConstantRate(url, Duration.ofMillis(1), 100);
+    // Since custom logging disabled, this will check rate-limited request don't have an extra
+    // error-code at the end.
+    verifyLog(
+        totalRequests,
+        ErrorCodes.DOS_FILTER_MAX_REQUEST_LIMIT_EXCEEDED,
+        totalRequests - requestsWithStatusOk,
+        false,
+        true);
+  }
+
+  /*
+   * All the test below are run with custom-logging enabled in kafka-rest.
+   */
+
+  @Test
+  @DisplayName("test_whenNoRateLimitTriggered_ThenRequestLogHasRelevantInfo")
+  public void test_whenNoRateLimitTriggered_ThenRequestLogHasRelevantInfo() {
+    int totalRequests = 100;
+    int requestsWithStatusOk = 100;
+    String url = "/v3/clusters/" + getClusterId() + "/topics/";
+    hammerAtConstantRate(url, Duration.ofMillis(1), 100);
+    // Check all requests are logged with status 200, and there is no extra error-code at the end.
+    verifyLog(
+        totalRequests,
+        ErrorCodes.DOS_FILTER_MAX_REQUEST_LIMIT_EXCEEDED,
+        totalRequests - requestsWithStatusOk,
+        false,
+        false);
   }
 
   @Test
@@ -330,12 +385,13 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
-    String clusterId = getClusterId();
-    hammerAtConstantRate("/v3/clusters/" + clusterId + "/topics/", Duration.ofMillis(1), 100);
+    String url = "/v3/clusters/" + getClusterId() + "/topics/";
+    hammerAtConstantRate(url, Duration.ofMillis(1), 100);
     verifyLog(
         totalRequests,
         ErrorCodes.DOS_FILTER_MAX_REQUEST_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
+        false,
         false);
   }
 
@@ -346,11 +402,13 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
     String clusterId = getClusterId();
-    hammerAtConstantRate("/v3/clusters/" + clusterId + "/topics/", Duration.ofMillis(1), 100);
+    String url = "/v3/clusters/" + getClusterId() + "/topics/";
+    hammerAtConstantRate(url, Duration.ofMillis(1), 100);
     verifyLog(
         totalRequests,
         ErrorCodes.DOS_FILTER_MAX_REQUEST_PER_CONNECTION_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
+        false,
         false);
   }
 
@@ -361,12 +419,13 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
-    String clusterId = getClusterId();
-    hammerAtConstantRate("/v3/clusters/" + clusterId + "/topics/", Duration.ofMillis(1), 100);
+    String url = "/v3/clusters/" + getClusterId() + "/topics/";
+    hammerAtConstantRate(url, Duration.ofMillis(1), 100);
     verifyLog(
         totalRequests,
         ErrorCodes.PERMITS_MAX_GLOBAL_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
+        false,
         false);
   }
 
@@ -377,12 +436,13 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
-    String clusterId = getClusterId();
-    hammerAtConstantRate("/v3/clusters/" + clusterId + "/topics/", Duration.ofMillis(1), 100);
+    String url = "/v3/clusters/" + getClusterId() + "/topics/";
+    hammerAtConstantRate(url, Duration.ofMillis(1), 100);
     verifyLog(
         totalRequests,
         ErrorCodes.PERMITS_MAX_PER_CLUSTER_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
+        false,
         false);
   }
 
@@ -392,16 +452,14 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
-    String clusterId = getClusterId();
-    hammerAtConstantRate(
-        "/v3/clusters/" + clusterId + "/topics/" + topicName + "/records/",
-        Duration.ofMillis(1),
-        100);
+    String url = "/v3/clusters/" + getClusterId() + "/topics/" + topicName + "/records/";
+    hammerAtConstantRate(url, Duration.ofMillis(1), 100);
     verifyLog(
         totalRequests,
         ErrorCodes.PRODUCE_MAX_REQUESTS_GLOBAL_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
-        true);
+        true,
+        false);
   }
 
   @Test
@@ -410,16 +468,14 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
-    String clusterId = getClusterId();
-    hammerAtConstantRate(
-        "/v3/clusters/" + clusterId + "/topics/" + topicName + "/records/",
-        Duration.ofMillis(1),
-        100);
+    String url = "/v3/clusters/" + getClusterId() + "/topics/" + topicName + "/records/";
+    hammerAtConstantRate(url, Duration.ofMillis(1), 100);
     verifyLog(
         totalRequests,
         ErrorCodes.PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
-        true);
+        true,
+        false);
   }
 
   @Test
@@ -428,16 +484,14 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
     int totalRequests = 100;
     // Since rate-limit is 1, so event first request will have enough data to get rate-limited
     int requestsWithStatusOk = 0;
-    String clusterId = getClusterId();
-    hammerAtConstantRate(
-        "/v3/clusters/" + clusterId + "/topics/" + topicName + "/records/",
-        Duration.ofMillis(1),
-        100);
+    String url = "/v3/clusters/" + getClusterId() + "/topics/" + topicName + "/records/";
+    hammerAtConstantRate(url, Duration.ofMillis(1), 100);
     verifyLog(
         totalRequests,
         ErrorCodes.PRODUCE_MAX_BYTES_GLOBAL_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
-        true);
+        true,
+        false);
   }
 
   @Test
@@ -446,15 +500,13 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
     int totalRequests = 100;
     // Since rate-limit is 1, so event first request will have enough data to get rate-limited
     int requestsWithStatusOk = 0;
-    String clusterId = getClusterId();
-    hammerAtConstantRate(
-        "/v3/clusters/" + clusterId + "/topics/" + topicName + "/records/",
-        Duration.ofMillis(1),
-        100);
+    String url = "/v3/clusters/" + getClusterId() + "/topics/" + topicName + "/records/";
+    hammerAtConstantRate(url, Duration.ofMillis(1), 100);
     verifyLog(
         totalRequests,
         ErrorCodes.PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
-        true);
+        true,
+        false);
   }
 }
