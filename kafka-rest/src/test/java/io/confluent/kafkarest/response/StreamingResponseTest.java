@@ -41,6 +41,8 @@ import org.junit.jupiter.api.Test;
 public class StreamingResponseTest {
 
   private static final Duration DURATION = Duration.ofMillis(5000);
+  private static final Duration GRACE_DURATION = Duration.ofMillis(1);
+  private static final int DEPTH = 100;
 
   @Test
   public void testGracePeriodExceededExceptionThrown() throws IOException {
@@ -92,7 +94,8 @@ public class StreamingResponseTest {
     replay(mockedChunkedOutput);
 
     StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(mockedChunkedOutputFactory, DURATION, DURATION);
+        new StreamingResponseFactory(
+            mockedChunkedOutputFactory, DURATION, GRACE_DURATION, DEPTH, DEPTH);
     StreamingResponse<ProduceRequest> streamingResponse =
         streamingResponseFactory.from(new JsonStream<>(() -> requests));
 
@@ -156,7 +159,8 @@ public class StreamingResponseTest {
     replay(mockedChunkedOutput, mockedChunkedOutputFactory);
 
     StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(mockedChunkedOutputFactory, DURATION, DURATION);
+        new StreamingResponseFactory(
+            mockedChunkedOutputFactory, DURATION, GRACE_DURATION, DEPTH, DEPTH);
 
     StreamingResponse<ProduceRequest> streamingResponse =
         streamingResponseFactory.from(new JsonStream<>(() -> requestsMappingIterator));
@@ -201,7 +205,8 @@ public class StreamingResponseTest {
     replay(mockedChunkedOutput);
 
     StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(mockedChunkedOutputFactory, DURATION, DURATION);
+        new StreamingResponseFactory(
+            mockedChunkedOutputFactory, DURATION, GRACE_DURATION, DEPTH, DEPTH);
     StreamingResponse<ProduceRequest> streamingResponse =
         streamingResponseFactory.from(new JsonStream<>(() -> requests));
 
@@ -241,7 +246,8 @@ public class StreamingResponseTest {
     replay(mockedChunkedOutput);
 
     StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(mockedChunkedOutputFactory, DURATION, DURATION);
+        new StreamingResponseFactory(
+            mockedChunkedOutputFactory, DURATION, GRACE_DURATION, DEPTH, DEPTH);
     StreamingResponse<ProduceRequest> streamingResponse =
         streamingResponseFactory.from(new JsonStream<>(() -> requests));
 
@@ -255,7 +261,7 @@ public class StreamingResponseTest {
   }
 
   @Test
-  public void testWriteToChunkedOutputAfterTimeout() throws IOException, InterruptedException {
+  public void testWriteToChunkedOutputAfterTimeout() throws IOException {
     String key = "foo";
     String value = "bar";
     ProduceRequest request =
@@ -294,50 +300,148 @@ public class StreamingResponseTest {
         ResultOrError.error(
             ErrorResponse.create(
                 408,
-                "Streaming connection open for longer than allowed: Connection will be closed."));
+                "Streaming connection open for longer than allowed: "
+                    + "Connection will be closed."));
 
     ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
 
     expect(clock.instant())
-        .andReturn(Instant.ofEpochMilli(0)); // stream start - input stream response (check)
-    expect(clock.instant())
-        .andReturn(Instant.ofEpochMilli(0)); // stream start - composing response (check)
-    expect(requestsMappingIterator.hasNext()).andReturn(true); // first message - OK
+        .andReturn(Instant.ofEpochMilli(0)); // stream start - input stream response
+
+    // first message
+    expect(clock.instant()).andReturn(Instant.ofEpochMilli(0));
+    expect(requestsMappingIterator.hasNext()).andReturn(true);
     expect(requestsMappingIterator.nextValue()).andReturn(request);
     expect(clock.instant())
         .andReturn(Instant.ofEpochMilli(1)); // first comparison duration.  within timeout
-
     expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
-    mockedChunkedOutput.write(sucessResult);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(sucessResult);
 
-    expect(requestsMappingIterator.hasNext()).andReturn(true); // is another message
-    expect(requestsMappingIterator.nextValue()).andReturn(request); // second message - bad gateway
+    // second message
+    expect(requestsMappingIterator.hasNext()).andReturn(true);
+    expect(requestsMappingIterator.nextValue()).andReturn(request);
     expect(clock.instant())
         .andReturn(Instant.ofEpochMilli(timeout + 5)); // second message beyond timeout
-
-    mockedChunkedOutput.write(error);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(error);
 
-    expect(requestsMappingIterator.hasNext())
-        .andAnswer(
-            () -> { // return hasnext true AFTER the thread executor has timed out and closed the
-              // connections.  Then expect no other calls except the connection closing.
-              Thread.sleep(500);
-              return true;
-            });
+    // no third message
+    expect(requestsMappingIterator.hasNext()).andReturn(false);
 
-    requestsMappingIterator.close(); // this ensures the closes have been called
-    mockedChunkedOutput.close();
-    requestsMappingIterator.close(); // expect twice - one from the thread and one from the finally
-    mockedChunkedOutput.close();
+    requestsMappingIterator.close(); // call from thread executor
+    mockedChunkedOutput.close(); // call from thread executor
+
+    requestsMappingIterator.close(); // call from finally
+    mockedChunkedOutput.close(); // call from finally
 
     replay(mockedChunkedOutput, mockedChunkedOutputFactory, requestsMappingIterator, clock);
 
-    StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(
-            mockedChunkedOutputFactory, Duration.ofMillis(timeout), Duration.ofMillis(50));
+    final StreamingResponse streamingResponse =
+        StreamingResponse.fromWithClock(
+            new JsonStream<>(() -> requestsMappingIterator),
+            mockedChunkedOutputFactory,
+            Duration.ofMillis(timeout),
+            Duration.ofMillis(50),
+            DEPTH,
+            DEPTH,
+            clock);
+
+    CompletableFuture<ProduceResponse> produceResponseFuture = new CompletableFuture<>();
+    produceResponseFuture.complete(produceResponse);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    streamingResponse.compose(result -> produceResponseFuture).resume(response);
+
+    try {
+      EasyMock.verify(mockedChunkedOutput);
+      EasyMock.verify(mockedChunkedOutputFactory);
+      EasyMock.verify(requestsMappingIterator);
+      EasyMock.verify(clock);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testSlowWritesToKafka429() throws IOException {
+
+    String key = "foo";
+    String value = "bar";
+    ProduceRequest request =
+        ProduceRequest.builder()
+            .setKey(
+                ProduceRequestData.builder()
+                    .setFormat(EmbeddedFormat.AVRO)
+                    .setRawSchema("{\"type\": \"string\"}")
+                    .setData(TextNode.valueOf(key))
+                    .build())
+            .setValue(
+                ProduceRequestData.builder()
+                    .setFormat(EmbeddedFormat.AVRO)
+                    .setRawSchema("{\"type\": \"string\"}")
+                    .setData(TextNode.valueOf(value))
+                    .build())
+            .setOriginalSize(0L)
+            .build();
+
+    MappingIterator<ProduceRequest> requestsMappingIterator = mock(MappingIterator.class);
+
+    long timeout = 10;
+    Clock clock = mock(Clock.class);
+
+    CompletableFuture<ProduceResponse> produceResponseFuture = new CompletableFuture<>();
+
+    ProduceResponse produceResponse =
+        ProduceResponse.builder()
+            .setClusterId("clusterId")
+            .setTopicName("topicName")
+            .setPartitionId(1)
+            .setOffset(1L)
+            .setErrorCode(HttpStatus.OK_200)
+            .build();
+    ResultOrError sucessResult = ResultOrError.result(produceResponse);
+
+    ResultOrError error =
+        ResultOrError.error(
+            ErrorResponse.create(
+                429,
+                "Backlog of messages waiting to be sent to Kafka is too large: Not "
+                    + "sending to Kafka."));
+
+    ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
+    ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
+
+    expect(clock.instant()).andReturn(Instant.ofEpochMilli(0));
+
+    // first message
+    expect(requestsMappingIterator.hasNext()).andReturn(true);
+    expect(clock.instant()).andReturn(Instant.ofEpochMilli(0));
+    expect(requestsMappingIterator.nextValue()).andReturn(request);
+    expect(clock.instant()).andReturn(Instant.ofEpochMilli(1));
+    expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(sucessResult);
+
+    // second message
+    expect(requestsMappingIterator.hasNext()).andReturn(true);
+    expect(clock.instant()).andReturn(Instant.ofEpochMilli(2));
+    expect(requestsMappingIterator.nextValue())
+        .andAnswer(
+            () -> {
+              produceResponseFuture.complete(produceResponse);
+              return request;
+            });
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(error);
+
+    expect(requestsMappingIterator.hasNext()).andReturn(false);
+
+    requestsMappingIterator.close(); // closes from the finally
+    mockedChunkedOutput.close();
+
+    replay(mockedChunkedOutput, mockedChunkedOutputFactory, requestsMappingIterator, clock);
 
     StreamingResponse<ProduceRequest> streamingResponse =
         StreamingResponse.fromWithClock(
@@ -345,18 +449,123 @@ public class StreamingResponseTest {
             mockedChunkedOutputFactory,
             Duration.ofMillis(timeout),
             Duration.ofMillis(50),
+            1,
+            2,
             clock);
 
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    streamingResponse.compose(result -> produceResponseFuture).resume(response);
+
+    EasyMock.verify(mockedChunkedOutput);
+    EasyMock.verify(mockedChunkedOutputFactory);
+    EasyMock.verify(requestsMappingIterator);
+    EasyMock.verify(clock);
+  }
+
+  @Test
+  public void testSlowWritesToKafkaDisconnects() throws IOException {
+
+    String key = "foo";
+    String value = "bar";
+    ProduceRequest request =
+        ProduceRequest.builder()
+            .setKey(
+                ProduceRequestData.builder()
+                    .setFormat(EmbeddedFormat.AVRO)
+                    .setRawSchema("{\"type\": \"string\"}")
+                    .setData(TextNode.valueOf(key))
+                    .build())
+            .setValue(
+                ProduceRequestData.builder()
+                    .setFormat(EmbeddedFormat.AVRO)
+                    .setRawSchema("{\"type\": \"string\"}")
+                    .setData(TextNode.valueOf(value))
+                    .build())
+            .setOriginalSize(0L)
+            .build();
+
+    MappingIterator<ProduceRequest> requestsMappingIterator = mock(MappingIterator.class);
+
+    long timeout = 10;
+    Clock clock = mock(Clock.class);
+
     CompletableFuture<ProduceResponse> produceResponseFuture = new CompletableFuture<>();
-    produceResponseFuture.complete(produceResponse);
+
+    ProduceResponse produceResponse =
+        ProduceResponse.builder()
+            .setClusterId("clusterId")
+            .setTopicName("topicName")
+            .setPartitionId(1)
+            .setOffset(1L)
+            .setErrorCode(HttpStatus.OK_200)
+            .build();
+    ResultOrError sucessResult = ResultOrError.result(produceResponse);
+
+    ResultOrError error =
+        ResultOrError.error(
+            ErrorResponse.create(
+                429,
+                "Backlog of messages waiting to be sent to Kafka is too large: Not "
+                    + "sending to Kafka."));
+
+    ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
+    ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
+
+    expect(clock.instant()).andReturn(Instant.ofEpochMilli(0));
+
+    // first message
+    expect(requestsMappingIterator.hasNext()).andReturn(true);
+    expect(clock.instant()).andReturn(Instant.ofEpochMilli(0));
+    expect(requestsMappingIterator.nextValue()).andReturn(request);
+    expect(clock.instant()).andReturn(Instant.ofEpochMilli(1));
+    expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(sucessResult);
+
+    // second message
+    expect(requestsMappingIterator.hasNext()).andReturn(true);
+    expect(clock.instant()).andReturn(Instant.ofEpochMilli(2));
+    expect(requestsMappingIterator.nextValue())
+        .andAnswer(
+            () -> {
+              return request;
+            });
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(error);
+
+    // third message
+    expect(requestsMappingIterator.hasNext()).andReturn(true);
+    expect(clock.instant()).andReturn(Instant.ofEpochMilli(2));
+    expect(requestsMappingIterator.nextValue())
+        .andAnswer(
+            () -> {
+              produceResponseFuture.complete(produceResponse);
+              return request;
+            });
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(error);
+
+    expect(requestsMappingIterator.hasNext()).andReturn(false);
+
+    requestsMappingIterator.close(); // closes from thread executor
+    mockedChunkedOutput.close();
+    requestsMappingIterator.close(); // closes from finally
+    mockedChunkedOutput.close();
+
+    replay(mockedChunkedOutput, mockedChunkedOutputFactory, requestsMappingIterator, clock);
+
+    StreamingResponse<ProduceRequest> streamingResponse =
+        StreamingResponse.fromWithClock(
+            new JsonStream<>(() -> requestsMappingIterator),
+            mockedChunkedOutputFactory,
+            Duration.ofMillis(timeout),
+            Duration.ofMillis(50),
+            1,
+            2,
+            clock);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse
-        .compose(
-            result -> {
-              return produceResponseFuture;
-            })
-        .resume(response);
+    streamingResponse.compose(result -> produceResponseFuture).resume(response);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);

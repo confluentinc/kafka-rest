@@ -489,8 +489,29 @@ public class KafkaRestConfig extends RestConfig {
       "streaming.connection.max.duration.grace.period.ms";
   private static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC =
       "How long after a streaming connection reaches its maximum duration outstanding "
-          + "requests will be processed for before the connection is closed.";
+          + "requests will be processed for before the connection is closed. "
+          + "Maximum value is 10 seconds.";
   private static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT = "500";
+  public static final ConfigDef.Range STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_VALIDATOR =
+      ConfigDef.Range.between(1, 10000);
+
+  public static final String STREAMING_RESPONSE_QUEUE_THROTTLE_DEPTH =
+      "streaming.response.queue.throttle.depth";
+  private static final String STREAMING_RESPONSE_QUEUE_THROTTLE_DEPTH_DOC =
+      "The maximum depth of the response queue that is used to hold requests as they are being "
+          + "processed by Kafka.  If this queue grows too long it indicates that Kafka is "
+          + "processing messages more slowly than the user is sending them. After this "
+          + "queue depth is reached, then all requests will receive a 429 response until the"
+          + "queue depth returns under the limit.";
+  private static final Integer STREAMING_RESPONSE_QUEUE_THROTTLE_DEPTH_DEFAULT = 100;
+
+  public static final String STREAMING_RESPONSE_QUEUE_DISCONNECT_DEPTH =
+      "streaming.response.queue.disconnect.depth";
+  private static final String STREAMING_RESPONSE_QUEUE_DISCONNECT_DEPTH_DOC =
+      "The maximum depth of the response queue that is used to hold requests as they are being"
+          + "processed by Kafka.  If the queue depth grows beyond this limit then the connection"
+          + "is closed.";
+  private static final Integer STREAMING_RESPONSE_QUEUE_DISCONNECT_DEPTH_DEFAULT = 200;
 
   private static final ConfigDef config;
   private volatile Metrics metrics;
@@ -888,8 +909,21 @@ public class KafkaRestConfig extends RestConfig {
             STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS,
             Type.LONG,
             STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT,
+            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_VALIDATOR,
             Importance.LOW,
-            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC);
+            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC)
+        .define(
+            STREAMING_RESPONSE_QUEUE_THROTTLE_DEPTH,
+            Type.INT,
+            STREAMING_RESPONSE_QUEUE_THROTTLE_DEPTH_DEFAULT,
+            Importance.LOW,
+            STREAMING_RESPONSE_QUEUE_THROTTLE_DEPTH_DOC)
+        .define(
+            STREAMING_RESPONSE_QUEUE_DISCONNECT_DEPTH,
+            Type.INT,
+            STREAMING_RESPONSE_QUEUE_DISCONNECT_DEPTH_DEFAULT,
+            Importance.LOW,
+            STREAMING_RESPONSE_QUEUE_DISCONNECT_DEPTH_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {
@@ -1128,6 +1162,14 @@ public class KafkaRestConfig extends RestConfig {
 
   public final Duration getStreamingConnectionMaxDurationGracePeriod() {
     return Duration.ofMillis(getLong(STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS));
+  }
+
+  public final Integer getStreamingConnectionMaxQueueDepthBeforeThrottling() {
+    return getInt(STREAMING_RESPONSE_QUEUE_THROTTLE_DEPTH);
+  }
+
+  public final Integer getStreamingConnectionMaxQueueDepthBeforeDisconnect() {
+    return getInt(STREAMING_RESPONSE_QUEUE_DISCONNECT_DEPTH);
   }
 
   public final int getRateLimitDefaultCost() {

@@ -19,6 +19,8 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionDurationConfig;
 import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionGracePeriod;
+import io.confluent.kafkarest.config.ConfigModule.getStreamingConnectionMaxQueueDepthBeforeDisconnect;
+import io.confluent.kafkarest.config.ConfigModule.getStreamingConnectionMaxQueueDepthBeforeThrottling;
 import java.time.Duration;
 import javax.inject.Inject;
 
@@ -27,18 +29,30 @@ public final class StreamingResponseFactory {
   private final ChunkedOutputFactory chunkedOutputFactory;
   private final Duration maxDuration;
   private final Duration gracePeriod;
+  private final Integer throttleDepth;
+  private final Integer disconnectDepth;
 
   @Inject
   public StreamingResponseFactory(
       ChunkedOutputFactory chunkedOutputFactory,
       @StreamingMaxConnectionDurationConfig Duration maxDuration,
-      @StreamingMaxConnectionGracePeriod Duration gracePeriod) {
+      @StreamingMaxConnectionGracePeriod Duration gracePeriod,
+      @getStreamingConnectionMaxQueueDepthBeforeThrottling Integer throttleDepth,
+      @getStreamingConnectionMaxQueueDepthBeforeDisconnect Integer disconnectDepth) {
     this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
     this.maxDuration = maxDuration;
     this.gracePeriod = gracePeriod;
+    this.throttleDepth = throttleDepth;
+    this.disconnectDepth = disconnectDepth;
   }
 
   public <T> StreamingResponse<T> from(JsonStream<T> inputStream) {
-    return StreamingResponse.from(inputStream, chunkedOutputFactory, maxDuration, gracePeriod);
+    return StreamingResponse.from(
+        inputStream,
+        chunkedOutputFactory,
+        maxDuration,
+        gracePeriod,
+        throttleDepth,
+        disconnectDepth);
   }
 }
