@@ -24,12 +24,22 @@ import javax.ws.rs.core.Response;
  * @see RequestRateLimiter#rateLimit(int)
  */
 public final class RateLimitExceededException extends StatusCodeException {
+  private final int errorCode;
 
   public RateLimitExceededException() {
+    this(Response.Status.TOO_MANY_REQUESTS.getStatusCode());
+  }
+
+  public RateLimitExceededException(int errorCode) {
     super(
         Response.Status.TOO_MANY_REQUESTS,
         "Request rate limit exceeded",
         "The rate limit of requests per second has been exceeded.");
+    this.errorCode = errorCode;
+  }
+
+  public int getErrorCode() {
+    return this.errorCode;
   }
 
   @Override

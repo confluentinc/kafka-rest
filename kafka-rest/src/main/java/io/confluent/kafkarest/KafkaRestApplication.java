@@ -27,6 +27,7 @@ import io.confluent.kafkarest.config.ConfigModule;
 import io.confluent.kafkarest.controllers.ControllersModule;
 import io.confluent.kafkarest.exceptions.ExceptionsModule;
 import io.confluent.kafkarest.exceptions.KafkaRestExceptionMapper;
+import io.confluent.kafkarest.exceptions.RateLimitExceededExceptionMapper;
 import io.confluent.kafkarest.extension.EnumConverterProvider;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature;
@@ -36,6 +37,7 @@ import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.JsonStreamMessageBodyReader;
 import io.confluent.kafkarest.response.ResponseModule;
 import io.confluent.rest.Application;
+import io.confluent.rest.CustomErrorCodeFields;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import java.text.SimpleDateFormat;
@@ -75,6 +77,14 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
         config.getConfiguredInstances(
             KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG, RestResourceExtension.class);
     config.setMetrics(metrics);
+  }
+
+  @Override
+  protected String requestLogFormat() {
+    return super.requestLogFormat()
+        + " %{"
+        + CustomErrorCodeFields.CUSTOM_ERROR_CODE_RESPONSE_HEADER
+        + "}o";
   }
 
   @Override
@@ -134,6 +144,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(ConstraintViolationExceptionMapper.class);
     config.register(new WebApplicationExceptionMapper(restConfig));
     config.register(new KafkaRestExceptionMapper(restConfig));
+    config.register(RateLimitExceededExceptionMapper.class);
   }
 
   @Override

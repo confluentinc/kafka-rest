@@ -51,7 +51,11 @@ final class FixedCostRateLimitRequestFilter implements ContainerRequestFilter {
       RequestRateLimiter rateLimiter = perClusterRateLimiterCache.getUnchecked(clusterId);
       rateLimiter.rateLimit(cost);
     }
-    // apply generic (global) rate limiter
-    genericRateLimiter.rateLimit(cost);
+    try {
+      // apply generic (global) rate limiter
+      genericRateLimiter.rateLimit(cost);
+    } catch (RateLimitExceededException e) {
+      throw new RateLimitExceededException(42907);
+    }
   }
 }
