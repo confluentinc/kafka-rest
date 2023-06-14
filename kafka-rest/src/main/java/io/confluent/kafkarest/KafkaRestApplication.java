@@ -124,9 +124,10 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       }
 
       RestCustomRequestLog customRequestLog =
-          new RestCustomRequestLog(this.requestLogWriter, this.requestLogFormat);
-      customRequestLog.setRequestAttributesToLog(
-          new String[] {CustomLogFields.REST_ERROR_CODE_FIELD});
+          new RestCustomRequestLog(
+              this.requestLogWriter,
+              this.requestLogFormat,
+              new String[] {CustomLogFields.REST_ERROR_CODE_FIELD});
       this.requestLog = customRequestLog;
       this.setNonGlobalDosfilterListeners(
           new ArrayList(Arrays.asList(new PerConnectionDosFilterListener())));

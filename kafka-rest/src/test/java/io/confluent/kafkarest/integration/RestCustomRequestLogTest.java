@@ -50,6 +50,7 @@ import org.eclipse.jetty.security.HashLoginService;
 import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.security.UserStore;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
+import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.ForwardedRequestCustomizer;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.LocalConnector;
@@ -106,7 +107,7 @@ public class RestCustomRequestLogTest {
         .getHttpConfiguration()
         .addCustomizer(new ForwardedRequestCustomizer());
     TestRequestLogWriter writer = new TestRequestLogWriter();
-    _log = new RestCustomRequestLog(writer, formatString);
+    _log = new RestCustomRequestLog(writer, formatString, new String[] {});
     _server.setRequestLog(_log);
     ServletContextHandler contextHandler = new ServletContextHandler();
     contextHandler.setSecurityHandler(getSecurityHandler("username", "password", "testRealm"));
@@ -416,7 +417,7 @@ public class RestCustomRequestLogTest {
     String log = _entries.poll(5, TimeUnit.SECONDS);
     long requestTime = requestTimes.poll(5, TimeUnit.SECONDS);
     DateCache dateCache =
-        new DateCache(RestCustomRequestLog.DEFAULT_DATE_FORMAT, Locale.getDefault(), "GMT");
+        new DateCache(CustomRequestLog.DEFAULT_DATE_FORMAT, Locale.getDefault(), "GMT");
     assertThat(log, is("RequestTime: [" + dateCache.format(requestTime) + "]"));
   }
 
@@ -639,8 +640,7 @@ public class RestCustomRequestLogTest {
         .getHttpConfiguration()
         .addCustomizer(new ForwardedRequestCustomizer());
     TestRequestLogWriter writer = new TestRequestLogWriter();
-    _log = new RestCustomRequestLog(writer, formatString);
-    _log.setRequestAttributesToLog(new String[] {requestAttrToLog});
+    _log = new RestCustomRequestLog(writer, formatString, new String[] {requestAttrToLog});
     _server.setRequestLog(_log);
     ServletContextHandler contextHandler = new ServletContextHandler();
     contextHandler.setSecurityHandler(getSecurityHandler("username", "password", "testRealm"));
