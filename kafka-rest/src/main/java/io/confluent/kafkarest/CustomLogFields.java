@@ -20,6 +20,5 @@ package io.confluent.kafkarest;
  * These field(& corresponding) value are stored as request-attribute.
  */
 public class CustomLogFields {
-
   public static final String REST_ERROR_CODE_FIELD = "REST_ERROR_CODE";
 }

@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.databind.node.BinaryNode;
 import com.google.protobuf.ByteString;
+import io.confluent.kafkarest.CustomLogFields;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
@@ -281,6 +282,9 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
             .collect(Collectors.toList());
 
     for (Response response : responses) {
+      assertTrue(
+          !response.getHeaders().containsKey(CustomLogFields.REST_ERROR_CODE_FIELD),
+          "Unexpected header in headers " + response.getHeaders());
       int status = response.getStatus();
       if (status != 200 && status != 429) {
         fail(
@@ -303,7 +307,7 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
     } catch (InterruptedException e) {
       assertTrue(false, "Unexpectedly failed to sleep.");
     }
-    String okStatusLogEntry = "200";
+    String okStatusLogEntry = "200 -";
     String rateLimitedLogEntry = "429 " + errorCodeInLog;
     if (isProduce) {
       // When produce-api gets rate-limited by produce-rate-limiters, then http-response-code still

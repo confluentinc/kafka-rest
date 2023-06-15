@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest;
 
+import static java.lang.System.exit;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
@@ -116,6 +118,16 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       if (this.requestLogWriter == null) {
         Slf4jRequestLogWriter logWriter = new Slf4jRequestLogWriter();
         logWriter.setLoggerName(config.getString(RestConfig.REQUEST_LOGGER_NAME_CONFIG));
+        try {
+          // This is required to correctly initialise Slf4jRequestLogWriter otherwise it throws NPE.
+          logWriter.start();
+        } catch (Exception e) {
+          log.error(
+              "Aborting as failed to start logger with exception {}, stack is \n{}",
+              e,
+              e.getStackTrace());
+          exit(1);
+        }
         this.requestLogWriter = logWriter;
       }
 
