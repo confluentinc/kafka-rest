@@ -18,6 +18,7 @@ package io.confluent.kafkarest.resources.v3;
 import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.Errors;
@@ -98,6 +99,21 @@ public final class ProduceAction {
       StreamingResponseFactory streamingResponseFactory,
       ProduceRateLimiters produceRateLimiters,
       @ProduceResponseThreadPool ExecutorService executorService) {
+    this(schemaManagerProvider, recordSerializer, produceControllerProvider, producerMetrics,
+        streamingResponseFactory, produceRateLimiters, executorService, null);
+  }
+
+  @Inject
+  @VisibleForTesting
+  ProduceAction(
+      Provider<SchemaManager> schemaManagerProvider,
+      Provider<RecordSerializer> recordSerializer,
+      Provider<ProduceController> produceControllerProvider,
+      Provider<ProducerMetrics> producerMetrics,
+      StreamingResponseFactory streamingResponseFactory,
+      ProduceRateLimiters produceRateLimiters,
+      @ProduceResponseThreadPool ExecutorService executorService,
+      HttpServletRequest httpServletRequest) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
@@ -105,6 +121,7 @@ public final class ProduceAction {
     this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
     this.produceRateLimiters = requireNonNull(produceRateLimiters);
     this.executorService = requireNonNull(executorService);
+    this.httpServletRequest = httpServletRequest;
   }
 
   @POST

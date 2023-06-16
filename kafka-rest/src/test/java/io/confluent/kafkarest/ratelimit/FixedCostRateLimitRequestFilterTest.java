@@ -15,6 +15,9 @@
 
 package io.confluent.kafkarest.ratelimit;
 
+import static io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes.PERMITS_MAX_GLOBAL_LIMIT_EXCEEDED;
+import static io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes.PERMITS_MAX_PER_CLUSTER_LIMIT_EXCEEDED;
+import static io.confluent.kafkarest.requestlog.CustomLogRequestAttributes.REST_ERROR_CODE;
 import static org.easymock.EasyMock.anyBoolean;
 import static org.easymock.EasyMock.anyInt;
 import static org.easymock.EasyMock.expect;
@@ -86,6 +89,8 @@ class FixedCostRateLimitRequestFilterTest {
     expect(requestContext.getUriInfo()).andReturn(mockUriInfo);
     genericRateLimiter.rateLimit(anyInt());
     expectLastCall().andThrow(new RateLimitExceededException());
+    requestContext.setProperty(REST_ERROR_CODE, PERMITS_MAX_GLOBAL_LIMIT_EXCEEDED);
+    expectLastCall();
 
     replay(requestContext, mockUriInfo, genericRateLimiter, perClusterRateLimiterCache);
 
@@ -180,6 +185,8 @@ class FixedCostRateLimitRequestFilterTest {
     expect(perClusterRateLimiterCache.getUnchecked(CLUSTER_ID)).andReturn(cachedRateLimiter);
     cachedRateLimiter.rateLimit(anyInt());
     expectLastCall().andThrow(new RateLimitExceededException());
+    requestContext.setProperty(REST_ERROR_CODE, PERMITS_MAX_PER_CLUSTER_LIMIT_EXCEEDED);
+    expectLastCall();
 
     replay(
         requestContext,
@@ -221,6 +228,8 @@ class FixedCostRateLimitRequestFilterTest {
     // cluster rate limit pass but generic rate limit fail
     genericRateLimiter.rateLimit(anyInt());
     expectLastCall().andThrow(new RateLimitExceededException());
+    requestContext.setProperty(REST_ERROR_CODE, PERMITS_MAX_GLOBAL_LIMIT_EXCEEDED);
+    expectLastCall();
 
     replay(
         requestContext,
