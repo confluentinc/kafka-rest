@@ -27,7 +27,7 @@ public final class RateLimitExceededException extends StatusCodeException {
 
   /*
    *  These error-codes signify which rate-limit got exceeded, and then
-   *  logged with request in RestCustomRequestLog.
+   *  logged with request in CustomLog.
    */
   public static class ErrorCodes {
 

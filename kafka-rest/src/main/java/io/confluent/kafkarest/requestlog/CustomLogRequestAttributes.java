@@ -13,12 +13,15 @@
  * specific language governing permissions and limitations under the License
  */
 
-package io.confluent.kafkarest;
+package io.confluent.kafkarest.requestlog;
 
 /**
- * This class lists the fields that are added to the request-log(see RestCustomRequestLog.java).
- * These field(& corresponding) value are stored as request-attribute.
+ * This class lists the request-attributes that are used to propagate custom-info that will be added
+ * to the request-log(see CustomLog.java).
  */
-public class CustomLogFields {
-  public static final String REST_ERROR_CODE_FIELD = "REST_ERROR_CODE";
+public final class CustomLogRequestAttributes {
+
+  private CustomLogRequestAttributes() {}
+
+  public static final String REST_ERROR_CODE = "REST_ERROR_CODE";
 }

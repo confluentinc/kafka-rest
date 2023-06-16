@@ -15,8 +15,6 @@
 
 package io.confluent.kafkarest;
 
-import static java.lang.System.exit;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
@@ -34,6 +32,10 @@ import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.ratelimit.RateLimitFeature;
+import io.confluent.kafkarest.requestlog.CustomLog;
+import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
+import io.confluent.kafkarest.requestlog.GlobalDosFilterListener;
+import io.confluent.kafkarest.requestlog.PerConnectionDosFilterListener;
 import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.JsonStreamMessageBodyReader;
 import io.confluent.kafkarest.response.ResponseModule;
@@ -42,14 +44,11 @@ import io.confluent.rest.RestConfig;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
 import javax.ws.rs.core.Configurable;
 import org.eclipse.jetty.server.CustomRequestLog;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Slf4jRequestLogWriter;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -98,54 +97,49 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       String listenerName,
       RequestLog.Writer requestLogWriter,
       String requestLogFormat) {
-    super(config, path, listenerName);
-
-    this.requestLogWriter = requestLogWriter;
-    this.requestLogFormat = requestLogFormat;
+    super(
+        config,
+        path,
+        listenerName,
+        createRequestLog(config, requestLogWriter, requestLogFormat, log, listenerName));
 
     restResourceExtensions =
         config.getConfiguredInstances(
             KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG, RestResourceExtension.class);
     config.setMetrics(metrics);
+
+    // Set up listeners for dos-filters, needed for custom-logging for when dos-filter rate-limits.
+    this.addNonGlobalDosfilterListener(new PerConnectionDosFilterListener());
+    this.addGlobalDosfilterListener(new GlobalDosFilterListener());
   }
 
-  @Override
-  public Handler configureHandler() {
-    // kafka-rest's custom-request-logging should be setup before calling super.configureHandler()
+  private static RequestLog createRequestLog(
+      KafkaRestConfig config,
+      RequestLog.Writer requestLogWriter,
+      String requestLogFormat,
+      Logger log,
+      String listenerName) {
     if (config.getBoolean(KafkaRestConfig.USE_CUSTOM_REQUEST_LOGGING_CONFIG)) {
-      log.info(
-          "For rest-app with listener {}, configuring custom request logging", getListenerName());
-      if (this.requestLogWriter == null) {
+      log.info("For rest-app with listener {}, configuring custom request logging", listenerName);
+      if (requestLogWriter == null) {
         Slf4jRequestLogWriter logWriter = new Slf4jRequestLogWriter();
         logWriter.setLoggerName(config.getString(RestConfig.REQUEST_LOGGER_NAME_CONFIG));
-        try {
-          // This is required to correctly initialise Slf4jRequestLogWriter otherwise it throws NPE.
-          logWriter.start();
-        } catch (Exception e) {
-          log.error(
-              "Aborting as failed to start logger with exception {}, stack is \n{}",
-              e,
-              e.getStackTrace());
-          exit(1);
-        }
-        this.requestLogWriter = logWriter;
+        requestLogWriter = logWriter;
       }
 
-      if (this.requestLogFormat == null) {
-        this.requestLogFormat = CustomRequestLog.EXTENDED_NCSA_FORMAT + " %{ms}T";
+      if (requestLogFormat == null) {
+        requestLogFormat = CustomRequestLog.EXTENDED_NCSA_FORMAT + " %{ms}T";
       }
 
-      RestCustomRequestLog customRequestLog =
-          new RestCustomRequestLog(
-              this.requestLogWriter,
-              this.requestLogFormat,
-              new String[] {CustomLogFields.REST_ERROR_CODE_FIELD});
-      this.requestLog = customRequestLog;
-      this.setNonGlobalDosfilterListeners(
-          new ArrayList(Arrays.asList(new PerConnectionDosFilterListener())));
-      this.setGlobalDosfilterListeners(new ArrayList(Arrays.asList(new GlobalDosFilterListener())));
+      CustomLog customRequestLog =
+          new CustomLog(
+              requestLogWriter,
+              requestLogFormat,
+              new String[] {CustomLogRequestAttributes.REST_ERROR_CODE});
+      return customRequestLog;
     }
-    return super.configureHandler();
+    // Return null, as Application's ctor would set-up a default request-logger.
+    return null;
   }
 
   @Override

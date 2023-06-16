@@ -20,7 +20,6 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
-import io.confluent.kafkarest.CustomLogFields;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitCacheExpiryConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitEnabledConfig;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
@@ -31,6 +30,7 @@ import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterCount;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterCountGlobal;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiterCacheLoader;
+import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import java.time.Duration;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -78,7 +78,7 @@ public class ProduceRateLimiters {
       countLimiterGlobal.get().rateLimit(1);
     } catch (RateLimitExceededException ex) {
       httpServletRequest.setAttribute(
-          CustomLogFields.REST_ERROR_CODE_FIELD,
+          CustomLogRequestAttributes.REST_ERROR_CODE,
           ErrorCodes.PRODUCE_MAX_REQUESTS_GLOBAL_LIMIT_EXCEEDED);
       throw ex;
     }
@@ -86,7 +86,7 @@ public class ProduceRateLimiters {
       bytesLimiterGlobal.get().rateLimit(toIntExact(requestSize));
     } catch (RateLimitExceededException ex) {
       httpServletRequest.setAttribute(
-          CustomLogFields.REST_ERROR_CODE_FIELD,
+          CustomLogRequestAttributes.REST_ERROR_CODE,
           ErrorCodes.PRODUCE_MAX_BYTES_GLOBAL_LIMIT_EXCEEDED);
       throw ex;
     }
@@ -98,7 +98,7 @@ public class ProduceRateLimiters {
       countRateLimiter.rateLimit(1);
     } catch (RateLimitExceededException ex) {
       httpServletRequest.setAttribute(
-          CustomLogFields.REST_ERROR_CODE_FIELD,
+          CustomLogRequestAttributes.REST_ERROR_CODE,
           ErrorCodes.PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
       throw ex;
     }
@@ -106,7 +106,7 @@ public class ProduceRateLimiters {
       byteRateLimiter.rateLimit(toIntExact(requestSize));
     } catch (RateLimitExceededException ex) {
       httpServletRequest.setAttribute(
-          CustomLogFields.REST_ERROR_CODE_FIELD,
+          CustomLogRequestAttributes.REST_ERROR_CODE,
           ErrorCodes.PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
       throw ex;
     }

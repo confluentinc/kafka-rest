@@ -13,7 +13,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest;
+package io.confluent.kafkarest.requestlog;
 
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes;
 import javax.servlet.http.HttpServletRequest;
@@ -22,10 +22,11 @@ import org.eclipse.jetty.servlets.DoSFilter.Action;
 import org.eclipse.jetty.servlets.DoSFilter.OverLimit;
 
 /**
- * This class is a Jetty DosFilter.Listener, for the global-dos filter. This on 429s will populate
- * relevant metadata as attributed on the request, that later-on can be logged.
+ * This class is a Jetty DosFilter.Listener, for the per-connection-dos(aka per IP, or non-global)
+ * filter. This on 429s will populate relevant metadata as attributed on the request, that later-on
+ * can be logged.
  */
-public class GlobalDosFilterListener extends DoSFilter.Listener {
+public class PerConnectionDosFilterListener extends DoSFilter.Listener {
 
   @Override
   public Action onRequestOverLimit(
@@ -35,7 +36,8 @@ public class GlobalDosFilterListener extends DoSFilter.Listener {
     Action action = Action.fromDelay(dosFilter.getDelayMs());
     if (action.equals(Action.REJECT)) {
       request.setAttribute(
-          CustomLogFields.REST_ERROR_CODE_FIELD, ErrorCodes.DOS_FILTER_MAX_REQUEST_LIMIT_EXCEEDED);
+          CustomLogRequestAttributes.REST_ERROR_CODE,
+          ErrorCodes.DOS_FILTER_MAX_REQUEST_PER_CONNECTION_LIMIT_EXCEEDED);
     }
     return action;
   }

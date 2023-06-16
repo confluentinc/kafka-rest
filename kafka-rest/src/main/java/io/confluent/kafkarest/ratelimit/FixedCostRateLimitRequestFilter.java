@@ -21,11 +21,9 @@ import static io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorC
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.cache.LoadingCache;
-import io.confluent.kafkarest.CustomLogFields;
-import javax.servlet.http.HttpServletRequest;
+import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.Context;
 
 /**
  * A {@link ContainerRequestFilter} that automatically applies a request rate-limit at a fixed cost
@@ -38,8 +36,6 @@ final class FixedCostRateLimitRequestFilter implements ContainerRequestFilter {
   private final RequestRateLimiter genericRateLimiter;
   private final int cost;
   private final LoadingCache<String, RequestRateLimiter> perClusterRateLimiterCache;
-
-  @Context private HttpServletRequest httpServletRequest;
 
   FixedCostRateLimitRequestFilter(
       RequestRateLimiter genericRateLimiter,
@@ -64,7 +60,7 @@ final class FixedCostRateLimitRequestFilter implements ContainerRequestFilter {
         // running in servlet environment, see
         // https://github.com/eclipse-ee4j/jersey/blob/d60da249fdd06a5059472c6d9c1d8a757588e710/containers/jersey-servlet-core/src/main/java/org/glassfish/jersey/servlet/ServletPropertiesDelegate.java#L29
         requestContext.setProperty(
-            CustomLogFields.REST_ERROR_CODE_FIELD, PERMITS_MAX_PER_CLUSTER_LIMIT_EXCEEDED);
+            CustomLogRequestAttributes.REST_ERROR_CODE, PERMITS_MAX_PER_CLUSTER_LIMIT_EXCEEDED);
         throw ex;
       }
     }
@@ -77,7 +73,7 @@ final class FixedCostRateLimitRequestFilter implements ContainerRequestFilter {
       // running in servlet environment, see
       // https://github.com/eclipse-ee4j/jersey/blob/d60da249fdd06a5059472c6d9c1d8a757588e710/containers/jersey-servlet-core/src/main/java/org/glassfish/jersey/servlet/ServletPropertiesDelegate.java#L29
       requestContext.setProperty(
-          CustomLogFields.REST_ERROR_CODE_FIELD, PERMITS_MAX_GLOBAL_LIMIT_EXCEEDED);
+          CustomLogRequestAttributes.REST_ERROR_CODE, PERMITS_MAX_GLOBAL_LIMIT_EXCEEDED);
       throw ex;
     }
   }

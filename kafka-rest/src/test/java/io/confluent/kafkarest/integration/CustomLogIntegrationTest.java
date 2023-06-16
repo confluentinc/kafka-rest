@@ -22,12 +22,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.databind.node.BinaryNode;
 import com.google.protobuf.ByteString;
-import io.confluent.kafkarest.CustomLogFields;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes;
+import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
@@ -56,10 +56,9 @@ import org.slf4j.LoggerFactory;
  * Integration tests to validate request-log has necessary custom-log when request is rate-limited.
  */
 @Tag("IntegrationTest")
-public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
+public class CustomLogIntegrationTest extends ClusterTestHarness {
 
-  private static final Logger log =
-      LoggerFactory.getLogger(RestCustomRequestLogIntegrationTest.class);
+  private static final Logger log = LoggerFactory.getLogger(CustomLogIntegrationTest.class);
 
   private ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
 
@@ -69,7 +68,7 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
 
   private Properties restConfigs = new Properties();
 
-  public RestCustomRequestLogIntegrationTest() {
+  public CustomLogIntegrationTest() {
     super(1, false, false);
   }
 
@@ -204,8 +203,8 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
     // And also setup dosfilter-listeners to populate request-attributes for logging
     // on Jetty dos-filters being triggered.
     logEntries.clear();
-    RestCustomRequestLogIntegrationTest.TestRequestLogWriter logWriter =
-        new RestCustomRequestLogIntegrationTest.TestRequestLogWriter();
+    CustomLogIntegrationTest.TestRequestLogWriter logWriter =
+        new CustomLogIntegrationTest.TestRequestLogWriter();
     startRest(logWriter, "%s");
 
     createTopic(topicName, 1, (short) 1);
@@ -283,7 +282,7 @@ public class RestCustomRequestLogIntegrationTest extends ClusterTestHarness {
 
     for (Response response : responses) {
       assertTrue(
-          !response.getHeaders().containsKey(CustomLogFields.REST_ERROR_CODE_FIELD),
+          !response.getHeaders().containsKey(CustomLogRequestAttributes.REST_ERROR_CODE),
           "Unexpected header in headers " + response.getHeaders());
       int status = response.getStatus();
       if (status != 200 && status != 429) {

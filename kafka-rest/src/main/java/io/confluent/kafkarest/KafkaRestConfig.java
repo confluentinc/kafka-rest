@@ -494,7 +494,7 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String USE_CUSTOM_REQUEST_LOGGING_CONFIG = "use.custom.request.logging";
   private static final String USE_CUSTOM_REQUEST_LOGGING_DOC =
-      "Whether to use custom-request-logging i.e. RestCustomRequestLog.java. Instead of using"
+      "Whether to use custom-request-logging i.e. CustomLog.java. Instead of using"
           + "Jetty's request-logging.";
   private static final boolean USE_CUSTOM_REQUEST_LOGGING_DEFAULT = true;
 
