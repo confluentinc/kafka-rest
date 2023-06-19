@@ -215,135 +215,6 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     stopRest();
   }
 
-  class TestRequestLogWriter implements RequestLog.Writer {
-
-    AtomicInteger entryCounter = new AtomicInteger();
-
-    @Override
-    public void write(String requestEntry) {
-      try {
-        boolean added = logEntries.add(requestEntry);
-        assertTrue(added, "Failed to add entry to log, unexpected.");
-        log.info("Log #{}:{}", entryCounter.getAndIncrement(), requestEntry);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-  }
-
-  private void hammerAtConstantRate(String path, Duration requestInterval, int totalRequests) {
-    checkArgument(!requestInterval.isNegative(), "rate must be non-negative");
-    List<Response> responses =
-        IntStream.range(0, totalRequests)
-            .mapToObj(
-                i -> {
-                  if (path.contains("/records")) {
-                    // Produce API call
-                    ByteString key = ByteString.copyFromUtf8("foo");
-                    ByteString value = ByteString.copyFromUtf8("bar");
-                    ProduceRequest request =
-                        ProduceRequest.builder()
-                            .setKey(
-                                ProduceRequestData.builder()
-                                    .setFormat(EmbeddedFormat.BINARY)
-                                    .setData(BinaryNode.valueOf(key.toByteArray()))
-                                    .build())
-                            .setValue(
-                                ProduceRequestData.builder()
-                                    .setFormat(EmbeddedFormat.BINARY)
-                                    .setData(BinaryNode.valueOf(value.toByteArray()))
-                                    .build())
-                            .setOriginalSize(0L)
-                            .build();
-                    return executor.schedule(
-                        () ->
-                            request(path)
-                                .accept(MediaType.APPLICATION_JSON)
-                                .post(Entity.entity(request, MediaType.APPLICATION_JSON)),
-                        /* delay= */ i * requestInterval.toMillis(),
-                        TimeUnit.MILLISECONDS);
-                  } else {
-                    return executor.schedule(
-                        () -> request(path).accept(MediaType.APPLICATION_JSON).get(),
-                        /* delay= */ i * requestInterval.toMillis(),
-                        TimeUnit.MILLISECONDS);
-                  }
-                })
-            .collect(Collectors.toList()).stream()
-            .map(
-                future -> {
-                  try {
-                    return future.get();
-                  } catch (InterruptedException | ExecutionException e) {
-                    throw new RuntimeException(e);
-                  }
-                })
-            .collect(Collectors.toList());
-
-    for (Response response : responses) {
-      assertTrue(
-          !response.getHeaders().containsKey(CustomLogRequestAttributes.REST_ERROR_CODE),
-          "Unexpected header in headers " + response.getHeaders());
-      int status = response.getStatus();
-      if (status != 200 && status != 429) {
-        fail(
-            String.format(
-                "Expected HTTP 200 or HTTP 429, but got HTTP %d instead: %s",
-                status, response.readEntity(String.class)));
-      }
-    }
-  }
-
-  private void verifyLog(
-      int expectedNumOfEntries,
-      int errorCodeInLog,
-      int expectedRateLimitLogs,
-      boolean isProduce,
-      boolean isCustomLoggingDisabled) {
-    // Sleep so all request-logs are logged before reading and validating them here.
-    try {
-      TimeUnit.SECONDS.sleep(2);
-    } catch (InterruptedException e) {
-      assertTrue(false, "Unexpectedly failed to sleep.");
-    }
-    String okStatusLogEntry = "200 -";
-    String rateLimitedLogEntry = "429 " + errorCodeInLog;
-    if (isProduce) {
-      // When produce-api gets rate-limited by produce-rate-limiters, then http-response-code still
-      // is 200. Though status-code at record receipt would be 429.
-      rateLimitedLogEntry = "200 " + errorCodeInLog;
-    }
-    int rateLimitedRequests = 0;
-    int totalRequests = 0;
-    while (true) {
-      String entry = logEntries.poll();
-      if (entry == null) {
-        break;
-      }
-      assertTrue(
-          okStatusLogEntry.equals(entry) || rateLimitedLogEntry.equals(entry),
-          "Log entry is <"
-              + entry
-              + "> Vs it should be either of <"
-              + okStatusLogEntry
-              + ">, or <"
-              + rateLimitedLogEntry
-              + ">");
-      if (rateLimitedLogEntry.equals(entry)) {
-        rateLimitedRequests++;
-      }
-      totalRequests++;
-    }
-    if (isCustomLoggingDisabled) {
-      // Custom logging is disabled, Jetty's CustomRequestLog.java would be used, which is
-      // configured to log to stdout, so expect 0 entries in the queue logEntries.
-      assertEquals(0, totalRequests);
-      return;
-    }
-    assertEquals(expectedRateLimitLogs, rateLimitedRequests);
-    assertEquals(expectedNumOfEntries, totalRequests);
-  }
-
   @Test
   @DisplayName("test_whenCustomLoggingDisabled_ThenRequestLogDoesntHaveCustomInfo")
   public void test_whenCustomLoggingDisabled_ThenRequestLogDoesntHaveCustomInfo() {
@@ -511,5 +382,134 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         totalRequests - requestsWithStatusOk,
         true,
         false);
+  }
+
+  class TestRequestLogWriter implements RequestLog.Writer {
+
+    AtomicInteger entryCounter = new AtomicInteger();
+
+    @Override
+    public void write(String requestEntry) {
+      try {
+        boolean added = logEntries.add(requestEntry);
+        assertTrue(added, "Failed to add entry to log, unexpected.");
+        log.info("Log #{}:{}", entryCounter.getAndIncrement(), requestEntry);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  private void hammerAtConstantRate(String path, Duration requestInterval, int totalRequests) {
+    checkArgument(!requestInterval.isNegative(), "rate must be non-negative");
+    List<Response> responses =
+        IntStream.range(0, totalRequests)
+            .mapToObj(
+                i -> {
+                  if (path.contains("/records")) {
+                    // Produce API call
+                    ByteString key = ByteString.copyFromUtf8("foo");
+                    ByteString value = ByteString.copyFromUtf8("bar");
+                    ProduceRequest request =
+                        ProduceRequest.builder()
+                            .setKey(
+                                ProduceRequestData.builder()
+                                    .setFormat(EmbeddedFormat.BINARY)
+                                    .setData(BinaryNode.valueOf(key.toByteArray()))
+                                    .build())
+                            .setValue(
+                                ProduceRequestData.builder()
+                                    .setFormat(EmbeddedFormat.BINARY)
+                                    .setData(BinaryNode.valueOf(value.toByteArray()))
+                                    .build())
+                            .setOriginalSize(0L)
+                            .build();
+                    return executor.schedule(
+                        () ->
+                            request(path)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .post(Entity.entity(request, MediaType.APPLICATION_JSON)),
+                        /* delay= */ i * requestInterval.toMillis(),
+                        TimeUnit.MILLISECONDS);
+                  } else {
+                    return executor.schedule(
+                        () -> request(path).accept(MediaType.APPLICATION_JSON).get(),
+                        /* delay= */ i * requestInterval.toMillis(),
+                        TimeUnit.MILLISECONDS);
+                  }
+                })
+            .collect(Collectors.toList()).stream()
+            .map(
+                future -> {
+                  try {
+                    return future.get();
+                  } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
+                  }
+                })
+            .collect(Collectors.toList());
+
+    for (Response response : responses) {
+      assertTrue(
+          !response.getHeaders().containsKey(CustomLogRequestAttributes.REST_ERROR_CODE),
+          "Unexpected header in headers " + response.getHeaders());
+      int status = response.getStatus();
+      if (status != 200 && status != 429) {
+        fail(
+            String.format(
+                "Expected HTTP 200 or HTTP 429, but got HTTP %d instead: %s",
+                status, response.readEntity(String.class)));
+      }
+    }
+  }
+
+  private void verifyLog(
+      int expectedNumOfEntries,
+      int errorCodeInLog,
+      int expectedRateLimitLogs,
+      boolean isProduce,
+      boolean isCustomLoggingDisabled) {
+    // Sleep so all request-logs are logged before reading and validating them here.
+    try {
+      TimeUnit.SECONDS.sleep(2);
+    } catch (InterruptedException e) {
+      assertTrue(false, "Unexpectedly failed to sleep.");
+    }
+    String okStatusLogEntry = "200 -";
+    String rateLimitedLogEntry = "429 " + errorCodeInLog;
+    if (isProduce) {
+      // When produce-api gets rate-limited by produce-rate-limiters, then http-response-code still
+      // is 200. Though status-code at record receipt would be 429.
+      rateLimitedLogEntry = "200 " + errorCodeInLog;
+    }
+    int rateLimitedRequests = 0;
+    int totalRequests = 0;
+    while (true) {
+      String entry = logEntries.poll();
+      if (entry == null) {
+        break;
+      }
+      assertTrue(
+          okStatusLogEntry.equals(entry) || rateLimitedLogEntry.equals(entry),
+          "Log entry is <"
+              + entry
+              + "> Vs it should be either of <"
+              + okStatusLogEntry
+              + ">, or <"
+              + rateLimitedLogEntry
+              + ">");
+      if (rateLimitedLogEntry.equals(entry)) {
+        rateLimitedRequests++;
+      }
+      totalRequests++;
+    }
+    if (isCustomLoggingDisabled) {
+      // Custom logging is disabled, Jetty's CustomRequestLog.java would be used, which is
+      // configured to log to stdout, so expect 0 entries in the queue logEntries.
+      assertEquals(0, totalRequests);
+      return;
+    }
+    assertEquals(expectedRateLimitLogs, rateLimitedRequests);
+    assertEquals(expectedNumOfEntries, totalRequests);
   }
 }

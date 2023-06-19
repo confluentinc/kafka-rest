@@ -64,10 +64,6 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   List<RestResourceExtension> restResourceExtensions;
 
-  protected RequestLog.Writer requestLogWriter;
-
-  protected String requestLogFormat;
-
   public KafkaRestApplication() {
     this(new Properties());
   }

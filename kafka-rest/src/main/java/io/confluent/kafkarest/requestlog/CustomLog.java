@@ -37,10 +37,12 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
 
   private final CustomRequestLog delegateJettyLog;
 
-  private String[] requestAttributesToLog;
+  private final String[] requestAttributesToLog;
 
   public CustomLog(RequestLog.Writer writer, String formatString, String[] requestAttributesToLog) {
     for (String attr : requestAttributesToLog) {
+      // Add format-specifier to log request-attributes as response-headers in Jetty's
+      // CustomRequestLog.
       formatString += " %{" + attr + "}o";
     }
     this.requestAttributesToLog = requestAttributesToLog;
@@ -63,12 +65,13 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
 
   @Override
   public void log(Request request, Response response) {
-    // Add request-attributes to log as response-headers. Then these response-headers are logged
-    // in jetty's CustomRequestLog with format specifier "%{AttributeName}o". This is workaround
-    // as the Jetty's CustomRequestLog doesn't have ability to log request-attributes. Whereas
-    // request-attributes are used to propagate custom-info to log, as that is more idiomatic. Also
-    // since request is more readily available Vs response(example - GlobalDosFilterListener), and
-    // the attributes are
+    // The configured request-attributes are converted to response-headers so Jetty can log them.
+    // Request-attributes are chosen to propagate custom-info to the request-log, as
+    // 1. Its idiomatic as per ServletRequest(which is implemented by Jetty's request).
+    // 2. Places like dosfilter-listeners, ex - GlobalJettyDosFilterListener, only request is
+    //    readily available(Vs response).
+    // Unfortunately Jetty doesn't provide a way to log request-attributes, hence they are converted
+    // to response-headers, which can be logged.
     for (String attr : this.requestAttributesToLog) {
       Object attrVal = request.getAttribute(attr);
       if (attrVal != null) {
@@ -80,7 +83,7 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
     try {
       delegateJettyLog.log(request, response);
     } catch (Exception e) {
-      log.info(
+      log.debug(
           "Logging with Jetty's CustomRequestLogFailed with exception {}, stack is \n{}",
           e,
           e.getStackTrace());
