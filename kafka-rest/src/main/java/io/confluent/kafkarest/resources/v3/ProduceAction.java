@@ -99,8 +99,15 @@ public final class ProduceAction {
       StreamingResponseFactory streamingResponseFactory,
       ProduceRateLimiters produceRateLimiters,
       @ProduceResponseThreadPool ExecutorService executorService) {
-    this(schemaManagerProvider, recordSerializer, produceControllerProvider, producerMetrics,
-        streamingResponseFactory, produceRateLimiters, executorService, null);
+    this(
+        schemaManagerProvider,
+        recordSerializer,
+        produceControllerProvider,
+        producerMetrics,
+        streamingResponseFactory,
+        produceRateLimiters,
+        executorService,
+        null);
   }
 
   @Inject

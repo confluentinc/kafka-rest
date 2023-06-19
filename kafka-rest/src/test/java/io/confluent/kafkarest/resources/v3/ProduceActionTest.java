@@ -37,7 +37,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.google.api.Http;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -512,8 +511,8 @@ public class ProduceActionTest {
     countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
-    httpServletRequest.setAttribute(REST_ERROR_CODE,
-        PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
+    httpServletRequest.setAttribute(
+        REST_ERROR_CODE, PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
     expectLastCall();
 
     replay(
@@ -907,9 +906,16 @@ public class ProduceActionTest {
       Provider<RequestRateLimiter> countLimiterGlobal,
       Provider<RequestRateLimiter> bytesLimiterGlobal,
       boolean errorSchemaRegistry) {
-    return getProduceAction(properties, chunkedOutputFactory, times, countLimiter, bytesLimiter,
+    return getProduceAction(
+        properties,
+        chunkedOutputFactory,
+        times,
+        countLimiter,
+        bytesLimiter,
         countLimiterGlobal,
-        bytesLimiterGlobal, errorSchemaRegistry, null);
+        bytesLimiterGlobal,
+        errorSchemaRegistry,
+        null);
   }
 
   private static ProduceAction getProduceAction(
@@ -949,15 +955,15 @@ public class ProduceActionTest {
     SchemaManager schemaManagerMock = mock(SchemaManager.class);
     expect(schemaManagerProvider.get()).andReturn(schemaManagerMock);
     expect(
-        schemaManagerMock.getSchema(
-            "topicName",
-            Optional.of(EmbeddedFormat.AVRO),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.of("bob"),
-            true))
+            schemaManagerMock.getSchema(
+                "topicName",
+                Optional.of(EmbeddedFormat.AVRO),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.of("bob"),
+                true))
         .andThrow(
             Errors.invalidPayloadException(
                 "Schema Registry must be configured when using schemas."));
