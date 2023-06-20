@@ -41,10 +41,10 @@
   <suppress checks="MethodTypeParameterName" files="AbstractConsumerTest" />
 
   <!-- The tests below are fairly big and complex, so they go over the NCSS threshold. -->
-  <suppress checks="JavaNCSS" files="ProtobufConverterTest|ProduceActionTest" />
+  <suppress checks="JavaNCSS" files="ProtobufConverterTest|ProduceActionTest|CustomLogIntegrationTest" />
 
   <!-- TestUtils#encodeComparable contains a complex, switch-like if-else structure. -->
-  <suppress checks="CyclomaticComplexity" files="TestUtils" />
+  <suppress checks="CyclomaticComplexity" files="TestUtils|CustomLogIntegrationTest" />
 
   <suppress
     checks="ClassDataAbstractionCoupling"

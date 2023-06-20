@@ -492,6 +492,12 @@ public class KafkaRestConfig extends RestConfig {
           + "requests will be processed for before the connection is closed.";
   private static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT = "500";
 
+  public static final String USE_CUSTOM_REQUEST_LOGGING_CONFIG = "use.custom.request.logging";
+  private static final String USE_CUSTOM_REQUEST_LOGGING_DOC =
+      "Whether to use custom-request-logging i.e. CustomLog.java. Instead of using"
+          + "Jetty's request-logging.";
+  private static final boolean USE_CUSTOM_REQUEST_LOGGING_DEFAULT = true;
+
   private static final ConfigDef config;
   private volatile Metrics metrics;
 
@@ -889,7 +895,13 @@ public class KafkaRestConfig extends RestConfig {
             Type.LONG,
             STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT,
             Importance.LOW,
-            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC);
+            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC)
+        .define(
+            USE_CUSTOM_REQUEST_LOGGING_CONFIG,
+            Type.BOOLEAN,
+            USE_CUSTOM_REQUEST_LOGGING_DEFAULT,
+            Importance.LOW,
+            USE_CUSTOM_REQUEST_LOGGING_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {

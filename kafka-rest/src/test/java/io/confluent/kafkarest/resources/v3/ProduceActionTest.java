@@ -20,11 +20,15 @@ import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SE
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED;
 import static io.confluent.kafkarest.KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG;
+import static io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes.PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED;
+import static io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes.PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED;
+import static io.confluent.kafkarest.requestlog.CustomLogRequestAttributes.REST_ERROR_CODE;
 import static java.util.Collections.emptyMap;
 import static org.easymock.EasyMock.anyBoolean;
 import static org.easymock.EasyMock.anyInt;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
@@ -67,6 +71,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.kafka.common.metrics.Metrics;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.http.HttpStatus;
@@ -378,6 +383,7 @@ public class ProduceActionTest {
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+    HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
@@ -395,6 +401,8 @@ public class ProduceActionTest {
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
     EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
+    httpServletRequest.setAttribute(REST_ERROR_CODE, PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
+    expectLastCall();
 
     replay(
         countLimitProvider,
@@ -404,7 +412,8 @@ public class ProduceActionTest {
         countLimiterGlobal,
         bytesLimiterGlobal,
         countLimiterGlobalProvider,
-        bytesLimiterGlobalProvider);
+        bytesLimiterGlobalProvider,
+        httpServletRequest);
 
     ProduceAction produceAction =
         getProduceAction(
@@ -414,7 +423,9 @@ public class ProduceActionTest {
             countLimitProvider,
             bytesLimitProvider,
             countLimiterGlobalProvider,
-            bytesLimiterGlobalProvider);
+            bytesLimiterGlobalProvider,
+            false,
+            httpServletRequest);
     MappingIterator<ProduceRequest> requests =
         getProduceRequestsMappingIterator(totalNumberOfProduceCalls);
 
@@ -455,7 +466,8 @@ public class ProduceActionTest {
         rateLimiterForCount,
         rateLimiterForBytes,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        httpServletRequest);
   }
 
   @Test
@@ -482,6 +494,7 @@ public class ProduceActionTest {
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+    HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
@@ -498,6 +511,9 @@ public class ProduceActionTest {
     countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
+    httpServletRequest.setAttribute(
+        REST_ERROR_CODE, PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
+    expectLastCall();
 
     replay(
         countLimitProvider,
@@ -507,7 +523,8 @@ public class ProduceActionTest {
         countLimiterGlobal,
         bytesLimiterGlobal,
         countLimiterGlobalProvider,
-        bytesLimiterGlobalProvider);
+        bytesLimiterGlobalProvider,
+        httpServletRequest);
 
     ProduceAction produceAction =
         getProduceAction(
@@ -517,7 +534,9 @@ public class ProduceActionTest {
             countLimitProvider,
             bytesLimitProvider,
             countLimiterGlobalProvider,
-            bytesLimiterGlobalProvider);
+            bytesLimiterGlobalProvider,
+            false,
+            httpServletRequest);
     MappingIterator<ProduceRequest> requests =
         getProduceRequestsMappingIterator(totalNumberOfProduceCalls);
 
@@ -557,7 +576,8 @@ public class ProduceActionTest {
         rateLimiterForCount,
         rateLimiterForBytes,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        httpServletRequest);
   }
 
   @Test
@@ -873,7 +893,8 @@ public class ProduceActionTest {
         bytesLimiter,
         countLimiterGlobal,
         bytesLimiterGlobal,
-        false);
+        false,
+        null);
   }
 
   private static ProduceAction getProduceAction(
@@ -886,6 +907,28 @@ public class ProduceActionTest {
       Provider<RequestRateLimiter> bytesLimiterGlobal,
       boolean errorSchemaRegistry) {
     return getProduceAction(
+        properties,
+        chunkedOutputFactory,
+        times,
+        countLimiter,
+        bytesLimiter,
+        countLimiterGlobal,
+        bytesLimiterGlobal,
+        errorSchemaRegistry,
+        null);
+  }
+
+  private static ProduceAction getProduceAction(
+      Properties properties,
+      ChunkedOutputFactory chunkedOutputFactory,
+      int times,
+      Provider<RequestRateLimiter> countLimiter,
+      Provider<RequestRateLimiter> bytesLimiter,
+      Provider<RequestRateLimiter> countLimiterGlobal,
+      Provider<RequestRateLimiter> bytesLimiterGlobal,
+      boolean errorSchemaRegistry,
+      HttpServletRequest httpServletRequest) {
+    return getProduceAction(
         new ProduceRateLimiters(
             countLimiter,
             bytesLimiter,
@@ -897,7 +940,8 @@ public class ProduceActionTest {
         chunkedOutputFactory,
         times,
         0,
-        errorSchemaRegistry);
+        errorSchemaRegistry,
+        httpServletRequest);
   }
 
   private static ProduceAction getProduceAction(
@@ -905,7 +949,8 @@ public class ProduceActionTest {
       ChunkedOutputFactory chunkedOutputFactory,
       int times,
       int producerId,
-      boolean errorSchemaRegistry) {
+      boolean errorSchemaRegistry,
+      HttpServletRequest httpServletRequest) {
     Provider<SchemaManager> schemaManagerProvider = mock(Provider.class);
     SchemaManager schemaManagerMock = mock(SchemaManager.class);
     expect(schemaManagerProvider.get()).andReturn(schemaManagerMock);
@@ -948,7 +993,8 @@ public class ProduceActionTest {
             () -> new ProducerMetrics(kafkaRestConfig, emptyMap()),
             streamingResponseFactory,
             produceRateLimiters,
-            executorService);
+            executorService,
+            httpServletRequest);
     produceRateLimiters.clear();
     return produceAction;
   }

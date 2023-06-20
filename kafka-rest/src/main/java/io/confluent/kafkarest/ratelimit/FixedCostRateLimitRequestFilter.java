@@ -16,9 +16,12 @@
 package io.confluent.kafkarest.ratelimit;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes.PERMITS_MAX_GLOBAL_LIMIT_EXCEEDED;
+import static io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes.PERMITS_MAX_PER_CLUSTER_LIMIT_EXCEEDED;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.cache.LoadingCache;
+import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 
@@ -29,6 +32,7 @@ import javax.ws.rs.container.ContainerRequestFilter;
  * io.confluent.kafkarest.KafkaRestConfig#RATE_LIMIT_DEFAULT_COST_CONFIG} configs.
  */
 final class FixedCostRateLimitRequestFilter implements ContainerRequestFilter {
+
   private final RequestRateLimiter genericRateLimiter;
   private final int cost;
   private final LoadingCache<String, RequestRateLimiter> perClusterRateLimiterCache;
@@ -49,9 +53,28 @@ final class FixedCostRateLimitRequestFilter implements ContainerRequestFilter {
     String clusterId = requestContext.getUriInfo().getPathParameters(true).getFirst("clusterId");
     if (clusterId != null) {
       RequestRateLimiter rateLimiter = perClusterRateLimiterCache.getUnchecked(clusterId);
-      rateLimiter.rateLimit(cost);
+      try {
+        rateLimiter.rateLimit(cost);
+      } catch (RateLimitExceededException ex) {
+        // The setProperty() call below maps to HttpServletRequest.setAttribute(), when Jersey is
+        // running in servlet environment, see
+        // https://github.com/eclipse-ee4j/jersey/blob/d60da249fdd06a5059472c6d9c1d8a757588e710/containers/jersey-servlet-core/src/main/java/org/glassfish/jersey/servlet/ServletPropertiesDelegate.java#L29
+        requestContext.setProperty(
+            CustomLogRequestAttributes.REST_ERROR_CODE, PERMITS_MAX_PER_CLUSTER_LIMIT_EXCEEDED);
+        throw ex;
+      }
     }
-    // apply generic (global) rate limiter
-    genericRateLimiter.rateLimit(cost);
+
+    try {
+      // apply generic (global) rate limiter
+      genericRateLimiter.rateLimit(cost);
+    } catch (RateLimitExceededException ex) {
+      // The setProperty() call below maps to HttpServletRequest.setAttribute, when Jersey is
+      // running in servlet environment, see
+      // https://github.com/eclipse-ee4j/jersey/blob/d60da249fdd06a5059472c6d9c1d8a757588e710/containers/jersey-servlet-core/src/main/java/org/glassfish/jersey/servlet/ServletPropertiesDelegate.java#L29
+      requestContext.setProperty(
+          CustomLogRequestAttributes.REST_ERROR_CODE, PERMITS_MAX_GLOBAL_LIMIT_EXCEEDED);
+      throw ex;
+    }
   }
 }
