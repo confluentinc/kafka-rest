@@ -509,7 +509,13 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
       assertEquals(0, totalRequests);
       return;
     }
-    assertEquals(expectedRateLimitLogs, rateLimitedRequests);
+    // This test will run on CI machines(like on Jenkins), which are shared & busy. Even
+    // though all requests are expected to be done with-in 1 second, on such machines, they can
+    // happen across 1 second. So less # of requests are rate-limited, keep 5% margin for that.
+    int minExpectedRateLimitLogs = (int) (0.95 * expectedRateLimitLogs);
+    assertTrue(
+        rateLimitedRequests >= minExpectedRateLimitLogs,
+        "Expected # of rate-limited requests to be >= " + minExpectedRateLimitLogs);
     assertEquals(expectedNumOfEntries, totalRequests);
   }
 }
