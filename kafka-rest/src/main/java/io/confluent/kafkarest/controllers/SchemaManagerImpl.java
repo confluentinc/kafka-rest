@@ -60,16 +60,11 @@ final class SchemaManagerImpl implements SchemaManager {
     // (subject|subjectNameStrategy)?, schemaId
 
     if (schemaId.isPresent()) {
-      checkArgumentWrapper(!format.isPresent());
-      checkArgumentWrapper(!schemaVersion.isPresent());
-      checkArgumentWrapper(!rawSchema.isPresent());
       return getSchemaFromSchemaId(topicName, subject, subjectNameStrategy, schemaId.get(), isKey);
     }
 
     // (subject|subjectNameStrategy)?, schemaVersion
     if (schemaVersion.isPresent()) {
-      checkArgumentWrapper(!format.isPresent());
-      checkArgumentWrapper(!rawSchema.isPresent());
       return getSchemaFromSchemaVersion(
           topicName, subject, subjectNameStrategy, schemaVersion.get(), isKey);
     }

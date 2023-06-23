@@ -252,43 +252,6 @@ public abstract class ProduceRequest {
                 : (!request.getSchemaVersion().isPresent() || !request.getRawSchema().isPresent()),
             "Only one of 'schema_id', 'schema_version' or 'schema' can be used.");
 
-        if (request.getFormat().isPresent()) {
-          if (request.getFormat().get().requiresSchema()) {
-            checkState(
-                !request.getSchemaId().isPresent(),
-                "'schema_id=%s' cannot be used with 'serializer'.",
-                request.getSchemaId().orElse(null));
-            checkState(
-                !request.getSchemaVersion().isPresent(),
-                "'schema_version=%s' cannot be used with 'serializer'.",
-                request.getSchemaVersion().orElse(null));
-            checkState(
-                request.getRawSchema().isPresent(),
-                "'schema_version=latest' cannot be used with 'serializer'.");
-          } else {
-            checkState(
-                !request.getSubjectNameStrategy().isPresent(),
-                "'type=%s' cannot be used with 'subject_strategy'.",
-                request.getFormat().get());
-            checkState(
-                !request.getSubject().isPresent(),
-                "'type=%s' cannot be used with 'subject'.",
-                request.getFormat().get());
-            checkState(
-                !request.getSchemaId().isPresent(),
-                "'type=%s' cannot be used with 'schema_id'.",
-                request.getFormat().get());
-            checkState(
-                !request.getSchemaVersion().isPresent(),
-                "'type=%s' cannot be used with 'schema_version'.",
-                request.getFormat().get());
-            checkState(
-                !request.getRawSchema().isPresent(),
-                "'type=%s' cannot be used with 'schema'.",
-                request.getFormat().get());
-          }
-        }
-
         return request;
       }
     }
