@@ -97,7 +97,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
         config,
         path,
         listenerName,
-        createRequestLog(config, requestLogWriter, requestLogFormat, log, listenerName));
+        createRequestLog(config, requestLogWriter, requestLogFormat, listenerName));
 
     restResourceExtensions =
         config.getConfiguredInstances(
@@ -113,7 +113,6 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       KafkaRestConfig config,
       RequestLog.Writer requestLogWriter,
       String requestLogFormat,
-      Logger log,
       String listenerName) {
     if (config.getBoolean(KafkaRestConfig.USE_CUSTOM_REQUEST_LOGGING_CONFIG)) {
       log.info("For rest-app with listener {}, configuring custom request logging", listenerName);
@@ -127,12 +126,10 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
         requestLogFormat = CustomRequestLog.EXTENDED_NCSA_FORMAT + " %{ms}T";
       }
 
-      CustomLog customRequestLog =
-          new CustomLog(
-              requestLogWriter,
-              requestLogFormat,
-              new String[] {CustomLogRequestAttributes.REST_ERROR_CODE});
-      return customRequestLog;
+      return new CustomLog(
+          requestLogWriter,
+          requestLogFormat,
+          new String[] {CustomLogRequestAttributes.REST_ERROR_CODE});
     }
     // Return null, as Application's ctor would set-up a default request-logger.
     return null;

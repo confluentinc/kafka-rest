@@ -36,8 +36,12 @@ import java.io.IOException;
 import java.util.Optional;
 import javax.ws.rs.core.Response.Status;
 import org.apache.avro.SchemaParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class SchemaManagerImpl implements SchemaManager {
+  private static final Logger log = LoggerFactory.getLogger(SchemaManagerImpl.class);
+
   private final SchemaRegistryClient schemaRegistryClient;
   private final SubjectNameStrategy defaultSubjectNameStrategy;
 
@@ -133,6 +137,7 @@ final class SchemaManagerImpl implements SchemaManager {
           schemaRegistryClient.getByVersion(
               actualSubject, schemaVersion, /* lookupDeletedSchema= */ false);
     } catch (RuntimeException e) {
+      log.error("Error while getSchemaFromSchemaVersion", e);
       throw new BadRequestException(
           String.format(
               "Schema does not exist for subject: %s, version: %s", actualSubject, schemaVersion),
@@ -150,6 +155,7 @@ final class SchemaManagerImpl implements SchemaManager {
     try {
       schemaProvider = EmbeddedFormat.forSchemaType(schema.getSchemaType()).getSchemaProvider();
     } catch (UnsupportedOperationException e) {
+      log.error("Error while getSchemaFromSchemaVersion", e);
       throw new BadRequestException(
           String.format("Schema version not supported for %s", schema.getSchemaType()), e);
     }
@@ -167,6 +173,7 @@ final class SchemaManagerImpl implements SchemaManager {
                           actualSubject, schemaVersion)));
 
     } catch (SchemaParseException e) {
+      log.error("Error while getSchemaFromSchemaVersion", e);
       throw new BadRequestException(
           String.format("Error parsing schema for %s", schema.getSchemaType()), e);
     }
