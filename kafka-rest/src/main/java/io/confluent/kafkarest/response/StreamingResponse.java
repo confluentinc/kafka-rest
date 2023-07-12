@@ -205,7 +205,7 @@ public abstract class StreamingResponse<T> {
             executorService.shutdownNow();
           }
         } catch (InterruptedException e) {
-          log.debug("Exception thrown when attempting to shutdown executorService {}", e);
+          log.debug("Exception thrown when attempting to shutdown executorService", e);
         }
       }
     }
