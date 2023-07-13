@@ -180,6 +180,7 @@
                     <version>${maven-checkstyle-plugin.version}</version>
                     <configuration>
                         <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                        <propertyExpansion>config_loc=checkstyle</propertyExpansion>
                     </configuration>
                 </plugin>
                 

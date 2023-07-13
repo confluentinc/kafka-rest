@@ -6,7 +6,7 @@
 <module name="Checker">
   <module name="TreeWalker">
     <module name="ImportControl">
-      <property name="file" value="checkstyle/import_control.xml"/>
+      <property name="file" value="${config_loc}/import_control.xml"/>
     </module>
   </module>
 </module>
