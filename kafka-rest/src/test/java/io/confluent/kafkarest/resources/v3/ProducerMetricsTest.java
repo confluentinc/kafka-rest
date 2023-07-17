@@ -21,11 +21,15 @@ import static java.util.function.LongUnaryOperator.identity;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.IsCloseTo.closeTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.rest.RestConfig;
 import java.lang.management.ManagementFactory;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -36,10 +40,17 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.metrics.JmxReporter;
+import org.apache.kafka.common.metrics.KafkaMetric;
 import org.apache.kafka.common.metrics.MetricConfig;
 import org.apache.kafka.common.metrics.Metrics;
 import org.apache.kafka.common.metrics.Sensor;
+import org.apache.kafka.common.metrics.stats.Avg;
+import org.apache.kafka.common.metrics.stats.CumulativeSum;
+import org.apache.kafka.common.metrics.stats.Max;
+import org.apache.kafka.common.metrics.stats.Rate;
+import org.apache.kafka.common.metrics.stats.WindowedCount;
 import org.apache.kafka.common.utils.Time;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +60,9 @@ public class ProducerMetricsTest {
   private static final String METRICS_SEARCH_STRING = "kafka.rest:type=produce-api-metrics,*";
 
   private ProducerMetrics producerMetrics;
+  private KafkaRestConfig config;
+
+  private final Map<String, String> tags = ImmutableMap.of("tag", "value");
 
   @BeforeEach
   public void setUp()
@@ -56,7 +70,7 @@ public class ProducerMetricsTest {
     Properties properties = new Properties();
     properties.setProperty(METRICS_JMX_PREFIX_CONFIG, "kafka.rest");
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    config = new KafkaRestConfig(properties);
 
     JmxReporter reporter = new JmxReporter();
     reporter.contextChange(config.getMetricsContext());
@@ -75,7 +89,7 @@ public class ProducerMetricsTest {
 
     config.setMetrics(metrics);
 
-    producerMetrics = new ProducerMetrics(config, ImmutableMap.of("tag", "value"));
+    producerMetrics = new ProducerMetrics(config, tags);
   }
 
   @Test
@@ -208,5 +222,147 @@ public class ProducerMetricsTest {
     assertEquals(1, beanNames.size());
     String tenantId = beanNames.stream().iterator().next().getKeyPropertyList().get("tag");
     assertEquals("value", tenantId);
+  }
+
+  @Test
+  public void testMultipleSensors() throws Exception {
+
+    Map<String, String> tags2 = ImmutableMap.of("tag", "value2", "otherTag", "otherValue2");
+    ProducerMetrics producerMetrics2 = new ProducerMetrics(config, tags2);
+
+    producerMetrics.recordRequest();
+    producerMetrics2.recordRequest();
+    producerMetrics2.recordRequest();
+
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
+    assertEquals(2, beanNames.size());
+    Iterator<ObjectName> i = beanNames.stream().iterator();
+    String tenantId = i.next().getKeyPropertyList().get("tag");
+
+    Hashtable<String, String> object2 = i.next().getKeyPropertyList();
+    String tenantId2 = object2.get("tag");
+    String otherValue2 = object2.get("otherTag");
+
+    assertEquals("value", tenantId);
+    assertEquals("value2", tenantId2);
+    assertEquals("otherValue2", otherValue2);
+
+    assertEquals(
+        1.0,
+        mBeanServer.getAttribute(
+            new ObjectName("kafka.rest:type=produce-api-metrics,tag=value"),
+            "request-count-windowed"));
+    assertEquals(
+        2.0,
+        mBeanServer.getAttribute(
+            new ObjectName("kafka.rest:type=produce-api-metrics,otherTag=otherValue2,tag=value2"),
+            "request-count-windowed"));
+
+    producerMetrics.recordRequest();
+    producerMetrics2.recordRequest();
+    producerMetrics2.recordRequest();
+
+    assertEquals(
+        2.0,
+        mBeanServer.getAttribute(
+            new ObjectName("kafka.rest:type=produce-api-metrics,tag=value"),
+            "request-count-windowed"));
+    assertEquals(
+        4.0,
+        mBeanServer.getAttribute(
+            new ObjectName("kafka.rest:type=produce-api-metrics,otherTag=otherValue2,tag=value2"),
+            "request-count-windowed"));
+
+    mBeanServer.unregisterMBean(new ObjectName("kafka.rest:type=produce-api-metrics,tag=value"));
+    mBeanServer.unregisterMBean(
+        new ObjectName("kafka.rest:type=produce-api-metrics," + "otherTag=otherValue2,tag=value2"));
+  }
+
+  @Test
+  public void test_requestSensor_hasCorrectMetricObjectTypeSetup() {
+    {
+      MetricName name = producerMetrics.getMetricName("request-rate", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof Rate);
+    }
+    {
+      MetricName name = producerMetrics.getMetricName("request-count-windowed", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof WindowedCount);
+    }
+  }
+
+  @Test
+  public void test_requestSizeSensor_hasCorrectMetricObjectTypeSetup() {
+    // RequestSizeSensor setups up a meter, which internally comprises of a rate & cumulative-sum.
+    // So to check a meter is created, check for rate & cum-sum.
+    {
+      MetricName name = producerMetrics.getMetricName("request-byte-rate", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof Rate);
+    }
+    {
+      MetricName name = producerMetrics.getMetricName("request-byte-total", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof CumulativeSum);
+    }
+  }
+
+  @Test
+  public void test_responseSensor_hasCorrectMetricObjectTypeSetup() {
+    {
+      MetricName name = producerMetrics.getMetricName("response-rate", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof Rate);
+    }
+    {
+      MetricName name = producerMetrics.getMetricName("response-count-windowed", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof WindowedCount);
+    }
+  }
+
+  @Test
+  public void test_recordErrorSensor_hasCorrectMetricObjectTypeSetup() {
+    {
+      MetricName name = producerMetrics.getMetricName("record-error-rate", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof Rate);
+    }
+    {
+      MetricName name = producerMetrics.getMetricName("error-count-windowed", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof WindowedCount);
+    }
+  }
+
+  @Test
+  public void test_recordRateLimitedSensor_hasCorrectMetricObjectTypeSetup() {
+    {
+      MetricName name = producerMetrics.getMetricName("record-rate-limited-rate", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof Rate);
+    }
+    {
+      MetricName name =
+          producerMetrics.getMetricName("record-rate-limited-count-windowed", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof WindowedCount);
+    }
+  }
+
+  @Test
+  public void test_requestLatencySensor_hasCorrectMetricObjectTypeSetup() {
+    {
+      MetricName name = producerMetrics.getMetricName("request-latency-max", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof Max);
+    }
+    {
+      MetricName name = producerMetrics.getMetricName("request-latency-avg", "", tags);
+      KafkaMetric metric = config.getMetrics().metric(name);
+      assertTrue(metric.measurable() instanceof Avg);
+    }
   }
 }

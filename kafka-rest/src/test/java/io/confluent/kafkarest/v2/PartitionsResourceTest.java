@@ -39,16 +39,11 @@ import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(EasyMockExtension.class)
-@TestInstance(Lifecycle.PER_CLASS)
 public class PartitionsResourceTest extends JerseyTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -93,16 +88,6 @@ public class PartitionsResourceTest extends JerseyTest {
     application.register(new PartitionsResource(() -> partitionManager));
     application.register(new JacksonMessageBodyProvider());
     return application;
-  }
-
-  @BeforeAll
-  public void before() throws Exception {
-    super.setUp();
-  }
-
-  @AfterAll
-  public void after() throws Exception {
-    super.tearDown();
   }
 
   @BeforeEach

@@ -32,11 +32,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.AlterConfigsOptions;
 import org.apache.kafka.clients.admin.DescribeConfigsOptions;
 import org.apache.kafka.common.config.ConfigResource;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
 /** An abstract base class for managers of subtypes of {@link AbstractConfig}. */
 abstract class AbstractConfigManager<
@@ -92,7 +97,21 @@ abstract class AbstractConfigManager<
                                                         .map(ConfigSynonym::fromAdminConfigSynonym)
                                                         .collect(Collectors.toList()))
                                                 .build())
-                                    .collect(Collectors.toList()))));
+                                    .collect(Collectors.toList()))))
+        .exceptionally(
+            exception -> {
+              if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
+                throw new UnknownTopicOrPartitionException(
+                    "This server does not host this topic-partition.", exception);
+              } else if (exception instanceof NotFoundException
+                  || exception.getCause() instanceof NotFoundException) {
+                throw new NotFoundException(exception.getCause());
+              } else if (exception instanceof RuntimeException
+                  || exception.getCause() instanceof RuntimeException) {
+                throw (RuntimeException) exception;
+              }
+              throw new CompletionException(exception.getCause());
+            });
   }
 
   final CompletableFuture<Optional<T>> getConfig(
@@ -170,6 +189,28 @@ abstract class AbstractConfigManager<
    */
   final CompletableFuture<Void> safeAlterConfigs(
       String clusterId, ConfigResource resourceId, B prototype, List<AlterConfigCommand> commands) {
+    return safeAlterOrValidateConfigs(clusterId, resourceId, prototype, commands, false);
+  }
+
+  /**
+   * Atomically alter configs according to {@code commands}, checking if the configs exist first. If
+   * the {@code validateOnly} flag is set, the operation is only dry-ran (the configs do not get
+   * altered as a result).
+   */
+  // KREST-8518 A separate method is provided instead of changing the pre-existing
+  // safeAlterConfigs method in order to minimize any risks related to external usage of that method
+  // (as this manager can be injected in projects inheriting from kafka-rest) and to minimize the
+  // amount of necessary changes (e.g. by avoiding the need to heavily refactor tests).
+  final CompletableFuture<Void> safeAlterOrValidateConfigs(
+      String clusterId,
+      ConfigResource resourceId,
+      B prototype,
+      List<AlterConfigCommand> commands,
+      boolean validateOnly) {
+    Function<? super List<T>, ? extends CompletionStage<Void>> alterConfigCall =
+        validateOnly
+            ? config -> validateAlterConfigs(resourceId, commands)
+            : config -> alterConfigs(resourceId, commands);
     return listConfigs(clusterId, resourceId, prototype)
         .thenApply(
             configs -> {
@@ -185,7 +226,21 @@ abstract class AbstractConfigManager<
               }
               return configs;
             })
-        .thenCompose(config -> alterConfigs(resourceId, commands));
+        .thenCompose(alterConfigCall)
+        .exceptionally(
+            exception -> {
+              if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
+                throw new UnknownTopicOrPartitionException(
+                    "This server does not host this topic-partition.", exception);
+              } else if (exception instanceof NotFoundException
+                  || exception.getCause() instanceof NotFoundException) {
+                throw new NotFoundException(exception.getCause());
+              } else if (exception instanceof RuntimeException
+                  || exception.getCause() instanceof RuntimeException) {
+                throw (RuntimeException) exception;
+              }
+              throw new CompletionException(exception.getCause());
+            });
   }
 
   /**
@@ -210,6 +265,21 @@ abstract class AbstractConfigManager<
                     commands.stream()
                         .map(AlterConfigCommand::toAlterConfigOp)
                         .collect(Collectors.toList())))
+            .values()
+            .get(resourceId));
+  }
+
+  private CompletableFuture<Void> validateAlterConfigs(
+      ConfigResource resourceId, List<AlterConfigCommand> commands) {
+    return KafkaFutures.toCompletableFuture(
+        adminClient
+            .incrementalAlterConfigs(
+                singletonMap(
+                    resourceId,
+                    commands.stream()
+                        .map(AlterConfigCommand::toAlterConfigOp)
+                        .collect(Collectors.toList())),
+                new AlterConfigsOptions().validateOnly(true))
             .values()
             .get(resourceId));
   }

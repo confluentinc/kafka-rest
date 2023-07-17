@@ -24,6 +24,8 @@ import javax.annotation.Nullable;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Utilities to deal with {@link AsyncResponse}. */
 public final class AsyncResponses {
@@ -86,6 +88,8 @@ public final class AsyncResponses {
       return this;
     }
 
+    private static final Logger log = LoggerFactory.getLogger(AsyncResponse.class);
+
     /** Resumes this {@code AsyncResponseBuilder}. */
     public void asyncResume(AsyncResponse asyncResponse) {
       if (entityFuture == null) {
@@ -104,8 +108,18 @@ public final class AsyncResponses {
                 asyncResponse.resume(responseBuilder.entity(entity).build());
               }
             } else if (exception instanceof CompletionException) {
+              log.error(
+                  "Async response CompletionException with error response entity of type {}: {}",
+                  entity != null ? entity.getClass() : "unknown",
+                  entity,
+                  exception);
               asyncResponse.resume(exception.getCause());
             } else {
+              log.error(
+                  "Async response exception with error response entity of type {}: {}",
+                  entity != null ? entity.getClass() : "unknown",
+                  entity,
+                  exception);
               asyncResponse.resume(exception);
             }
           });

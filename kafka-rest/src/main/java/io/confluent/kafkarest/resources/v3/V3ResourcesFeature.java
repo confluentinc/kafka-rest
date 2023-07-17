@@ -24,6 +24,7 @@ public final class V3ResourcesFeature implements Feature {
   public boolean configure(FeatureContext configurable) {
     configurable.register(V3ResourcesModule.class);
     configurable.register(AclsResource.class);
+    configurable.register(CreateAclBatchAction.class);
     configurable.register(AlterBrokerConfigBatchAction.class);
     configurable.register(AlterClusterConfigBatchAction.class);
     configurable.register(AlterTopicConfigBatchAction.class);
@@ -41,6 +42,7 @@ public final class V3ResourcesFeature implements Feature {
     configurable.register(SearchReassignmentsByTopicAction.class);
     configurable.register(PartitionsResource.class);
     configurable.register(ProduceAction.class);
+    configurable.register(ProduceBatchAction.class);
     configurable.register(ReplicasResource.class);
     configurable.register(SearchReplicasByBrokerAction.class);
     configurable.register(TopicConfigsResource.class);

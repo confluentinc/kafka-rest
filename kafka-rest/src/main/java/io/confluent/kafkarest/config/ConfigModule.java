@@ -131,6 +131,10 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ProduceResponseThreadPoolSizeImpl())
         .to(Integer.class);
 
+    bind(config.getInt(KafkaRestConfig.PRODUCE_BATCH_MAXIMUM_ENTRIES))
+        .qualifiedBy(new ProduceBatchMaximumEntriesImpl())
+        .to(Integer.class);
+
     bind(config.getProducerConfigs())
         .qualifiedBy(new ProducerConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() {});
@@ -148,6 +152,14 @@ public final class ConfigModule extends AbstractBinder {
     bind(config.getRateLimitDefaultCost())
         .qualifiedBy(new RateLimitDefaultCostConfigImpl())
         .to(Integer.class);
+
+    bind(config.getInt(KafkaRestConfig.RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_CONFIG))
+        .qualifiedBy(new RateLimitPerClusterPermitsPerSecConfigImpl())
+        .to(Integer.class);
+
+    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.RATE_LIMIT_PER_CLUSTER_CACHE_EXPIRY_MS)))
+        .qualifiedBy(new RateLimitPerClusterCacheExpiryConfigImpl())
+        .to(Duration.class);
 
     bind(config.isRateLimitEnabled())
         .qualifiedBy(new RateLimitEnabledConfigImpl())
@@ -353,6 +365,15 @@ public final class ConfigModule extends AbstractBinder {
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceBatchMaximumEntriesConfig {}
+
+  private static final class ProduceBatchMaximumEntriesImpl
+      extends AnnotationLiteral<ProduceBatchMaximumEntriesConfig>
+      implements ProduceBatchMaximumEntriesConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface ProducerConfigs {}
 
   private static final class ProducerConfigsImpl extends AnnotationLiteral<ProducerConfigs>
@@ -385,6 +406,15 @@ public final class ConfigModule extends AbstractBinder {
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface RateLimitPerClusterCacheExpiryConfig {}
+
+  private static final class RateLimitPerClusterCacheExpiryConfigImpl
+      extends AnnotationLiteral<RateLimitPerClusterCacheExpiryConfig>
+      implements RateLimitPerClusterCacheExpiryConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface RateLimitEnabledConfig {}
 
   private static final class RateLimitEnabledConfigImpl
@@ -398,6 +428,15 @@ public final class ConfigModule extends AbstractBinder {
   private static final class RateLimitPermitsPerSecConfigImpl
       extends AnnotationLiteral<RateLimitPermitsPerSecConfig>
       implements RateLimitPermitsPerSecConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface RateLimitPerClusterPermitsPerSecConfig {}
+
+  private static final class RateLimitPerClusterPermitsPerSecConfigImpl
+      extends AnnotationLiteral<RateLimitPerClusterPermitsPerSecConfig>
+      implements RateLimitPerClusterPermitsPerSecConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)

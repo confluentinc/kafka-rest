@@ -115,6 +115,7 @@
   <allow class="javax.xml.bind.DatatypeConverter" />
   <allow class="org.everit.json.schema.ValidationException" />
   <allow class="org.hibernate.validator.constraints.URL" />
+  <allow class="javax.servlet.http.HttpServletRequest" />
 
   <!-- Static field imports -->
   <allow class="io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS" />
@@ -142,7 +143,6 @@
   <allow class="kafka.server.KafkaConfig" />
   <allow class="kafka.server.KafkaServer" />
   <allow class="kafka.utils.CoreUtils" />
-  <allow class="kafka.utils.MockTime" />
   <allow class="kafka.utils.TestUtils" />
   <allow class="kafka.zk.EmbeddedZookeeper" />
 

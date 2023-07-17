@@ -57,4 +57,16 @@ public interface TopicConfigManager {
    */
   CompletableFuture<Void> alterTopicConfigs(
       String clusterId, String topicName, List<AlterConfigCommand> commands);
+
+  /**
+   * Atomically alter configs according to {@code commands}, checking if the configs exist first. If
+   * the {@code validateOnly} flag is set, the operation is only dry-ran (the configs do not get
+   * altered as a result).
+   */
+  // KREST-8518 A separate overload is provided instead of changing the pre-existing createTopic
+  // method in order to minimize any risks related to external usage of that method (as TopicManager
+  // can be injected in projects inheriting from kafka-rest) and to minimize the amount of necessary
+  // changes (e.g. by avoiding the need to heavily refactor tests).
+  CompletableFuture<Void> alterTopicConfigs(
+      String clusterId, String topicName, List<AlterConfigCommand> commands, boolean validateOnly);
 }

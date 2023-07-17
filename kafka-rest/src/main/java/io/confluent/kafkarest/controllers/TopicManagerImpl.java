@@ -27,6 +27,7 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,10 +38,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.CreateTopicsOptions;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
+import org.apache.kafka.clients.admin.NewPartitions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
+import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
 
@@ -151,7 +156,7 @@ final class TopicManagerImpl implements TopicManager {
                     topicNames,
                     new DescribeTopicsOptions()
                         .includeAuthorizedOperations(includeAuthorizedOperations))
-                .all())
+                .allTopicNames())
         .thenApply(
             topics ->
                 topics.values().stream()
@@ -200,6 +205,29 @@ final class TopicManagerImpl implements TopicManager {
       Optional<Short> replicationFactor,
       Map<Integer, List<Integer>> replicasAssignments,
       Map<String, Optional<String>> configs) {
+    return createTopic2(
+            clusterId,
+            topicName,
+            partitionsCount,
+            replicationFactor,
+            replicasAssignments,
+            configs,
+            false)
+        .thenAccept(
+            unused -> {
+              return;
+            });
+  }
+
+  @Override
+  public CompletableFuture<Topic> createTopic2(
+      String clusterId,
+      String topicName,
+      Optional<Integer> partitionsCount,
+      Optional<Short> replicationFactor,
+      Map<Integer, List<Integer>> replicasAssignments,
+      Map<String, Optional<String>> configs,
+      boolean validateOnly) {
     requireNonNull(topicName);
 
     Map<String, String> nullableConfigs = new HashMap<>();
@@ -217,8 +245,79 @@ final class TopicManagerImpl implements TopicManager {
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             cluster ->
-                KafkaFutures.toCompletableFuture(
-                    adminClient.createTopics(singletonList(createTopicRequest)).all()));
+                createTopicInternal(
+                    clusterId,
+                    topicName,
+                    createTopicRequest,
+                    partitionsCount,
+                    replicationFactor,
+                    validateOnly));
+  }
+
+  private CompletableFuture<Topic> createTopicInternal(
+      String clusterId,
+      String topicName,
+      NewTopic createTopicRequest,
+      Optional<Integer> requestPartitionsCount,
+      Optional<Short> requestReplicationFactor,
+      boolean validateOnly) {
+
+    CreateTopicsResult createTopicsResult =
+        adminClient.createTopics(
+            singletonList(createTopicRequest),
+            new CreateTopicsOptions().validateOnly(validateOnly));
+
+    return CompletableFuture.completedFuture(Topic.builder())
+        .thenCombine(
+            KafkaFutures.toCompletableFuture(createTopicsResult.all()),
+            (topicBuilder, unused) -> {
+              return topicBuilder
+                  .setClusterId(clusterId)
+                  .setName(topicName)
+                  .setInternal(false)
+                  .setAuthorizedOperations(emptySet());
+            })
+        .thenCombine(
+            extractConfigFromResultUnlessNotAuthorized(
+                createTopicsResult.numPartitions(topicName), requestPartitionsCount),
+            (topicBuilder, responseNumPartitions) -> {
+              ArrayList<Partition> dummyPartitions = new ArrayList<>(responseNumPartitions);
+              for (int i = 0; i < responseNumPartitions; i++) {
+                dummyPartitions.add(Partition.create(clusterId, topicName, i, emptyList()));
+              }
+              return topicBuilder.addAllPartitions(dummyPartitions);
+            })
+        .thenCombine(
+            extractConfigFromResultUnlessNotAuthorized(
+                createTopicsResult.replicationFactor(topicName), requestReplicationFactor),
+            (topicBuilder, responseReplicationFactor) -> {
+              return topicBuilder.setReplicationFactor(responseReplicationFactor.shortValue());
+            })
+        .thenApply(Topic.Builder::build);
+  }
+
+  // In KIP-525, the behavior of the CreateTopicsResult is that the config, including the
+  // replication factor and number of partitions, is only returned if the creating principal had
+  // DESCRIBE_CONFIGS authority. If it does not, the methods throw TopicAuthorizationException, even
+  // when the request to create the topic actually succeeded. So, we need to make sure that these
+  // exceptions do not fail the entire request, because the creation has actually worked. If the
+  // value cannot be extracted from the actual result, we take the value from the original request,
+  // if supplied, or else zero. The schema for the response says that the values are required, so
+  // just omitting them if not present is not allowed.
+  private CompletableFuture<Integer> extractConfigFromResultUnlessNotAuthorized(
+      KafkaFuture<Integer> configFuture, Optional<? extends Number> defaultValue) {
+    CompletableFuture<Integer> completableFuture = new CompletableFuture<>();
+    configFuture.whenComplete(
+        (value, exception) -> {
+          if (exception == null) {
+            completableFuture.complete(value);
+          } else if (defaultValue.isPresent()) {
+            completableFuture.complete(defaultValue.get().intValue());
+          } else {
+            completableFuture.complete(0);
+          }
+        });
+    return completableFuture;
   }
 
   @Override
@@ -232,5 +331,13 @@ final class TopicManagerImpl implements TopicManager {
             cluster ->
                 KafkaFutures.toCompletableFuture(
                     adminClient.deleteTopics(singletonList(topicName)).all()));
+  }
+
+  @Override
+  public CompletableFuture<Void> updateTopicPartitionsCount(
+      String topicName, Integer partitionsCount) {
+    Map<String, NewPartitions> newPartitionsMap =
+        Collections.singletonMap(topicName, NewPartitions.increaseTo(partitionsCount));
+    return KafkaFutures.toCompletableFuture(adminClient.createPartitions(newPartitionsMap).all());
   }
 }

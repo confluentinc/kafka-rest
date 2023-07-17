@@ -20,9 +20,11 @@ import io.confluent.kafkarest.entities.Acl.Operation;
 import io.confluent.kafkarest.entities.Acl.PatternType;
 import io.confluent.kafkarest.entities.Acl.Permission;
 import io.confluent.kafkarest.entities.Acl.ResourceType;
+import io.confluent.kafkarest.entities.v3.CreateAclRequest;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
+import javax.ws.rs.BadRequestException;
 
 public interface AclManager {
 
@@ -67,4 +69,7 @@ public interface AclManager {
       @Nullable String host,
       Operation operation,
       Permission permission);
+
+  AclManager validateAclCreateParameters(List<CreateAclRequest> requests)
+      throws BadRequestException;
 }

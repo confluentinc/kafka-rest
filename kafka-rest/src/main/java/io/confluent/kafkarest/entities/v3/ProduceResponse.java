@@ -33,17 +33,25 @@ public abstract class ProduceResponse {
   @JsonProperty("error_code")
   public abstract int getErrorCode();
 
+  @JsonProperty("message")
+  @JsonInclude(Include.NON_ABSENT)
+  public abstract Optional<String> getMessage();
+
   @JsonProperty("cluster_id")
-  public abstract String getClusterId();
+  @JsonInclude(Include.NON_ABSENT)
+  public abstract Optional<String> getClusterId();
 
   @JsonProperty("topic_name")
-  public abstract String getTopicName();
+  @JsonInclude(Include.NON_ABSENT)
+  public abstract Optional<String> getTopicName();
 
   @JsonProperty("partition_id")
-  public abstract int getPartitionId();
+  @JsonInclude(Include.NON_NULL)
+  public abstract @Nullable Integer getPartitionId();
 
   @JsonProperty("offset")
-  public abstract long getOffset();
+  @JsonInclude(Include.NON_NULL)
+  public abstract @Nullable Long getOffset();
 
   @JsonProperty("timestamp")
   @JsonInclude(Include.NON_ABSENT)
@@ -60,15 +68,17 @@ public abstract class ProduceResponse {
   @JsonCreator
   static ProduceResponse fromJson(
       @JsonProperty("error_code") int errorCode,
-      @JsonProperty("cluster_id") String clusterId,
-      @JsonProperty("topic_name") String topicName,
-      @JsonProperty("partition_id") int partitionId,
-      @JsonProperty("offset") long offset,
+      @JsonProperty("message") @Nullable String message,
+      @JsonProperty("cluster_id") @Nullable String clusterId,
+      @JsonProperty("topic_name") @Nullable String topicName,
+      @JsonProperty("partition_id") @Nullable Integer partitionId,
+      @JsonProperty("offset") @Nullable Long offset,
       @JsonProperty("timestamp") @Nullable Instant timestamp,
       @JsonProperty("key") @Nullable ProduceResponseData key,
       @JsonProperty("value") @Nullable ProduceResponseData value) {
     return builder()
         .setErrorCode(errorCode)
+        .setMessage(message)
         .setClusterId(clusterId)
         .setTopicName(topicName)
         .setPartitionId(partitionId)
@@ -90,13 +100,21 @@ public abstract class ProduceResponse {
 
     public abstract Builder setErrorCode(int errorCode);
 
-    public abstract Builder setClusterId(String clusterId);
+    public abstract Builder setMessage(Optional<String> message);
 
-    public abstract Builder setTopicName(String topicName);
+    public abstract Builder setMessage(@Nullable String message);
 
-    public abstract Builder setPartitionId(int partitionId);
+    public abstract Builder setClusterId(Optional<String> clusterId);
 
-    public abstract Builder setOffset(long offset);
+    public abstract Builder setClusterId(@Nullable String clusterId);
+
+    public abstract Builder setTopicName(Optional<String> topicName);
+
+    public abstract Builder setTopicName(@Nullable String topicName);
+
+    public abstract Builder setPartitionId(@Nullable Integer partitionId);
+
+    public abstract Builder setOffset(@Nullable Long offset);
 
     public abstract Builder setTimestamp(Optional<Instant> timestamp);
 

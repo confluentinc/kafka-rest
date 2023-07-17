@@ -31,7 +31,7 @@ import io.confluent.kafkarest.entities.v2.ProduceResponse;
 import io.confluent.kafkarest.entities.v2.SchemaConsumerRecord;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
-import io.confluent.kafkarest.testing.DefaultKafkaRestTestEnvironment;
+import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,21 +44,17 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Tag("IntegrationTest")
-public abstract class SchemaProduceConsumeTest {
+public abstract class SchemaProduceConsumeTest extends ClusterTestHarness {
 
   private static final String TOPIC = "topic-1";
 
   private static final String CONSUMER_GROUP = "group-1";
 
   private static final Logger log = LoggerFactory.getLogger(SchemaProduceConsumeTest.class);
-
-  @RegisterExtension
-  public final DefaultKafkaRestTestEnvironment testEnv = new DefaultKafkaRestTestEnvironment();
 
   protected abstract EmbeddedFormat getFormat();
 
@@ -70,18 +66,16 @@ public abstract class SchemaProduceConsumeTest {
 
   protected abstract List<SchemaTopicProduceRecord> getProduceRecords();
 
+  public SchemaProduceConsumeTest() {
+    super(/* numBrokers= */ 1, /* withSchemaRegistry= */ true);
+  }
+
   @Test
   public void produceThenConsume_returnsExactlyProduced() throws Exception {
-    testEnv
-        .kafkaCluster()
-        .createTopic(TOPIC, /* numPartitions= */ 1, /* replicationFactor= */ (short) 3);
+    createTopic(TOPIC, /* numPartitions= */ 1, /* replicationFactor= */ (short) 1);
 
     Response createConsumerInstanceResponse =
-        testEnv
-            .kafkaRest()
-            .target()
-            .path(String.format("/consumers/%s", CONSUMER_GROUP))
-            .request()
+        request(String.format("/consumers/%s", CONSUMER_GROUP))
             .post(
                 Entity.entity(
                     new CreateConsumerInstanceRequest(
@@ -100,14 +94,10 @@ public abstract class SchemaProduceConsumeTest {
         createConsumerInstanceResponse.readEntity(CreateConsumerInstanceResponse.class);
 
     Response subscribeResponse =
-        testEnv
-            .kafkaRest()
-            .target()
-            .path(
+        request(
                 String.format(
                     "/consumers/%s/instances/%s/subscription",
                     CONSUMER_GROUP, createConsumerInstance.getInstanceId()))
-            .request()
             .post(
                 Entity.entity(
                     new ConsumerSubscriptionRecord(singletonList(TOPIC), null),
@@ -116,14 +106,10 @@ public abstract class SchemaProduceConsumeTest {
     assertEquals(Status.NO_CONTENT.getStatusCode(), subscribeResponse.getStatus());
 
     // Needs to consume empty once before producing.
-    testEnv
-        .kafkaRest()
-        .target()
-        .path(
+    request(
             String.format(
                 "/consumers/%s/instances/%s/records",
                 CONSUMER_GROUP, createConsumerInstance.getInstanceId()))
-        .request()
         .accept(getContentType())
         .get();
 
@@ -136,11 +122,7 @@ public abstract class SchemaProduceConsumeTest {
             null);
 
     Response genericResponse =
-        testEnv
-            .kafkaRest()
-            .target()
-            .path(String.format("/topics/%s", TOPIC))
-            .request()
+        request(String.format("/topics/%s", TOPIC))
             .post(Entity.entity(produceRequest, getContentType()));
 
     ProduceResponse produceResponse;
@@ -162,14 +144,10 @@ public abstract class SchemaProduceConsumeTest {
     assertEquals(Status.OK, produceResponse.getRequestStatus());
 
     Response readRecordsResponse =
-        testEnv
-            .kafkaRest()
-            .target()
-            .path(
+        request(
                 String.format(
                     "/consumers/%s/instances/%s/records",
                     CONSUMER_GROUP, createConsumerInstance.getInstanceId()))
-            .request()
             .accept(getContentType())
             .get();
 

@@ -35,6 +35,7 @@ import io.confluent.kafkarest.entities.v3.TopicDataList;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
 import java.util.Properties;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -47,6 +48,9 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   private static final String TOPIC_1 = "topic-1";
   private static final String TOPIC_2 = "topic-2";
   private static final String TOPIC_3 = "topic-3";
+  private static final String TOPIC_NON_EXISTENT = "no-such-topic";
+
+  private static final boolean USE_ALTERNATE_CLIENT_PROVIDER = true;
 
   public TopicsResourceIntegrationTest() {
     super(/* numBrokers= */ 3, /* withSchemaRegistry= */ false);
@@ -57,7 +61,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   public void setUp() throws Exception {
     super.setUp();
 
-    createTopic(TOPIC_1, 1, (short) 1);
+    createTopic(TOPIC_1, 2, (short) 1);
     createTopic(TOPIC_2, 1, (short) 1);
     createTopic(TOPIC_3, 1, (short) 1);
   }
@@ -99,7 +103,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             .setTopicName(TOPIC_1)
                             .setInternal(false)
                             .setReplicationFactor(1)
-                            .setPartitionsCount(1)
+                            .setPartitionsCount(2)
                             .setPartitions(
                                 Resource.Relationship.create(
                                     baseUrl
@@ -252,7 +256,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setTopicName(TOPIC_1)
                 .setInternal(false)
                 .setReplicationFactor(1)
-                .setPartitionsCount(1)
+                .setPartitionsCount(2)
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
@@ -323,7 +327,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setTopicName(topicName)
                 .setInternal(false)
                 .setReplicationFactor(1)
-                .setPartitionsCount(0)
+                .setPartitionsCount(1)
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
@@ -374,6 +378,76 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
+  public void validateOnlyCreateTopic_nonExistingTopic_returnsNonCreatedTopic() {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+    String topicName = "topic-4";
+
+    CreateTopicResponse expected =
+        CreateTopicResponse.create(
+            TopicData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/topics/" + topicName)
+                        .setResourceName("crn:///kafka=" + clusterId + "/topic=" + topicName)
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(topicName)
+                .setInternal(false)
+                .setReplicationFactor(1)
+                .setPartitionsCount(1)
+                .setPartitions(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
+                            + "/partitions"))
+                .setConfigs(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
+                            + "/configs"))
+                .setPartitionReassignments(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
+                            + "/partitions/-/reassignment"))
+                .setAuthorizedOperations(emptySet())
+                .build());
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"topic_name\":\""
+                        + topicName
+                        + "\",\"partitions_count\":1,"
+                        + "\"replication_factor\":1,"
+                        + "\"validate_only\":true}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+
+    CreateTopicResponse actual = response.readEntity(CreateTopicResponse.class);
+    assertEquals(expected, actual);
+
+    testWithRetry(
+        () ->
+            assertFalse(
+                getTopicNames().contains(topicName),
+                String.format(
+                    "Topic names should not contain %s after dry-run creation", topicName)));
+  }
+
+  @Test
   public void createTopic_nonExistingTopic_customReplicasAssignments_returnsCreatedTopic() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -390,8 +464,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setClusterId(clusterId)
                 .setTopicName(topicName)
                 .setInternal(false)
-                .setReplicationFactor(2) // As determined by the actual replicas asignments below.
-                .setPartitionsCount(0)
+                .setReplicationFactor(2) // As determined by the actual replicas assignments below.
+                .setPartitionsCount(3)
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
@@ -451,8 +525,26 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 Entity.entity(
                     "{\"topic_name\":\""
                         + TOPIC_1
-                        + "\",\"partitions_count\":1,\\"
+                        + "\",\"partitions_count\":2,\\"
                         + "replication_factor\":1}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void validateOnlyCreateTopic_existingTopic_returnsBadRequest() {
+    String clusterId = getClusterId();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"partitions_count\":2,\\"
+                        + "replication_factor\":1,"
+                        + "\"validate_only\":true}",
                     MediaType.APPLICATION_JSON));
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
@@ -467,6 +559,16 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                     "{\"topic_name\":\"topic-4\",\"partitions_count\":1,\"replication_factor\":1}",
                     MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void createTopic_withoutRequestBody_returnsInvalidPayload() {
+    String clusterId = getClusterId();
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(Entity.entity(null, MediaType.APPLICATION_JSON));
+    assertEquals(422, response.getStatus());
   }
 
   @Test
@@ -535,8 +637,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setClusterId(clusterId)
                 .setTopicName(topicName)
                 .setInternal(false)
-                .setReplicationFactor(0)
-                .setPartitionsCount(0)
+                .setReplicationFactor(2)
+                .setPartitionsCount(1)
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
@@ -715,5 +817,100 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), deletedGetTopicResponse.getStatus());
+  }
+
+  @Test
+  public void updateTopicPartitions_IncreasePartitionsCount_returnsTopicWithIncreasedPartitions() {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+
+    GetTopicResponse expected =
+        GetTopicResponse.create(
+            TopicData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1)
+                        .setResourceName("crn:///kafka=" + clusterId + "/topic=" + TOPIC_1)
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_1)
+                .setInternal(false)
+                .setReplicationFactor(1)
+                .setPartitionsCount(3)
+                .setPartitions(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + TOPIC_1
+                            + "/partitions"))
+                .setConfigs(
+                    Resource.Relationship.create(
+                        baseUrl + "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs"))
+                .setPartitionReassignments(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + TOPIC_1
+                            + "/partitions/-/reassignment"))
+                .setAuthorizedOperations(emptySet())
+                .build());
+
+    Response getTopicResponse =
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1, USE_ALTERNATE_CLIENT_PROVIDER)
+            .accept(MediaType.APPLICATION_JSON)
+            .method(
+                HttpMethod.PATCH,
+                Entity.entity("{\"partitions_count\":3}", MediaType.APPLICATION_JSON));
+    assertEquals(Status.OK.getStatusCode(), getTopicResponse.getStatus());
+
+    GetTopicResponse actualCreateTopicResponse =
+        getTopicResponse.readEntity(GetTopicResponse.class);
+
+    assertEquals(expected, actualCreateTopicResponse);
+  }
+
+  @Test
+  public void updateTopicPartitions_decreasePartitionsCount_returns40002() {
+    String clusterId = getClusterId();
+
+    Response getTopicResponse =
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1, USE_ALTERNATE_CLIENT_PROVIDER)
+            .accept(MediaType.APPLICATION_JSON)
+            .method(
+                HttpMethod.PATCH,
+                Entity.entity("{\"partitions_count\":1}", MediaType.APPLICATION_JSON));
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), getTopicResponse.getStatus());
+  }
+
+  @Test
+  public void updateTopicPartitions_samePartitionsCount_returns40002() {
+    String clusterId = getClusterId();
+
+    Response getTopicResponse =
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1, USE_ALTERNATE_CLIENT_PROVIDER)
+            .accept(MediaType.APPLICATION_JSON)
+            .method(
+                HttpMethod.PATCH,
+                Entity.entity("{\"partitions_count\":2}", MediaType.APPLICATION_JSON));
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), getTopicResponse.getStatus());
+  }
+
+  @Test
+  public void updateTopicPartitions_topicDoesntExist_returns404() {
+    String clusterId = getClusterId();
+
+    Response getTopicResponse =
+        request(
+                "/v3/clusters/" + clusterId + "/topics/" + TOPIC_NON_EXISTENT,
+                USE_ALTERNATE_CLIENT_PROVIDER)
+            .accept(MediaType.APPLICATION_JSON)
+            .method(
+                HttpMethod.PATCH,
+                Entity.entity("{\"partitions_count\":1}", MediaType.APPLICATION_JSON));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), getTopicResponse.getStatus());
   }
 }

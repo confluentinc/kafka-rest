@@ -220,6 +220,13 @@ public class KafkaRestConfig extends RestConfig {
   public static final ConfigDef.Range PRODUCE_RESPONSE_THREAD_POOL_SIZE_VALIDATOR =
       ConfigDef.Range.between(1, Integer.MAX_VALUE);
 
+  public static final String PRODUCE_BATCH_MAXIMUM_ENTRIES = "api.v3.produce.batch.maximum.entries";
+  private static final String PRODUCE_BATCH_MAXIMUM_ENTRIES_DOC =
+      "The maximum number of entries in a batch produce request.";
+  public static final String PRODUCE_BATCH_MAXIMUM_ENTRIES_DEFAULT = "10";
+  public static final ConfigDef.Range PRODUCE_BATCH_MAXIMUM_ENTRIES_VALIDATOR =
+      ConfigDef.Range.between(1, 50);
+
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
   private static final String CONSUMER_ITERATOR_TIMEOUT_MS_DOC =
       "Timeout for blocking consumer iterator operations. This should be set to a small enough "
@@ -454,6 +461,22 @@ public class KafkaRestConfig extends RestConfig {
           + "\"api.v3.clusters.*=1,api.v3.brokers.list=2\". A cost of zero means no rate-limit.";
   private static final String RATE_LIMIT_COSTS_DEFAULT = "";
 
+  public static final String RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_CONFIG =
+      "rate.limit.per.cluster.permits.per.sec";
+  private static final String RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_DOC =
+      "The maximum number of permits to emit per second for a cluster. A permit is an unit of "
+          + "cost for a request. More expensive requests will consume more permits. The cost for "
+          + "each resource/method can configured via rate.limit.default.cost and rate.limit.costs. "
+          + "Default is 50.";
+  private static final Integer RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_DEFAULT = 50;
+
+  public static final String RATE_LIMIT_PER_CLUSTER_CACHE_EXPIRY_MS =
+      "rate.limit.per.cluster.cache.expiry.ms";
+  private static final String RATE_LIMIT_PER_CLUSTER_CACHE_EXPIRY_MS_DOC =
+      "How long after the request a cluster remains in the cache storing rateLimits. Default is "
+          + "1 hour.";
+  public static final String RATE_LIMIT_PER_CLUSTER_CACHE_EXPIRY_MS_DEFAULT = "3600000";
+
   public static final String STREAMING_CONNECTION_MAX_DURATION_MS =
       "streaming.connection.max.duration.ms";
   private static final String STREAMING_CONNECTION_MAX_DURATION_MS_DOC =
@@ -489,6 +512,12 @@ public class KafkaRestConfig extends RestConfig {
           + "processed by Kafka.  If the queue depth grows beyond this limit then the connection"
           + "is closed.";
   private static final Integer STREAMING_RESPONSE_QUEUE_DISCONNECT_DEPTH_DEFAULT = 200;
+
+  public static final String USE_CUSTOM_REQUEST_LOGGING_CONFIG = "use.custom.request.logging";
+  private static final String USE_CUSTOM_REQUEST_LOGGING_DOC =
+      "Whether to use custom-request-logging i.e. CustomLog.java. Instead of using"
+          + "Jetty's request-logging.";
+  private static final boolean USE_CUSTOM_REQUEST_LOGGING_DEFAULT = true;
 
   private static final ConfigDef config;
   private volatile Metrics metrics;
@@ -596,6 +625,13 @@ public class KafkaRestConfig extends RestConfig {
             PRODUCE_RESPONSE_THREAD_POOL_SIZE_VALIDATOR,
             Importance.LOW,
             PRODUCE_RESPONSE_THREAD_POOL_SIZE_DOC)
+        .define(
+            PRODUCE_BATCH_MAXIMUM_ENTRIES,
+            Type.INT,
+            PRODUCE_BATCH_MAXIMUM_ENTRIES_DEFAULT,
+            PRODUCE_BATCH_MAXIMUM_ENTRIES_VALIDATOR,
+            Importance.LOW,
+            PRODUCE_BATCH_MAXIMUM_ENTRIES_DOC)
         .define(
             CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG,
             Type.INT,
@@ -858,6 +894,18 @@ public class KafkaRestConfig extends RestConfig {
             Importance.LOW,
             RATE_LIMIT_COSTS_DOC)
         .define(
+            RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_CONFIG,
+            Type.INT,
+            RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_DEFAULT,
+            Importance.LOW,
+            RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_DOC)
+        .define(
+            RATE_LIMIT_PER_CLUSTER_CACHE_EXPIRY_MS,
+            Type.INT,
+            RATE_LIMIT_PER_CLUSTER_CACHE_EXPIRY_MS_DEFAULT,
+            Importance.LOW,
+            RATE_LIMIT_PER_CLUSTER_CACHE_EXPIRY_MS_DOC)
+        .define(
             STREAMING_CONNECTION_MAX_DURATION_MS,
             Type.LONG,
             STREAMING_CONNECTION_MAX_DURATION_MS_DEFAULT,
@@ -881,7 +929,13 @@ public class KafkaRestConfig extends RestConfig {
             Type.INT,
             STREAMING_RESPONSE_QUEUE_DISCONNECT_DEPTH_DEFAULT,
             Importance.LOW,
-            STREAMING_RESPONSE_QUEUE_DISCONNECT_DEPTH_DOC);
+            STREAMING_RESPONSE_QUEUE_DISCONNECT_DEPTH_DOC)
+        .define(
+            USE_CUSTOM_REQUEST_LOGGING_CONFIG,
+            Type.BOOLEAN,
+            USE_CUSTOM_REQUEST_LOGGING_DEFAULT,
+            Importance.LOW,
+            USE_CUSTOM_REQUEST_LOGGING_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {
