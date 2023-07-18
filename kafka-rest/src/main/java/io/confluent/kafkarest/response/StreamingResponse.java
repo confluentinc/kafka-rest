@@ -317,7 +317,7 @@ public abstract class StreamingResponse<T> {
 
     @Override
     public CompletableFuture<O> next() {
-      return streamingResponseInput.next().thenCompose(transform);
+      return streamingResponseInput.next().thenComposeAsync(transform);
     }
 
     public void close() {
