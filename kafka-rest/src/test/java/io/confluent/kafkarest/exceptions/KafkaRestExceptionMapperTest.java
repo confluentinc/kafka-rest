@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import io.confluent.rest.entities.ErrorMessage;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.common.errors.SerializationException;
@@ -48,5 +49,6 @@ public class KafkaRestExceptionMapperTest {
     ErrorMessage errorMessage = (ErrorMessage) response.getEntity();
     assertEquals(errorCode, errorMessage.getErrorCode());
     assertEquals(exceptionMessage, throwable.getMessage());
+    assertEquals(MediaType.APPLICATION_JSON_TYPE, response.getMediaType());
   }
 }
