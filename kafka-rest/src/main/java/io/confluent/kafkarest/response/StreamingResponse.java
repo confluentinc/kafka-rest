@@ -363,17 +363,12 @@ public abstract class StreamingResponse<T> {
           CompletableFuture.allOf(tail, result)
               .thenApply(
                   unused -> {
-                    try {
-                      if (sinkClosed || sink.isClosed()) {
-                        sinkClosed = true;
-                        return null;
-                      }
-                      ResultOrError res = result.join();
-                      log.debug("Writing to sink");
-                      sink.write(res);
-                    } catch (IOException e) {
-                      log.error("Error when writing streaming result to response channel.", e);
+                    if (sinkClosed || sink.isClosed()) {
+                      sinkClosed = true;
+                      return null;
                     }
+                    ResultOrError res = result.join();
+                    log.debug("Skip writing to sink {}", res);
                     return null;
                   });
     }
