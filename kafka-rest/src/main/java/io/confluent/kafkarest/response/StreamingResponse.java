@@ -367,7 +367,7 @@ public abstract class StreamingResponse<T> {
                       sinkClosed = true;
                       return null;
                     }
-                    ResultOrError res = result.join();
+                    ResultOrError res = result.getNow(null);
                     log.debug("Skip writing to sink {}", res);
                     return null;
                   });
