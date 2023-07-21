@@ -18,6 +18,7 @@ package io.confluent.kafkarest.exceptions;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.common.errors.SerializationException;
 
@@ -40,6 +41,9 @@ public final class KafkaRestExceptionMapper extends KafkaExceptionMapper {
 
   private Response getResponse(Throwable exception, Response.Status status, int errorCode) {
     ErrorMessage errorMessage = new ErrorMessage(errorCode, exception.getMessage());
-    return Response.status(status).entity(errorMessage).build();
+    return Response.status(status)
+        .entity(errorMessage)
+        .type(MediaType.APPLICATION_JSON_TYPE)
+        .build();
   }
 }
