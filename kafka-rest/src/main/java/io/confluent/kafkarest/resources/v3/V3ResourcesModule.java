@@ -78,7 +78,7 @@ public final class V3ResourcesModule extends AbstractBinder {
     public ExecutorService provide() {
       ThreadFactory namedThreadFactory =
           new ThreadFactoryBuilder().setNameFormat("Produce-response-thread-%d").build();
-      return Executors.newFixedThreadPool(produceResponseThreadPoolSize, namedThreadFactory);
+      return Executors.newCachedThreadPool(namedThreadFactory);
     }
 
     @Override
