@@ -85,12 +85,7 @@ public final class V3ResourcesModule extends AbstractBinder {
       ThreadFactory namedThreadFactory =
           new ThreadFactoryBuilder().setNameFormat("Produce-response-thread-%d").build();
       return new ThreadPoolExecutor(
-          produceResponseThreadPoolSize,
-          permitsPerSecond,
-          60L,
-          TimeUnit.SECONDS,
-          new SynchronousQueue<>(),
-          namedThreadFactory);
+          0, 100, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), namedThreadFactory);
     }
 
     @Override
