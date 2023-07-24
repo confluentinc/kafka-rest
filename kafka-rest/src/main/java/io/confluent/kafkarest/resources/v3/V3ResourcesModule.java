@@ -30,9 +30,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.time.Clock;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -87,12 +86,11 @@ public final class V3ResourcesModule extends AbstractBinder {
           new ThreadFactoryBuilder().setNameFormat("Produce-response-thread-%d").build();
       return new ThreadPoolExecutor(
           produceResponseThreadPoolSize,
-          100,
-          60,
+          permitsPerSecond,
+          60L,
           TimeUnit.SECONDS,
-          new ArrayBlockingQueue<>(permitsPerSecond),
-          namedThreadFactory,
-          new ThreadPoolExecutor.AbortPolicy());
+          new SynchronousQueue<>(),
+          namedThreadFactory);
     }
 
     @Override
