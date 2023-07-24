@@ -18,8 +18,10 @@ package io.confluent.kafkarest.resources.v3;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitCountGlobalConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProduceResponseThreadPoolSizeConfig;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
@@ -29,8 +31,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.time.Clock;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -67,30 +70,33 @@ public final class V3ResourcesModule extends AbstractBinder {
       implements Factory<ExecutorService> {
 
     private final int produceResponseThreadPoolSize;
+    private final int permitsPerSecond;
 
     @Inject
     ProduceResponseExecutorServiceFactory(
-        @ProduceResponseThreadPoolSizeConfig Integer produceExecutorThreadPoolSize) {
+        @ProduceResponseThreadPoolSizeConfig Integer produceExecutorThreadPoolSize,
+        @ProduceRateLimitCountGlobalConfig Integer permitsPerSecond) {
       this.produceResponseThreadPoolSize = produceExecutorThreadPoolSize;
+      this.permitsPerSecond = permitsPerSecond;
     }
 
     @Override
     public ExecutorService provide() {
       ThreadFactory namedThreadFactory =
           new ThreadFactoryBuilder().setNameFormat("Produce-response-thread-%d").build();
-      return Executors.newFixedThreadPool(produceResponseThreadPoolSize, namedThreadFactory);
+      return new ThreadPoolExecutor(
+          1,
+          100,
+          60,
+          TimeUnit.SECONDS,
+          new LinkedBlockingQueue<>(permitsPerSecond),
+          namedThreadFactory,
+          new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     @Override
     public void dispose(ExecutorService executorService) {
-      executorService.shutdown();
-      try {
-        if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
-          executorService.shutdownNow();
-        }
-      } catch (InterruptedException e) {
-        executorService.shutdownNow();
-      }
+      MoreExecutors.shutdownAndAwaitTermination(executorService, 60, TimeUnit.SECONDS);
     }
   }
 
