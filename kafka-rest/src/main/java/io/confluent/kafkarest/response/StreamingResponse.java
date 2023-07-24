@@ -277,6 +277,7 @@ public abstract class StreamingResponse<T> {
       try {
         return CompletableFuture.completedFuture(inputStream.nextValue());
       } catch (Throwable e) {
+        log.error("Encounter exception while reading input", e);
         return CompletableFutures.failedFuture(e);
       }
     }
