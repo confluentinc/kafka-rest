@@ -151,15 +151,19 @@ public final class ProduceAction {
                 return ResultOrError.error(
                     EXCEPTION_MAPPER.toErrorResponse(requestOrError.getError()));
               } else {
-                return produce(
-                        clusterId,
-                        topicName,
-                        requestOrError.getRequest(),
-                        controller,
-                        producerMetricsProvider.get(),
-                        httpServletRequest)
-                    .handle(CompositeErrorMapper::handleNext)
-                    .join();
+                try {
+                  return produce(
+                          clusterId,
+                          topicName,
+                          requestOrError.getRequest(),
+                          controller,
+                          producerMetricsProvider.get(),
+                          httpServletRequest)
+                      .handle(CompositeErrorMapper::handleNext)
+                      .join();
+                } catch (Throwable e) {
+                  return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(e.getCause()));
+                }
               }
             })
         .subscribe(

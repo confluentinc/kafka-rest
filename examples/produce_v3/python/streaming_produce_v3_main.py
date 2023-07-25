@@ -156,7 +156,7 @@ def produce_records(producer: Producer, record_count: int):
     for idx in range(0, record_count):
         # Sleep for 1 second, so that the record-receipts can be received
         # for previously produced records.
-        time.sleep(1)
+        time.sleep(0.001)
         producer.produce(ProduceRecord("key_" + str(idx), "value_" + str(idx)))
 
 
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     producer = Producer(topic, cluster_id, host, port)
 
     # Create a new thread that will produce records to the topic.
-    producer_thread = Thread(target=produce_records, args=(producer, 20))
+    producer_thread = Thread(target=produce_records, args=(producer, 200000))
     producer_thread.start()
     producer_thread.join()
     # Wait for 5 seconds, so that all record receipts are received.
