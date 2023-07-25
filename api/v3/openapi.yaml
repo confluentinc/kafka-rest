@@ -1326,14 +1326,19 @@ paths:
         [![Open Preview](https://img.shields.io/badge/Lifecycle%20Stage-Open%20Preview-%2300afba)](#section/Versioning/API-Lifecycle-Policy)
 
         Produce records to the given topic, returning delivery reports for each
-                    record produced. This API can be used in streaming mode by setting "Transfer-Encoding:
-                    chunked" header. For as long as the connection is kept open, the server will
-                    keep accepting records. Records are streamed to and from the server as Concatenated 
-                    JSON. For each record sent to the server, the server will
-                    asynchronously send back a delivery report, in the same order, each with its own
-                    error_code. An error_code of 200 indicates success. The HTTP status code will be HTTP 
-                    200 OK as long as the connection is successfully established. To identify records
-                    that have encountered an error, check the error_code of each delivery report.
+        record produced. This API can be used in streaming mode by setting
+        "Transfer-Encoding: chunked" header. For as long as the connection is
+        kept open, the server will keep accepting records. Records are streamed
+        to and from the server as Concatenated JSON. For each record sent to the
+        server, the server will asynchronously send back a delivery report, in
+        the same order, each with its own error_code. An error_code of 200
+        indicates success. The HTTP status code will be HTTP 200 OK as long as
+        the connection is successfully established. To identify records that
+        have encountered an error, check the error_code of each delivery report.
+
+        Note that only BINARY and JSON formats are supported.
+
+                    
       tags:
         - Records
       requestBody:
