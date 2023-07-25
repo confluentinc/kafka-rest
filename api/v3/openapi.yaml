@@ -1336,7 +1336,7 @@ paths:
         the connection is successfully established. To identify records that
         have encountered an error, check the error_code of each delivery report.
 
-        Note that only BINARY and JSON formats are supported.
+        Note that only BINARY, JSON, and STRING formats are supported.
 
                     
       tags:
