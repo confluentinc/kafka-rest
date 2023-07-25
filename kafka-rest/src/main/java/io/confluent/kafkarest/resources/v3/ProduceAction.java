@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Confluent Inc.
+ * Copyright 2023 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static io.confluent.kafkarest.response.CompositeErrorMapper.EXCEPTION_MAPPER;
 import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -38,10 +39,16 @@ import io.confluent.kafkarest.exceptions.StacklessCompletionException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
+import io.confluent.kafkarest.requests.JsonStreamWrapperIterable;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
+import io.confluent.kafkarest.response.CompositeErrorMapper;
 import io.confluent.kafkarest.response.JsonStream;
+import io.confluent.kafkarest.response.StreamingResponse;
+import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
+import io.reactivex.rxjava3.core.Flowable;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -63,11 +70,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.errors.SerializationException;
 import org.eclipse.jetty.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @DoNotRateLimit
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/records")
 @ResourceName("api.v3.produce.*")
 public final class ProduceAction {
+  private static final Logger log = LoggerFactory.getLogger(ProduceAction.class);
 
   private static final Collector<
           ProduceRequestHeader,
@@ -88,28 +98,6 @@ public final class ProduceAction {
   private final ProduceRateLimiters produceRateLimiters;
   private final ExecutorService executorService;
 
-  @Context private HttpServletRequest httpServletRequest;
-
-  @Inject
-  public ProduceAction(
-      Provider<SchemaManager> schemaManagerProvider,
-      Provider<RecordSerializer> recordSerializer,
-      Provider<ProduceController> produceControllerProvider,
-      Provider<ProducerMetrics> producerMetrics,
-      StreamingResponseFactory streamingResponseFactory,
-      ProduceRateLimiters produceRateLimiters,
-      @ProduceResponseThreadPool ExecutorService executorService) {
-    this(
-        schemaManagerProvider,
-        recordSerializer,
-        produceControllerProvider,
-        producerMetrics,
-        streamingResponseFactory,
-        produceRateLimiters,
-        executorService,
-        null);
-  }
-
   @Inject
   @VisibleForTesting
   ProduceAction(
@@ -119,8 +107,7 @@ public final class ProduceAction {
       Provider<ProducerMetrics> producerMetrics,
       StreamingResponseFactory streamingResponseFactory,
       ProduceRateLimiters produceRateLimiters,
-      @ProduceResponseThreadPool ExecutorService executorService,
-      HttpServletRequest httpServletRequest) {
+      @ProduceResponseThreadPool ExecutorService executorService) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
@@ -128,7 +115,6 @@ public final class ProduceAction {
     this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
     this.produceRateLimiters = requireNonNull(produceRateLimiters);
     this.executorService = requireNonNull(executorService);
-    this.httpServletRequest = httpServletRequest;
   }
 
   @POST
@@ -140,6 +126,7 @@ public final class ProduceAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
+      @Context HttpServletRequest httpServletRequest,
       JsonStream<ProduceRequest> requests)
       throws Exception {
 
@@ -148,12 +135,50 @@ public final class ProduceAction {
     }
 
     ProduceController controller = produceControllerProvider.get();
-    streamingResponseFactory
-        .from(requests)
-        .compose(
-            request ->
-                produce(clusterId, topicName, request, controller, producerMetricsProvider.get()))
-        .resume(asyncResponse);
+
+    JsonStreamWrapperIterable<ProduceRequest> inputIterable =
+        new JsonStreamWrapperIterable<>(requests);
+    // TODO: if this sink is slow, try writing directly to ServletOutputStream
+    StreamingResponse<ProduceResponse> subscriber = streamingResponseFactory.compose(asyncResponse);
+
+    // TODO: terminate stream on java.util.concurrent.TimeoutException: Idle timeout expired
+    // TODO: close source on exception connection (auth error, ...)
+    // TODO: implement MaxDuration and GracePeriod
+    Flowable.fromIterable(inputIterable)
+        .map(
+            requestOrError -> {
+              if (requestOrError.getError() != null) {
+                return ResultOrError.error(
+                    EXCEPTION_MAPPER.toErrorResponse(requestOrError.getError()));
+              } else {
+                return produce(
+                        clusterId,
+                        topicName,
+                        requestOrError.getRequest(),
+                        controller,
+                        producerMetricsProvider.get(),
+                        httpServletRequest)
+                    .handle(CompositeErrorMapper::handleNext)
+                    .join();
+              }
+            })
+        .subscribe(
+            subscriber::write,
+            error -> {
+              subscriber.writeError(error);
+              closeResources(inputIterable, subscriber);
+            },
+            () -> closeResources(inputIterable, subscriber));
+  }
+
+  private static void closeResources(
+      JsonStreamWrapperIterable<ProduceRequest> input, StreamingResponse<ProduceResponse> output) {
+    try {
+      output.close();
+      input.close();
+    } catch (IOException e) {
+      log.error("Error closing resources", e);
+    }
   }
 
   private CompletableFuture<ProduceResponse> produce(
@@ -161,7 +186,8 @@ public final class ProduceAction {
       String topicName,
       ProduceRequest request,
       ProduceController controller,
-      ProducerMetrics metrics) {
+      ProducerMetrics metrics,
+      HttpServletRequest httpServletRequest) {
     final long requestStartNs = System.nanoTime();
 
     try {

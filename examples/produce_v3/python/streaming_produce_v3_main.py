@@ -3,32 +3,39 @@ import queue
 import time
 from threading import Thread
 import http.client
+import string
+import random
+
+
+def random_string(length):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
 
 class ProduceRecord:
     """A class that represents a record to be produced to a Kafka topic."""
+
     def __init__(self, key, value):
         """
         :param key: The key of the record.
         :param value: The value of the record.
         """
-        self.key = key
-        self.value = value
+        self.key = key + "_" + random_string(random.randint(1, 100))
+        self.value = value + "_" + random_string(random.randint(1, 100))
 
     def to_json(self):
-        ret = {
-            "value": {
-                "type": "STRING",
-                "data": self.value
-            },
-        }
-
+        ret = {}
         if self.key:
             ret["key"] = {
                 "type": "STRING",
                 "data": self.key,
             }
+        ret["value"] = {
+            "type": "STRING",
+            "data": self.value,
+        }
 
         return json.dumps(ret).encode("utf-8")
+
 
 class Producer:
     """
@@ -39,6 +46,7 @@ class Producer:
     NOTE: This is simply only printing the record-receipts. But it can
     be easily extended to do process the record-receipts.
     """
+
     def __init__(self, topic, cluster_id, host, port):
         """
         :param topic: The topic to produce to.
@@ -71,7 +79,7 @@ class Producer:
         Produce a record to the topic.
         :param record: The record to produce.
         """
-        self.__record_counter +=1 
+        self.__record_counter += 1
         self.__record_queue.put(record)
 
     def shutdown(self):
@@ -83,7 +91,7 @@ class Producer:
     def __record_generator(self):
         while True:
             try:
-                record =  self.__record_queue.get(timeout=5)
+                record = self.__record_queue.get(timeout=5)
             except queue.Empty:
                 print("No more records to produce, exiting __record_generator")
                 break
@@ -92,7 +100,6 @@ class Producer:
                     break
             print("Writing a record #{} with json {}".format(self.__record_counter, record.to_json()))
             yield record.to_json()
-
 
     def __produce_records(self):
         self.connection = http.client.HTTPConnection(
@@ -124,13 +131,14 @@ class Producer:
 
         # Directly access the connection/socket, and start read the
         # http-response(record-receipts) to be fully-duplex
-        # Else most traditionaly Http-libraries would allow reading
+        # Else most traditionally Http-libraries would allow reading
         # the request when the entire response is written.
         http_response = http.client.HTTPResponse(self.connection.sock)
         http_response.begin()
         print("Http-stream has status-code {}".format(http_response.getcode()))
         if http_response.getcode() != 200:
-            raise Exception("Failed to produce records as recieved error with http status code %d, error %s" % (http_response.getcode(), http_response.read()))
+            raise Exception("Failed to produce records as received error with http status code %d, error %s" % (
+                http_response.getcode(), http_response.read()))
 
         record_receipt_counter = 0
         while True:
@@ -142,26 +150,28 @@ class Producer:
         http_response.close()
         print("Done reading record-receipts, exiting __handle_record_receipts")
 
-# This is simple producer that will produce records in a loop.
+
+# This is a simple producer that will produce records in a loop.
 def produce_records(producer: Producer, record_count: int):
     for idx in range(0, record_count):
         # Sleep for 1 second, so that the record-receipts can be received
-        # for previosly produced records.
+        # for previously produced records.
         time.sleep(1)
         producer.produce(ProduceRecord("key_" + str(idx), "value_" + str(idx)))
-    
+
+
 if __name__ == "__main__":
     host = "localhost"
     port = 8082
-    topic = "topic_1"
-    cluster_id = "EV-5o5e3SViiGP0hpgKn1g"
+    topic = "topic_test_0"
+    cluster_id = "ZXBWzl8VQ5WTB_hgEAuGeQ"
     producer = Producer(topic, cluster_id, host, port)
 
     # Create a new thread that will produce records to the topic.
     producer_thread = Thread(target=produce_records, args=(producer, 20))
     producer_thread.start()
     producer_thread.join()
-    # Wait for 5 seconds, so that all record reciepts are received.
+    # Wait for 5 seconds, so that all record receipts are received.
     time.sleep(5)
 
     producer.shutdown()

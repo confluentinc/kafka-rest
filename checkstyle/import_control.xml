@@ -101,6 +101,9 @@
   <allow pkg="org.junit" />
   <allow pkg="org.slf4j" />
 
+  <!-- RxJava -->
+  <allow pkg="io.reactivex.rxjava3" />
+
   <!-- Kafka REST's own base package -->
   <allow pkg="io.confluent.kafkarest" />
   <!-- common's base package -->

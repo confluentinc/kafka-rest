@@ -117,6 +117,11 @@
                 <version>${bouncycastle.version}</version>
             </dependency>
             <dependency>
+                <groupId>io.reactivex.rxjava3</groupId>
+                <artifactId>rxjava</artifactId>
+                <version>3.1.6</version>
+            </dependency>
+            <dependency>
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-library</artifactId>
                 <version>$(hamcrest.version)</version>

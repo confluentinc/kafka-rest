@@ -21,6 +21,7 @@ import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionDuration
 import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionGracePeriod;
 import java.time.Duration;
 import javax.inject.Inject;
+import javax.ws.rs.container.AsyncResponse;
 
 public final class StreamingResponseFactory {
 
@@ -38,7 +39,7 @@ public final class StreamingResponseFactory {
     this.gracePeriod = gracePeriod;
   }
 
-  public <T> StreamingResponse<T> from(JsonStream<T> inputStream) {
-    return StreamingResponse.from(inputStream, chunkedOutputFactory, maxDuration, gracePeriod);
+  public <T> StreamingResponse<T> compose(AsyncResponse asyncResponse) {
+    return StreamingResponse.compose(asyncResponse, chunkedOutputFactory, maxDuration, gracePeriod);
   }
 }
