@@ -155,7 +155,7 @@ public final class ProduceAction {
                           httpServletRequest)
                       .handle(CompositeErrorMapper::handleNext)
                       .join();
-                } catch (StacklessCompletionException e) {
+                } catch (Throwable e) {
                   return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(e.getCause()));
                 }
               }
