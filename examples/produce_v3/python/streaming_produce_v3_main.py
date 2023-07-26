@@ -168,7 +168,7 @@ if __name__ == "__main__":
     producer = Producer(topic, cluster_id, host, port)
 
     # Create a new thread that will produce records to the topic.
-    producer_thread = Thread(target=produce_records, args=(producer, 200000))
+    producer_thread = Thread(target=produce_records, args=(producer, 10000))
     producer_thread.start()
     producer_thread.join()
     # Wait for 5 seconds, so that all record receipts are received.

@@ -86,9 +86,7 @@ public final class StreamingResponse<I> {
           this.maxDuration.toMillis(),
           TimeUnit.MILLISECONDS);
       executorService.schedule(
-              this::close,
-          this.maxDuration.toMillis() + gracePeriod.toMillis(),
-          TimeUnit.MILLISECONDS);
+          this::close, this.maxDuration.toMillis() + gracePeriod.toMillis(), TimeUnit.MILLISECONDS);
     }
   }
 
