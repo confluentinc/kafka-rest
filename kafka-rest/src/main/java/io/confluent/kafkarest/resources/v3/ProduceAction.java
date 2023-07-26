@@ -139,6 +139,7 @@ public final class ProduceAction {
     StreamingResponse<ProduceRequest> responseStream =
         streamingResponseFactory.compose(requestStream, asyncResponse);
     Flowable.fromIterable(requestStream)
+        .onBackpressureDrop()
         .map(
             requestOrError -> {
               if (requestOrError.getError() != null) {
