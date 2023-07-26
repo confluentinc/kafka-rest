@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.requests;
 
-public class RequestOrError<T> {
+public final class RequestOrError<T> {
   private final T request;
   private final Throwable error;
 

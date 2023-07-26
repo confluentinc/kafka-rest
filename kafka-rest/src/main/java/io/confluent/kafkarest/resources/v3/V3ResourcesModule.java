@@ -30,6 +30,7 @@ import java.lang.annotation.Target;
 import java.time.Clock;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -51,6 +52,10 @@ public final class V3ResourcesModule extends AbstractBinder {
     bindFactory(ProduceResponseExecutorServiceFactory.class)
         .qualifiedBy(new ProduceResponseThreadPoolImpl())
         .to(ExecutorService.class)
+        .in(Singleton.class);
+    bindFactory(ProduceScheduleCloseConnectionExecutorServiceFactory.class)
+        .qualifiedBy(new ProduceScheduleCloseConnectionThreadPoolImpl())
+        .to(ScheduledExecutorService.class)
         .in(Singleton.class);
     bindFactory(ProducerMetricsFactory.class).to(ProducerMetrics.class).in(Singleton.class);
   }
@@ -83,6 +88,40 @@ public final class V3ResourcesModule extends AbstractBinder {
 
     @Override
     public void dispose(ExecutorService executorService) {
+      executorService.shutdown();
+      try {
+        if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+          executorService.shutdownNow();
+        }
+      } catch (InterruptedException e) {
+        executorService.shutdownNow();
+      }
+    }
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceScheduleCloseConnectionThreadPool {}
+
+  private static final class ProduceScheduleCloseConnectionThreadPoolImpl
+      extends AnnotationLiteral<ProduceScheduleCloseConnectionThreadPool>
+      implements ProduceScheduleCloseConnectionThreadPool {}
+
+  private static final class ProduceScheduleCloseConnectionExecutorServiceFactory
+      implements Factory<ScheduledExecutorService> {
+
+    @Override
+    public ScheduledExecutorService provide() {
+      ThreadFactory namedThreadFactory =
+          new ThreadFactoryBuilder()
+              .setNameFormat("Produce-schedule-close-connection-thread-%d")
+              .build();
+      return Executors.newSingleThreadScheduledExecutor(namedThreadFactory);
+    }
+
+    @Override
+    public void dispose(ScheduledExecutorService executorService) {
       executorService.shutdown();
       try {
         if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {

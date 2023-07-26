@@ -19,7 +19,10 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionDurationConfig;
 import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionGracePeriod;
+import io.confluent.kafkarest.requests.JsonStreamIterable;
+import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceScheduleCloseConnectionThreadPool;
 import java.time.Duration;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.ws.rs.container.AsyncResponse;
 
@@ -28,18 +31,28 @@ public final class StreamingResponseFactory {
   private final ChunkedOutputFactory chunkedOutputFactory;
   private final Duration maxDuration;
   private final Duration gracePeriod;
+  private final ScheduledExecutorService executorService;
 
   @Inject
   public StreamingResponseFactory(
       ChunkedOutputFactory chunkedOutputFactory,
+      @ProduceScheduleCloseConnectionThreadPool ScheduledExecutorService executorService,
       @StreamingMaxConnectionDurationConfig Duration maxDuration,
       @StreamingMaxConnectionGracePeriod Duration gracePeriod) {
     this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
+    this.executorService = requireNonNull(executorService);
     this.maxDuration = maxDuration;
     this.gracePeriod = gracePeriod;
   }
 
-  public <T> StreamingResponse<T> compose(AsyncResponse asyncResponse) {
-    return StreamingResponse.compose(asyncResponse, chunkedOutputFactory, maxDuration, gracePeriod);
+  public <I> StreamingResponse<I> compose(
+      JsonStreamIterable<I> inputStream, AsyncResponse asyncResponse) {
+    return StreamingResponse.compose(
+        inputStream,
+        asyncResponse,
+        chunkedOutputFactory,
+        maxDuration,
+        gracePeriod,
+        executorService);
   }
 }

@@ -39,7 +39,7 @@ import io.confluent.kafkarest.exceptions.StacklessCompletionException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
-import io.confluent.kafkarest.requests.JsonStreamWrapperIterable;
+import io.confluent.kafkarest.requests.JsonStreamIterable;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.CompositeErrorMapper;
 import io.confluent.kafkarest.response.JsonStream;
@@ -48,7 +48,6 @@ import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import io.reactivex.rxjava3.core.Flowable;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -136,15 +135,10 @@ public final class ProduceAction {
 
     ProduceController controller = produceControllerProvider.get();
 
-    JsonStreamWrapperIterable<ProduceRequest> inputIterable =
-        new JsonStreamWrapperIterable<>(requests);
-    // TODO: if this sink is slow, try writing directly to ServletOutputStream
-    StreamingResponse<ProduceResponse> subscriber = streamingResponseFactory.compose(asyncResponse);
-
-    // TODO: terminate stream on java.util.concurrent.TimeoutException: Idle timeout expired
-    // TODO: close source on exception connection (auth error, ...)
-    // TODO: implement MaxDuration and GracePeriod
-    Flowable.fromIterable(inputIterable)
+    JsonStreamIterable<ProduceRequest> requestStream = new JsonStreamIterable<>(requests);
+    StreamingResponse<ProduceRequest> responseStream =
+        streamingResponseFactory.compose(requestStream, asyncResponse);
+    Flowable.fromIterable(requestStream)
         .map(
             requestOrError -> {
               if (requestOrError.getError() != null) {
@@ -161,28 +155,18 @@ public final class ProduceAction {
                           httpServletRequest)
                       .handle(CompositeErrorMapper::handleNext)
                       .join();
-                } catch (Throwable e) {
+                } catch (StacklessCompletionException e) {
                   return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(e.getCause()));
                 }
               }
             })
         .subscribe(
-            subscriber::write,
+            responseStream::writeResult,
             error -> {
-              subscriber.writeError(error);
-              closeResources(inputIterable, subscriber);
+              responseStream.writeError(error);
+              responseStream.close();
             },
-            () -> closeResources(inputIterable, subscriber));
-  }
-
-  private static void closeResources(
-      JsonStreamWrapperIterable<ProduceRequest> input, StreamingResponse<ProduceResponse> output) {
-    try {
-      output.close();
-      input.close();
-    } catch (IOException e) {
-      log.error("Error closing resources", e);
-    }
+            responseStream::close);
   }
 
   private CompletableFuture<ProduceResponse> produce(

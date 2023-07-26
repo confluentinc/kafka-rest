@@ -20,12 +20,14 @@ import io.confluent.kafkarest.response.JsonStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import org.eclipse.jetty.io.EofException;
 
-public class JsonStreamWrapperIterable<T> implements Closeable, Iterable<RequestOrError<T>> {
+public class JsonStreamIterable<T> implements Closeable, Iterable<RequestOrError<T>> {
   private final JsonStream<T> jsonStream;
 
-  public JsonStreamWrapperIterable(JsonStream<T> jsonStream) {
+  public JsonStreamIterable(JsonStream<T> jsonStream) {
     this.jsonStream = Objects.requireNonNull(jsonStream);
   }
 
@@ -60,6 +62,9 @@ public class JsonStreamWrapperIterable<T> implements Closeable, Iterable<Request
     public RequestOrError<V> next() {
       try {
         return new RequestOrError<>(delegate.nextValue(), null);
+      } catch (EofException eof) {
+        // this indicates that the connection is closed from clients, so we issue stopping signal
+        throw new NoSuchElementException(eof.getMessage());
       } catch (Throwable throwable) {
         return new RequestOrError<>(null, throwable);
       }

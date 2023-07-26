@@ -16,132 +16,129 @@
 package io.confluent.kafkarest.response;
 
 import static io.confluent.kafkarest.response.CompositeErrorMapper.EXCEPTION_MAPPER;
-import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.auto.value.AutoValue;
+import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
-import java.io.IOException;
-import java.time.Clock;
+import io.confluent.kafkarest.requests.JsonStreamIterable;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import org.glassfish.jersey.server.ChunkedOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Helper class to allow transforming a stream of requests into a stream of responses online.
- *
- * <p>Usage:
- *
- * <pre>{@code
- * StreamingResponse.from(myStreamOfRequests) // e.g. a MappingIterator request body
- *     .compose(request -> computeResponse(request))
- *     .resume(asyncResponse);
- * }</pre>
- */
-// CHECKSTYLE:OFF:ClassDataAbstractionCoupling
-public abstract class StreamingResponse<T> {
+public final class StreamingResponse<I> {
 
   private static final Logger log = LoggerFactory.getLogger(StreamingResponse.class);
 
-  private final ChunkedOutputFactory chunkedOutputFactory;
   private final Duration maxDuration;
   private final Duration gracePeriod;
-  private final Instant streamStartTime;
-  private final Clock clock;
 
-  volatile boolean closingStarted = false;
+  private final ChunkedOutput<ResultOrError> sink;
+  private final JsonStreamIterable<I> source;
 
-  StreamingResponse(
-      ChunkedOutputFactory chunkedOutputFactory,
-      Duration maxDuration,
-      Duration gracePeriod,
-      Clock clock) {
-    this.clock = clock;
-    this.streamStartTime = clock.instant();
-    this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
-    this.maxDuration = maxDuration;
-    this.gracePeriod = gracePeriod;
-  }
-
-  public static <U> StreamingResponse<U> compose(
+  private StreamingResponse(
+      JsonStreamIterable<I> inputStream,
       AsyncResponse asyncResponse,
       ChunkedOutputFactory chunkedOutputFactory,
       Duration maxDuration,
-      Duration gracePeriod) {
-    return new ComposingStreamingResponse<>(
-        asyncResponse, chunkedOutputFactory, maxDuration, gracePeriod);
+      Duration gracePeriod,
+      ScheduledExecutorService executorService) {
+    this.maxDuration = maxDuration;
+    this.gracePeriod = gracePeriod;
+    this.source = inputStream;
+    this.sink = chunkedOutputFactory.getChunkedOutput();
+
+    asyncResponse.resume(Response.ok(this.sink).build());
+    scheduleConnectionCloseOnOverMaxDuration(executorService);
+  }
+
+  private void scheduleConnectionCloseOnOverMaxDuration(ScheduledExecutorService executorService) {
+    if (this.gracePeriod.isZero() || this.gracePeriod.isNegative()) {
+      executorService.schedule(
+          () -> {
+            writeResult(
+                ResultOrError.error(
+                    EXCEPTION_MAPPER.toErrorResponse(
+                        new StatusCodeException(
+                            Status.REQUEST_TIMEOUT,
+                            "Streaming connection open for longer than allowed",
+                            "Connection will be closed."))));
+            this.close();
+          },
+          this.maxDuration.toMillis(),
+          TimeUnit.MILLISECONDS);
+    } else {
+      executorService.schedule(
+          () ->
+              writeResult(
+                  ResultOrError.error(
+                      EXCEPTION_MAPPER.toErrorResponse(
+                          new StatusCodeException(
+                              Status.REQUEST_TIMEOUT,
+                              "Streaming connection open for longer than allowed",
+                              "Connection will be closed.")))),
+          this.maxDuration.toMillis(),
+          TimeUnit.MILLISECONDS);
+      executorService.schedule(
+              this::close,
+          this.maxDuration.toMillis() + gracePeriod.toMillis(),
+          TimeUnit.MILLISECONDS);
+    }
+  }
+
+  public static <I> StreamingResponse<I> compose(
+      JsonStreamIterable<I> jsonStreamWrapper,
+      AsyncResponse asyncResponse,
+      ChunkedOutputFactory chunkedOutputFactory,
+      Duration maxDuration,
+      Duration gracePeriod,
+      ScheduledExecutorService executorService) {
+    return new StreamingResponse<>(
+        jsonStreamWrapper,
+        asyncResponse,
+        chunkedOutputFactory,
+        maxDuration,
+        gracePeriod,
+        executorService);
   }
 
   public static ErrorResponse toErrorResponse(Throwable t) {
     return EXCEPTION_MAPPER.toErrorResponse(t);
   }
 
-  abstract boolean hasNext();
+  public void writeResult(ResultOrError r) {
+    try {
+      sink.write(r);
+    } catch (Throwable e) {
+      log.debug("Error when writing streaming result to response channel", e);
+    }
+  }
 
-  public abstract void close();
+  public void writeError(Throwable error) {
+    try {
+      sink.write(ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error)));
+    } catch (Throwable e) {
+      log.debug("Error when writing error result to response channel", e);
+    }
+  }
 
-  abstract CompletableFuture<T> next();
-
-  public abstract boolean write(ResultOrError result);
-
-  public abstract void writeError(Throwable error);
-
-  private static final class ComposingStreamingResponse<O> extends StreamingResponse<O> {
-    private final ChunkedOutput<ResultOrError> sink;
-
-    private ComposingStreamingResponse(
-        AsyncResponse asyncResponse,
-        ChunkedOutputFactory chunkedOutputFactory,
-        Duration maxDuration,
-        Duration gracePeriod) {
-      super(chunkedOutputFactory, maxDuration, gracePeriod, Clock.systemUTC());
-      this.sink = chunkedOutputFactory.getChunkedOutput();
-      asyncResponse.resume(Response.ok(this.sink).build());
+  public void close() {
+    try {
+      source.close();
+    } catch (Throwable e) {
+      log.debug("Error closing input", e);
     }
 
-    @Override
-    public boolean hasNext() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public CompletableFuture<O> next() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean write(ResultOrError r) {
-      try {
-        sink.write(r);
-        return true;
-      } catch (IOException e) {
-        log.error("Error when writing streaming result to response channel", e);
-        return false;
-      }
-    }
-
-    @Override
-    public void writeError(Throwable error) {
-      try {
-        ResultOrError r = ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error));
-        sink.write(r);
-      } catch (IOException e) {
-        log.error("Error when writing error result to response channel", e);
-      }
-    }
-
-    @Override
-    public void close() {
-      try {
-        sink.close();
-      } catch (IOException e) {
-        log.error("Error closing output stream", e);
-      }
+    try {
+      sink.close();
+    } catch (Throwable e) {
+      log.debug("Error closing output", e);
     }
   }
 
@@ -174,4 +171,3 @@ public abstract class StreamingResponse<T> {
     abstract ErrorResponse getError();
   }
 }
-// CHECKSTYLE:ON:ClassDataAbstractionCoupling
