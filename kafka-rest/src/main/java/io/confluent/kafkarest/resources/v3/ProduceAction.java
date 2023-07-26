@@ -136,11 +136,10 @@ public final class ProduceAction {
     ProduceController controller = produceControllerProvider.get();
 
     JsonStreamIterable<ProduceRequest> requestStream = new JsonStreamIterable<>(requests);
-    ResponseFlowableSubscriber responseStream =
-        streamingResponseFactory.createSubscriber(requestStream, asyncResponse);
-
-    Flowable.fromIterable(requestStream)
-        .map(
+    ResponseFlowableSubscriber<ProduceRequest> subscriber =
+        streamingResponseFactory.createSubscriber(
+            requestStream,
+            asyncResponse,
             requestOrError -> {
               if (requestOrError.getError() != null) {
                 return ResultOrError.error(
@@ -160,8 +159,9 @@ public final class ProduceAction {
                   return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(e.getCause()));
                 }
               }
-            })
-        .subscribe(responseStream);
+            });
+
+    Flowable.fromIterable(requestStream).subscribe(subscriber);
   }
 
   private CompletableFuture<ProduceResponse> produce(

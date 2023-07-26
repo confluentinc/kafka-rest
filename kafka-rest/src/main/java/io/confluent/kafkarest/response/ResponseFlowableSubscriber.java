@@ -19,12 +19,14 @@ import static io.confluent.kafkarest.response.CompositeErrorMapper.EXCEPTION_MAP
 
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.requests.JsonStreamIterable;
+import io.confluent.kafkarest.requests.RequestOrError;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.FlowableSubscriber;
 import java.time.Duration;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -33,7 +35,7 @@ import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ResponseFlowableSubscriber implements FlowableSubscriber<ResultOrError> {
+public class ResponseFlowableSubscriber<T> implements FlowableSubscriber<RequestOrError<T>> {
   private static final Logger log = LoggerFactory.getLogger(ResponseFlowableSubscriber.class);
 
   private final Duration maxDuration;
@@ -41,12 +43,14 @@ public class ResponseFlowableSubscriber implements FlowableSubscriber<ResultOrEr
 
   private final ChunkedOutput<ResultOrError> sink;
   private final JsonStreamIterable source;
+  private final Function<RequestOrError<T>, ResultOrError> transform;
 
   private Subscription subscription;
 
   public ResponseFlowableSubscriber(
       JsonStreamIterable inputStream,
       AsyncResponse asyncResponse,
+      Function<RequestOrError<T>, ResultOrError> transform,
       ChunkedOutputFactory chunkedOutputFactory,
       Duration maxDuration,
       Duration gracePeriod,
@@ -55,20 +59,23 @@ public class ResponseFlowableSubscriber implements FlowableSubscriber<ResultOrEr
     this.gracePeriod = gracePeriod;
     this.source = inputStream;
     this.sink = chunkedOutputFactory.getChunkedOutput();
+    this.transform = transform;
     asyncResponse.resume(Response.ok(this.sink).build());
     scheduleConnectionCloseOnOverMaxDuration(executorService);
   }
 
-  public static ResponseFlowableSubscriber instance(
+  public static <T> ResponseFlowableSubscriber<T> instance(
       JsonStreamIterable jsonStreamWrapper,
       AsyncResponse asyncResponse,
+      Function<RequestOrError<T>, ResultOrError> transform,
       ChunkedOutputFactory chunkedOutputFactory,
       Duration maxDuration,
       Duration gracePeriod,
       ScheduledExecutorService executorService) {
-    return new ResponseFlowableSubscriber(
+    return new ResponseFlowableSubscriber<>(
         jsonStreamWrapper,
         asyncResponse,
+        transform,
         chunkedOutputFactory,
         maxDuration,
         gracePeriod,
@@ -82,8 +89,9 @@ public class ResponseFlowableSubscriber implements FlowableSubscriber<ResultOrEr
   }
 
   @Override
-  public void onNext(ResultOrError t) {
+  public void onNext(RequestOrError<T> r) {
     try {
+      ResultOrError t = transform.apply(r);
       writeResult(t);
       subscription.request(1);
     } catch (Throwable e) {
