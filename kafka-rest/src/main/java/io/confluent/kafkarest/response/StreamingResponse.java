@@ -358,24 +358,25 @@ public abstract class StreamingResponse<T> {
     }
 
     private void push(CompletableFuture<ResultOrError> result) {
-      log.debug("Pushing to response queue");
-      tail =
-          CompletableFuture.allOf(tail, result)
-              .thenApply(
-                  unused -> {
-                    try {
-                      if (sinkClosed || sink.isClosed()) {
-                        sinkClosed = true;
-                        return null;
-                      }
-                      ResultOrError res = result.join();
-                      log.debug("Writing to sink");
-                      sink.write(res);
-                    } catch (IOException e) {
-                      log.error("Error when writing streaming result to response channel.", e);
-                    }
-                    return null;
-                  });
+      log.info("Pushing to response queue");
+      //      tail =
+      //          CompletableFuture.allOf(tail, result)
+      //              .thenApply(
+      //                  unused -> {
+      //                    try {
+      //                      if (sinkClosed || sink.isClosed()) {
+      //                        sinkClosed = true;
+      //                        return null;
+      //                      }
+      //                      ResultOrError res = result.join();
+      //                      log.debug("Writing to sink");
+      //                      sink.write(res);
+      //                    } catch (IOException e) {
+      //                      log.error("Error when writing streaming result to response channel.",
+      // e);
+      //                    }
+      //                    return null;
+      //                  });
     }
 
     private void close() {
