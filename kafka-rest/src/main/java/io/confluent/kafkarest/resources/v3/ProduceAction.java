@@ -43,7 +43,7 @@ import io.confluent.kafkarest.requests.JsonStreamIterable;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.CompositeErrorMapper;
 import io.confluent.kafkarest.response.JsonStream;
-import io.confluent.kafkarest.response.StreamingResponse;
+import io.confluent.kafkarest.response.ResponseFlowableSubscriber;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
@@ -136,8 +136,9 @@ public final class ProduceAction {
     ProduceController controller = produceControllerProvider.get();
 
     JsonStreamIterable<ProduceRequest> requestStream = new JsonStreamIterable<>(requests);
-    StreamingResponse<ProduceRequest> responseStream =
-        streamingResponseFactory.compose(requestStream, asyncResponse);
+    ResponseFlowableSubscriber responseStream =
+        streamingResponseFactory.createSubscriber(requestStream, asyncResponse);
+
     Flowable.fromIterable(requestStream)
         .map(
             requestOrError -> {
@@ -160,14 +161,7 @@ public final class ProduceAction {
                 }
               }
             })
-        .onBackpressureDrop(e -> log.info("Back-pressured, dropping result {}", e))
-        .subscribe(
-            responseStream::writeResult,
-            error -> {
-              responseStream.writeError(error);
-              responseStream.close();
-            },
-            responseStream::close);
+        .subscribe(responseStream);
   }
 
   private CompletableFuture<ProduceResponse> produce(

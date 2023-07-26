@@ -55,4 +55,15 @@ public final class StreamingResponseFactory {
         gracePeriod,
         executorService);
   }
+
+  public ResponseFlowableSubscriber createSubscriber(
+      JsonStreamIterable inputStream, AsyncResponse asyncResponse) {
+    return ResponseFlowableSubscriber.instance(
+        inputStream,
+        asyncResponse,
+        chunkedOutputFactory,
+        maxDuration,
+        gracePeriod,
+        executorService);
+  }
 }

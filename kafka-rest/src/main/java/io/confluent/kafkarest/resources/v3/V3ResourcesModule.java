@@ -122,14 +122,16 @@ public final class V3ResourcesModule extends AbstractBinder {
 
     @Override
     public void dispose(ScheduledExecutorService executorService) {
-      executorService.shutdown();
-      try {
-        if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
-          executorService.shutdownNow();
-        }
-      } catch (InterruptedException e) {
-        executorService.shutdownNow();
-      }
+      executorService.shutdownNow();
+      // TODO: uncommented below for proper shutdown
+      //      executorService.shutdown();
+      //      try {
+      //        if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+      //          executorService.shutdownNow();
+      //        }
+      //      } catch (InterruptedException e) {
+      //        executorService.shutdownNow();
+      //      }
     }
   }
 
