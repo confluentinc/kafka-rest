@@ -52,6 +52,11 @@ public abstract class ProduceRequest {
 
   ProduceRequest() {}
 
+  @JsonProperty("id")
+  @JsonInclude(Include.NON_ABSENT)
+  @Nullable
+  public abstract String getId();
+
   @JsonProperty("partition_id")
   @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<Integer> getPartitionId();
@@ -84,12 +89,14 @@ public abstract class ProduceRequest {
 
     @JsonCreator
     static Builder fromJson(
+        @JsonProperty("id") @Nullable String id,
         @JsonProperty("partition_id") @Nullable Integer partitionId,
         @JsonProperty("headers") @Nullable List<ProduceRequestHeader> headers,
         @JsonProperty("key") @Nullable ProduceRequestData key,
         @JsonProperty("value") @Nullable ProduceRequestData value,
         @JsonProperty("timestamp") @Nullable Instant timestamp) {
       return ProduceRequest.builder()
+          .setId(id)
           .setPartitionId(partitionId)
           .setHeaders(headers != null ? headers : ImmutableList.of())
           .setKey(key)
@@ -98,6 +105,8 @@ public abstract class ProduceRequest {
     }
 
     public abstract Builder setPartitionId(@Nullable Integer partitionId);
+
+    public abstract Builder setId(@Nullable String id);
 
     public abstract Builder setHeaders(List<ProduceRequestHeader> headers);
 

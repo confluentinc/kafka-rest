@@ -228,7 +228,14 @@ public final class ProduceAction {
             result -> {
               ProduceResponse response =
                   toProduceResponse(
-                      clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
+                      request.getId(),
+                      clusterId,
+                      topicName,
+                      keyFormat,
+                      keySchema,
+                      valueFormat,
+                      valueSchema,
+                      result);
               long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
               recordResponseMetrics(metrics, latency);
               return response;
@@ -279,6 +286,7 @@ public final class ProduceAction {
   }
 
   private static ProduceResponse toProduceResponse(
+      String id,
       String clusterId,
       String topicName,
       Optional<EmbeddedFormat> keyFormat,
@@ -287,6 +295,7 @@ public final class ProduceAction {
       Optional<RegisteredSchema> valueSchema,
       ProduceResult result) {
     return ProduceResponse.builder()
+        .setId(id)
         .setClusterId(clusterId)
         .setTopicName(topicName)
         .setPartitionId(result.getPartitionId())

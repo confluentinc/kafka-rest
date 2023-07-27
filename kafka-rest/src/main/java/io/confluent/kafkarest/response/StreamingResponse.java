@@ -41,8 +41,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -328,23 +330,11 @@ public abstract class StreamingResponse<T> {
   private static final class AsyncResponseQueue {
 
     private final ChunkedOutput<ResultOrError> sink;
-
-    // tail is the end of a linked list of completable futures. The futures are tied together by
-    // allOf completion handles. For example, let's say we push 3 futures into the queue:
-    //
-    // 1. tail = (null) // empty queue
-    // 2. tail = then(allOf((null), f_1), write(f_1)) // -> f_1
-    // 3. tail = then(allOf(then(allOf((null), f_1), write(f_1)), f_2), write(f_2)) // -> f_1 -> f_2
-    //
-    // The chaining of the futures guarantees that the write(f) callbacks are called in the order
-    // that the futures got pushed into the queue. Also, due to the way allOf is implemented, it
-    // makes sure that, as soon as f_0..i is completed, the whole
-    // then(allOf((f_i-1), f_i), write(f_i)) monad is made available for garbage collection.
-    private CompletableFuture<Void> tail;
+    private final BlockingQueue<CompletableFuture<ResultOrError>> results =
+        new LinkedBlockingQueue<>();
 
     private AsyncResponseQueue(ChunkedOutputFactory chunkedOutputFactory) {
       sink = chunkedOutputFactory.getChunkedOutput();
-      tail = CompletableFuture.completedFuture(null);
     }
 
     private void asyncResume(AsyncResponse asyncResponse) {
@@ -359,35 +349,42 @@ public abstract class StreamingResponse<T> {
 
     private void push(CompletableFuture<ResultOrError> result) {
       log.debug("Pushing to response queue");
-      tail =
-          CompletableFuture.allOf(tail, result)
-              .thenApply(
-                  unused -> {
-                    try {
-                      if (sinkClosed || sink.isClosed()) {
-                        sinkClosed = true;
-                        return null;
-                      }
-                      ResultOrError res = result.join();
-                      log.debug("Writing to sink");
-                      sink.write(res);
-                    } catch (IOException e) {
-                      log.error("Error when writing streaming result to response channel.", e);
-                    }
-                    return null;
-                  });
+      try {
+        results.add(result);
+      } catch (Throwable e) {
+        log.error("Error when adding result to queue.", e);
+      }
+
+      result.thenApply(
+          resultOrError -> {
+            try {
+              if (sinkClosed || sink.isClosed()) {
+                sinkClosed = true;
+                return null;
+              }
+              log.debug("Writing to sink");
+              sink.write(resultOrError);
+              results.remove(result);
+            } catch (IOException e) {
+              log.error("Error when writing streaming result to response channel.", e);
+            }
+            return null;
+          });
     }
 
     private void close() {
-      tail.whenComplete(
-          (unused, throwable) -> {
-            try {
-              sinkClosed = true;
-              sink.close();
-            } catch (IOException e) {
-              log.error("Error when closing response channel.", e);
-            }
-          });
+      try {
+        while (!results.isEmpty()) {
+          CompletableFuture<ResultOrError> top = results.peek();
+          if (top.isDone() || top.isCompletedExceptionally() || top.isCancelled()) {
+            results.poll();
+          }
+        }
+        sinkClosed = true;
+        sink.close();
+      } catch (IOException e) {
+        log.error("Error when closing response channel.", e);
+      }
     }
   }
 

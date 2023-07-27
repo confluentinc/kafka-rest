@@ -30,6 +30,11 @@ public abstract class ProduceResponse {
 
   ProduceResponse() {}
 
+  @JsonProperty("id")
+  @JsonInclude(Include.NON_ABSENT)
+  @Nullable
+  public abstract String getId();
+
   @JsonProperty("error_code")
   public abstract int getErrorCode();
 
@@ -67,6 +72,7 @@ public abstract class ProduceResponse {
 
   @JsonCreator
   static ProduceResponse fromJson(
+      @JsonProperty("id") @Nullable String id,
       @JsonProperty("error_code") int errorCode,
       @JsonProperty("message") @Nullable String message,
       @JsonProperty("cluster_id") @Nullable String clusterId,
@@ -77,6 +83,7 @@ public abstract class ProduceResponse {
       @JsonProperty("key") @Nullable ProduceResponseData key,
       @JsonProperty("value") @Nullable ProduceResponseData value) {
     return builder()
+        .setId(id)
         .setErrorCode(errorCode)
         .setMessage(message)
         .setClusterId(clusterId)
@@ -97,6 +104,8 @@ public abstract class ProduceResponse {
   public abstract static class Builder {
 
     Builder() {}
+
+    public abstract Builder setId(@Nullable String id);
 
     public abstract Builder setErrorCode(int errorCode);
 
