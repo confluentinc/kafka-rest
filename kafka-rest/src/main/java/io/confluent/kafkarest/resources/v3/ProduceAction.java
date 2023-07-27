@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
@@ -134,19 +135,28 @@ public final class ProduceAction {
 
     JsonStreamIterable<ProduceRequest> requestStream = new JsonStreamIterable<>(requests);
     ResponseFlowableSubscriber subscriber =
-        streamingResponseFactory.createSubscriber(
-            requestStream,
-            asyncResponse,
-            request ->
-                produce(
-                    clusterId,
-                    topicName,
-                    request,
-                    controller,
-                    producerMetricsProvider.get(),
-                    httpServletRequest));
+        streamingResponseFactory.createSubscriber(requestStream, asyncResponse);
 
-    Flowable.fromIterable(requestStream).subscribe(subscriber);
+    Flowable.fromIterable(requestStream)
+        .map(
+            requestOrError -> {
+              if (requestOrError.getError() != null) {
+                return CompletableFutures.failedFuture(requestOrError.getError());
+              } else {
+                try {
+                  return produce(
+                      clusterId,
+                      topicName,
+                      requestOrError.getRequest(),
+                      controller,
+                      producerMetricsProvider.get(),
+                      httpServletRequest);
+                } catch (Throwable e) {
+                  return CompletableFutures.failedFuture(e.getCause());
+                }
+              }
+            })
+        .subscribe(subscriber);
   }
 
   private CompletableFuture<ProduceResponse> produce(
