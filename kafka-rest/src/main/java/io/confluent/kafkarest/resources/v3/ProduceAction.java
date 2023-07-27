@@ -139,10 +139,6 @@ public final class ProduceAction {
         streamingResponseFactory.createSubscriber(requestStream, asyncResponse);
 
     Flowable.fromIterable(requestStream)
-        .onBackpressureBuffer(
-            3,
-            () -> log.warn("BackPressure: buffer overflow"),
-            BackpressureOverflowStrategy.DROP_LATEST)
         .map(
             requestOrError -> {
               if (requestOrError.getError() != null) {
@@ -161,6 +157,8 @@ public final class ProduceAction {
                 }
               }
             })
+        .onBackpressureBuffer(
+            3, () -> log.warn("BackPressure: buffer overflow"), BackpressureOverflowStrategy.ERROR)
         .subscribe(subscriber);
   }
 
