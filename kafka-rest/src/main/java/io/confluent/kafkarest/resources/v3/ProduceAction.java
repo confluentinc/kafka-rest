@@ -47,6 +47,7 @@ import io.confluent.kafkarest.response.ResponseFlowableSubscriber;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
+import io.reactivex.rxjava3.core.BackpressureOverflowStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import java.time.Instant;
 import java.util.Optional;
@@ -161,7 +162,10 @@ public final class ProduceAction {
               }
             });
 
-    Flowable.fromIterable(requestStream).subscribe(subscriber);
+    Flowable.fromIterable(requestStream)
+        .onBackpressureBuffer(
+            16, () -> log.warn("BACKPRESSURE: Buffer overflow"), BackpressureOverflowStrategy.DROP_LATEST)
+        .subscribe(subscriber);
   }
 
   private CompletableFuture<ProduceResponse> produce(
