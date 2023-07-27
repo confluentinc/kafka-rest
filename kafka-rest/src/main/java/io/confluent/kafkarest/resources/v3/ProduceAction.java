@@ -45,6 +45,7 @@ import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.ResponseFlowableSubscriber;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
+import io.reactivex.rxjava3.core.BackpressureOverflowStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import java.time.Instant;
 import java.util.Optional;
@@ -138,6 +139,10 @@ public final class ProduceAction {
         streamingResponseFactory.createSubscriber(requestStream, asyncResponse);
 
     Flowable.fromIterable(requestStream)
+        .onBackpressureBuffer(
+            3,
+            () -> log.warn("BackPressure: buffer overflow"),
+            BackpressureOverflowStrategy.DROP_LATEST)
         .map(
             requestOrError -> {
               if (requestOrError.getError() != null) {
