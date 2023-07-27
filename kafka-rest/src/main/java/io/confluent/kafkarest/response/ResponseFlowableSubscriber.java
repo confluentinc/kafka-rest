@@ -17,6 +17,8 @@ package io.confluent.kafkarest.response;
 
 import static io.confluent.kafkarest.response.CompositeErrorMapper.EXCEPTION_MAPPER;
 
+import io.confluent.kafkarest.entities.v3.ProduceRequest;
+import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.requests.JsonStreamIterable;
 import io.confluent.kafkarest.requests.RequestOrError;
@@ -24,6 +26,7 @@ import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.FlowableSubscriber;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -35,7 +38,8 @@ import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ResponseFlowableSubscriber<T> implements FlowableSubscriber<RequestOrError<T>> {
+public class ResponseFlowableSubscriber
+    implements FlowableSubscriber<RequestOrError<ProduceRequest>> {
   private static final Logger log = LoggerFactory.getLogger(ResponseFlowableSubscriber.class);
 
   private final Duration maxDuration;
@@ -43,14 +47,14 @@ public class ResponseFlowableSubscriber<T> implements FlowableSubscriber<Request
 
   private final ChunkedOutput<ResultOrError> sink;
   private final JsonStreamIterable source;
-  private final Function<RequestOrError<T>, ResultOrError> transform;
+  private final Function<ProduceRequest, CompletableFuture<ProduceResponse>> transform;
 
   private Subscription subscription;
 
   public ResponseFlowableSubscriber(
       JsonStreamIterable inputStream,
       AsyncResponse asyncResponse,
-      Function<RequestOrError<T>, ResultOrError> transform,
+      Function<ProduceRequest, CompletableFuture<ProduceResponse>> transform,
       ChunkedOutputFactory chunkedOutputFactory,
       Duration maxDuration,
       Duration gracePeriod,
@@ -64,15 +68,15 @@ public class ResponseFlowableSubscriber<T> implements FlowableSubscriber<Request
     scheduleConnectionCloseOnOverMaxDuration(executorService);
   }
 
-  public static <T> ResponseFlowableSubscriber<T> instance(
+  public static ResponseFlowableSubscriber instance(
       JsonStreamIterable jsonStreamWrapper,
       AsyncResponse asyncResponse,
-      Function<RequestOrError<T>, ResultOrError> transform,
+      Function<ProduceRequest, CompletableFuture<ProduceResponse>> transform,
       ChunkedOutputFactory chunkedOutputFactory,
       Duration maxDuration,
       Duration gracePeriod,
       ScheduledExecutorService executorService) {
-    return new ResponseFlowableSubscriber<>(
+    return new ResponseFlowableSubscriber(
         jsonStreamWrapper,
         asyncResponse,
         transform,
@@ -89,10 +93,23 @@ public class ResponseFlowableSubscriber<T> implements FlowableSubscriber<Request
   }
 
   @Override
-  public void onNext(RequestOrError<T> r) {
+  public void onNext(RequestOrError<ProduceRequest> requestOrError) {
     try {
-      ResultOrError t = transform.apply(r);
-      writeResult(t);
+      ResultOrError r;
+      if (requestOrError.getError() != null) {
+        r = ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(requestOrError.getError()));
+      } else {
+        try {
+          r =
+              transform
+                  .apply(requestOrError.getRequest())
+                  .handle(CompositeErrorMapper::handleNext)
+                  .join();
+        } catch (Throwable e) {
+          r = ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(e.getCause()));
+        }
+      }
+      writeResult(r);
       subscription.request(1);
     } catch (Throwable e) {
       log.error("Encounter error onNext", e);

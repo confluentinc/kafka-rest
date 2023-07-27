@@ -19,11 +19,12 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionDurationConfig;
 import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionGracePeriod;
+import io.confluent.kafkarest.entities.v3.ProduceRequest;
+import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.requests.JsonStreamIterable;
-import io.confluent.kafkarest.requests.RequestOrError;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceScheduleCloseConnectionThreadPool;
-import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 import javax.inject.Inject;
@@ -59,10 +60,10 @@ public final class StreamingResponseFactory {
         executorService);
   }
 
-  public <I> ResponseFlowableSubscriber<I> createSubscriber(
+  public ResponseFlowableSubscriber createSubscriber(
       JsonStreamIterable inputStream,
       AsyncResponse asyncResponse,
-      Function<RequestOrError<I>, ResultOrError> transform) {
+      Function<ProduceRequest, CompletableFuture<ProduceResponse>> transform) {
     return ResponseFlowableSubscriber.instance(
         inputStream,
         asyncResponse,

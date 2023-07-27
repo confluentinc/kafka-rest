@@ -15,7 +15,6 @@
 
 package io.confluent.kafkarest.resources.v3;
 
-import static io.confluent.kafkarest.response.CompositeErrorMapper.EXCEPTION_MAPPER;
 import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -41,13 +40,10 @@ import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.requests.JsonStreamIterable;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
-import io.confluent.kafkarest.response.CompositeErrorMapper;
 import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.ResponseFlowableSubscriber;
-import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
-import io.reactivex.rxjava3.core.BackpressureOverflowStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import java.time.Instant;
 import java.util.Optional;
@@ -137,35 +133,20 @@ public final class ProduceAction {
     ProduceController controller = produceControllerProvider.get();
 
     JsonStreamIterable<ProduceRequest> requestStream = new JsonStreamIterable<>(requests);
-    ResponseFlowableSubscriber<ProduceRequest> subscriber =
+    ResponseFlowableSubscriber subscriber =
         streamingResponseFactory.createSubscriber(
             requestStream,
             asyncResponse,
-            requestOrError -> {
-              if (requestOrError.getError() != null) {
-                return ResultOrError.error(
-                    EXCEPTION_MAPPER.toErrorResponse(requestOrError.getError()));
-              } else {
-                try {
-                  return produce(
-                          clusterId,
-                          topicName,
-                          requestOrError.getRequest(),
-                          controller,
-                          producerMetricsProvider.get(),
-                          httpServletRequest)
-                      .handle(CompositeErrorMapper::handleNext)
-                      .join();
-                } catch (Throwable e) {
-                  return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(e.getCause()));
-                }
-              }
-            });
+            request ->
+                produce(
+                    clusterId,
+                    topicName,
+                    request,
+                    controller,
+                    producerMetricsProvider.get(),
+                    httpServletRequest));
 
-    Flowable.fromIterable(requestStream)
-        .onBackpressureBuffer(
-            16, () -> log.warn("BACKPRESSURE: Buffer overflow"), BackpressureOverflowStrategy.DROP_LATEST)
-        .subscribe(subscriber);
+    Flowable.fromIterable(requestStream).subscribe(subscriber);
   }
 
   private CompletableFuture<ProduceResponse> produce(
