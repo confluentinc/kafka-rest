@@ -204,14 +204,15 @@ public final class ProduceAction {
         serialize(topicName, valueFormat, valueSchema, request.getValue(), /* isKey= */ false);
 
     CompletableFuture<ProduceResult> produceResult =
-        controller.produce(
-            clusterId,
-            topicName,
-            request.getPartitionId(),
-            request.getHeaders().stream().collect(PRODUCE_REQUEST_HEADER_COLLECTOR),
-            serializedKey,
-            serializedValue,
-            request.getTimestamp().orElse(Instant.now()));
+        CompletableFuture.completedFuture(ProduceResult.create(0, 0, null, 10, 10, Instant.now()));
+    //        controller.produce(
+    //            clusterId,
+    //            topicName,
+    //            request.getPartitionId(),
+    //            request.getHeaders().stream().collect(PRODUCE_REQUEST_HEADER_COLLECTOR),
+    //            serializedKey,
+    //            serializedValue,
+    //            request.getTimestamp().orElse(Instant.now()));
 
     return produceResult
         .handleAsync(
