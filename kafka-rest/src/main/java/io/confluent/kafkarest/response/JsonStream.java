@@ -17,6 +17,7 @@ package io.confluent.kafkarest.response;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.google.common.base.Suppliers;
+import io.confluent.kafkarest.exceptions.BadRequestException;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.NoSuchElementException;
@@ -28,9 +29,13 @@ import java.util.function.Supplier;
  */
 public final class JsonStream<T> implements Closeable {
   private final Supplier<MappingIterator<T>> delegate;
+  private final SizePreventionInputStream sizePreventionInputStream;
 
-  public JsonStream(Supplier<MappingIterator<T>> delegate) {
+  public JsonStream(
+      Supplier<MappingIterator<T>> delegate, SizePreventionInputStream sizePreventionInputStream) {
     this.delegate = Suppliers.memoize(delegate::get);
+    this.sizePreventionInputStream = sizePreventionInputStream;
+    this.sizePreventionInputStream.resetBytesRead();
   }
 
   public boolean hasNext() {
@@ -44,7 +49,13 @@ public final class JsonStream<T> implements Closeable {
     if (delegate.get() == null) {
       throw new NoSuchElementException();
     }
-    return delegate.get().nextValue();
+    try {
+      T value = delegate.get().nextValue();
+      sizePreventionInputStream.resetBytesRead();
+      return value;
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException("Input stream too large", e);
+    }
   }
 
   @Override

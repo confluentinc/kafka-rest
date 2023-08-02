@@ -70,6 +70,8 @@ public final class JsonStreamMessageBodyReader implements MessageBodyReader<Json
     }
 
     JavaType wrappedType = objectMapper.constructType(genericType).containedType(0);
+    SizePreventionInputStream sizePreventionInputStream =
+        new SizePreventionInputStream(entityStream);
     return new JsonStream<>(
         () -> {
           try {
@@ -77,11 +79,12 @@ public final class JsonStreamMessageBodyReader implements MessageBodyReader<Json
             // from the entityStream. If this initial bootstrapping doesn't work, and this is not
             // done lazily, it can create problems with releasing request scoped resources. See
             // KREST-5830 for context.
-            JsonParser parser = objectMapper.createParser(entityStream);
+            JsonParser parser = objectMapper.createParser(sizePreventionInputStream);
             return objectMapper.readValues(parser, wrappedType);
           } catch (IOException e) {
             throw new BadRequestException("Unexpected error while starting JSON stream: ", e);
           }
-        });
+        },
+        sizePreventionInputStream);
   }
 }
