@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
@@ -411,6 +412,6 @@ public class TopicsResourceTest
         response,
         Errors.TOPIC_NOT_FOUND_ERROR_CODE,
         Errors.TOPIC_NOT_FOUND_MESSAGE,
-        Versions.KAFKA_V2_JSON);
+        MediaType.APPLICATION_JSON);
   }
 }
