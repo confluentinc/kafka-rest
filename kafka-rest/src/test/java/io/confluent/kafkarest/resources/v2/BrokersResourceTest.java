@@ -34,6 +34,7 @@ import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import java.util.Arrays;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.common.errors.SaslAuthenticationException;
 import org.apache.kafka.common.protocol.Errors;
@@ -91,6 +92,6 @@ public class BrokersResourceTest
         response,
         io.confluent.kafkarest.Errors.KAFKA_AUTHENTICATION_ERROR_CODE,
         Errors.SASL_AUTHENTICATION_FAILED.message(),
-        Versions.KAFKA_V2_JSON);
+        MediaType.APPLICATION_JSON);
   }
 }

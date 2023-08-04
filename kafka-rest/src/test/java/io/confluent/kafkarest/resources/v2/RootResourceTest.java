@@ -18,7 +18,6 @@ package io.confluent.kafkarest.resources.v2;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -29,6 +28,7 @@ import io.confluent.rest.RestConfigException;
 import java.util.Map;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
@@ -55,8 +55,7 @@ public class RootResourceTest
     // entities. See https://java.net/jira/browse/JAX_RS_SPEC-363 for the corresponding JAX-RS
     // bug. We verify the little bit we can (status code) here.
     assertEquals(Response.Status.NOT_ACCEPTABLE.getStatusCode(), response.getStatus());
-    // These verify that we're seeing the *expected* but *incorrect* behavior.
-    assertNull(response.getMediaType());
+    assertEquals(response.getMediaType(), MediaType.APPLICATION_JSON_TYPE);
   }
 
   @Test
