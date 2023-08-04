@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import kafka.security.authorizer.AclAuthorizer;
 import kafka.server.KafkaConfig;
@@ -197,7 +198,7 @@ public class AuthorizationErrorTest
           response,
           Errors.KAFKA_AUTHORIZATION_ERROR_CODE,
           "Not authorized to access topics",
-          Versions.KAFKA_V2_JSON_BINARY);
+          MediaType.APPLICATION_JSON);
     } else {
       assertOKResponse(response, Versions.KAFKA_V2_JSON_BINARY);
     }

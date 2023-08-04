@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -174,7 +175,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
         response,
         Errors.INVALID_CONSUMER_CONFIG_ERROR_CODE,
         Errors.INVALID_CONSUMER_CONFIG_MESSAGE,
-        Versions.KAFKA_V2_JSON);
+        MediaType.APPLICATION_JSON);
   }
 
   @Test
@@ -191,6 +192,6 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
         createResponse,
         Errors.CONSUMER_ALREADY_EXISTS_ERROR_CODE,
         Errors.CONSUMER_ALREADY_EXISTS_MESSAGE,
-        Versions.KAFKA_V2_JSON);
+        MediaType.APPLICATION_JSON);
   }
 }
