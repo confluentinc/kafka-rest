@@ -36,7 +36,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -155,7 +154,7 @@ public class MetadataApiTest extends ClusterTestHarness {
         invalidResponse,
         KafkaExceptionMapper.KAFKA_UNKNOWN_TOPIC_PARTITION_CODE,
         null,
-        MediaType.APPLICATION_JSON);
+        Versions.KAFKA_V2_JSON);
   }
 
   @Test
@@ -182,7 +181,7 @@ public class MetadataApiTest extends ClusterTestHarness {
         invalidResponse,
         Errors.PARTITION_NOT_FOUND_ERROR_CODE,
         Errors.PARTITION_NOT_FOUND_MESSAGE,
-        MediaType.APPLICATION_JSON);
+        Versions.KAFKA_V2_JSON);
   }
 
   private void verifyPartitionGet(String topicName, int numReplicas, int numPartitions) {

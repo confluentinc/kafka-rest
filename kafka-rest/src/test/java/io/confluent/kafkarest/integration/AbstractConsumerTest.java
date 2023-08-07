@@ -49,7 +49,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -337,7 +336,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         response,
         Errors.CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE,
         Errors.CONSUMER_INSTANCE_NOT_FOUND_MESSAGE,
-        MediaType.APPLICATION_JSON);
+        Versions.KAFKA_V2_JSON_BINARY);
   }
 
   protected void deleteConsumer(String instanceUri) {

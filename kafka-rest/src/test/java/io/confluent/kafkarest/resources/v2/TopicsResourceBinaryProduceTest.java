@@ -55,7 +55,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.KafkaException;
@@ -254,7 +253,7 @@ public class TopicsResourceBinaryProduceTest
         response,
         ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
         null,
-        MediaType.APPLICATION_JSON);
+        Versions.KAFKA_V2_JSON);
   }
 
   private void testProduceToTopicException(
@@ -268,7 +267,7 @@ public class TopicsResourceBinaryProduceTest
           rawResponse,
           RestServerErrorException.DEFAULT_ERROR_CODE,
           AbstractProduceAction.UNEXPECTED_PRODUCER_EXCEPTION,
-          MediaType.APPLICATION_JSON);
+          Versions.KAFKA_V2_JSON);
     } else {
       assertOKResponse(rawResponse, Versions.KAFKA_V2_JSON);
       ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
