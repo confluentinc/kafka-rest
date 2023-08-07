@@ -155,7 +155,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     }
 
     config.property(ServerProperties.OUTBOUND_CONTENT_LENGTH_BUFFER, 0);
-    config.register(new JsonStreamMessageBodyReader(getJsonMapper()));
+    config.register(new JsonStreamMessageBodyReader(getJsonMapper(), appConfig));
     config.register(new BackendsModule());
     config.register(new ConfigModule(appConfig));
     config.register(new ControllersModule());
