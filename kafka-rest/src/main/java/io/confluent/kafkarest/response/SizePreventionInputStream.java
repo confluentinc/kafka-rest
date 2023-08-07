@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 public class SizePreventionInputStream extends InputStream {
   private static final Logger log = LoggerFactory.getLogger(SizePreventionInputStream.class);
 
-  private static final long SIZE_THRESHOLD = 21L * 1024 * 1024;
+  private static final long SIZE_THRESHOLD = 27L * 1024 * 1024;
 
   private final InputStream delegate;
   private final AtomicLong bytesRead = new AtomicLong(0);
