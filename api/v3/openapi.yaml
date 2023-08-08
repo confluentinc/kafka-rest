@@ -239,6 +239,7 @@ paths:
 
         Return a list of dynamic cluster-wide broker configuration parameters for the specified Kafka
         cluster. Returns an empty list if there are no dynamic cluster-wide broker configuration parameters.
+
       tags:
         - Configs (v3)
       responses:
