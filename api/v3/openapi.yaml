@@ -223,7 +223,11 @@ paths:
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
         Returns a list of configuration parameters for the specified Kafka
-        cluster.
+        cluster. Note that this API call is used for cluster-wide default
+        configs. The endpoint will only return configs when there is an override
+        for the cluster-wide default config. If a cluster-wide default config is
+        not set, this endpoint returns an empty response.
+        
       tags:
         - Configs (v3)
       responses:
