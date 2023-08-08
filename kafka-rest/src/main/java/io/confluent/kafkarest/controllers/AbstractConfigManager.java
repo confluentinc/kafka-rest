@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -40,6 +41,7 @@ import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AlterConfigsOptions;
 import org.apache.kafka.clients.admin.DescribeConfigsOptions;
 import org.apache.kafka.common.config.ConfigResource;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
 /** An abstract base class for managers of subtypes of {@link AbstractConfig}. */
 abstract class AbstractConfigManager<
@@ -95,7 +97,21 @@ abstract class AbstractConfigManager<
                                                         .map(ConfigSynonym::fromAdminConfigSynonym)
                                                         .collect(Collectors.toList()))
                                                 .build())
-                                    .collect(Collectors.toList()))));
+                                    .collect(Collectors.toList()))))
+        .exceptionally(
+            exception -> {
+              if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
+                throw new UnknownTopicOrPartitionException(
+                    "This server does not host this topic-partition.", exception);
+              } else if (exception instanceof NotFoundException
+                  || exception.getCause() instanceof NotFoundException) {
+                throw new NotFoundException(exception.getCause());
+              } else if (exception instanceof RuntimeException
+                  || exception.getCause() instanceof RuntimeException) {
+                throw (RuntimeException) exception;
+              }
+              throw new CompletionException(exception.getCause());
+            });
   }
 
   final CompletableFuture<Optional<T>> getConfig(
@@ -210,7 +226,21 @@ abstract class AbstractConfigManager<
               }
               return configs;
             })
-        .thenCompose(alterConfigCall);
+        .thenCompose(alterConfigCall)
+        .exceptionally(
+            exception -> {
+              if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
+                throw new UnknownTopicOrPartitionException(
+                    "This server does not host this topic-partition.", exception);
+              } else if (exception instanceof NotFoundException
+                  || exception.getCause() instanceof NotFoundException) {
+                throw new NotFoundException(exception.getCause());
+              } else if (exception instanceof RuntimeException
+                  || exception.getCause() instanceof RuntimeException) {
+                throw (RuntimeException) exception;
+              }
+              throw new CompletionException(exception.getCause());
+            });
   }
 
   /**

@@ -22,7 +22,8 @@ import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.confluent.kafka.schemaregistry.CompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
@@ -35,9 +36,11 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,7 +57,6 @@ import javax.ws.rs.client.WebTarget;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
-import kafka.utils.MockTime;
 import kafka.utils.TestUtils;
 import kafka.zk.EmbeddedZookeeper;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -66,6 +68,10 @@ import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -75,6 +81,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.apache.kafka.common.serialization.Deserializer;
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
@@ -139,7 +146,7 @@ public abstract class ClusterTestHarness {
   protected String plaintextBrokerList = null;
 
   // Schema registry config
-  protected String schemaRegCompatibility = AvroCompatibilityLevel.NONE.name;
+  protected String schemaRegCompatibility = CompatibilityLevel.NONE.name;
   protected Properties schemaRegProperties = null;
   protected String schemaRegConnect = null;
   protected SchemaRegistryRestApplication schemaRegApp = null;
@@ -201,12 +208,13 @@ public abstract class ClusterTestHarness {
     if (withSchemaRegistry) {
       int schemaRegPort = choosePort();
       schemaRegProperties.put(
-          SchemaRegistryConfig.PORT_CONFIG, ((Integer) schemaRegPort).toString());
-      schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG, zkConnect);
+          SchemaRegistryConfig.LISTENERS_CONFIG,
+          String.format("http://127.0.0.1:%d", schemaRegPort));
       schemaRegProperties.put(
           SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
           SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
-      schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG, schemaRegCompatibility);
+      schemaRegProperties.put(
+          SchemaRegistryConfig.SCHEMA_COMPATIBILITY_CONFIG, schemaRegCompatibility);
       String broker =
           SecurityProtocol.PLAINTEXT.name
               + "://"
@@ -237,6 +245,8 @@ public abstract class ClusterTestHarness {
     // Reduce the metadata fetch timeout so requests for topics that don't exist timeout much
     // faster than the default
     restProperties.put("producer." + ProducerConfig.MAX_BLOCK_MS_CONFIG, "5000");
+    restProperties.put(
+        "producer." + ProducerConfig.MAX_REQUEST_SIZE_CONFIG, String.valueOf((2 << 20) * 10));
 
     restConfig = new KafkaRestConfig(restProperties);
 
@@ -290,11 +300,7 @@ public abstract class ClusterTestHarness {
                     .map(
                         config ->
                             CompletableFuture.supplyAsync(
-                                () ->
-                                    TestUtils.createServer(
-                                        config,
-                                        new MockTime(
-                                            System.currentTimeMillis(), System.nanoTime()))))
+                                () -> TestUtils.createServer(config, Option.empty())))
                     .collect(toList()))
             .join();
     log.info("Started all {} brokers for {}", numBrokers, getClass().getSimpleName());
@@ -340,6 +346,7 @@ public abstract class ClusterTestHarness {
             (short) 1,
             false);
     props.setProperty("auto.create.topics.enable", "false");
+    props.setProperty("message.max.bytes", String.valueOf((2 << 20) * 10));
     // We *must* override this to use the port we allocated (Kafka currently allocates one port
     // that it always uses for ZK
     props.setProperty("zookeeper.connect", this.zkConnect);
@@ -715,6 +722,63 @@ public abstract class ClusterTestHarness {
           producer.close();
           assertTrue(sent);
         });
+  }
+
+  protected final <K, V> ConsumerRecord<K, V> getMessage(
+      String topic,
+      int partition,
+      long offset,
+      Deserializer<K> keyDeserializer,
+      Deserializer<V> valueDeserializer) {
+
+    Properties props = new Properties();
+    props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+
+    KafkaConsumer<K, V> consumer = new KafkaConsumer<>(props, keyDeserializer, valueDeserializer);
+    TopicPartition tp = new TopicPartition(topic, partition);
+    consumer.assign(Collections.singleton(tp));
+    consumer.seek(tp, offset);
+
+    ConsumerRecords<K, V> records = consumer.poll(Duration.ofSeconds(60));
+    consumer.close();
+
+    return records.isEmpty() ? null : records.records(tp).get(0);
+  }
+
+  protected final <K, V> ConsumerRecords<K, V> getMessages(
+      String topic,
+      Deserializer<K> keyDeserializer,
+      Deserializer<V> valueDeserializer,
+      int messageCount) {
+
+    List<ConsumerRecord<K, V>> accumulator = new ArrayList<>(messageCount);
+    int numMessages = 0;
+
+    Properties props = new Properties();
+    props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+
+    KafkaConsumer<K, V> consumer = new KafkaConsumer<>(props, keyDeserializer, valueDeserializer);
+    TopicPartition tp = new TopicPartition(topic, 0);
+    consumer.assign(Collections.singleton(tp));
+    consumer.seekToBeginning(Collections.singleton(tp));
+
+    ConsumerRecords<K, V> records;
+    while (numMessages < messageCount) {
+      records = consumer.poll(Duration.ofSeconds(60));
+      Iterator<ConsumerRecord<K, V>> it = records.iterator();
+      while (it.hasNext() && (numMessages < messageCount)) {
+        ConsumerRecord<K, V> rec = it.next();
+        accumulator.add(rec);
+        numMessages++;
+      }
+    }
+    consumer.close();
+
+    return new ConsumerRecords<>(Collections.singletonMap(tp, accumulator));
+  }
+
+  protected ObjectMapper getObjectMapper() {
+    return restApp.getJsonMapper();
   }
 
   protected Map<Integer, List<Integer>> createAssignment(

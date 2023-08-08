@@ -24,9 +24,14 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.common.config.ConfigResource;
 
+// What is referred to as "cluster config" here is really the dynamic cluster-wide broker config
+// as introduced in KIP-226. In terms of the Admin API, this is accessed using the BROKER resource
+// type with the default entity name of "".
 final class ClusterConfigManagerImpl
     extends AbstractConfigManager<ClusterConfig, ClusterConfig.Builder>
     implements ClusterConfigManager {
+
+  private static final String BROKER_DEFAULT_ENTITY_NAME = "";
 
   @Inject
   ClusterConfigManagerImpl(Admin adminClient, ClusterManager clusterManager) {
@@ -38,7 +43,7 @@ final class ClusterConfigManagerImpl
       String clusterId, ClusterConfig.Type type) {
     return listConfigs(
         clusterId,
-        new ConfigResource(type.getAdminType(), ""),
+        new ConfigResource(type.getAdminType(), BROKER_DEFAULT_ENTITY_NAME),
         ClusterConfig.builder().setClusterId(clusterId).setType(type));
   }
 
@@ -47,7 +52,7 @@ final class ClusterConfigManagerImpl
       String clusterId, ClusterConfig.Type type, String name) {
     return getConfig(
         clusterId,
-        new ConfigResource(type.getAdminType(), ""),
+        new ConfigResource(type.getAdminType(), BROKER_DEFAULT_ENTITY_NAME),
         ClusterConfig.builder().setClusterId(clusterId).setType(type),
         name);
   }
@@ -59,21 +64,26 @@ final class ClusterConfigManagerImpl
     // currently of knowing which config names are valid to create/update. So we skip the existence
     // check. If the config is not valid, it will fail silently.
     return unsafeUpdateConfig(
-        clusterId, new ConfigResource(type.getAdminType(), ""), name, newValue);
+        clusterId,
+        new ConfigResource(type.getAdminType(), BROKER_DEFAULT_ENTITY_NAME),
+        name,
+        newValue);
   }
 
   @Override
   public CompletableFuture<Void> deleteClusterConfig(
       String clusterId, ClusterConfig.Type type, String name) {
-    // Since listing cluster configs will only return the ones dynamically created, there's no way
-    // currently of knowing which config names are valid to delete. So we skip the existence check.
-    // If the config is not valid, it will fail silently.
-    return unsafeResetConfig(clusterId, new ConfigResource(type.getAdminType(), ""), name);
+    return safeResetConfig(
+        clusterId,
+        new ConfigResource(type.getAdminType(), BROKER_DEFAULT_ENTITY_NAME),
+        ClusterConfig.builder().setClusterId(clusterId).setType(type),
+        name);
   }
 
   @Override
   public CompletableFuture<Void> alterClusterConfigs(
       String clusterId, ClusterConfig.Type type, List<AlterConfigCommand> commands) {
-    return unsafeAlterConfigs(clusterId, new ConfigResource(type.getAdminType(), ""), commands);
+    return unsafeAlterConfigs(
+        clusterId, new ConfigResource(type.getAdminType(), BROKER_DEFAULT_ENTITY_NAME), commands);
   }
 }

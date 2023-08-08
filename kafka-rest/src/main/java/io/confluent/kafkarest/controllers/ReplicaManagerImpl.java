@@ -20,6 +20,7 @@ import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Partition;
@@ -74,6 +75,15 @@ final class ReplicaManagerImpl implements ReplicaManager {
         .thenApply(replicas -> findEntityByKey(replicas, PartitionReplica::getBrokerId, brokerId));
   }
 
+  // Gets a partition-replica but returns an empty Optional if the entities do not exist
+  CompletableFuture<Optional<PartitionReplica>> getReplicaAllowMissing(
+      String clusterId, String topicName, int partitionId, int brokerId) {
+    return partitionManager
+        .getPartitionAllowMissing(clusterId, topicName, partitionId)
+        .thenApply(partition -> partition.map(Partition::getReplicas).orElse(ImmutableList.of()))
+        .thenApply(replicas -> findEntityByKey(replicas, PartitionReplica::getBrokerId, brokerId));
+  }
+
   @Override
   public CompletableFuture<List<PartitionReplica>> searchReplicasByBrokerId(
       String clusterId, int brokerId) {
@@ -85,17 +95,17 @@ final class ReplicaManagerImpl implements ReplicaManager {
               DescribeLogDirsResult result =
                   adminClient.describeLogDirs(
                       singletonList(brokerId), new DescribeLogDirsOptions());
-              return KafkaFutures.toCompletableFuture(result.values().get(brokerId));
+              return KafkaFutures.toCompletableFuture(result.descriptions().get(brokerId));
             })
         .thenCompose(
             logDirs -> {
               log.debug("Describe log dirs {} ", logDirs);
               return CompletableFutures.allAsList(
                   logDirs.values().stream()
-                      .flatMap(logDir -> logDir.replicaInfos.keySet().stream())
+                      .flatMap(logDir -> logDir.replicaInfos().keySet().stream())
                       .map(
                           partition ->
-                              getReplica(
+                              getReplicaAllowMissing(
                                   clusterId, partition.topic(), partition.partition(), brokerId))
                       .collect(Collectors.toList()));
             })

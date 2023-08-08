@@ -209,6 +209,7 @@ public class TopicConfigManagerImplTest {
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
+      assertEquals("This server does not host this topic-partition.", e.getCause().getMessage());
     }
   }
 
@@ -357,6 +358,7 @@ public class TopicConfigManagerImplTest {
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
+      assertEquals("This server does not host this topic-partition.", e.getCause().getMessage());
     }
   }
 
@@ -451,6 +453,7 @@ public class TopicConfigManagerImplTest {
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
+      assertEquals("This server does not host this topic-partition.", e.getCause().getMessage());
     }
 
     verify(adminClient);
@@ -673,6 +676,7 @@ public class TopicConfigManagerImplTest {
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
+      assertEquals("This server does not host this topic-partition.", e.getCause().getMessage());
     }
   }
 

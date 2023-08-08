@@ -64,6 +64,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import org.apache.kafka.common.errors.InvalidTopicException;
 
 @Path("/v3/clusters/{clusterId}/topics")
 @ResourceName("api.v3.topics.*")
@@ -179,6 +180,12 @@ public final class TopicsResource {
     }
 
     String topicName = request.getTopicName();
+    try {
+      org.apache.kafka.common.internals.Topic.validate(topicName);
+    } catch (InvalidTopicException e) {
+      throw Errors.invalidPayloadException("Invalid topic name.");
+    }
+
     Optional<Integer> partitionsCount = request.getPartitionsCount();
     Optional<Short> replicationFactor = request.getReplicationFactor();
     Map<Integer, List<Integer>> replicasAssignments = request.getReplicasAssignments();
@@ -186,6 +193,27 @@ public final class TopicsResource {
         request.getConfigs().stream()
             .collect(Collectors.toMap(ConfigEntry::getName, ConfigEntry::getValue));
 
+    // The partitions count for the topic is set in three ways, in this order of precedence:
+    // 1) If a map of replica assignments is provided, the partition count is calculated.
+    // 2) If a partition count is provided, use that value.
+    // 3) Otherwise, no value is provided and the topic uses the default partition count.
+    Optional<Integer> requestPartitionsCount =
+        replicasAssignments.isEmpty()
+            ? partitionsCount
+            : Optional.of(replicasAssignments.values().size());
+
+    // The replication factor for the topic is set in three ways, in this order of precedence:
+    // 1) If a map of replica assignments is provided, the replication factor is calculated.
+    // 2) If a replication factor is provided, use that value.
+    // 3) Otherwise, no value is provided and the topic uses the default replication factor.
+    Optional<Short> requestReplicationFactor =
+        replicasAssignments.isEmpty()
+            ? replicationFactor
+            : Optional.of((short) replicasAssignments.values().iterator().next().size());
+
+    // The CreateTopicResponse is created from TopicData, although this is only really used to
+    // build the response in a way compatible with the original implementation. This requires
+    // a value for the replication factor, which is supplied, calculated or defaulted to 0.
     // We have no way of knowing the default replication factor in the Kafka broker. Also in case
     // of explicitly specified partition-to-replicas assignments, all partitions should have the
     // same number of replicas.
@@ -206,29 +234,19 @@ public final class TopicsResource {
                 /* authorizedOperations= */ emptySet()));
 
     boolean validateOnly = request.getValidateOnly().orElse(false);
+    TopicManager topicManager = topicManagerProvider.get();
+
     CompletableFuture<CreateTopicResponse> response =
-        validateOnly
-            ? topicManagerProvider
-                .get()
-                .createTopic(
-                    clusterId,
-                    topicName,
-                    partitionsCount,
-                    replicationFactor,
-                    replicasAssignments,
-                    configs,
-                    true)
-                .thenApply(none -> CreateTopicResponse.create(topicData))
-            : topicManagerProvider
-                .get()
-                .createTopic(
-                    clusterId,
-                    topicName,
-                    partitionsCount,
-                    replicationFactor,
-                    replicasAssignments,
-                    configs)
-                .thenApply(none -> CreateTopicResponse.create(topicData));
+        topicManager
+            .createTopic2(
+                clusterId,
+                topicName,
+                requestPartitionsCount,
+                requestReplicationFactor,
+                replicasAssignments,
+                configs,
+                validateOnly)
+            .thenApply(topic -> CreateTopicResponse.create(toTopicData(topic)));
 
     // The response status will differ depending on whether a topic has actually been created.
     Response.Status responseStatus = validateOnly ? Status.OK : Status.CREATED;
