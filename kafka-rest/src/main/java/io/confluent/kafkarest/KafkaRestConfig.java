@@ -227,6 +227,20 @@ public class KafkaRestConfig extends RestConfig {
   public static final ConfigDef.Range PRODUCE_BATCH_MAXIMUM_ENTRIES_VALIDATOR =
       ConfigDef.Range.between(1, 50);
 
+  public static final String PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_CONFIG =
+      "api.v3.produce.request.size.limit.max.bytes";
+  private static final String PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_DOC =
+      "Specify this number to limit produce request size. Once that limit is reached then "
+          + "the produce request will be rejected with a 400 is returned to the client. "
+          + "In addition, the connection will be dropped to prevent further produce requests. "
+          + "Due to the produce request size counting algorithm's limitation, it is recommended "
+          + "to add 8192 (8KiB) buffer to the intended number that you want to set for the limit "
+          + "to avoid rejecting legitimate produce requests."
+          + "If this limit is set to a non-positive number, no limit is applied. Default is 0.";
+  public static final String PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_DEFAULT = "0";
+  public static final ConfigDef.Range PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_VALIDATOR =
+      ConfigDef.Range.atLeast(0);
+
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
   private static final String CONSUMER_ITERATOR_TIMEOUT_MS_DOC =
       "Timeout for blocking consumer iterator operations. This should be set to a small enough "
@@ -611,6 +625,13 @@ public class KafkaRestConfig extends RestConfig {
             PRODUCE_BATCH_MAXIMUM_ENTRIES_VALIDATOR,
             Importance.LOW,
             PRODUCE_BATCH_MAXIMUM_ENTRIES_DOC)
+        .define(
+            PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_CONFIG,
+            Type.LONG,
+            PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_DEFAULT,
+            PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_VALIDATOR,
+            Importance.LOW,
+            PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_DOC)
         .define(
             CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG,
             Type.INT,
@@ -1144,6 +1165,10 @@ public class KafkaRestConfig extends RestConfig {
 
   public final int getRateLimitDefaultCost() {
     return getInt(RATE_LIMIT_DEFAULT_COST_CONFIG);
+  }
+
+  public final long getProduceRequestSizeLimitMaxBytesConfig() {
+    return getLong(PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_CONFIG);
   }
 
   public final ImmutableMap<String, Integer> getRateLimitCosts() {
