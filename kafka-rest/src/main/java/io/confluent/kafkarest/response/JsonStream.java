@@ -75,7 +75,9 @@ public final class JsonStream<T> implements Closeable {
    * read while parsing a produce request so that we can act accordingly if the input stream is too
    * large; as an input stream is unbounded, we provide a method to reset the byte counter so that
    * it will be called by {@link JsonStream} on the boundary whenever a produce request is
-   * successfully parsed.
+   * successfully parsed; note that this class might not provide 100% accuracy produce request size
+   * counting due to the default buffer size of Jackson parser is 8000, so it is recommended to use
+   * this class only to validate produce request of big size.
    */
   public static class SizeLimitEntityStream extends InputStream {
 
