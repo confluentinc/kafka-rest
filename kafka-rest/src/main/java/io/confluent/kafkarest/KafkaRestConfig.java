@@ -43,19 +43,23 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.MediaType;
+import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
 import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.kafka.common.config.types.Password;
 import org.apache.kafka.common.metrics.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -964,7 +968,7 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public Properties getOriginalProperties() {
-    Properties properties = new Properties();
+    Properties properties = new PropertiesWithSafeToString(this);
     properties.putAll(originals());
     return properties;
   }
@@ -1022,12 +1026,14 @@ public class KafkaRestConfig extends RestConfig {
     }
     configs.put(USE_LATEST_VERSION, false);
 
-    return configs;
+    return new ConfigsWithSafeToString(configs, this);
   }
 
   public final Map<String, Object> getJsonSerializerConfigs() {
     Set<String> mask = singleton(KafkaJsonSerializerConfig.JSON_INDENT_OUTPUT);
-    return new ConfigsBuilder(mask).addConfigs("client.").addConfigs("producer.").build();
+    Map<String, Object> configs =
+        new ConfigsBuilder(mask).addConfigs("client.").addConfigs("producer.").build();
+    return new ConfigsWithSafeToString(configs, this);
   }
 
   public final Map<String, Object> getAvroSerializerConfigs() {
@@ -1036,7 +1042,7 @@ public class KafkaRestConfig extends RestConfig {
         new HashMap<>(
             new ConfigsBuilder(mask).addConfigs("client.").addConfigs("producer.").build());
     configs.putAll(getSchemaRegistryConfigs());
-    return configs;
+    return new ConfigsWithSafeToString(configs, this);
   }
 
   public final Map<String, Object> getJsonschemaSerializerConfigs() {
@@ -1050,7 +1056,7 @@ public class KafkaRestConfig extends RestConfig {
         new HashMap<>(
             new ConfigsBuilder(mask).addConfigs("client.").addConfigs("producer.").build());
     configs.putAll(getSchemaRegistryConfigs());
-    return configs;
+    return new ConfigsWithSafeToString(configs, this);
   }
 
   public final Map<String, Object> getProtobufSerializerConfigs() {
@@ -1072,7 +1078,7 @@ public class KafkaRestConfig extends RestConfig {
             .addConfigs("schema.registry.", false)
             .build();
 
-    Properties producerProperties = new Properties();
+    Properties producerProperties = new PropertiesWithSafeToString(this);
     producerProperties.putAll(producerConfigs);
 
     // KREST-4606: Disable idempotency until at the very least KAFKA-13668 is fixed, but maybe
@@ -1089,12 +1095,14 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public Map<String, Object> getProducerConfigs() {
-    return getProducerProperties().entrySet().stream()
-        .collect(Collectors.toMap(entry -> entry.getKey().toString(), Entry::getValue));
+    return new ConfigsWithSafeToString(
+        getProducerProperties().entrySet().stream()
+            .collect(Collectors.toMap(entry -> entry.getKey().toString(), Entry::getValue)),
+        this);
   }
 
   public Properties getConsumerProperties() {
-    Properties consumerProps = new Properties();
+    Properties consumerProps = new PropertiesWithSafeToString(this);
 
     consumerProps.setProperty(BOOTSTRAP_SERVERS_CONFIG, getString(BOOTSTRAP_SERVERS_CONFIG));
     consumerProps.setProperty(MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS_VALUE);
@@ -1108,7 +1116,7 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public Properties getAdminProperties() {
-    Properties adminProps = new Properties();
+    Properties adminProps = new PropertiesWithSafeToString(this);
 
     adminProps.setProperty(BOOTSTRAP_SERVERS_CONFIG, getString(BOOTSTRAP_SERVERS_CONFIG));
 
@@ -1285,6 +1293,139 @@ public class KafkaRestConfig extends RestConfig {
 
     private static ConfigValue create(String origin, Object value) {
       return new AutoValue_KafkaRestConfig_ConfigValue(origin, value);
+    }
+  }
+
+  // this set contains configs that are a password type but not listed in AbstractConfig
+  private static final Set<String> passwordTypeConfigs =
+      ImmutableSet.of(SaslConfigs.SASL_JAAS_CONFIG);
+
+  static <K, V> String mapToStringHideSensitiveConfigs(Map<K, V> map, AbstractConfig config) {
+    StringBuilder sb = new StringBuilder();
+    Set<Entry<K, V>> entries = map.entrySet();
+    sb.append('{');
+    Iterator<Entry<K, V>> it = entries.iterator();
+    while ((it.hasNext())) {
+      Entry<K, V> entry = it.next();
+      K key = entry.getKey();
+      V value = entry.getValue();
+      if (key instanceof String) {
+        if (passwordTypeConfigs.contains(key)) {
+          toStringKeyAndValue(sb, key, Password.HIDDEN, it.hasNext());
+        } else {
+          Type type = config.typeOf((String) key);
+          if (type == Type.PASSWORD) {
+            toStringKeyAndValue(sb, key, config.getPassword((String) key), it.hasNext());
+          } else {
+            toStringKeyAndValue(sb, key, value, it.hasNext());
+          }
+        }
+      }
+    }
+    return sb.append('}').toString();
+  }
+
+  private static void toStringKeyAndValue(
+      StringBuilder sb, Object key, Object value, boolean appendDelimiter) {
+    sb.append(key);
+    sb.append("=");
+    sb.append(value);
+    if (appendDelimiter) {
+      sb.append(",");
+      sb.append(" ");
+    }
+  }
+
+  /** {@link Properties} class with toString function that hide sensitive configs */
+  static class PropertiesWithSafeToString extends Properties {
+
+    private final AbstractConfig config;
+
+    PropertiesWithSafeToString(AbstractConfig config) {
+      super();
+      this.config = config;
+    }
+
+    @Override
+    public synchronized String toString() {
+      return mapToStringHideSensitiveConfigs(this, config);
+    }
+  }
+
+  /** {@link Map} configs class with toString function that hide sensitive configs */
+  static class ConfigsWithSafeToString implements Map<String, Object> {
+
+    private final Map<String, Object> delegate;
+    private final AbstractConfig config;
+
+    ConfigsWithSafeToString(Map<String, Object> delegate, AbstractConfig config) {
+      this.delegate = delegate;
+      this.config = config;
+    }
+
+    @Override
+    public String toString() {
+      return mapToStringHideSensitiveConfigs(this, config);
+    }
+
+    @Override
+    public int size() {
+      return delegate.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return delegate.isEmpty();
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+      return delegate.containsKey(key);
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+      return delegate.containsValue(value);
+    }
+
+    @Override
+    public Object get(Object key) {
+      return delegate.get(key);
+    }
+
+    @Override
+    public Object put(String key, Object value) {
+      return delegate.put(key, value);
+    }
+
+    @Override
+    public Object remove(Object key) {
+      return delegate.remove(key);
+    }
+
+    @Override
+    public void putAll(Map<? extends String, ?> m) {
+      delegate.putAll(m);
+    }
+
+    @Override
+    public void clear() {
+      delegate.clear();
+    }
+
+    @Override
+    public Set<String> keySet() {
+      return delegate.keySet();
+    }
+
+    @Override
+    public Collection<Object> values() {
+      return delegate.values();
+    }
+
+    @Override
+    public Set<Entry<String, Object>> entrySet() {
+      return delegate.entrySet();
     }
   }
 }
