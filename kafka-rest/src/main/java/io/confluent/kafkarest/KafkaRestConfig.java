@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.MapDifference.ValueDifference;
 import com.google.common.collect.Maps;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.KafkaJsonSerializerConfig;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializerConfig;
@@ -967,12 +968,20 @@ public class KafkaRestConfig extends RestConfig {
     this(configDef, props);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Properties getOriginalProperties() {
     Properties properties = new PropertiesWithSafeToString(this);
     properties.putAll(originals());
     return properties;
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Map<String, Object> getSchemaRegistryConfigs() {
     ImmutableSet<String> mask =
         ImmutableSet.<String>builder()
@@ -1029,6 +1038,10 @@ public class KafkaRestConfig extends RestConfig {
     return new ConfigsWithSafeToString(configs, this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public final Map<String, Object> getJsonSerializerConfigs() {
     Set<String> mask = singleton(KafkaJsonSerializerConfig.JSON_INDENT_OUTPUT);
     Map<String, Object> configs =
@@ -1036,6 +1049,10 @@ public class KafkaRestConfig extends RestConfig {
     return new ConfigsWithSafeToString(configs, this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public final Map<String, Object> getAvroSerializerConfigs() {
     Set<String> mask = AbstractKafkaSchemaSerDeConfig.baseConfigDef().names();
     HashMap<String, Object> configs =
@@ -1045,6 +1062,10 @@ public class KafkaRestConfig extends RestConfig {
     return new ConfigsWithSafeToString(configs, this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public final Map<String, Object> getJsonschemaSerializerConfigs() {
     Set<String> mask =
         ImmutableSet.of(
@@ -1059,6 +1080,10 @@ public class KafkaRestConfig extends RestConfig {
     return new ConfigsWithSafeToString(configs, this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public final Map<String, Object> getProtobufSerializerConfigs() {
     Set<String> mask =
         singleton(KafkaProtobufSerializerConfig.REFERENCE_SUBJECT_NAME_STRATEGY_CONFIG);
@@ -1066,9 +1091,13 @@ public class KafkaRestConfig extends RestConfig {
         new HashMap<>(
             new ConfigsBuilder(mask).addConfigs("client.").addConfigs("producer.").build());
     configs.putAll(getSchemaRegistryConfigs());
-    return configs;
+    return new ConfigsWithSafeToString(configs, this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Properties getProducerProperties() {
     Map<String, Object> producerConfigs =
         new ConfigsBuilder()
@@ -1094,6 +1123,10 @@ public class KafkaRestConfig extends RestConfig {
     return producerProperties;
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Map<String, Object> getProducerConfigs() {
     return new ConfigsWithSafeToString(
         getProducerProperties().entrySet().stream()
@@ -1101,6 +1134,10 @@ public class KafkaRestConfig extends RestConfig {
         this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Properties getConsumerProperties() {
     Properties consumerProps = new PropertiesWithSafeToString(this);
 
@@ -1115,6 +1152,10 @@ public class KafkaRestConfig extends RestConfig {
     return consumerProps;
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Properties getAdminProperties() {
     Properties adminProps = new PropertiesWithSafeToString(this);
 
@@ -1298,8 +1339,20 @@ public class KafkaRestConfig extends RestConfig {
 
   // this set contains configs that are a password type but not listed in AbstractConfig
   private static final Set<String> passwordTypeConfigs =
-      ImmutableSet.of(SaslConfigs.SASL_JAAS_CONFIG);
+      ImmutableSet.of(
+          SaslConfigs.SASL_JAAS_CONFIG,
+          SchemaRegistryClientConfig.SCHEMA_REGISTRY_USER_INFO_CONFIG,
+          SchemaRegistryClientConfig.USER_INFO_CONFIG,
+          SchemaRegistryClientConfig.BEARER_AUTH_TOKEN_CONFIG,
+          SchemaRegistryClientConfig.BEARER_AUTH_CLIENT_SECRET);
 
+  /**
+   * This function relies on {@link AbstractConfig} object to detect whether a config is a {@link
+   * Password}. Therefore, it is important for the implementation to make sure that a config is
+   * registered correctly to not accidentally leaking sensitive information. If there is config that
+   * is sensitive but not registered correctly in its corresponding {@link AbstractConfig} object,
+   * please add that config to {@link KafkaRestConfig#passwordTypeConfigs} field above.
+   */
   static <K, V> String mapToStringHideSensitiveConfigs(Map<K, V> map, AbstractConfig config) {
     StringBuilder sb = new StringBuilder();
     Set<Entry<K, V>> entries = map.entrySet();
@@ -1337,11 +1390,11 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   /** {@link Properties} class with toString function that hide sensitive configs */
-  static class PropertiesWithSafeToString extends Properties {
+  public static class PropertiesWithSafeToString extends Properties {
 
     private final AbstractConfig config;
 
-    PropertiesWithSafeToString(AbstractConfig config) {
+    public PropertiesWithSafeToString(AbstractConfig config) {
       super();
       this.config = config;
     }
@@ -1353,12 +1406,12 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   /** {@link Map} configs class with toString function that hide sensitive configs */
-  static class ConfigsWithSafeToString implements Map<String, Object> {
+  public static class ConfigsWithSafeToString implements Map<String, Object> {
 
     private final Map<String, Object> delegate;
     private final AbstractConfig config;
 
-    ConfigsWithSafeToString(Map<String, Object> delegate, AbstractConfig config) {
+    public ConfigsWithSafeToString(Map<String, Object> delegate, AbstractConfig config) {
       this.delegate = delegate;
       this.config = config;
     }
