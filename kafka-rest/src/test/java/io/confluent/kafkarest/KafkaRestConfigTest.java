@@ -543,7 +543,8 @@ public class KafkaRestConfigTest {
     assertThat(
         loggedToString,
         containsString(
-            "reference.subject.name.strategy=io.confluent.kafka.serializers.subject.QualifiedReferenceSubjectNameStrategy"));
+            "reference.subject.name.strategy="
+                + "io.confluent.kafka.serializers.subject.QualifiedReferenceSubjectNameStrategy"));
     assertThat(loggedToString, containsString("sasl.jaas.config=" + Password.HIDDEN));
   }
 
