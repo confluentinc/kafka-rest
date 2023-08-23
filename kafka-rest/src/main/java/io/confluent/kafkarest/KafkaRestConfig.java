@@ -1349,16 +1349,16 @@ public class KafkaRestConfig extends RestConfig {
   /**
    * This function relies on {@link AbstractConfig} object to detect whether a config is a {@link
    * Password}. Therefore, it is important for the implementation to make sure that a config is
-   * registered correctly to not accidentally leaking sensitive information. If there is config that
-   * is sensitive but not registered correctly in its corresponding {@link AbstractConfig} object,
-   * please add that config to {@link KafkaRestConfig#passwordTypeConfigs} field above.
+   * registered correctly to not accidentally leaking sensitive information. If there is a config
+   * that is sensitive but not registered correctly in its corresponding {@link AbstractConfig}
+   * object, please add that config to {@link KafkaRestConfig#passwordTypeConfigs} field above.
    */
   static <K, V> String mapToStringHideSensitiveConfigs(Map<K, V> map, AbstractConfig config) {
     StringBuilder sb = new StringBuilder();
     Set<Entry<K, V>> entries = map.entrySet();
     sb.append('{');
     Iterator<Entry<K, V>> it = entries.iterator();
-    while ((it.hasNext())) {
+    while (it.hasNext()) {
       Entry<K, V> entry = it.next();
       K key = entry.getKey();
       V value = entry.getValue();
@@ -1384,8 +1384,7 @@ public class KafkaRestConfig extends RestConfig {
     sb.append("=");
     sb.append(value);
     if (appendDelimiter) {
-      sb.append(",");
-      sb.append(" ");
+      sb.append(", ");
     }
   }
 
