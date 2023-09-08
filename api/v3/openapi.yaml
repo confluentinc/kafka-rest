@@ -1430,7 +1430,7 @@ paths:
         '200':
           $ref: '#/components/responses/ProduceResponse'
         '400':
-            $ref: '#/components/responses/BadRequestErrorResponse_ProduceRecords'
+          $ref: '#/components/responses/BadRequestErrorResponse_ProduceRecords'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
         '403':
