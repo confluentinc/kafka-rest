@@ -1210,14 +1210,14 @@ public class RecordSerializerFacadeTest {
                 EmbeddedFormat.JSONSCHEMA,
                 TOPIC_NAME,
                 Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-                JsonNode.valueOf(new Float(123.456001)),
+                FloatNode.valueOf(123.456F),
                 /* isKey= */ true)
             .get();
 
     KafkaJsonSchemaDeserializer<BigDecimal> deserializer = new KafkaJsonSchemaDeserializer<>();
     deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
-    assertEquals(new BigDecimal("123.456001"), deserialized);
+    assertEquals(new BigDecimal("123.456"), deserialized);
   }
 
   @Test
@@ -1423,14 +1423,14 @@ public class RecordSerializerFacadeTest {
                 EmbeddedFormat.JSONSCHEMA,
                 TOPIC_NAME,
                 Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-                JsonNode.valueOf(new Float(123.456001)),
+                FloatNode.valueOf(123.456F),
                 /* isKey= */ false)
             .get();
 
     KafkaJsonSchemaDeserializer<BigDecimal> deserializer = new KafkaJsonSchemaDeserializer<>();
     deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
-    assertEquals(new BigDecimal("123.456001"), deserialized);
+    assertEquals(new BigDecimal("123.456"), deserialized);
   }
 
   @Test

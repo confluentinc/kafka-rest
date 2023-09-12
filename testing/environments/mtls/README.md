@@ -14,7 +14,7 @@ Components:
     3. `kafka-3:9293`, `http://kafka-3:9393`
 
 Kafka is configured with PLAINTEXT security, and REST Proxy is configured with mTLS authentication.
-    
+
 ## Usage
 
 The command below starts up all containers. Use `-d` to start on detached mode.
