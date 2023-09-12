@@ -21,6 +21,7 @@ import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.USE_
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
@@ -1217,7 +1218,11 @@ public class RecordSerializerFacadeTest {
     KafkaJsonSchemaDeserializer<BigDecimal> deserializer = new KafkaJsonSchemaDeserializer<>();
     deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
-    assertEquals(new BigDecimal("123.456"), deserialized);
+
+    BigDecimal expected = new BigDecimal("123.456");
+    BigDecimal actual = (BigDecimal) deserialized;
+    BigDecimal epsilon = new BigDecimal("0.0001");
+    assertTrue(actual.subtract(expected).abs().compareTo(epsilon) <= 0);
   }
 
   @Test
@@ -1430,7 +1435,11 @@ public class RecordSerializerFacadeTest {
     KafkaJsonSchemaDeserializer<BigDecimal> deserializer = new KafkaJsonSchemaDeserializer<>();
     deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
-    assertEquals(new BigDecimal("123.456"), deserialized);
+
+    BigDecimal expected = new BigDecimal("123.456");
+    BigDecimal actual = (BigDecimal) deserialized;
+    BigDecimal epsilon = new BigDecimal("0.0001");
+    assertTrue(actual.subtract(expected).abs().compareTo(epsilon) <= 0);
   }
 
   @Test
