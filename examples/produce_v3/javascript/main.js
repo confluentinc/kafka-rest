@@ -3,19 +3,17 @@ const http = require('http');
 
 // handling streaming response
 var recordReceiptCounter = 1;
-callback = function(response) {
-    response.on(
-        'data',
-        function (data) {
-            let chunk = data.toString('utf8');
-            if (chunk.trim()) {
-                console.log("Receipt for record #" + recordReceiptCounter + " is");
-                console.log(JSON.parse(chunk));
-                recordReceiptCounter += 1;
-            }
-        });
+callback = (response) => {
+    response.on('data', (data) => {
+        const chunk = data.toString('utf8');
+        if (chunk.trim()) {
+            console.log(`Receipt for record #${recordReceiptCounter} is`);
+            console.log(JSON.parse(chunk));
+            recordReceiptCounter += 1;
+        }
+    });
 
-    response.on('end', function () {
+    response.on('end', () => {
         console.log("Stream is closed!");
     });
 }
@@ -26,7 +24,7 @@ async function main() {
     const port = '8082';
     const clusterId = 'ZXBWzl8VQ5WTB_hgEAuGeQ';
     const topic = 'topic_1';
-    let options = {
+    const options = {
         host: host,
         port: port,
         path: `/v3/clusters/${clusterId}/topics/${topic}/records`,
@@ -37,12 +35,12 @@ async function main() {
     // produces records to a Kafka topic, using Kafka REST's produce API -
     // /v3/clusters/{clusterId}/topics/{topic}/records.
     for (let i = 1; i <= 10; i++) {
-      var record = JSON.stringify({"value": {"type": "JSON", "data": {"foo": i } }});
-      console.log("Producing record #" + i + " with json " + record);
-      request.write(record);
+        const record = JSON.stringify({"value": {"type": "JSON", "data": {"foo": i } }});
+        console.log("Producing record #" + i + " with json " + record);
+        request.write(record);
 
-      // Wait 1 sec to confirm we indeed are streaming data back
-      await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait 1 sec to confirm we indeed are streaming data back
+        await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     // Close the stream.
