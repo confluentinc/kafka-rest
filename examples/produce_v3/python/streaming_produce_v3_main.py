@@ -124,13 +124,13 @@ class Producer:
 
         # Directly access the connection/socket, and start read the
         # http-response(record-receipts) to be fully-duplex
-        # Else most traditionaly Http-libraries would allow reading
+        # Else most traditionally Http-libraries would allow reading
         # the request when the entire response is written.
         http_response = http.client.HTTPResponse(self.connection.sock)
         http_response.begin()
         print("Http-stream has status-code {}".format(http_response.getcode()))
         if http_response.getcode() != 200:
-            raise Exception("Failed to produce records as recieved error with http status code %d, error %s" % (http_response.getcode(), http_response.read()))
+            raise Exception("Failed to produce records as received error with http status code %d, error %s" % (http_response.getcode(), http_response.read()))
 
         record_receipt_counter = 0
         while True:
@@ -146,7 +146,7 @@ class Producer:
 def produce_records(producer: Producer, record_count: int):
     for idx in range(0, record_count):
         # Sleep for 1 second, so that the record-receipts can be received
-        # for previosly produced records.
+        # for previously produced records.
         time.sleep(1)
         producer.produce(ProduceRecord("key_" + str(idx), "value_" + str(idx)))
     
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     producer_thread = Thread(target=produce_records, args=(producer, 20))
     producer_thread.start()
     producer_thread.join()
-    # Wait for 5 seconds, so that all record reciepts are received.
+    # Wait for 5 seconds, so that all record receipts are received.
     time.sleep(5)
 
     producer.shutdown()
