@@ -118,7 +118,7 @@ public final class TopicsResource {
     CompletableFuture<GetTopicResponse> response =
         topicManager.get()
             .getTopic(clusterId, topicName)
-            .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
+            .thenApply(topic -> topic.<NotFoundException>orElseThrow(() -> new NotFoundException()))
             .thenApply(topic -> GetTopicResponse.create(toTopicData(topic)));
 
     AsyncResponses.asyncResume(asyncResponse, response);

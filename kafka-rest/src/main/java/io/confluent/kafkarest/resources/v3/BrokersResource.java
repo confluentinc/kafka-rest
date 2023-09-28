@@ -102,7 +102,7 @@ public final class BrokersResource {
     CompletableFuture<GetBrokerResponse> response =
         brokerManager.get()
             .getBroker(clusterId, brokerId)
-            .thenApply(broker -> broker.orElseThrow(NotFoundException::new))
+            .thenApply(broker -> broker.<NotFoundException>orElseThrow(() -> new NotFoundException()))
             .thenApply(broker -> GetBrokerResponse.create(toBrokerData(broker)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
