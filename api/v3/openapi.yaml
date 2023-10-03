@@ -1437,6 +1437,8 @@ paths:
           $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
+        '413':
+          $ref: '#/components/responses/RequestEntityTooLargeErrorResponse'
         '415':
           $ref: '#/components/responses/UnsupportedMediaTypeErrorResponse'
         '422':
@@ -4493,8 +4495,22 @@ components:
                         </body>
                     </html>'
 
+    RequestEntityTooLargeErrorResponse:
+      description: 'This implies the client is sending a request payload that is larger than the maximum message size the
+        server can accept.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            produce_records_expects_json:
+              description: "Thrown by /records API if payload size exceeds the message max size"
+              value:
+                error_code: 413
+                message:  "The request included a message larger than the maximum message size the server can accept."
+
     UnsupportedMediaTypeErrorResponse:
-      description: 'This implies client is sending the request payload format in an supported format.'
+      description: 'This implies the client is sending the request payload format in an unsupported format.'
       content:
         application/json:
           schema:
