@@ -4496,8 +4496,8 @@ components:
                     </html>'
 
     RequestEntityTooLargeErrorResponse:
-      description: 'This implies client is sending the request payload that is larger than the max message size the
-        server will accept.'
+      description: 'This implies the client is sending a request payload that is larger than the maximum message size the
+        server can accept.'
       content:
         application/json:
           schema:
@@ -4507,10 +4507,10 @@ components:
               description: "Thrown by /records API if payload size exceeds the message max size"
               value:
                 error_code: 413
-                message:  "The request included a message larger than the max message size the server will accept."
+                message:  "The request included a message larger than the maximum message size the server can accept."
 
     UnsupportedMediaTypeErrorResponse:
-      description: 'This implies client is sending the request payload format in an supported format.'
+      description: 'This implies the client is sending the request payload format in an unsupported format.'
       content:
         application/json:
           schema:
