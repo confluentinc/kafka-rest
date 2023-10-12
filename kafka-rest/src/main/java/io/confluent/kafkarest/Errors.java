@@ -52,7 +52,7 @@ public class Errors {
   public static final int CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE = 40403;
 
   public static final String CONSUMER_GROUP_ID_NOT_FOUND_MESSAGE = "Consumer group id not found.";
-  public static final int CONSUMER_GROUP_ID_NOT_FOUND_ERROR_CODE = 40403;
+  public static final int CONSUMER_GROUP_ID_NOT_FOUND_ERROR_CODE = 40405;
 
   public static RestException consumerInstanceNotFoundException() {
     return new RestNotFoundException(
