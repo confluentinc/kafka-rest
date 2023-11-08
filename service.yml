@@ -1,5 +1,6 @@
 name: kafka-rest
 lang: unknown
+lang_version: unknown
 codeowners:
   enable: true
 semaphore:
