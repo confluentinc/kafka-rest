@@ -139,6 +139,41 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <dependency>
+                <groupId>io.confluent</groupId>
+                <artifactId>kafka-schema-rules</artifactId>
+                <version>${io.confluent.schema-registry.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-runtime</artifactId>
+                <version>4.11.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectnessie.cel</groupId>
+                <artifactId>cel-jackson</artifactId>
+                <version>0.3.12</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectnessie.cel</groupId>
+                <artifactId>cel-tools</artifactId>
+                <version>0.3.12</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-validator</groupId>
+                <artifactId>commons-validator</artifactId>
+                <version>1.7</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ibm.jsonata4java</groupId>
+                <artifactId>JSONata4Java</artifactId>
+                <version>2.4.3</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hubspot.jackson</groupId>
+                <artifactId>jackson-datatype-protobuf</artifactId>
+                <version>0.9.13</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
