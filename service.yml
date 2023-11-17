@@ -6,6 +6,7 @@ codeowners:
 semaphore:
   enable: true
   pipeline_type: cp
+  nano_version: true
   downstream_projects: ["confluent-security-plugins", "ce-kafka-rest", "confluent-cloud-plugins"]
 git:
   enable: true
