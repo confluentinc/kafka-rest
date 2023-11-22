@@ -108,9 +108,14 @@
                 </exclusions>
             </dependency>
             <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>3.7.2</version>
+            </dependency>
+            <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-core</artifactId>
-                <version>4.1.12.1</version>
+                <version>4.2.22</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
