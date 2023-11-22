@@ -16,15 +16,18 @@
 package io.confluent.kafkarest.v2;
 
 import io.confluent.kafkarest.ConsumerReadCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Vector;
-
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Vector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * State for tracking the progress of a single consumer read request.
@@ -40,7 +43,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   private static final Logger log = LoggerFactory.getLogger(KafkaConsumerReadTask.class);
 
   private final KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> parent;
-  private final long requestTimeoutMs;
+  private final Duration requestTimeout;
   // the minimum bytes the task should accumulate
   // before returning a response (or hitting the timeout)
   // responseMinBytes might be bigger than maxResponseBytes
@@ -54,35 +57,39 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   private long bytesConsumed = 0;
   private boolean exceededMinResponseBytes = false;
   private boolean exceededMaxResponseBytes = false;
-  private final long started;
+  private final Instant started;
+  private final Clock clock = Clock.systemUTC();
 
 
   public KafkaConsumerReadTask(
       KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> parent,
-      long timeout,
+      Duration timeout,
       long maxBytes,
-      ConsumerReadCallback<ClientKeyT, ClientValueT> callback
+      ConsumerReadCallback<ClientKeyT, ClientValueT> callback,
+      KafkaRestConfig config
   ) {
     this.parent = parent;
     this.maxResponseBytes =
-        Math.min(
-            maxBytes,
-            parent.getConfig().getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG)
-        );
-    long defaultRequestTimeout =
-        parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
-    this.requestTimeoutMs =
-            timeout <= 0 ? defaultRequestTimeout : Math.min(timeout, defaultRequestTimeout);
-
-    int responseMinBytes = parent.getConfig().getInt(
-            KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG);
+        Math.min(maxBytes, config.getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG));
+    Duration defaultRequestTimeout =
+        parent.getConsumerInstanceConfig().getRequestWaitMs() != null
+            ? Duration.ofMillis(parent.getConsumerInstanceConfig().getRequestWaitMs())
+            : Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG));
+    this.requestTimeout =
+        timeout.isNegative() || timeout.isZero()
+            ? defaultRequestTimeout
+            : Collections.min(Arrays.asList(timeout, defaultRequestTimeout));
+    int responseMinBytes =
+        parent.getConsumerInstanceConfig().getResponseMinBytes() != null
+            ? parent.getConsumerInstanceConfig().getResponseMinBytes()
+            : config.getInt(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG);
     this.responseMinBytes = responseMinBytes < 0 ? Integer.MAX_VALUE : responseMinBytes;
 
 
     this.callback = callback;
     this.finished = false;
 
-    started = parent.getConfig().getTime().milliseconds();
+    started = clock.instant();
   }
 
   /**
@@ -99,22 +106,22 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
       log.trace(
           "KafkaConsumerReadTask exiting read with id={} messages={} bytes={}, backing off if not"
-          + " complete",
+              + " complete",
           this,
           messages.size(),
           bytesConsumed
       );
 
-      long now = parent.getConfig().getTime().milliseconds();
-      long elapsed = now - started;
+      Instant now = clock.instant();
+      Duration elapsed = Duration.between(started, now);
 
       // Including the rough message size here ensures processing finishes if the next
       // message exceeds the maxResponseBytes
-      boolean requestTimedOut = elapsed >= requestTimeoutMs;
+      boolean requestTimedOut = elapsed.compareTo(requestTimeout) >= 0;
       if (requestTimedOut || exceededMaxResponseBytes || exceededMinResponseBytes) {
         log.trace(
             "Finishing KafkaConsumerReadTask id={} requestTimedOut={} "
-            + "exceededMaxResponseBytes={} exceededMinResponseBytes={}",
+                + "exceededMaxResponseBytes={} exceededMinResponseBytes={}",
             this,
             requestTimedOut,
             exceededMaxResponseBytes,
@@ -187,7 +194,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     } catch (Throwable t) {
       // This protects the worker thread from any issues with the callback code. Nothing to be
       // done here but log it since it indicates a bug in the calling code.
-      log.error("Consumer read callback threw an unhandled exception id={}", this, e);
+      log.error("Consumer read callback threw an unhandled exception id={} exception={}", this, e);
     }
     finished = true;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,15 +15,11 @@
 
 package io.confluent.kafkarest.converters;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.kafka.schemaregistry.ParsedSchema;
-import io.confluent.kafka.schemaregistry.json.JsonSchema;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaUtils;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * Provides conversion of JSON to/from JSON Schema.
@@ -33,15 +29,6 @@ public final class JsonSchemaConverter implements SchemaConverter {
   private static final Logger log = LoggerFactory.getLogger(JsonSchemaConverter.class);
 
   private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-
-  @Override
-  public Object toObject(JsonNode value, ParsedSchema parsedSchema) {
-    try {
-      return JsonSchemaUtils.toObject(value, (JsonSchema) parsedSchema);
-    } catch (Exception e) {
-      throw new ConversionException("Failed to convert JSON using JSON Schema: " + e.getMessage());
-    }
-  }
 
   /**
    * Converts JSON Schema data to their equivalent JsonNode representation.

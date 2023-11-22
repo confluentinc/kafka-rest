@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,16 +15,12 @@
 
 package io.confluent.kafkarest.converters;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.Message;
-import io.confluent.kafka.schemaregistry.ParsedSchema;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaUtils;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * Provides conversion of JSON to/from Protobuf.
@@ -34,15 +30,6 @@ public final class ProtobufConverter implements SchemaConverter {
   private static final Logger log = LoggerFactory.getLogger(ProtobufConverter.class);
 
   private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-
-  @Override
-  public Object toObject(JsonNode value, ParsedSchema parsedSchema) {
-    try {
-      return ProtobufSchemaUtils.toObject(value, (ProtobufSchema) parsedSchema);
-    } catch (Exception e) {
-      throw new ConversionException("Failed to convert JSON to Protobuf: " + e.getMessage());
-    }
-  }
 
   /**
    * Converts Protobuf data to their equivalent JsonNode representation.

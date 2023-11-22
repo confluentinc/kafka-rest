@@ -15,27 +15,18 @@
 package io.confluent.kafkarest.integration;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest.BinaryPartitionProduceRecord;
 import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.Before;
 import org.junit.Test;
@@ -112,17 +103,6 @@ public class ProducerTest
       new PartitionOffset(2, 0L, null, null)
   );
 
-  private boolean sawCallback;
-
-  @Override
-  protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {
-    Properties overrides = new Properties();
-    // Reduce the metadata fetch timeout so requests for topics that don't exist timeout much
-    // faster than the default
-    overrides.setProperty(ProducerConfig.MAX_BLOCK_MS_CONFIG, "5000");
-    return new ProducerPool(appConfig, overrides);
-  }
-
   @Before
   @Override
   public void setUp() throws Exception {
@@ -132,41 +112,6 @@ public class ProducerTest
     kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
         JavaConverters.asScalaBuffer(this.servers),
         new Properties());
-  }
-
-  // This should really be a unit test, but producer settings aren't accessible and any requests
-  // trigger metadata requests, so to verify we need to use a full cluster setup
-  @Test
-  public void testProducerConfigOverrides() {
-    Properties overrides = new Properties();
-    overrides.setProperty("block.on.buffer.full", "false");
-    overrides.setProperty("buffer.memory", "1");
-    // Note separate ProducerPool since the override should only be for this test, so
-    // getProducerPool doesn't work here
-    ProducerPool pool = new ProducerPool(this.restConfig, this.brokerList, overrides);
-
-    BinaryPartitionProduceRequest request =
-        BinaryPartitionProduceRequest.create(
-            Collections.singletonList(new BinaryPartitionProduceRecord(null, "data")));
-
-    sawCallback = false;
-    pool.produce(
-        topicName,
-        0,
-        EmbeddedFormat.BINARY,
-        request.toProduceRequest(),
-        new ProducerPool.ProduceRequestCallback() {
-          @Override
-          public void onCompletion(
-              Integer keySchemaId,
-              Integer valueSchemaId,
-              List<RecordMetadataOrException> results) {
-            sawCallback = true;
-            assertNotNull(results.get(0).getException());
-            assertEquals(results.get(0).getException().getClass(), RecordTooLargeException.class);
-          }
-        });
-    assertTrue(sawCallback);
   }
 
   @Test

@@ -26,7 +26,7 @@ import java.util.concurrent.CompletableFuture;
 public interface ConsumerAssignmentManager {
 
   /**
-   * Returns the list of Kafka {@link ConsumerAssignment Consumer Asignments} belonging to the
+   * Returns the list of Kafka {@link ConsumerAssignment Consumer Assignments} belonging to the
    * {@link io.confluent.kafkarest.entities.Consumer} with the given {@code consumerId}.
    */
   CompletableFuture<List<ConsumerAssignment>> listConsumerAssignments(

@@ -52,10 +52,6 @@ public final class AvroProduceConsumeTest extends SchemaProduceConsumeTest {
                   new GenericRecordBuilder(VALUE_SCHEMA).set("value", 13).build()).getJson(),
               /* partition= */ 0));
 
-  public AvroProduceConsumeTest() {
-    super(/* numBrokers= */ 1, /* withSchemaRegistry= */ true);
-  }
-
   @Override
   protected EmbeddedFormat getFormat() {
     return EmbeddedFormat.AVRO;

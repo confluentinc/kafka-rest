@@ -25,8 +25,8 @@ public final class V2ExceptionMapper implements ExceptionMapper<StatusCodeExcept
   public Response toResponse(StatusCodeException exception) {
     return Response.status(exception.getStatus())
         .entity(
-            new ErrorResponse(
-                exception.getCode().orElse(exception.getStatus().getStatusCode()).toString(),
+            ErrorResponse.create(
+                exception.getCode(),
                 String.format("%s: %s", exception.getTitle(), exception.getDetail())))
         .build();
   }

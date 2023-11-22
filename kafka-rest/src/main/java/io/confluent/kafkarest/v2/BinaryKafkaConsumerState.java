@@ -19,6 +19,7 @@ import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
@@ -30,10 +31,13 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 public class BinaryKafkaConsumerState
     extends KafkaConsumerState<byte[], byte[], ByteString, ByteString> {
 
-  public BinaryKafkaConsumerState(KafkaRestConfig config,
+  public BinaryKafkaConsumerState(
+      KafkaRestConfig config,
+      ConsumerInstanceConfig consumerInstanceConfig,
       ConsumerInstanceId instanceId,
-      Consumer consumer) {
-    super(config, instanceId, consumer);
+      Consumer consumer
+  ) {
+    super(config, consumerInstanceConfig, instanceId, consumer);
   }
 
   @Override

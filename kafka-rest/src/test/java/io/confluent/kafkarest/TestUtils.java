@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
@@ -43,7 +44,6 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +53,9 @@ public class TestUtils {
   private static final ObjectMapper jsonParser = new ObjectMapper();
 
   private static final int DEFAULT_EXP_BACKOFF_RETRIES = 3;
-  private static final Duration DEFAULT_INITIAL_BACKOFF = Duration.ofMillis(200L);
+
+  public static final Duration DEFAULT_WAIT_TIMEOUT = Duration.ofSeconds(30L);
+  public static final Duration DEFAULT_RETRY_INTERVAL = Duration.ofMillis(200L);
 
   /**
    * Try to read the entity. If parsing fails, errors are rethrown, but the raw entity is also logged for debugging.
@@ -120,17 +122,6 @@ public class TestUtils {
                                          String mediatype) {
     assertErrorResponse(status, rawResponse, status.getStatusCode(), status.getReasonPhrase(),
                         mediatype);
-  }
-
-  public static class RequestMediaType {
-
-    public final String header;
-    public final String expected;
-
-    public RequestMediaType(String header, String expected) {
-      this.header = header;
-      this.expected = expected;
-    }
   }
 
   /**
@@ -246,28 +237,125 @@ public class TestUtils {
         valueDeserializerClassName, new Properties(), validateContents);
   }
 
+  /**
+   * Retries a given set of assertions, if not all of them succeed, using a pre-defined exponential
+   * backoff strategy.
+   *
+   * @param assertions A set of assertions which are expected to throw if not all of them succeed.
+   */
   public static void testWithRetry(Runnable assertions) {
-    testWithRetry(assertions, DEFAULT_EXP_BACKOFF_RETRIES, DEFAULT_INITIAL_BACKOFF);
+    testWithRetry(assertions, DEFAULT_EXP_BACKOFF_RETRIES, null, DEFAULT_RETRY_INTERVAL, true);
   }
 
-  public static void testWithRetry(Runnable assertions, int numRetries, Duration initialBackoff) {
-    Duration backoff = initialBackoff;
+  private static void testWithRetry(
+      Runnable assertions,
+      int numRetries,
+      Duration timeout,
+      Duration initialRetryInterval,
+      boolean isExponentialBackoff) {
+    long sleepNanos = initialRetryInterval.toNanos();
+    long start = System.nanoTime();
+    long elapsed;
+    long maxElapsed = timeout != null ? timeout.toNanos() : Long.MAX_VALUE;
     for (int i = 0;; i++) {
       try {
         assertions.run();
         return;
       } catch (Throwable t) {
-        if (i == numRetries) {
+        elapsed = System.nanoTime() - start;
+        if (i == numRetries || elapsed > maxElapsed) {
           throw new AssertionError(
               String.format(
-                  "Failed after %d exponential backoff retries with %d ms initial backoff.",
+                  "Failed after %d ms elapsed and %d%s retries with %d ms initial retry interval.",
+                  TimeUnit.NANOSECONDS.toMillis(elapsed),
                   numRetries,
-                  initialBackoff.toMillis()),
+                  isExponentialBackoff ? " exponential backoff" : "",
+                  initialRetryInterval.toMillis()),
               t);
         }
       }
-      LockSupport.parkNanos(backoff.toNanos());
-      backoff = backoff.multipliedBy(2L);
+      LockSupport.parkNanos(sleepNanos);
+      sleepNanos = isExponentialBackoff ? sleepNanos * 2 : sleepNanos;
+    }
+  }
+
+  /**
+   * Waits (blocking the execution thread) for a pre-defined amount of time for the given condition
+   * to be met.
+   *
+   * @param condition A condition expected to throw or return false if not met.
+   * @param conditionDetails A message describing the condition being waited for.
+   */
+  public static void waitForCondition(Callable<Boolean> condition, String conditionDetails) {
+    waitForCondition(
+        condition, DEFAULT_WAIT_TIMEOUT, DEFAULT_RETRY_INTERVAL, () -> conditionDetails);
+  }
+
+  /**
+   * Waits (blocking the execution thread) for the given amount of time for the given condition
+   * to be met.
+   *
+   * @param condition A condition expected to throw or return false if not met.
+   * @param timeoutMs The amount of time (in milliseconds) to wait for the condition to be met
+   *                  before timing out. Because of the way it is used as a bound, the actual
+   *                  amount of time waited will be slightly bigger than this.
+   * @param conditionDetails A message describing the condition being waited for.
+   */
+  public static void waitForCondition(
+      Callable<Boolean> condition,
+      long timeoutMs,
+      String conditionDetails) {
+    waitForCondition(
+        condition, Duration.ofMillis(timeoutMs), DEFAULT_RETRY_INTERVAL, () -> conditionDetails);
+  }
+
+  /**
+   * Waits (blocking the execution thread) for the given amount of time for the given condition
+   * to be met.
+   *
+   * @param condition A condition expected to throw or return false if not met.
+   * @param timeout The amount of time to wait for the condition to be met before timing out.
+   *                Because of the way it is used as a bound, the actual amount of time waited
+   *                will be slightly bigger than this.
+   * @param intervalBetweenPolls The amount of time to wait before polling again whether the
+   *                             condition is met.
+   * @param conditionDetailsSupplier Returns a message describing the condition being waited for.
+   */
+  public static void waitForCondition(
+      Callable<Boolean> condition,
+      Duration timeout,
+      Duration intervalBetweenPolls,
+      Supplier<String> conditionDetailsSupplier) {
+    try {
+      testWithRetry(
+          () -> {
+            try {
+              assertTrue(condition.call());
+            } catch (Exception e) {
+              if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+              } else {
+                throw new RuntimeException(e);
+              }
+            }
+          },
+          Integer.MAX_VALUE,
+          timeout,
+          intervalBetweenPolls,
+          false);
+    } catch (AssertionError ae) {
+      throw new AssertionError(
+          String.format(
+              "Condition '%s' not met after waiting for %d ms",
+              conditionDetailsSupplier.get(),
+              timeout.toMillis()),
+          ae);
+    } catch (Throwable t) {
+      throw new AssertionError(
+          String.format(
+              "Unexpected error while waiting for condition '%s'",
+              conditionDetailsSupplier.get()),
+          t);
     }
   }
 
@@ -278,25 +366,21 @@ public class TestUtils {
     Map<Object, Integer> msgCounts = new HashMap<Object, Integer>();
     consumer.subscribe(Collections.singleton(topicName));
 
-    try {
-      AtomicInteger counter = new AtomicInteger(0);
-      org.apache.kafka.test.TestUtils.waitForCondition(() -> {
-        ConsumerRecords<K, V> consumerRecords = consumer.poll(Duration.ofMillis(100));
+    AtomicInteger counter = new AtomicInteger(0);
+    waitForCondition(() -> {
+      ConsumerRecords<K, V> consumerRecords = consumer.poll(Duration.ofMillis(100));
 
-        for (ConsumerRecord<K, V> record: consumerRecords) {
-          if (partition == null || record.partition() == partition) {
-            Object msg = encodeComparable(record.value());
-            msgCounts.put(msg, (msgCounts.get(msg) == null ? 0 : msgCounts.get(msg)) + 1);
-            if (counter.incrementAndGet() == records.size())
-              return true;
-          }
+      for (ConsumerRecord<K, V> record: consumerRecords) {
+        if (partition == null || record.partition() == partition) {
+          Object msg = encodeComparable(record.value());
+          msgCounts.put(msg, (msgCounts.get(msg) == null ? 0 : msgCounts.get(msg)) + 1);
+          if (counter.incrementAndGet() == records.size())
+            return true;
         }
+      }
 
-        return false;
-      }, "Failed to consume messages");
-    } catch (InterruptedException e) {
-      throw new RuntimeException("InterruptedException occurred", e);
-    }
+      return false;
+    }, "Waiting to consume all messages");
 
     consumer.close();
     return msgCounts;

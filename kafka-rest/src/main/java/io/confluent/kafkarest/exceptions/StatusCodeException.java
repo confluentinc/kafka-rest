@@ -17,8 +17,6 @@ package io.confluent.kafkarest.exceptions;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Optional;
-import javax.annotation.Nullable;
 import javax.ws.rs.core.Response.Status;
 
 /**
@@ -28,8 +26,7 @@ public class StatusCodeException extends RuntimeException {
 
   private final Status status;
 
-  @Nullable
-  private final Integer code;
+  private final int code;
 
   private final String title;
 
@@ -40,7 +37,7 @@ public class StatusCodeException extends RuntimeException {
   }
 
   StatusCodeException(Status status, String title, String detail) {
-    this(status, /* code= */ null, title, detail);
+    this(status, status.getStatusCode(), title, detail);
   }
 
   public static StatusCodeException create(
@@ -49,10 +46,10 @@ public class StatusCodeException extends RuntimeException {
   }
 
   StatusCodeException(Status status, String title, String detail, Throwable cause) {
-    this(status, /* code= */ null, title, detail, cause);
+    this(status, status.getStatusCode(), title, detail, cause);
   }
 
-  StatusCodeException(Status status, @Nullable Integer code, String title, String detail) {
+  StatusCodeException(Status status, Integer code, String title, String detail) {
     super(detail);
     this.status = requireNonNull(status);
     this.code = code;
@@ -60,8 +57,7 @@ public class StatusCodeException extends RuntimeException {
     this.detail = requireNonNull(detail);
   }
 
-  StatusCodeException(
-      Status status, @Nullable Integer code, String title, String detail, Throwable cause) {
+  StatusCodeException(Status status, int code, String title, String detail, Throwable cause) {
     super(detail, cause);
     this.status = requireNonNull(status);
     this.code = code;
@@ -73,8 +69,8 @@ public class StatusCodeException extends RuntimeException {
     return status;
   }
 
-  public Optional<Integer> getCode() {
-    return Optional.ofNullable(code);
+  public int getCode() {
+    return code;
   }
 
   public String getTitle() {

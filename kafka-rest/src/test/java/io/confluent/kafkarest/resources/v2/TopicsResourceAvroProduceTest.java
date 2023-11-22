@@ -15,198 +15,248 @@
 
 package io.confluent.kafkarest.resources.v2;
 
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.confluent.kafkarest.DefaultKafkaRestContext;
-import io.confluent.kafkarest.Errors;
+import com.fasterxml.jackson.databind.node.NullNode;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.protobuf.ByteString;
+import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.controllers.ProduceController;
+import io.confluent.kafkarest.controllers.RecordSerializer;
+import io.confluent.kafkarest.controllers.SchemaManager;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.ProduceResult;
+import io.confluent.kafkarest.entities.RegisteredSchema;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.ProduceRequest;
+import io.confluent.kafkarest.entities.v2.ProduceRequest.ProduceRecord;
 import io.confluent.kafkarest.entities.v2.ProduceResponse;
-import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
-import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
-import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import org.apache.avro.Schema;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-import org.junit.Before;
+import org.easymock.EasyMockRule;
+import org.easymock.Mock;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-// This test is much lighter than the Binary one since they would otherwise be mostly duplicated
-// -- this just sanity checks the Jersey processing of these requests.
+@RunWith(JUnit4.class)
 public class TopicsResourceAvroProduceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
-  private ProducerPool producerPool;
-  private DefaultKafkaRestContext ctx;
-
-  private static final String topicName = "topic1";
-  private static final String keySchemaStr = "{\"name\":\"int\",\"type\": \"int\"}";
-  private static final String valueSchemaStr = "{\"type\": \"record\", "
+  private static final String TOPIC_NAME = "topic1";
+  private static final String RAW_KEY_SCHEMA = "{\"name\":\"int\",\"type\": \"int\"}";
+  private static final String RAW_VALUE_SCHEMA = "{\"type\": \"record\", "
       + "\"name\":\"test\","
       + "\"fields\":[{"
       + "  \"name\":\"field\", "
       + "  \"type\": \"int\""
       + "}]}";
-  private static final Schema keySchema = new Schema.Parser().parse(keySchemaStr);
-  private static final Schema valueSchema = new Schema.Parser().parse(valueSchemaStr);
+  private static final AvroSchema KEY_SCHEMA =
+      new AvroSchema(new Schema.Parser().parse(RAW_KEY_SCHEMA));
+  private static final AvroSchema VALUE_SCHEMA =
+      new AvroSchema(new Schema.Parser().parse(RAW_VALUE_SCHEMA));
 
-  private final static JsonNode[] testKeys = {
+  private final static JsonNode[] TEST_KEYS = {
       TestUtils.jsonTree("1"),
       TestUtils.jsonTree("2"),
   };
 
-  private final static JsonNode[] testValues = {
+  private final static JsonNode[] TEST_VALUES = {
       TestUtils.jsonTree("{\"field\": 1}"),
       TestUtils.jsonTree("{\"field\": 2}"),
   };
 
-  private List<SchemaTopicProduceRecord> produceRecordsWithPartitionsAndKeys;
+  private final List<ProduceRecord> RECORDS =
+      Arrays.asList(
+          ProduceRecord.create(/* partition= */ 0, TEST_KEYS[0], TEST_VALUES[0]),
+          ProduceRecord.create(/* partition= */ 0, TEST_KEYS[1], TEST_VALUES[1]));
 
-  private static final TopicPartition tp0 = new TopicPartition(topicName, 0);
-  private static final TopicPartition tp1 = new TopicPartition(topicName, 1);
-  private List<RecordMetadataOrException> produceResults = Arrays.asList(
-      new RecordMetadataOrException(new RecordMetadata(tp0, 0L, 0L, 0L, 0L, 1, 1), null),
-      new RecordMetadataOrException(new RecordMetadata(tp0, 0L, 1L, 0L, 0L, 1, 1), null),
-      new RecordMetadataOrException(new RecordMetadata(tp1, 0L, 0L, 0L, 0L, 1, 1), null)
-  );
-  private static final List<PartitionOffset> offsetResults = Arrays.asList(
-      new PartitionOffset(0, 0L, null, null),
-      new PartitionOffset(0, 1L, null, null),
-      new PartitionOffset(1, 0L, null, null)
-  );
+  private static final TopicPartition PARTITION = new TopicPartition(TOPIC_NAME, 0);
+  private final List<RecordMetadata> PRODUCE_RESULTS =
+      Arrays.asList(
+          new RecordMetadata(PARTITION, 0L, 0L, 0L, 0L, 1, 1),
+          new RecordMetadata(PARTITION, 0L, 1L, 0L, 0L, 1, 1));
+  private static final List<PartitionOffset> OFFSETS =
+      Arrays.asList(
+          new PartitionOffset(0, 0L, null, null),
+          new PartitionOffset(0, 1L, null, null));
+
+  @Rule
+  public final EasyMockRule mocks = new EasyMockRule(this);
+
+  @Mock
+  private SchemaManager schemaManager;
+
+  @Mock
+  private RecordSerializer recordSerializer;
+
+  @Mock
+  private ProduceController produceController;
 
   public TopicsResourceAvroProduceTest() throws RestConfigException {
-    producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new DefaultKafkaRestContext(config, producerPool, /* kafkaConsumerManager= */ null);
-
-    addResource(new ProduceToTopicAction(ctx));
-
-    produceRecordsWithPartitionsAndKeys = Arrays.asList(
-        new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0),
-        new SchemaTopicProduceRecord(testKeys[1], testValues[1], 0)
-    );
+    addResource(
+        new ProduceToTopicAction(
+            () -> schemaManager,
+            () -> recordSerializer,
+            () -> produceController));
   }
 
-  @Before
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    EasyMock.reset(producerPool);
-  }
+  private Response produceToTopic(ProduceRequest request, List<RecordMetadata> results) {
+    RegisteredSchema registeredKeySchema =
+        RegisteredSchema.create(
+            TOPIC_NAME + "key", /* schemaId= */ 1, /* schemaVersion= */ 1, KEY_SCHEMA);
+    RegisteredSchema registeredValueSchema =
+        RegisteredSchema.create(
+            TOPIC_NAME + "value", /* schemaId= */ 2, /* schemaVersion= */ 1, VALUE_SCHEMA);
 
-  private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
-      EmbeddedFormat recordFormat,
-      SchemaTopicProduceRequest request,
-      final List<RecordMetadataOrException> results) {
-    final Capture<ProducerPool.ProduceRequestCallback>
-        produceCallback =
-        Capture.newInstance();
-    producerPool.produce(EasyMock.eq(topic),
-        EasyMock.eq((Integer) null),
-        EasyMock.eq(recordFormat),
-        EasyMock.anyObject(),
-        EasyMock.capture(produceCallback));
-    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
-      @Override
-      public Object answer() throws Throwable {
-        if (results == null) {
-          throw new Exception();
-        } else {
-          produceCallback.getValue().onCompletion(1, 2, results);
-        }
-        return null;
-      }
-    });
-    EasyMock.replay(producerPool);
+    expect(
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.of(EmbeddedFormat.AVRO),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.of(RAW_KEY_SCHEMA),
+            /* isKey= */ true))
+        .andStubReturn(registeredKeySchema);
+    expect(
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.of(EmbeddedFormat.AVRO),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.of(RAW_VALUE_SCHEMA),
+            /* isKey= */ false))
+        .andStubReturn(registeredValueSchema);
+    expect(
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.of(1),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true))
+        .andStubReturn(registeredKeySchema);
+    expect(
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.of(2),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ false))
+        .andStubReturn(registeredValueSchema);
 
-    Response response = request("/topics/" + topic, acceptHeader)
-        .post(Entity.entity(request, requestMediatype));
+    for (int i = 0; i < request.getRecords().size(); i++) {
+      ProduceRecord record = request.getRecords().get(i);
+      ByteString serializedKey = ByteString.copyFromUtf8(String.valueOf(record.getKey()));
+      ByteString serializedValue = ByteString.copyFromUtf8(String.valueOf(record.getValue()));
 
-    EasyMock.verify(producerPool);
+      expect(
+          recordSerializer.serialize(
+              EmbeddedFormat.AVRO,
+              TopicsResourceAvroProduceTest.TOPIC_NAME,
+              Optional.of(registeredKeySchema),
+              record.getKey().orElse(NullNode.getInstance()),
+              /* isKey= */ true))
+          .andReturn(Optional.of(serializedKey));
+      expect(
+          recordSerializer.serialize(
+              EmbeddedFormat.AVRO,
+              TopicsResourceAvroProduceTest.TOPIC_NAME,
+              Optional.of(registeredValueSchema),
+              record.getValue().orElse(NullNode.getInstance()),
+              /* isKey= */ false))
+          .andReturn(Optional.of(serializedValue));
+
+      expect(
+          produceController.produce(
+              /* clusterId= */ eq(""),
+              eq(TopicsResourceAvroProduceTest.TOPIC_NAME),
+              eq(record.getPartition()),
+              /* headers= */ eq(ImmutableMultimap.of()),
+              eq(Optional.of(serializedKey)),
+              eq(Optional.of(serializedValue)),
+              /* timestamp= */ isA(Instant.class)))
+          .andReturn(
+              CompletableFuture.completedFuture(ProduceResult.fromRecordMetadata(results.get(i))));
+    }
+
+    replay(schemaManager, recordSerializer, produceController);
+
+    Response response = request("/topics/" + TOPIC_NAME, Versions.KAFKA_V2_JSON)
+        .post(Entity.entity(request, Versions.KAFKA_V2_JSON_AVRO));
+
+    verify(schemaManager, recordSerializer, produceController);
 
     return response;
   }
 
   @Test
   public void testProduceToTopicWithPartitionAndKey() {
-    SchemaTopicProduceRequest request =
-        new SchemaTopicProduceRequest(
-            produceRecordsWithPartitionsAndKeys, keySchemaStr, null, valueSchemaStr, null);
+    ProduceRequest request =
+        ProduceRequest.create(
+            RECORDS,
+            /* keySchemaId= */ null,
+            RAW_KEY_SCHEMA,
+            /* valueSchemaId= */ null,
+            RAW_VALUE_SCHEMA);
 
     Response
         rawResponse =
-        produceToTopic(topicName, Versions.KAFKA_V2_JSON, Versions.KAFKA_V2_JSON_AVRO,
-            EmbeddedFormat.AVRO,
-            request, produceResults);
+        produceToTopic(
+            request, PRODUCE_RESULTS);
     assertOKResponse(rawResponse, Versions.KAFKA_V2_JSON);
     ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
-    assertEquals(offsetResults, response.getOffsets());
+    assertEquals(OFFSETS, response.getOffsets());
     assertEquals((Integer) 1, response.getKeySchemaId());
     assertEquals((Integer) 2, response.getValueSchemaId());
 
-    EasyMock.reset(producerPool);
+    EasyMock.reset(schemaManager, recordSerializer, produceController);
 
     // Test using schema IDs
-    SchemaTopicProduceRequest request2 =
-        new SchemaTopicProduceRequest(produceRecordsWithPartitionsAndKeys, null, 1, null, 2);
+    ProduceRequest request2 =
+        ProduceRequest.create(
+            RECORDS,
+            /* keySchemaId= */ 1,
+            /* keySchema= */ null,
+            /* valueSchemaId= */ 2,
+            /* valueSchema= */ null);
 
     Response rawResponse2 =
-        produceToTopic(topicName, Versions.KAFKA_V2_JSON, Versions.KAFKA_V2_JSON_AVRO,
-            EmbeddedFormat.AVRO,
-            request2, produceResults);
+        produceToTopic(
+            request2, PRODUCE_RESULTS);
     assertOKResponse(rawResponse2, Versions.KAFKA_V2_JSON);
-
-    EasyMock.reset(producerPool);
-  }
-
-  private void produceToTopicExpectFailure(String topicName, String acceptHeader,
-      String requestMediatype, SchemaTopicProduceRequest request,
-      String responseMediaType, int errorCode) {
-    Response rawResponse = request("/topics/" + topicName, acceptHeader)
-        .post(Entity.entity(request, requestMediatype));
-
-    assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
-        rawResponse, errorCode, null, responseMediaType);
-  }
-
-  @Test
-  public void testMissingKeySchema() {
-    SchemaTopicProduceRequest request =
-        new SchemaTopicProduceRequest(
-            produceRecordsWithPartitionsAndKeys, null, null, valueSchemaStr, null);
-
-    produceToTopicExpectFailure(topicName, Versions.KAFKA_V2_JSON, Versions.KAFKA_V2_JSON_AVRO,
-        request, Versions.KAFKA_V2_JSON,
-        Errors.KEY_SCHEMA_MISSING_ERROR_CODE);
-  }
-
-  @Test
-  public void testMissingValueSchema() {
-    SchemaTopicProduceRequest request =
-        new SchemaTopicProduceRequest(
-            produceRecordsWithPartitionsAndKeys, keySchemaStr, null, null, null);
-
-    produceToTopicExpectFailure(topicName, Versions.KAFKA_V2_JSON, Versions.KAFKA_V2_JSON_AVRO,
-        request, Versions.KAFKA_V2_JSON,
-        Errors.VALUE_SCHEMA_MISSING_ERROR_CODE);
   }
 }

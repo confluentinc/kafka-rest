@@ -15,59 +15,33 @@
 
 package io.confluent.kafkarest.exceptions.v3;
 
-import static java.util.Objects.requireNonNull;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.google.auto.value.AutoValue;
 
 /**
  * Response returned when an exception happens in a V3 API.
  */
-public final class ErrorResponse {
+@AutoValue
+public abstract class ErrorResponse {
 
-  private final String errorCode;
-
-  private final String message;
-
-  public ErrorResponse(String errorCode, String message) {
-    this.errorCode = requireNonNull(errorCode);
-    this.message = requireNonNull(message);
+  ErrorResponse() {
   }
 
   @JsonProperty("error_code")
-  public String getErrorCode() {
-    return errorCode;
-  }
+  public abstract int getErrorCode();
 
   @JsonProperty("message")
-  public String getMessage() {
-    return message;
+  public abstract String getMessage();
+
+  public static ErrorResponse create(int errorCode, String message) {
+    return new AutoValue_ErrorResponse(errorCode, message);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ErrorResponse that = (ErrorResponse) o;
-    return errorCode.equals(that.errorCode) && message.equals(that.message);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(errorCode, message);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ",
-        io.confluent.kafkarest.exceptions.v2.ErrorResponse.class.getSimpleName() + "[", "]")
-        .add("errorCode='" + errorCode + "'")
-        .add("message='" + message + "'")
-        .toString();
+  @JsonCreator
+  static ErrorResponse fromJson(
+      @JsonProperty("error_code") int errorCode,
+      @JsonProperty("message") String message) {
+    return create(errorCode, message);
   }
 }

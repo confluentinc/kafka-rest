@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.exceptions.v3;
 
 import io.confluent.kafkarest.exceptions.StatusCodeException;
-import io.confluent.kafkarest.exceptions.v2.ErrorResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
@@ -26,8 +25,8 @@ public final class V3ExceptionMapper implements ExceptionMapper<StatusCodeExcept
   public Response toResponse(StatusCodeException exception) {
     return Response.status(exception.getStatus())
         .entity(
-            new ErrorResponse(
-                exception.getCode().orElse(exception.getStatus().getStatusCode()).toString(),
+            ErrorResponse.create(
+                exception.getCode(),
                 String.format("%s: %s", exception.getTitle(), exception.getDetail())))
         .build();
   }

@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.backends;
 
 import io.confluent.kafkarest.backends.kafka.KafkaModule;
+import io.confluent.kafkarest.backends.schemaregistry.SchemaRegistryModule;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 /**
@@ -26,5 +27,6 @@ public final class BackendsModule extends AbstractBinder {
   @Override
   protected void configure() {
     install(new KafkaModule());
+    install(new SchemaRegistryModule());
   }
 }

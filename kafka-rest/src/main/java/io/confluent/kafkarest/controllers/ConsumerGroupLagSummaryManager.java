@@ -13,16 +13,20 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.exceptions;
+package io.confluent.kafkarest.controllers;
 
-import javax.ws.rs.core.Response.Status;
+import io.confluent.kafkarest.entities.ConsumerGroupLagSummary;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
-public final class DisabledOperationException extends StatusCodeException {
+/**
+ * A service to manage Kafka {@link ConsumerGroupLagSummary ConsumerGroupLagSummary}.
+ */
+public interface ConsumerGroupLagSummaryManager {
 
-  public DisabledOperationException(Status status) {
-    super(
-        status,
-        "Operation not supported",
-        "The operation attempted is not supported by this server.");
-  }
+  /**
+   * Returns the Kafka {@link ConsumerGroupLagSummary} with the given {@code consumerGroupId}.
+   */
+  CompletableFuture<Optional<ConsumerGroupLagSummary>> getConsumerGroupLagSummary(
+      String clusterId, String consumerGroupId);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,10 +15,22 @@
 
 package io.confluent.kafkarest;
 
+import static io.confluent.kafkarest.config.SchemaRegistryConfig.SCHEMA_PROVIDERS;
+import static java.util.Objects.requireNonNull;
+
+import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafkarest.config.SchemaRegistryConfig;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
-import java.util.Properties;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+
+import java.net.URI;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
@@ -28,20 +40,27 @@ import org.apache.kafka.clients.admin.AdminClient;
 public class DefaultKafkaRestContext implements KafkaRestContext {
 
   private final KafkaRestConfig config;
-  private ProducerPool producerPool;
   private KafkaConsumerManager kafkaConsumerManager;
-  private Admin adminClient;
 
+  private Admin adminClient;
+  private Producer<byte[], byte[]> producer;
+  private SchemaRegistryClient schemaRegistryClient;
+
+  /**
+   * @deprecated Use {@link #DefaultKafkaRestContext(KafkaRestConfig)} instead.
+   */
+  @Deprecated
   public DefaultKafkaRestContext(
       KafkaRestConfig config,
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager
   ) {
-    this.config = config;
-    this.producerPool = producerPool;
-    this.kafkaConsumerManager = kafkaConsumerManager;
+    this(config);
   }
 
+  public DefaultKafkaRestContext(KafkaRestConfig config) {
+    this.config = requireNonNull(config);
+  }
 
   @Override
   public KafkaRestConfig getConfig() {
@@ -49,11 +68,8 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
-  public synchronized ProducerPool getProducerPool() {
-    if (producerPool == null) {
-      producerPool = new ProducerPool(config);
-    }
-    return producerPool;
+  public ProducerPool getProducerPool() {
+    return new ProducerPool(getProducer());
   }
 
   @Override
@@ -67,18 +83,38 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   @Override
   public synchronized Admin getAdmin() {
     if (adminClient == null) {
-      adminClient = AdminClient.create(adminProperties(config));
+      adminClient = AdminClient.create(config.getAdminProperties());
     }
     return adminClient;
   }
 
-  public static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
-    Properties properties = new Properties();
-    properties.putAll(kafkaRestConfig.getAdminProperties());
-    properties.put(
-        KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG,
-        RestConfigUtils.bootstrapBrokers(kafkaRestConfig));
-    return properties;
+  @Override
+  public synchronized Producer<byte[], byte[]> getProducer() {
+    if (producer == null) {
+      producer =
+          new KafkaProducer<>(
+              config.getProducerConfigs(), new ByteArraySerializer(), new ByteArraySerializer());
+    }
+    return producer;
+  }
+
+  @Override
+  public SchemaRegistryClient getSchemaRegistryClient() {
+    if (schemaRegistryClient == null) {
+      SchemaRegistryConfig schemaRegistryConfig =
+          new SchemaRegistryConfig(config.getSchemaRegistryConfigs());
+      List<String> schemaRegistryUrls = schemaRegistryConfig.getSchemaRegistryUrls().stream()
+          .map(URI::create)
+          .map(Object::toString)
+          .collect(Collectors.toList());
+      schemaRegistryClient = new CachedSchemaRegistryClient(
+        schemaRegistryUrls,
+        schemaRegistryConfig.getMaxSchemasPerSubject(),
+        SCHEMA_PROVIDERS,
+        config.getSchemaRegistryConfigs(),
+        schemaRegistryConfig.requestHeaders());
+    }
+    return schemaRegistryClient;
   }
 
   @Override
@@ -86,11 +122,11 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     if (kafkaConsumerManager != null) {
       kafkaConsumerManager.shutdown();
     }
-    if (producerPool != null) {
-      producerPool.shutdown();
-    }
     if (adminClient != null) {
       adminClient.close();
+    }
+    if (producer != null) {
+      producer.close();
     }
   }
 }
