@@ -47,12 +47,11 @@ import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
 import kafka.utils.TestUtils;
-import kafka.zk.EmbeddedZookeeper;
 import kafka.zk.KafkaZkClient;
 import kafka.zookeeper.ZooKeeperClient;
+import org.apache.curator.test.TestingServer;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.AlterPartitionReassignmentsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
@@ -118,7 +117,7 @@ public abstract class ClusterTestHarness {
 
   // ZK Config
   protected String zkConnect;
-  protected EmbeddedZookeeper zookeeper;
+  protected TestingServer zookeeper;
   protected KafkaZkClient zkClient;
   protected int zkConnectionTimeout = 10000;
   protected int zkSessionTimeout = 6000;
@@ -165,8 +164,8 @@ public abstract class ClusterTestHarness {
 
   @Before
   public void setUp() throws Exception {
-    zookeeper = new EmbeddedZookeeper();
-    zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
+    zookeeper = new TestingServer(TestUtils.RandomPort(), TestUtils.tempDir(), true);
+    zkConnect = String.format("127.0.0.1:%d", zookeeper.getPort());
     Time time = Time.SYSTEM;
     zkClient = new KafkaZkClient(
         new ZooKeeperClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE,
@@ -294,7 +293,7 @@ public abstract class ClusterTestHarness {
     }
 
     zkClient.close();
-    zookeeper.shutdown();
+    zookeeper.stop();
   }
 
   protected Invocation.Builder request(String path) {
