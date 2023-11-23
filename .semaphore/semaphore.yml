@@ -56,8 +56,6 @@ blocks:
           commands:
             - git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
             - git fetch --unshallow || true
-            - pip install -q confluent-release-tools
-            - pint merge --check-all
             - . ci-tools ci-update-version
             - . ci-tools ci-push-tag
             - mvn -U -Dmaven.wagon.http.retryHandler.count=10 --batch-mode -Pjenkins -DaltDeploymentRepository=confluent-codeartifact-internal::default::https://confluent-519856050701.d.codeartifact.us-west-2.amazonaws.com/maven/maven-snapshots/
