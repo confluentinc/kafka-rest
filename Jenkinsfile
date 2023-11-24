@@ -5,4 +5,5 @@ common {
     "confluent-cloud-plugins"]
   nanoVersion = true
   mavenProfiles = ''
+  mvnSkipDeploy = true
 }
