@@ -25,6 +25,9 @@ import io.confluent.kafkarest.entities.EntityUtils;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import io.confluent.rest.entities.ErrorMessage;
+
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
@@ -445,5 +448,28 @@ public class TestUtils {
         .limit(length)
         .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
         .toString();
+  }
+
+  /** Choose a number of random available ports */
+  public static int[] choosePorts(int count) {
+    try {
+      ServerSocket[] sockets = new ServerSocket[count];
+      int[] ports = new int[count];
+      for (int i = 0; i < count; i++) {
+        sockets[i] = new ServerSocket(0);
+        ports[i] = sockets[i].getLocalPort();
+      }
+      for (int i = 0; i < count; i++) {
+        sockets[i].close();
+      }
+      return ports;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** Choose an available port */
+  public static int choosePort() {
+    return choosePorts(1)[0];
   }
 }
