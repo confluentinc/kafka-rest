@@ -7,13 +7,13 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>[6.1.15-0, 6.1.16-0)</version>
+        <version>6.1.15-21</version>
     </parent>
 
     <artifactId>kafka-rest-parent</artifactId>
     <packaging>pom</packaging>
     <name>kafka-rest-parent</name>
-    <version>6.1.15-0</version>
+    <version>6.1.15-19</version>
     <organization>
         <name>Confluent, Inc.</name>
         <url>http://confluent.io</url>
@@ -48,7 +48,7 @@
     <properties>
         <confluent.maven.repo>https://packages.confluent.io/maven/</confluent.maven.repo>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
-        <io.confluent.kafka-rest.version>6.1.15-0</io.confluent.kafka-rest.version>
+        <io.confluent.kafka-rest.version>6.1.15-19</io.confluent.kafka-rest.version>
     </properties>
 
     <repositories>
