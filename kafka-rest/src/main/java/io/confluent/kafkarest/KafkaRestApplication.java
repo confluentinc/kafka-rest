@@ -33,6 +33,7 @@ import io.confluent.kafkarest.extension.ResourceAccesslistFeature;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.ratelimit.RateLimitFeature;
 import io.confluent.kafkarest.resources.ResourcesFeature;
+import io.confluent.kafkarest.response.JsonStreamMessageBodyReader;
 import io.confluent.kafkarest.response.ResponseModule;
 import io.confluent.rest.Application;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
@@ -73,6 +74,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     restResourceExtensions =
         config.getConfiguredInstances(
             KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG, RestResourceExtension.class);
+    config.setMetrics(metrics);
   }
 
   @Override
@@ -95,6 +97,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     }
 
     config.property(ServerProperties.OUTBOUND_CONTENT_LENGTH_BUFFER, 0);
+    config.register(new JsonStreamMessageBodyReader(getJsonMapper()));
     config.register(new BackendsModule());
     config.register(new ConfigModule(appConfig));
     config.register(new ControllersModule());

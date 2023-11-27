@@ -436,7 +436,8 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.empty(),
                     /* isKey= */ true));
     assertEquals(
-        "Error serializing message. Error when fetching schema version. subject = topic-1-key, "
+        "Error serializing message. Error when fetching schema version. "
+            + "subject = topic-1-key, "
             + "schema = \"int\"\nSubject Not Found; error code: 40401",
         rcve.getMessage());
     assertEquals(42207, rcve.getErrorCode());
@@ -521,7 +522,8 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.empty(),
                     /* isKey= */ true));
     assertEquals(
-        "Error serializing message. Error when fetching latest schema version. subject = "
+        "Error serializing message. Error when fetching latest schema version. "
+            + "subject = "
             + "topic-1-key\nSubject Not Found; error code: 40401",
         rcve.getMessage());
     assertEquals(42207, rcve.getErrorCode());
@@ -574,8 +576,10 @@ public class SchemaManagerImplTest {
     assertTrue(
         rcve.getMessage()
             .startsWith(
-                "Cannot use schema_subject_strategy=io.confluent.kafkarest.controllers."
-                    + "SchemaManagerImplTest$NullReturningSubjectNameStrategy@"));
+                "Cannot use schema_subject_strategy="
+                    + "io.confluent.kafkarest.controllers."
+                    + "SchemaManagerImplTest"
+                    + "$NullReturningSubjectNameStrategy@"));
     assertTrue(rcve.getMessage().endsWith(" without schema_id or schema."));
   }
 
@@ -623,14 +627,11 @@ public class SchemaManagerImplTest {
   @Test
   public void getSchemaFromSchemaVersionThrowsInvalidSchemaException() {
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
-    Schema schemaMock = mock(Schema.class);
+    Schema schema =
+        new Schema(null, null, null, EmbeddedFormat.AVRO.toString(), Collections.emptyList(), null);
 
-    expect(schemaRegistryClientMock.getByVersion("subject1", 0, false)).andReturn(schemaMock);
-    expect(schemaMock.getSchemaType()).andReturn(EmbeddedFormat.AVRO.toString());
-    expect(schemaMock.getSchema()).andReturn(null);
-    expect(schemaMock.getReferences()).andReturn(Collections.emptyList());
-
-    replay(schemaRegistryClientMock, schemaMock);
+    expect(schemaRegistryClientMock.getByVersion("subject1", 0, false)).andReturn(schema);
+    replay(schemaRegistryClientMock);
 
     SchemaManager mySchemaManager =
         new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
@@ -689,13 +690,11 @@ public class SchemaManagerImplTest {
   @Test
   public void errorFetchingSchemaBySchemaVersion() {
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
-    Schema schemaMock = mock(Schema.class);
+    Schema schema =
+        new Schema(null, null, null, EmbeddedFormat.JSON.toString(), Collections.emptyList(), null);
 
-    expect(schemaRegistryClientMock.getByVersion("subject1", 123, false)).andReturn(schemaMock);
-    expect(schemaMock.getSchemaType()).andReturn(EmbeddedFormat.JSON.toString());
-    expect(schemaMock.getSchema()).andReturn(null);
-    expect(schemaMock.getReferences()).andReturn(Collections.emptyList());
-    replay(schemaRegistryClientMock, schemaMock);
+    expect(schemaRegistryClientMock.getByVersion("subject1", 123, false)).andReturn(schema);
+    replay(schemaRegistryClientMock);
 
     SchemaManager mySchemaManager =
         new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
@@ -766,7 +765,8 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.of(TextNode.valueOf("rawSchema").toString()),
                     /* isKey= */ true));
     assertEquals(
-        "Raw schema not supported with format = EasyMock for class "
+        "Raw schema not supported with format = "
+            + "EasyMock for class "
             + "io.confluent.kafkarest.entities.EmbeddedFormat",
         rcve.getMessage());
     assertEquals(400, rcve.getCode());
@@ -801,7 +801,8 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.of(TextNode.valueOf("rawSchema").toString()),
                     /* isKey= */ true));
     assertEquals(
-        "Raw schema not supported with format = EasyMock for class "
+        "Raw schema not supported with format = "
+            + "EasyMock for class "
             + "io.confluent.kafkarest.entities.EmbeddedFormat",
         bre.getMessage());
     assertEquals(400, bre.getCode());
@@ -844,8 +845,11 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.of(TextNode.valueOf("rawString").toString()),
                     /* isKey= */ true));
     assertEquals(
-        "Error serializing message. Error when registering schema. format = EasyMock for class "
-            + "io.confluent.kafkarest.entities.EmbeddedFormat, subject = subject1, schema = null\n"
+        "Error serializing message. Error when registering schema. "
+            + "format = EasyMock for class "
+            + "io.confluent.kafkarest.entities.EmbeddedFormat, "
+            + "subject = subject1, "
+            + "schema = null\n"
             + "Can't register Schema",
         rcve.getMessage());
     assertEquals(42207, rcve.getErrorCode());
@@ -902,14 +906,16 @@ public class SchemaManagerImplTest {
   public void errorFetchingLatestSchemaBySchemaVersionInvalidSchema()
       throws RestClientException, IOException {
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
-    SchemaMetadata schemaMetadataMock = mock(SchemaMetadata.class);
+    SchemaMetadata schemaMetadata =
+        new SchemaMetadata(
+            -1,
+            0,
+            EmbeddedFormat.AVRO.name(),
+            Collections.emptyList(),
+            TextNode.valueOf("schema").toString());
 
-    expect(schemaRegistryClientMock.getLatestSchemaMetadata("subject1"))
-        .andReturn(schemaMetadataMock);
-    expect(schemaMetadataMock.getSchemaType()).andReturn(EmbeddedFormat.AVRO.name());
-    expect(schemaMetadataMock.getSchema()).andReturn(TextNode.valueOf("schema").toString());
-    expect(schemaMetadataMock.getReferences()).andReturn(emptyList());
-    replay(schemaRegistryClientMock, schemaMetadataMock);
+    expect(schemaRegistryClientMock.getLatestSchemaMetadata("subject1")).andReturn(schemaMetadata);
+    replay(schemaRegistryClientMock);
 
     SchemaManager mySchemaManager =
         new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());

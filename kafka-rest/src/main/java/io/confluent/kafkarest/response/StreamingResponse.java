@@ -20,11 +20,11 @@ import static java.util.Objects.requireNonNull;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.fasterxml.jackson.jaxrs.base.JsonMappingExceptionMapper;
 import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.exceptions.BadRequestException;
@@ -37,8 +37,14 @@ import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import java.io.IOException;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.ws.rs.WebApplicationException;
@@ -65,6 +71,7 @@ import org.slf4j.LoggerFactory;
 public abstract class StreamingResponse<T> {
 
   private static final Logger log = LoggerFactory.getLogger(StreamingResponse.class);
+  private static final int ONE_SECOND_MS = 1000;
 
   private static final CompositeErrorMapper EXCEPTION_MAPPER =
       new CompositeErrorMapper.Builder()
@@ -100,19 +107,49 @@ public abstract class StreamingResponse<T> {
           .build();
 
   private final ChunkedOutputFactory chunkedOutputFactory;
+  private final Duration maxDuration;
+  private final Duration gracePeriod;
+  private final Instant streamStartTime;
+  private final Clock clock;
 
-  StreamingResponse(ChunkedOutputFactory chunkedOutputFactory) {
+  volatile boolean closingStarted = false;
+
+  StreamingResponse(
+      ChunkedOutputFactory chunkedOutputFactory,
+      Duration maxDuration,
+      Duration gracePeriod,
+      Clock clock) {
+    this.clock = clock;
+    this.streamStartTime = clock.instant();
     this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
+    this.maxDuration = maxDuration;
+    this.gracePeriod = gracePeriod;
   }
 
   public static <T> StreamingResponse<T> from(
-      MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
-    return new InputStreamingResponse<>(mappingIteratorInput, chunkedOutputFactory);
+      JsonStream<T> inputStream,
+      ChunkedOutputFactory chunkedOutputFactory,
+      Duration maxDuration,
+      Duration gracePeriod) {
+    return new InputStreamingResponse<>(
+        inputStream, chunkedOutputFactory, maxDuration, gracePeriod, Clock.systemUTC());
+  }
+
+  @VisibleForTesting
+  static <T> StreamingResponse<T> fromWithClock(
+      JsonStream<T> inputStream,
+      ChunkedOutputFactory chunkedOutputFactory,
+      Duration maxDuration,
+      Duration gracePeriod,
+      Clock clock) {
+    return new InputStreamingResponse<>(
+        inputStream, chunkedOutputFactory, maxDuration, gracePeriod, clock);
   }
 
   public final <O> StreamingResponse<O> compose(
       Function<? super T, ? extends CompletableFuture<O>> transform) {
-    return new ComposingStreamingResponse<>(this, transform, chunkedOutputFactory);
+    return new ComposingStreamingResponse<>(
+        this, transform, chunkedOutputFactory, maxDuration, gracePeriod);
   }
 
   /**
@@ -125,9 +162,33 @@ public abstract class StreamingResponse<T> {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
+    ScheduledExecutorService executorService = null;
+
     try {
-      while (hasNext() && !responseQueue.isClosed()) {
-        responseQueue.push(next().handle(this::handleNext));
+      // hasNext() needs to be last here. It hangs if there is nothing on the mappingIterator
+      while (!closingStarted && hasNext()) {
+        // need to recheck closingStarted because hasNext can take time to respond
+        if (!closingStarted
+            && Duration.between(streamStartTime, clock.instant()).compareTo(maxDuration) > 0) {
+          if (executorService == null) {
+            executorService = Executors.newSingleThreadScheduledExecutor();
+            executorService.schedule(
+                () -> closeAll(responseQueue), gracePeriod.toMillis(), TimeUnit.MILLISECONDS);
+          }
+          next();
+          responseQueue.push(
+              CompletableFuture.completedFuture(
+                  ResultOrError.error(
+                      EXCEPTION_MAPPER.toErrorResponse(
+                          new StatusCodeException(
+                              Status.REQUEST_TIMEOUT,
+                              "Streaming connection open for longer than allowed",
+                              "Connection will be closed.")))));
+        } else if (!closingStarted) {
+          responseQueue.push(next().handle(this::handleNext));
+        } else {
+          break;
+        }
       }
     } catch (Exception e) {
       log.debug("Exception thrown when processing stream ", e);
@@ -137,7 +198,23 @@ public abstract class StreamingResponse<T> {
     } finally {
       close();
       responseQueue.close();
+      if (executorService != null) {
+        executorService.shutdown();
+        try {
+          if (!executorService.awaitTermination(ONE_SECOND_MS, TimeUnit.MILLISECONDS)) {
+            executorService.shutdownNow();
+          }
+        } catch (InterruptedException e) {
+          log.debug("Exception thrown when attempting to shutdown executorService {}", e);
+        }
+      }
     }
+  }
+
+  private void closeAll(AsyncResponseQueue responseQueue) {
+    closingStarted = true;
+    close();
+    responseQueue.close();
   }
 
   private ResultOrError handleNext(T result, @Nullable Throwable error) {
@@ -157,17 +234,21 @@ public abstract class StreamingResponse<T> {
 
   private static class InputStreamingResponse<T> extends StreamingResponse<T> {
 
-    private final MappingIterator<T> mappingIteratorInput;
+    private final JsonStream<T> inputStream;
 
     private InputStreamingResponse(
-        MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
-      super(chunkedOutputFactory);
-      this.mappingIteratorInput = requireNonNull(mappingIteratorInput);
+        JsonStream<T> inputStream,
+        ChunkedOutputFactory chunkedOutputFactory,
+        Duration maxDuration,
+        Duration gracePeriod,
+        Clock clock) {
+      super(chunkedOutputFactory, maxDuration, gracePeriod, clock);
+      this.inputStream = requireNonNull(inputStream);
     }
 
     public void close() {
       try {
-        mappingIteratorInput.close();
+        inputStream.close();
       } catch (IOException e) {
         log.error("Error when closing the request stream.", e);
       }
@@ -176,7 +257,7 @@ public abstract class StreamingResponse<T> {
     @Override
     public boolean hasNext() {
       try {
-        return mappingIteratorInput.hasNext();
+        return inputStream.hasNext();
       } catch (RuntimeJsonMappingException jme) {
         // jersey returns a 400 in both these cases first, so we should match this
         throw new BadRequestException(
@@ -190,7 +271,7 @@ public abstract class StreamingResponse<T> {
     @Override
     public CompletableFuture<T> next() {
       try {
-        return CompletableFuture.completedFuture(mappingIteratorInput.nextValue());
+        return CompletableFuture.completedFuture(inputStream.nextValue());
       } catch (Throwable e) {
         return CompletableFutures.failedFuture(e);
       }
@@ -205,15 +286,29 @@ public abstract class StreamingResponse<T> {
     private ComposingStreamingResponse(
         StreamingResponse<I> streamingResponseInput,
         Function<? super I, ? extends CompletableFuture<O>> transform,
-        ChunkedOutputFactory chunkedOutputFactory) {
-      super(chunkedOutputFactory);
+        ChunkedOutputFactory chunkedOutputFactory,
+        Duration maxDuration,
+        Duration gracePeriod) {
+      super(chunkedOutputFactory, maxDuration, gracePeriod, streamingResponseInput.clock);
       this.streamingResponseInput = requireNonNull(streamingResponseInput);
       this.transform = requireNonNull(transform);
     }
 
     @Override
     public boolean hasNext() {
-      return streamingResponseInput.hasNext();
+      try {
+        return streamingResponseInput.hasNext();
+      } catch (BadRequestException e) {
+        // hasNext() hangs on an empty queue.  If the mapping iterator is closed during this
+        // hang, then it throws an ArrayOutOfBoundsException.
+        if (closingStarted
+            && e.getCause() != null
+            && e.getCause() instanceof ArrayIndexOutOfBoundsException) {
+          return false;
+        } else {
+          throw e;
+        }
+      }
     }
 
     @Override

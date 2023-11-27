@@ -37,7 +37,8 @@ public class SchemaRecordSerializerTest {
 
     assertEquals(42207, rcve.getErrorCode());
     assertEquals(
-        "Error serializing message. Schema Registry not defined, no Schema Registry client available to serialize message.",
+        "Error serializing message. Schema Registry not defined, "
+            + "no Schema Registry client available to serialize message.",
         rcve.getMessage());
   }
 }

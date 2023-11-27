@@ -24,17 +24,11 @@ public interface KafkaRestContext {
 
   KafkaRestConfig getConfig();
 
-  /** @deprecated Use {@link #getProducer()} instead. */
-  @Deprecated
-  ProducerPool getProducerPool();
-
   KafkaConsumerManager getKafkaConsumerManager();
 
   Admin getAdmin();
 
-  default Producer<byte[], byte[]> getProducer() {
-    return getProducerPool().getProducer();
-  }
+  Producer<byte[], byte[]> getProducer();
 
   default SchemaRegistryClient getSchemaRegistryClient() {
     return null;

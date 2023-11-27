@@ -7,13 +7,13 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>[7.2.9-0, 7.2.10-0)</version>
+        <version>[7.3.7-0, 7.3.8-0)</version>
     </parent>
 
     <artifactId>kafka-rest-parent</artifactId>
     <packaging>pom</packaging>
     <name>kafka-rest-parent</name>
-    <version>7.2.9-0</version>
+    <version>7.3.7-0</version>
     <organization>
         <name>Confluent, Inc.</name>
         <url>http://confluent.io</url>
@@ -46,8 +46,9 @@
 
     <properties>
         <confluent.maven.repo>https://packages.confluent.io/maven/</confluent.maven.repo>
+        <checkstyle.config.location>checkstyle/checkstyle.xml</checkstyle.config.location>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
-        <io.confluent.kafka-rest.version>7.2.9-0</io.confluent.kafka-rest.version>
+        <io.confluent.kafka-rest.version>7.3.7-0</io.confluent.kafka-rest.version>
     </properties>
 
     <repositories>
@@ -187,6 +188,15 @@
                     </configuration>
                 </plugin>
 
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>${maven-checkstyle-plugin.version}</version>
+                    <configuration>
+                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    </configuration>
+                </plugin>
+                
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>

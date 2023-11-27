@@ -17,10 +17,6 @@ package io.confluent.kafkarest.testing;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.nio.file.Files.createTempFile;
-import static org.apache.kafka.test.TestSslUtils.createKeyStore;
-import static org.apache.kafka.test.TestSslUtils.createTrustStore;
-import static org.apache.kafka.test.TestSslUtils.generateCertificate;
-import static org.apache.kafka.test.TestSslUtils.generateKeyPair;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
@@ -39,6 +35,7 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import org.apache.kafka.common.config.types.Password;
+import org.apache.kafka.test.TestSslUtils;
 import org.glassfish.jersey.SslConfigurator;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -67,7 +64,7 @@ public final class SslFixture implements BeforeEachCallback, AfterEachCallback {
     keys = generateKeys();
     trustStoreLocation = createTempFile("truststore", ".jks");
     trustStorePassword = "truststore-pass";
-    createTrustStore(
+    TestSslUtils.createTrustStore(
         trustStoreLocation.toString(),
         new Password(trustStorePassword),
         keys.entrySet().stream()
@@ -77,13 +74,14 @@ public final class SslFixture implements BeforeEachCallback, AfterEachCallback {
   private ImmutableMap<String, Key> generateKeys() throws Exception {
     ImmutableMap.Builder<String, Key> keys = ImmutableMap.builder();
     for (String keyName : keyNames) {
-      KeyPair keyPair = generateKeyPair("RSA");
+      KeyPair keyPair = TestSslUtils.generateKeyPair("RSA");
       X509Certificate certificate =
-          generateCertificate("CN=localhost, O=" + keyName, keyPair, 30, "SHA1withRSA");
+          TestSslUtils.generateCertificate(
+              "CN=localhost, O=" + keyName, keyPair, 30, "SHA1withRSA");
       Path keyStoreLocation = createTempFile(keyName + "-keystore", ".jks");
       String keyStorePassword = keyName + "-pass";
       String keyPassword = keyName + "-pass";
-      createKeyStore(
+      TestSslUtils.createKeyStore(
           keyStoreLocation.toString(),
           new Password(keyStorePassword),
           new Password(keyPassword),
