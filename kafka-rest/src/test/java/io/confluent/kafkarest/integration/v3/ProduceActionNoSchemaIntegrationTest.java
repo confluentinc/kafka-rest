@@ -56,6 +56,7 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
 
@@ -68,8 +69,8 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
 
     createTopic(TOPIC_NAME, NUM_PARTITIONS, (short) 1);
   }

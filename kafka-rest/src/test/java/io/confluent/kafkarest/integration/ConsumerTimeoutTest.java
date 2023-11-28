@@ -22,6 +22,7 @@ import java.util.List;
 import javax.ws.rs.core.GenericType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class ConsumerTimeoutTest extends AbstractConsumerTest {
 
@@ -40,10 +41,10 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
+  public void setUp(TestInfo testInfo) throws Exception {
     restProperties.setProperty("consumer.request.timeout.ms", REQUEST_TIMEOUT_MS.toString());
     restProperties.setProperty("consumer.instance.timeout.ms", INSTANCE_TIMEOUT_MS.toString());
-    super.setUp();
+    super.setUp(testInfo);
     final int numPartitions = 3;
     final int replicationFactor = 1;
     createTopic(topicName, numPartitions, (short) replicationFactor);

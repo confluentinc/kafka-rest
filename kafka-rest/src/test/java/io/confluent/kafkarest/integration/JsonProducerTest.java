@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class JsonProducerTest
     extends AbstractProducerTest<JsonTopicProduceRequest, JsonPartitionProduceRequest> {
@@ -37,8 +38,8 @@ public class JsonProducerTest
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     final int numPartitions = 3;
     final short replicationFactor = 1;
     createTopic(topicName, numPartitions, replicationFactor);

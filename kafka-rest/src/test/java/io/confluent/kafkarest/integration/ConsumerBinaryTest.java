@@ -31,6 +31,7 @@ import javax.ws.rs.core.Response;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class ConsumerBinaryTest extends AbstractConsumerTest {
 
@@ -56,8 +57,8 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     final int numPartitions = 3;
     final int replicationFactor = 1;
     createTopic(topicName, numPartitions, (short) replicationFactor);
