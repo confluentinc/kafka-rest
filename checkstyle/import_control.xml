@@ -142,8 +142,12 @@
   <allow class="kafka.security.authorizer.AclAuthorizer" />
   <allow class="kafka.server.KafkaConfig" />
   <allow class="kafka.server.KafkaServer" />
+  <allow class="kafka.server.KafkaBroker" />
+  <allow class="kafka.server.QuorumTestHarness" />
   <allow class="kafka.utils.CoreUtils" />
+  <allow class="kafka.utils.EmptyTestInfo" />
   <allow class="kafka.utils.TestUtils" />
+  <allow class="kafka.utils.TestInfoUtils" />
   <allow class="kafka.zk.EmbeddedZookeeper" />
 
 </import-control>
