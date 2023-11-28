@@ -60,13 +60,13 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
 
   private static final Logger log = LoggerFactory.getLogger(CustomLogIntegrationTest.class);
 
-  private ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+  private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
 
   private final ConcurrentLinkedQueue<String> logEntries = new ConcurrentLinkedQueue<>();
 
   private static final String topicName = "topic-1";
 
-  private Properties restConfigs = new Properties();
+  private final Properties restConfigs = new Properties();
 
   public CustomLogIntegrationTest() {
     super(1, false, false);
@@ -77,13 +77,14 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     restProperties.putAll(restConfigs);
   }
 
-  @Override
   /** Override to do nothing, as this class has an overloaded setup() below. */
+  @Override
   public void setUp() {}
 
   @BeforeEach
+  @Override
   public void setUp(TestInfo testInfo) throws Exception {
-    super.setUp();
+    super.setUp(testInfo);
 
     restConfigs.clear();
     // Adding custom KafkaRestConfigs for individual test-cases/test-methods below.
