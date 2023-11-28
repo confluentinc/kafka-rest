@@ -32,7 +32,6 @@ import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.common.CompletableFutures;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -54,11 +53,10 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import kafka.server.KafkaBroker;
 import kafka.server.KafkaConfig;
-import kafka.server.KafkaServer;
-import kafka.utils.CoreUtils;
+import kafka.server.QuorumTestHarness;
 import kafka.utils.TestUtils;
-import kafka.zk.EmbeddedZookeeper;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.AlterConfigOp;
@@ -80,6 +78,7 @@ import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.utils.Time;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
@@ -88,6 +87,7 @@ import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
@@ -105,19 +105,19 @@ public abstract class ClusterTestHarness {
   private static final long HALF_SECOND_MILLIS = 500L;
 
   public static final int DEFAULT_NUM_BROKERS = 1;
+  public static final int MAX_MESSAGE_SIZE = (2 << 20) * 10; // 10 MiB
 
   private final int numBrokers;
   private final boolean withSchemaRegistry;
   private final boolean manageRest;
-  // ZK Config
+
+  // Quorum controller
+  private final QuorumTestHarness quorumTestHarness = new QuorumTestHarness() {};
   protected String zkConnect;
-  protected EmbeddedZookeeper zookeeper;
-  protected int zkConnectionTimeout = 10000;
-  protected int zkSessionTimeout = 6000;
 
   // Kafka Config
   protected List<KafkaConfig> configs = null;
-  protected List<KafkaServer> servers = null;
+  protected List<KafkaBroker> servers = null;
   protected String brokerList = null;
   // used for test consumer
   protected String plaintextBrokerList = null;
@@ -143,14 +143,14 @@ public abstract class ClusterTestHarness {
     this(numBrokers, withSchemaRegistry, true);
   }
 
-  /** @param manageRest If false, child-class is expected to create, start/stop REST-app. */
+  /** @param manageRest If false, child-class is expected to create and start/stop REST-app. */
   public ClusterTestHarness(int numBrokers, boolean withSchemaRegistry, boolean manageRest) {
     this.manageRest = manageRest;
     this.numBrokers = numBrokers;
     this.withSchemaRegistry = withSchemaRegistry;
 
-    schemaRegProperties = new Properties();
-    restProperties = new Properties();
+    this.schemaRegProperties = new Properties();
+    this.restProperties = new Properties();
   }
 
   public Properties overrideBrokerProperties(int i, Properties props) {
@@ -162,7 +162,12 @@ public abstract class ClusterTestHarness {
   }
 
   @BeforeEach
-  public void setUp() throws Exception {
+  public void setUp(TestInfo testInfo) throws Exception {
+    log.info("Starting controller of {}", getClass().getSimpleName());
+    // start controller (either Zk or Kraft)
+    quorumTestHarness.setUp(testInfo);
+    zkConnect = quorumTestHarness.zkConnectOrNull();
+
     log.info("Starting setup of {}", getClass().getSimpleName());
     setupMethod();
     log.info("Completed setup of {}", getClass().getSimpleName());
@@ -173,8 +178,6 @@ public abstract class ClusterTestHarness {
   // Pulling out the functionality to a separate method so we can call it without this behaviour
   // getting in the way.
   private void setupMethod() throws Exception {
-    zookeeper = new EmbeddedZookeeper();
-    zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
     // start brokers concurrently
     startBrokersConcurrently(numBrokers);
 
@@ -216,8 +219,6 @@ public abstract class ClusterTestHarness {
     if (manageRest) {
       startRest(null, null);
     }
-
-    log.info("Completed setup of {}", getClass().getSimpleName());
   }
 
   protected void startRest(RequestLog.Writer requestLogWriter, String requestLogFormat)
@@ -272,6 +273,10 @@ public abstract class ClusterTestHarness {
     }
   }
 
+  protected Time brokerTime(int brokerId) {
+    return Time.SYSTEM;
+  }
+
   private void startBrokersConcurrently(int numBrokers) {
     log.info("Starting concurrently {} brokers for {}", numBrokers, getClass().getSimpleName());
     configs =
@@ -287,7 +292,12 @@ public abstract class ClusterTestHarness {
                     .map(
                         config ->
                             CompletableFuture.supplyAsync(
-                                () -> TestUtils.createServer(config, Option.empty())))
+                                () ->
+                                    quorumTestHarness.createBroker(
+                                        config,
+                                        brokerTime(config.brokerId()),
+                                        true,
+                                        Option.empty())))
                     .collect(toList()))
             .join();
     log.info("Started all {} brokers for {}", numBrokers, getClass().getSimpleName());
@@ -306,9 +316,6 @@ public abstract class ClusterTestHarness {
   protected void overrideKafkaRestConfigs(Properties restProperties) {}
 
   protected Properties getBrokerProperties(int i) {
-    final Option<File> noFile = Option.apply(null);
-    final Option<SecurityProtocol> noInterBrokerSecurityProtocol =
-        Option.apply(getBrokerSecurityProtocol());
     Properties props =
         TestUtils.createBrokerConfig(
             i,
@@ -316,8 +323,8 @@ public abstract class ClusterTestHarness {
             false,
             false,
             TestUtils.RandomPort(),
-            noInterBrokerSecurityProtocol,
-            noFile,
+            Option.apply(getBrokerSecurityProtocol()),
+            Option.apply(null),
             Option.empty(),
             true,
             false,
@@ -333,10 +340,12 @@ public abstract class ClusterTestHarness {
             (short) 1,
             false);
     props.setProperty("auto.create.topics.enable", "false");
-    props.setProperty("message.max.bytes", String.valueOf((2 << 20) * 10));
-    // We *must* override this to use the port we allocated (Kafka currently allocates one port
-    // that it always uses for ZK
-    props.setProperty("zookeeper.connect", this.zkConnect);
+    props.setProperty("message.max.bytes", String.valueOf(MAX_MESSAGE_SIZE));
+    if (zkConnect != null) {
+      // We *must* override this to use the port we allocated (Kafka currently allocates one port
+      // that it always uses for ZK
+      props.setProperty("zookeeper.connect", zkConnect);
+    }
     return props;
   }
 
@@ -347,6 +356,8 @@ public abstract class ClusterTestHarness {
       stopRest();
     }
     tearDownMethod();
+    log.info("Stopping controller of {}", getClass().getSimpleName());
+    quorumTestHarness.tearDown();
     log.info("Completed teardown of {}", getClass().getSimpleName());
   }
 
@@ -364,15 +375,7 @@ public abstract class ClusterTestHarness {
       schemaRegServer.join();
     }
 
-    for (KafkaServer server : servers) {
-      server.shutdown();
-      server.metrics().close();
-    }
-    for (KafkaServer server : servers) {
-      CoreUtils.delete(server.config().logDirs());
-    }
-
-    zookeeper.shutdown();
+    TestUtils.shutdownServers(JavaConverters.asScalaBuffer(servers), true);
   }
 
   protected Invocation.Builder request(String path, boolean useAlternateConnectorProvider) {
@@ -531,8 +534,7 @@ public abstract class ClusterTestHarness {
             createTopicCall(
                 topicName, numPartitions, replicationFactor, replicasAssignments, properties);
         getTopicCreateFutures(result);
-      } else if (topicNames.stream()
-          .noneMatch(topicName::equals)) {
+      } else if (topicNames.stream().noneMatch(topicName::equals)) {
         // The topic we are trying to make isn't the first topic to be created, the topic list isn't
         // 0 length (that or an exception has been thrown, but the topic was created anyway).
         // We can't easily restart the environment as we will lose the existing topics.
@@ -550,8 +552,7 @@ public abstract class ClusterTestHarness {
                 "Exception thrown but topic  %s has been created, carrying on: %s",
                 topicName, e.getMessage()));
       }
-      if (!getTopicNames().stream()
-          .anyMatch(topicName::equals)) {
+      if (!getTopicNames().stream().anyMatch(topicName::equals)) {
         fail(String.format("Failed to create topic after retry: %s", topicNames));
       }
     }
@@ -577,10 +578,10 @@ public abstract class ClusterTestHarness {
     try (AdminClient adminClient = AdminClient.create(properties)) {
       if (replicasAssignments.isPresent()) {
         return adminClient.createTopics(
-                Collections.singletonList(new NewTopic(topicName, replicasAssignments.get())));
+            Collections.singletonList(new NewTopic(topicName, replicasAssignments.get())));
       } else {
         return adminClient.createTopics(
-                Collections.singletonList(new NewTopic(topicName, numPartitions, replicationFactor)));
+            Collections.singletonList(new NewTopic(topicName, numPartitions, replicationFactor)));
       }
     }
   }
@@ -605,16 +606,19 @@ public abstract class ClusterTestHarness {
     Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     try (AdminClient adminClient = AdminClient.create(properties)) {
-      adminClient.incrementalAlterConfigs(
+      adminClient
+          .incrementalAlterConfigs(
               singletonMap(
-                      new ConfigResource(ConfigResource.Type.TOPIC, topicName),
-                      singletonList(
-                              new AlterConfigOp(
-                                      new ConfigEntry(configName, value), AlterConfigOp.OpType.SET)))).all().get();
+                  new ConfigResource(ConfigResource.Type.TOPIC, topicName),
+                  singletonList(
+                      new AlterConfigOp(
+                          new ConfigEntry(configName, value), AlterConfigOp.OpType.SET))))
+          .all()
+          .get();
     } catch (InterruptedException | ExecutionException e) {
       fail(
-              String.format(
-                      "Failed to alter config %s for topic %s: %s", configName, topicName, e.getMessage()));
+          String.format(
+              "Failed to alter config %s for topic %s: %s", configName, topicName, e.getMessage()));
     }
   }
 
@@ -631,7 +635,7 @@ public abstract class ClusterTestHarness {
     HashMap<String, Object> serProps = new HashMap<>();
     serProps.put("schema.registry.url", schemaRegConnect);
     try (final KafkaAvroSerializer avroKeySerializer = new KafkaAvroSerializer();
-         final KafkaAvroSerializer avroValueSerializer = new KafkaAvroSerializer();) {
+        final KafkaAvroSerializer avroValueSerializer = new KafkaAvroSerializer(); ) {
       avroKeySerializer.configure(serProps, true);
       avroValueSerializer.configure(serProps, false);
 

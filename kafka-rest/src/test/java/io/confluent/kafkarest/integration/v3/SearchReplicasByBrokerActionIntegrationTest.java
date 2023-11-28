@@ -31,6 +31,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarness {
 
@@ -43,8 +44,8 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
 
     HashMap<Integer, List<Integer>> replicas = new HashMap<>();
     replicas.put(/* partition= */ 0, Arrays.asList(/* leader= */ 0, 1));

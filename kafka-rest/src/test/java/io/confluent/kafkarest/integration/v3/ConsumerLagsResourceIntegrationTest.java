@@ -42,6 +42,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.BytesDeserializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -62,8 +63,8 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     baseUrl = restConnect;
     clusterId = getClusterId();
     final int replicationFactor = 1;

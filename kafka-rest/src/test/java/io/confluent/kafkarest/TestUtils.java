@@ -25,7 +25,6 @@ import io.confluent.kafkarest.entities.EntityUtils;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import io.confluent.rest.entities.ErrorMessage;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.Duration;
