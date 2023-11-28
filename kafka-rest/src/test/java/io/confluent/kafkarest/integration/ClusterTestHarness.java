@@ -15,7 +15,6 @@
 
 package io.confluent.kafkarest.integration;
 
-import static com.google.common.base.Preconditions.checkState;
 import static io.confluent.kafkarest.TestUtils.choosePort;
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
@@ -57,8 +56,6 @@ import javax.ws.rs.client.WebTarget;
 import kafka.server.KafkaBroker;
 import kafka.server.KafkaConfig;
 import kafka.server.QuorumTestHarness;
-import kafka.utils.CoreUtils;
-import kafka.utils.EmptyTestInfo;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -115,7 +112,7 @@ public abstract class ClusterTestHarness {
   private final boolean manageRest;
 
   // Quorum controller
-  private QuorumTestHarness quorumTestHarness;
+  private final QuorumTestHarness quorumTestHarness = new QuorumTestHarness() {};
   protected String zkConnect;
 
   // Kafka Config
@@ -164,20 +161,12 @@ public abstract class ClusterTestHarness {
     return props;
   }
 
-  /** Deprecated: please use setUp(TestInfo) method instead */
-  @Deprecated
-  @BeforeEach
-  public void setUp() throws Exception {
-    setUp(new EmptyTestInfo());
-  }
-
   @BeforeEach
   public void setUp(TestInfo testInfo) throws Exception {
     log.info("Starting controller of {}", getClass().getSimpleName());
     // start controller (either Zk or Kraft)
-    quorumTestHarness = new QuorumTestHarness() {};
     quorumTestHarness.setUp(testInfo);
-    zkConnect = quorumTestHarness.zkConnect();
+    zkConnect = quorumTestHarness.zkConnectOrNull();
 
     log.info("Starting setup of {}", getClass().getSimpleName());
     setupMethod();
@@ -189,7 +178,6 @@ public abstract class ClusterTestHarness {
   // Pulling out the functionality to a separate method so we can call it without this behaviour
   // getting in the way.
   private void setupMethod() throws Exception {
-    checkState(quorumTestHarness != null);
     // start brokers concurrently
     startBrokersConcurrently(numBrokers);
 
@@ -231,8 +219,6 @@ public abstract class ClusterTestHarness {
     if (manageRest) {
       startRest(null, null);
     }
-
-    log.info("Completed setup of {}", getClass().getSimpleName());
   }
 
   protected void startRest(RequestLog.Writer requestLogWriter, String requestLogFormat)
@@ -333,7 +319,7 @@ public abstract class ClusterTestHarness {
     Properties props =
         TestUtils.createBrokerConfig(
             i,
-            quorumTestHarness.zkConnectOrNull(),
+            zkConnect,
             false,
             false,
             TestUtils.RandomPort(),
@@ -355,6 +341,11 @@ public abstract class ClusterTestHarness {
             false);
     props.setProperty("auto.create.topics.enable", "false");
     props.setProperty("message.max.bytes", String.valueOf(MAX_MESSAGE_SIZE));
+    if (zkConnect != null) {
+      // We *must* override this to use the port we allocated (Kafka currently allocates one port
+      // that it always uses for ZK
+      props.setProperty("zookeeper.connect", zkConnect);
+    }
     return props;
   }
 
@@ -365,6 +356,8 @@ public abstract class ClusterTestHarness {
       stopRest();
     }
     tearDownMethod();
+    log.info("Stopping controller of {}", getClass().getSimpleName());
+    quorumTestHarness.tearDown();
     log.info("Completed teardown of {}", getClass().getSimpleName());
   }
 
@@ -382,22 +375,7 @@ public abstract class ClusterTestHarness {
       schemaRegServer.join();
     }
 
-    for (KafkaBroker server : servers) {
-      server.shutdown();
-      server.metrics().close();
-    }
-    for (KafkaBroker server : servers) {
-      CoreUtils.delete(server.config().logDirs());
-    }
-
-    if (quorumTestHarness != null) {
-      if (quorumTestHarness.isKRaftTest()) {
-        quorumTestHarness.shutdownKRaftController();
-      } else {
-        quorumTestHarness.shutdownZooKeeper();
-      }
-      quorumTestHarness.tearDown();
-    }
+    TestUtils.shutdownServers(JavaConverters.asScalaBuffer(servers), true);
   }
 
   protected Invocation.Builder request(String path, boolean useAlternateConnectorProvider) {

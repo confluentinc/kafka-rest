@@ -77,10 +77,6 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     restProperties.putAll(restConfigs);
   }
 
-  /** Override to do nothing, as this class has an overloaded setup() below. */
-  @Override
-  public void setUp() {}
-
   @BeforeEach
   @Override
   public void setUp(TestInfo testInfo) throws Exception {

@@ -44,6 +44,7 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import scala.Option;
 
 public class AuthorizationErrorTest
@@ -69,8 +70,9 @@ public class AuthorizationErrorTest
           new PartitionOffset(0, 3L, null, null));
 
   @BeforeEach
-  public void setUp() throws Exception {
-    super.setUp();
+  @Override
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     properties.put("sasl.jaas.config", createPlainLoginModule("admin", "admin-secret"));

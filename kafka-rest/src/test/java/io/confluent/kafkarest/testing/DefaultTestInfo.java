@@ -28,11 +28,22 @@ public class DefaultTestInfo implements TestInfo {
   private final Optional<Class<?>> testClass;
   private final Optional<Method> testMethod;
 
-  DefaultTestInfo(ExtensionContext extensionContext) {
+  public DefaultTestInfo(ExtensionContext extensionContext) {
     this.displayName = extensionContext.getDisplayName();
     this.tags = extensionContext.getTags();
     this.testClass = extensionContext.getTestClass();
     this.testMethod = extensionContext.getTestMethod();
+  }
+
+  public DefaultTestInfo(
+      String displayName,
+      Set<String> tags,
+      Optional<Class<?>> testClass,
+      Optional<Method> testMethod) {
+    this.displayName = displayName;
+    this.tags = tags;
+    this.testClass = testClass;
+    this.testMethod = testMethod;
   }
 
   @Override

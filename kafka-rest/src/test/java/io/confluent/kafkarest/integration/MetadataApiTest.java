@@ -39,6 +39,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 /**
  * Tests metadata access against a real cluster. This isn't exhaustive since the unit tests cover
@@ -90,8 +91,8 @@ public class MetadataApiTest extends ClusterTestHarness {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     createTopic(topic1Name, topic1Partitions.size(), numReplicas);
     createTopic(topic2Name, topic2Partitions.size(), numReplicas);
   }
