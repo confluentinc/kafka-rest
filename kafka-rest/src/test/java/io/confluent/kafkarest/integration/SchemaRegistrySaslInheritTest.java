@@ -26,8 +26,8 @@ import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.testing.JvmPropertyFileLoginModuleFixture;
 import io.confluent.kafkarest.testing.KafkaClusterFixture;
 import io.confluent.kafkarest.testing.KafkaRestFixture;
+import io.confluent.kafkarest.testing.QuorumControllerFixture;
 import io.confluent.kafkarest.testing.SchemaRegistryFixture;
-import io.confluent.kafkarest.testing.ZookeeperFixture;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -55,7 +55,7 @@ public class SchemaRegistrySaslInheritTest {
 
   @Order(2)
   @RegisterExtension
-  public final ZookeeperFixture zookeeper = ZookeeperFixture.create();
+  public final QuorumControllerFixture quorumController = QuorumControllerFixture.create();
 
   @Order(3)
   @RegisterExtension
@@ -67,7 +67,7 @@ public class SchemaRegistrySaslInheritTest {
           .addSuperUser("schema-registry")
           .setNumBrokers(3)
           .setSecurityProtocol(SecurityProtocol.SASL_PLAINTEXT)
-          .setZookeeper(zookeeper)
+          .setQuorumController(quorumController)
           .build();
 
   @Order(4)
