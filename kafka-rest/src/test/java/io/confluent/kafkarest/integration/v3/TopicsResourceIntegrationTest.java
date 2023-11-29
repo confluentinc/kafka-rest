@@ -42,6 +42,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -58,8 +59,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
 
     createTopic(TOPIC_1, 2, (short) 1);
     createTopic(TOPIC_2, 1, (short) 1);

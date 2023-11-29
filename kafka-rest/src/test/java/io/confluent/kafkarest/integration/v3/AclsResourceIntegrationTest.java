@@ -43,6 +43,7 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class AclsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -112,8 +113,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @BeforeEach
-  public void setUp() throws Exception {
-    super.setUp();
+  @Override
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
 
     clusterId = getClusterId();
     baseAclUrl = "/v3/clusters/" + clusterId + "/acls";
