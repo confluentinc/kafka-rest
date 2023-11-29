@@ -22,7 +22,7 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.testing.KafkaClusterFixture;
 import io.confluent.kafkarest.testing.KafkaRestFixture;
-import io.confluent.kafkarest.testing.ZookeeperFixture;
+import io.confluent.kafkarest.testing.QuorumControllerFixture;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,12 +53,12 @@ public class ProducerLeakTest {
 
   @Order(1)
   @RegisterExtension
-  private final ZookeeperFixture zookeeper = ZookeeperFixture.create();
+  private final QuorumControllerFixture quorumController = QuorumControllerFixture.create();
 
   @Order(2)
   @RegisterExtension
   private final KafkaClusterFixture kafkaCluster =
-      KafkaClusterFixture.builder().setNumBrokers(3).setZookeeper(zookeeper).build();
+      KafkaClusterFixture.builder().setNumBrokers(3).setQuorumController(quorumController).build();
 
   @Order(3)
   @RegisterExtension

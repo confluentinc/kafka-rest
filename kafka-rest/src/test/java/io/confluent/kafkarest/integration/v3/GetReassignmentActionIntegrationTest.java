@@ -30,6 +30,7 @@ import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
 
@@ -41,8 +42,9 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
   }
 
   @BeforeEach
-  public void setUp() throws Exception {
-    super.setUp();
+  @Override
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     Map<Integer, List<Integer>> replicaAssignments = createAssignment(Arrays.asList(0, 1, 2), 100);
     createTopic(TOPIC_NAME, replicaAssignments);
   }

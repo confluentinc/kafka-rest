@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class ProducerTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
@@ -104,8 +105,8 @@ public class ProducerTest
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     final int numPartitions = 3;
     final short replicationFactor = 1;
     createTopic(topicName, numPartitions, replicationFactor);
