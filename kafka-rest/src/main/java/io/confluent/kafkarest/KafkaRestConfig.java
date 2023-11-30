@@ -33,6 +33,7 @@ import com.google.common.collect.MapDifference.ValueDifference;
 import com.google.common.collect.Maps;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
+import io.confluent.kafka.serializers.KafkaAvroSerializerConfig;
 import io.confluent.kafka.serializers.KafkaJsonSerializerConfig;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializerConfig;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializerConfig;
@@ -47,6 +48,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1054,7 +1056,14 @@ public class KafkaRestConfig extends RestConfig {
    * can hide sensitive information in logging.
    */
   public final Map<String, Object> getAvroSerializerConfigs() {
-    Set<String> mask = AbstractKafkaSchemaSerDeConfig.baseConfigDef().names();
+    Set<String> mask = new HashSet<>();
+    mask.addAll(AbstractKafkaSchemaSerDeConfig.baseConfigDef().names());
+    mask.addAll(
+        // these configs are specific to KafkaAvroSerializerConfig
+        ImmutableSet.of(
+            KafkaAvroSerializerConfig.AVRO_REFLECTION_ALLOW_NULL_CONFIG,
+            KafkaAvroSerializerConfig.AVRO_USE_LOGICAL_TYPE_CONVERTERS_CONFIG,
+            KafkaAvroSerializerConfig.AVRO_REMOVE_JAVA_PROPS_CONFIG));
     HashMap<String, Object> configs =
         new HashMap<>(
             new ConfigsBuilder(mask).addConfigs("client.").addConfigs("producer.").build());
