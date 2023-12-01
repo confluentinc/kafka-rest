@@ -501,7 +501,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 Entity.entity(
                     "{\"topic_name\":\""
                         + topicName
-                        + "\",\"replicas_assignments\":{\"0\":[1,2], \"1\":[2,3], \"2\":[3,1]}}",
+                        + "\",\"replicas_assignments\":{\"0\":[0,1], \"1\":[1,2], \"2\":[2,0]}}",
                     MediaType.APPLICATION_JSON));
     assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
 

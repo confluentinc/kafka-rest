@@ -15,8 +15,10 @@
 
 package io.confluent.kafkarest.integration;
 
+import static com.google.common.base.Preconditions.checkState;
 import static io.confluent.kafkarest.TestUtils.choosePort;
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
+import static java.util.Collections.EMPTY_MAP;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
@@ -42,12 +44,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -56,14 +60,13 @@ import javax.ws.rs.client.WebTarget;
 import kafka.server.KafkaBroker;
 import kafka.server.KafkaConfig;
 import kafka.server.QuorumTestHarness;
+import kafka.utils.TestInfoUtils;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.AlterConfigOp;
 import org.apache.kafka.clients.admin.ConfigEntry;
-import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -79,6 +82,7 @@ import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.utils.Time;
+import org.apache.kafka.server.common.MetadataVersion;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
@@ -92,6 +96,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
 import scala.collection.JavaConverters;
+import scala.collection.Seq;
 
 /**
  * Test harness to run against a real, local Kafka cluster and REST proxy. This is essentially
@@ -102,7 +107,6 @@ import scala.collection.JavaConverters;
 public abstract class ClusterTestHarness {
 
   private static final Logger log = LoggerFactory.getLogger(ClusterTestHarness.class);
-  private static final long HALF_SECOND_MILLIS = 500L;
 
   public static final int DEFAULT_NUM_BROKERS = 1;
   public static final int MAX_MESSAGE_SIZE = (2 << 20) * 10; // 10 MiB
@@ -112,7 +116,8 @@ public abstract class ClusterTestHarness {
   private final boolean manageRest;
 
   // Quorum controller
-  private final QuorumTestHarness quorumTestHarness = new QuorumTestHarness() {};
+  private TestInfo testInfo;
+  private QuorumTestHarness quorumTestHarness;
   protected String zkConnect;
 
   // Kafka Config
@@ -163,11 +168,7 @@ public abstract class ClusterTestHarness {
 
   @BeforeEach
   public void setUp(TestInfo testInfo) throws Exception {
-    log.info("Starting controller of {}", getClass().getSimpleName());
-    // start controller (either Zk or Kraft)
-    quorumTestHarness.setUp(testInfo);
-    zkConnect = quorumTestHarness.zkConnectOrNull();
-
+    this.testInfo = testInfo;
     log.info("Starting setup of {}", getClass().getSimpleName());
     setupMethod();
     log.info("Completed setup of {}", getClass().getSimpleName());
@@ -178,6 +179,15 @@ public abstract class ClusterTestHarness {
   // Pulling out the functionality to a separate method so we can call it without this behaviour
   // getting in the way.
   private void setupMethod() throws Exception {
+    checkState(testInfo != null);
+    log.info("Starting controller of {}", getClass().getSimpleName());
+    // start controller (either Zk or Kraft)
+    this.quorumTestHarness =
+        new DefaultQuorumTestHarness(
+            SecurityProtocol.PLAINTEXT, overrideKraftControllerConfig(), MetadataVersion.latest());
+    quorumTestHarness.setUp(testInfo);
+    zkConnect = quorumTestHarness.zkConnectOrNull();
+
     // start brokers concurrently
     startBrokersConcurrently(numBrokers);
 
@@ -313,6 +323,16 @@ public abstract class ClusterTestHarness {
     return String.format("http://localhost:%d", restPort);
   }
 
+  /** Only applicable in Kraft tests, no effect in Zk tests */
+  protected Properties overrideKraftControllerConfig() {
+    return new Properties();
+  }
+
+  public boolean isKraftTest() {
+    checkState(testInfo != null);
+    return TestInfoUtils.isKRaft(testInfo);
+  }
+
   protected void overrideKafkaRestConfigs(Properties restProperties) {}
 
   protected Properties getBrokerProperties(int i) {
@@ -339,6 +359,10 @@ public abstract class ClusterTestHarness {
             1,
             (short) 1,
             false);
+    if (quorumTestHarness.isKRaftTest()) {
+      // Make sure that broker only role is "broker"
+      props.setProperty("process.roles", "broker");
+    }
     props.setProperty("auto.create.topics.enable", "false");
     props.setProperty("message.max.bytes", String.valueOf(MAX_MESSAGE_SIZE));
     if (zkConnect != null) {
@@ -356,13 +380,11 @@ public abstract class ClusterTestHarness {
       stopRest();
     }
     tearDownMethod();
-    log.info("Stopping controller of {}", getClass().getSimpleName());
-    quorumTestHarness.tearDown();
     log.info("Completed teardown of {}", getClass().getSimpleName());
   }
 
   private void tearDownMethod() throws Exception {
-
+    checkState(quorumTestHarness != null);
     restProperties.clear();
 
     schemaRegProperties.clear();
@@ -376,6 +398,9 @@ public abstract class ClusterTestHarness {
     }
 
     TestUtils.shutdownServers(JavaConverters.asScalaBuffer(servers), true);
+
+    log.info("Stopping controller of {}", getClass().getSimpleName());
+    quorumTestHarness.tearDown();
   }
 
   protected Invocation.Builder request(String path, boolean useAlternateConnectorProvider) {
@@ -459,6 +484,7 @@ public abstract class ClusterTestHarness {
     }
   }
 
+  /** This method is non-deterministic on Kraft cluster, please use this with care */
   protected final int getControllerID() {
     Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
@@ -494,112 +520,76 @@ public abstract class ClusterTestHarness {
   }
 
   protected final void createTopic(
-      String topicName, int numPartitions, short replicationFactor, Properties properties) {
-    createTopic(
-        topicName,
-        Optional.of(numPartitions),
-        Optional.of(replicationFactor),
-        Optional.empty(),
-        properties);
-  }
-
-  protected final void createTopic(
-      String topicName,
-      Optional<Integer> numPartitions,
-      Optional<Short> replicationFactor,
-      Optional<Map<Integer, List<Integer>>> replicasAssignments,
-      Properties properties) {
-
-    CreateTopicsResult result =
-        createTopicCall(
-            topicName, numPartitions, replicationFactor, replicasAssignments, properties);
-
-    try {
-      result.all().get();
-    } catch (InterruptedException | ExecutionException e) {
-      pause();
-      Set<String> topicNames = getTopicNames();
-      if (topicNames.isEmpty()) { // Can restart because no topics exist yet
-        log.warn("Restarting the environment as topic creation failed the first time");
-        try {
-          tearDownMethod();
-          pause();
-          setupMethod();
-          pause();
-        } catch (Exception tearDownException) {
-          fail(String.format("Failed to create topic: %s", tearDownException.getMessage()));
-        }
-
-        result =
-            createTopicCall(
-                topicName, numPartitions, replicationFactor, replicasAssignments, properties);
-        getTopicCreateFutures(result);
-      } else if (topicNames.stream().noneMatch(topicName::equals)) {
-        // The topic we are trying to make isn't the first topic to be created, the topic list isn't
-        // 0 length (that or an exception has been thrown, but the topic was created anyway).
-        // We can't easily restart the environment as we will lose the existing topics.
-        // While we could store them and recreate them all, for now, let's just wait a bit and have
-        // another go with the current topic.
-        log.warn("Topic creation failed the first time round, trying again.");
-        result =
-            createTopicCall(
-                topicName, numPartitions, replicationFactor, replicasAssignments, properties);
-        pause(); // It's struggling at this point, give it a little time
-        getTopicCreateFutures(result);
-      } else {
-        log.warn(
-            String.format(
-                "Exception thrown but topic  %s has been created, carrying on: %s",
-                topicName, e.getMessage()));
-      }
-      if (!getTopicNames().stream().anyMatch(topicName::equals)) {
-        fail(String.format("Failed to create topic after retry: %s", topicNames));
-      }
-    }
-  }
-
-  protected final void createTopic(
       String topicName, Map<Integer, List<Integer>> replicasAssignments) {
     createTopic(
         topicName,
         Optional.empty(),
         Optional.empty(),
         Optional.of(replicasAssignments),
-        restConfig.getAdminProperties());
+        restConfig.getAdminProperties(),
+        new Properties());
   }
 
-  private CreateTopicsResult createTopicCall(
+  protected final void createTopic(
+      String topicName, int numPartitions, short replicationFactor, Properties adminProperties) {
+    createTopic(
+        topicName,
+        Optional.of(numPartitions),
+        Optional.of(replicationFactor),
+        Optional.empty(),
+        adminProperties,
+        new Properties());
+  }
+
+  protected final void createTopic(
+      String topicName,
+      int numPartitions,
+      short replicationFactor,
+      Properties adminProperties,
+      Properties topicConfig) {
+    createTopic(
+        topicName,
+        Optional.of(numPartitions),
+        Optional.of(replicationFactor),
+        Optional.empty(),
+        adminProperties,
+        topicConfig);
+  }
+
+  protected final void createTopic(
       String topicName,
       Optional<Integer> numPartitions,
       Optional<Short> replicationFactor,
       Optional<Map<Integer, List<Integer>>> replicasAssignments,
-      Properties properties) {
-    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
-    try (AdminClient adminClient = AdminClient.create(properties)) {
-      if (replicasAssignments.isPresent()) {
-        return adminClient.createTopics(
-            Collections.singletonList(new NewTopic(topicName, replicasAssignments.get())));
-      } else {
-        return adminClient.createTopics(
-            Collections.singletonList(new NewTopic(topicName, numPartitions, replicationFactor)));
-      }
+      Properties adminProperties,
+      Properties topicConfig) {
+    adminProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    try (AdminClient admin = AdminClient.create(adminProperties)) {
+      TestUtils.createTopicWithAdmin(
+          admin,
+          topicName,
+          JavaConverters.asScalaBuffer(servers).toSeq(),
+          quorumTestHarness.controllerServers(),
+          numPartitions.orElse(1),
+          replicationFactor.orElse((short) 1),
+          JavaConverters.mapAsScalaMapConverter(
+                  convertReplicasAssignmentToScalaCompatibleType(replicasAssignments))
+              .asScala(),
+          topicConfig);
     }
   }
 
-  private void pause() {
-    try {
-      Thread.sleep(HALF_SECOND_MILLIS);
-    } catch (InterruptedException ie3) {
-      // Noop
-    }
-  }
-
-  private void getTopicCreateFutures(CreateTopicsResult result) {
-    try {
-      result.all().get();
-    } catch (InterruptedException | ExecutionException e) {
-      fail(String.format("Failed to create topic: %s", e.getMessage()));
-    }
+  @SuppressWarnings({"unchecked"})
+  private static Map<Object, Seq<Object>> convertReplicasAssignmentToScalaCompatibleType(
+      Optional<Map<Integer, List<Integer>>> replicasAssignments) {
+    return replicasAssignments
+        .<Map<Integer, Seq<Integer>>>map(
+            integerListMap ->
+                integerListMap.entrySet().stream()
+                    .collect(
+                        Collectors.toMap(
+                            Entry::getKey, e -> JavaConverters.asScalaBuffer(e.getValue()))))
+        .orElse(EMPTY_MAP);
   }
 
   protected final void setTopicConfig(String topicName, String configName, String value) {
@@ -774,5 +764,37 @@ public abstract class ClusterTestHarness {
           new TopicPartition(topicName, i), Optional.of(new NewPartitionReassignment(replicaIds)));
     }
     return reassignmentMap;
+  }
+
+  /** A concrete class of QuorumTestHarness so that we can customize for testing purposes */
+  static class DefaultQuorumTestHarness extends QuorumTestHarness {
+    private final Properties kraftControllerConfig;
+    private final SecurityProtocol securityProtocol;
+    private final MetadataVersion metadataVersion;
+
+    DefaultQuorumTestHarness(
+        SecurityProtocol securityProtocol,
+        Properties kraftControllerConfig,
+        MetadataVersion metadataVersion) {
+      this.securityProtocol = securityProtocol;
+      this.kraftControllerConfig = kraftControllerConfig;
+      this.metadataVersion = metadataVersion;
+    }
+
+    @Override
+    public SecurityProtocol controllerListenerSecurityProtocol() {
+      return securityProtocol;
+    }
+
+    @Override
+    public Seq<Properties> kraftControllerConfigs() {
+      // only one Kraft controller is supported in QuorumTestHarness
+      return JavaConverters.asScalaBuffer(Collections.singletonList(kraftControllerConfig));
+    }
+
+    @Override
+    public MetadataVersion metadataVersion() {
+      return metadataVersion;
+    }
   }
 }

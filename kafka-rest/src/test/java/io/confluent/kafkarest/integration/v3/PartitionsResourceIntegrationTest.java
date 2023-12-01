@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -29,8 +30,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -48,8 +50,9 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
     createTopic(TOPIC_NAME, 1, (short) 1);
   }
 
-  @Test
-  public void listPartitions_existingTopic_returnPartitions() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listPartitions_existingTopic_returnPartitions(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -126,8 +129,9 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expected, actual);
   }
 
-  @Test
-  public void listPartitions_nonExistingTopic_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listPartitions_nonExistingTopic_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -137,8 +141,9 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void listPartitions_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listPartitions_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions")
             .accept(MediaType.APPLICATION_JSON)
@@ -146,8 +151,9 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getPartition_existingPartition_returnPartition() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getPartition_existingPartition_returnPartition(String quorum) throws Exception {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -205,8 +211,9 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expected, actual);
   }
 
-  @Test
-  public void getPartition_nonExistingPartition_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getPartition_nonExistingPartition_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -216,8 +223,9 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getPartition_nonExistingTopic_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getPartition_nonExistingTopic_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -227,8 +235,9 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getPartition_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getPartition_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/0")
             .accept(MediaType.APPLICATION_JSON)

@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,8 +56,9 @@ import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
 
@@ -75,8 +77,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     createTopic(TOPIC_NAME, NUM_PARTITIONS, (short) 1);
   }
 
-  @Test
-  public void produceBinary() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceBinary(String quorum) throws Exception {
     String clusterId = getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     ByteString value = ByteString.copyFromUtf8("bar");
@@ -113,8 +116,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(value, ByteString.copyFrom(produced.value()));
   }
 
-  @Test
-  public void produceBinaryWithNullData() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceBinaryWithNullData(String quorum) throws Exception {
     String clusterId = getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -149,8 +153,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceBinaryWithInvalidData_throwsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceBinaryWithInvalidData_throwsBadRequest(String quorum) throws Exception {
     String clusterId = getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -177,8 +182,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceString() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceString(String quorum) throws Exception {
     String clusterId = getClusterId();
     String key = "foo";
     String value = "bar";
@@ -215,8 +221,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceStringCharsetUtf8() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceStringCharsetUtf8(String quorum) throws Exception {
     String clusterId = getClusterId();
     String key = "foo";
     String value = "bar";
@@ -253,8 +260,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceStringCharsetIso88591() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceStringCharsetIso88591(String quorum) throws Exception {
     String clusterId = getClusterId();
     String key = "foo";
     String value = "bar";
@@ -291,8 +299,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceStringCharsetInvalid() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceStringCharsetInvalid(String quorum) throws Exception {
     String clusterId = getClusterId();
     String key = "foo";
     String value = "bar";
@@ -318,8 +327,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void produceStringWithEmptyData() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceStringWithEmptyData(String quorum) throws Exception {
     String clusterId = getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -354,8 +364,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertTrue(produced.value().isEmpty());
   }
 
-  @Test
-  public void produceStringWithNullData() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceStringWithNullData(String quorum) throws Exception {
     String clusterId = getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -390,8 +401,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceWithInvalidData_throwsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceWithInvalidData_throwsBadRequest(String quorum) throws Exception {
     String clusterId = getClusterId();
     String request = "{ \"records\": {\"subject\": \"foobar\" } }";
 
@@ -410,8 +422,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
         actual.getMessage());
   }
 
-  @Test
-  public void produceJson() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceJson(String quorum) throws Exception {
     String clusterId = getClusterId();
     String key = "foo";
     String value = "bar";
@@ -446,8 +459,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonWithNullData() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceJsonWithNullData(String quorum) throws Exception {
     String clusterId = getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -480,8 +494,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceBinaryWithPartitionId() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceBinaryWithPartitionId(String quorum) throws Exception {
     String clusterId = getClusterId();
     int partitionId = 1;
     ByteString key = ByteString.copyFromUtf8("foo");
@@ -520,8 +535,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(value, ByteString.copyFrom(produced.value()));
   }
 
-  @Test
-  public void produceBinaryWithTimestamp() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceBinaryWithTimestamp(String quorum) throws Exception {
     String clusterId = getClusterId();
     Instant timestamp = Instant.ofEpochMilli(1000);
     ByteString key = ByteString.copyFromUtf8("foo");
@@ -561,8 +577,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(timestamp, Instant.ofEpochMilli(produced.timestamp()));
   }
 
-  @Test
-  public void produceBinaryWithHeaders() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceBinaryWithHeaders(String quorum) throws Exception {
     String clusterId = getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     ByteString value = ByteString.copyFromUtf8("bar");
@@ -613,8 +630,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
         ImmutableList.copyOf(produced.headers().headers("header-2")));
   }
 
-  @Test
-  public void produceBinaryKeyOnly() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceBinaryKeyOnly(String quorum) throws Exception {
     String clusterId = getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     ProduceRequest request =
@@ -645,8 +663,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceBinaryValueOnly() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceBinaryValueOnly(String quorum) throws Exception {
     String clusterId = getClusterId();
     ByteString value = ByteString.copyFromUtf8("bar");
     ProduceRequest request =
@@ -677,8 +696,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(value, ByteString.copyFrom(produced.value()));
   }
 
-  @Test
-  public void produceStringWithPartitionId() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceStringWithPartitionId(String quorum) throws Exception {
     String clusterId = getClusterId();
     int partitionId = 1;
     String key = "foo";
@@ -717,8 +737,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceStringWithTimestamp() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceStringWithTimestamp(String quorum) throws Exception {
     String clusterId = getClusterId();
     Instant timestamp = Instant.ofEpochMilli(1000);
     String key = "foo";
@@ -758,8 +779,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(timestamp, Instant.ofEpochMilli(produced.timestamp()));
   }
 
-  @Test
-  public void produceStringWithHeaders() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceStringWithHeaders(String quorum) throws Exception {
     String clusterId = getClusterId();
     String key = "foo";
     String value = "bar";
@@ -810,8 +832,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
         ImmutableList.copyOf(produced.headers().headers("header-2")));
   }
 
-  @Test
-  public void produceStringKeyOnly() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceStringKeyOnly(String quorum) throws Exception {
     String clusterId = getClusterId();
     String key = "foo";
     ProduceRequest request =
@@ -842,8 +865,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceStringValueOnly() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceStringValueOnly(String quorum) throws Exception {
     String clusterId = getClusterId();
     String value = "bar";
     ProduceRequest request =
@@ -874,8 +898,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceNothing() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceNothing(String quorum) throws Exception {
     String clusterId = getClusterId();
     ProduceRequest request = ProduceRequest.builder().setOriginalSize(0L).build();
 
@@ -897,8 +922,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceJsonBatch() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceJsonBatch(String quorum) throws Exception {
     String clusterId = getClusterId();
     ArrayList<ProduceRequest> requests = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
@@ -964,8 +990,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     }
   }
 
-  @Test
-  public void produceStringBatch() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceStringBatch(String quorum) throws Exception {
     String clusterId = getClusterId();
     ArrayList<ProduceRequest> requests = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
@@ -1030,8 +1057,10 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     }
   }
 
-  @Test
-  public void produceBinaryBatchWithInvalidData_throwsMultipleBadRequests() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceBinaryBatchWithInvalidData_throwsMultipleBadRequests(String quorum)
+      throws Exception {
     String clusterId = getClusterId();
     ArrayList<ProduceRequest> requests = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
@@ -1070,8 +1099,9 @@ public class ProduceActionNoSchemaIntegrationTest extends ClusterTestHarness {
     }
   }
 
-  @Test
-  public void produceBinaryWithLargerSizeMessage() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceBinaryWithLargerSizeMessage(String quorum) throws Exception {
     String clusterId = getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     // Kafka server and producer is configured to accept messages upto 20971520 Bytes (20MB) but

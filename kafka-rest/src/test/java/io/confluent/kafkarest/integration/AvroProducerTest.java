@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -37,8 +38,9 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import org.apache.avro.Schema;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 // This test is much lighter than the Binary one which exercises all variants. Since binary
 // covers most code paths well, this just tries to exercise Schema-specific parts.
@@ -155,8 +157,9 @@ public class AvroProducerTest extends ClusterTestHarness {
     assertEquals(produceResponse.getValueSchemaId(), (Integer) 2);
   }
 
-  @Test
-  public void testProduceToTopicWithPartitionsAndKeys() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testProduceToTopicWithPartitionsAndKeys(String quorum) {
     testProduceToTopic(topicRecordsWithPartitionsAndKeys, partitionOffsetsWithPartitionsAndKeys);
   }
 
@@ -195,8 +198,9 @@ public class AvroProducerTest extends ClusterTestHarness {
     assertEquals((Integer) 1, poffsetResponse.getValueSchemaId());
   }
 
-  @Test
-  public void testProduceToPartitionOnlyValues() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testProduceToPartitionOnlyValues(String quorum) {
     testProduceToPartition(partitionRecordsOnlyValues, producePartitionOffsetOnlyValues);
   }
 }

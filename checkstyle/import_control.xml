@@ -130,12 +130,15 @@
   <allow class="javax.security.auth.login.Configuration" />
   <allow class="scala.Option" />
   <allow class="scala.collection.JavaConverters" />
+  <allow class="scala.collection.Seq" />
   <!-- b. Non-public Apache Kafka APIs -->
   <allow class="org.apache.kafka.clients.CommonClientConfigs" />
   <allow class="org.apache.kafka.common.config.types.Password" />
   <allow class="org.apache.kafka.common.network.ListenerName" />
   <allow class="org.apache.kafka.common.protocol.Errors" />
   <allow class="org.apache.kafka.common.security.JaasUtils" />
+  <allow class="org.apache.kafka.metadata.authorizer.StandardAuthorizer" />
+  <allow class="org.apache.kafka.server.common.MetadataVersion" />
   <allow class="org.apache.kafka.test.TestSslUtils" />
   <!-- c. Non-public Confluent Community Kafka APIs -->
   <allow class="kafka.admin.AclCommand" />

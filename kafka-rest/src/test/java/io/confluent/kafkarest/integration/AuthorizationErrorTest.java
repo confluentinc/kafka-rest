@@ -47,6 +47,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import scala.Option;
 
+/** This integration test uses AclAuthorizer class which is Zk specific. */
 public class AuthorizationErrorTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
@@ -144,7 +145,7 @@ public class AuthorizationErrorTest
 
   @Test
   public void testConsumerRequest() {
-    // test wihout acls
+    // test without acls
     verifySubscribeToTopic(true);
     // add acls
     SecureTestUtils.setConsumerAcls(zkConnect, TOPIC_NAME, USERNAME, CONSUMER_GROUP);
@@ -223,6 +224,7 @@ public class AuthorizationErrorTest
   }
 
   @AfterEach
+  @Override
   public void tearDown() throws Exception {
     super.tearDown();
   }

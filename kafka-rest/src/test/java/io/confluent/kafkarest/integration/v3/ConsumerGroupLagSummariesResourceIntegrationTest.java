@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -39,8 +40,9 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.BytesDeserializer;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTestHarness {
 
@@ -68,8 +70,9 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
     createTopic(topic2, numPartitions, (short) replicationFactor);
   }
 
-  @Test
-  public void getConsumerGroupLagSummary_returnsConsumerGroupLagSummary() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getConsumerGroupLagSummary_returnsConsumerGroupLagSummary(String quorum) {
     KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
     KafkaConsumer<?, ?> consumer2 = createConsumer(group1, "client-2");
     consumer1.subscribe(Collections.singletonList(topic1));
@@ -174,8 +177,9 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
         });
   }
 
-  @Test
-  public void getConsumerGroupLagSummary_nonExistingOffsets_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getConsumerGroupLagSummary_nonExistingOffsets_returnsNotFound(String quorum) {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1, topic2));
 
@@ -191,8 +195,9 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getConsumerGroupLagSummary_nonExistingConsumerGroup_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getConsumerGroupLagSummary_nonExistingConsumerGroup_returnsNotFound(String quorum) {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1));
     BinaryPartitionProduceRequest request =
@@ -207,8 +212,9 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getConsumerGroupLagSummary_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getConsumerGroupLagSummary_nonExistingCluster_returnsNotFound(String quorum) {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1));
     BinaryPartitionProduceRequest request =
