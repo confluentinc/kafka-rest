@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,7 +40,8 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.BytesDeserializer;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -47,8 +49,9 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
   }
 
-  @Test
-  public void listConsumerGroups_returnsConsumerGroups() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listConsumerGroups_returnsConsumerGroups(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -81,8 +84,9 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
         anyOf(is(expectedPreparingRebalance), is(expectedStable)));
   }
 
-  @Test
-  public void listConsumerGroups_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listConsumerGroups_nonExistingCluster_returnsNotFound(String quorum) {
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     createTopic("topic-2", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     createTopic("topic-3", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
@@ -101,8 +105,9 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getConsumerGroup_returnsConsumerGroup() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getConsumerGroup_returnsConsumerGroup(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -135,8 +140,9 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
         anyOf(is(expectedStable), is(expectedRebalance)));
   }
 
-  @Test
-  public void getConsumerGroup_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getConsumerGroup_nonExistingCluster_returnsNotFound(String quorum) {
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     createTopic("topic-2", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     createTopic("topic-3", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
@@ -157,8 +163,9 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getConsumerGroup_nonExistingConsumerGroup_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getConsumerGroup_nonExistingConsumerGroup_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     createTopic("topic-2", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);

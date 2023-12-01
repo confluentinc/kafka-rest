@@ -42,6 +42,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -58,8 +59,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
 
     createTopic(TOPIC_1, 2, (short) 1);
     createTopic(TOPIC_2, 1, (short) 1);
@@ -500,7 +501,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 Entity.entity(
                     "{\"topic_name\":\""
                         + topicName
-                        + "\",\"replicas_assignments\":{\"0\":[1,2], \"1\":[2,3], \"2\":[3,1]}}",
+                        + "\",\"replicas_assignments\":{\"0\":[0,1], \"1\":[1,2], \"2\":[2,0]}}",
                     MediaType.APPLICATION_JSON));
     assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
 

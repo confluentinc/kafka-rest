@@ -25,6 +25,7 @@ import javax.ws.rs.core.GenericType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class SeekToTimestampTest extends AbstractConsumerTest {
 
@@ -48,8 +49,8 @@ public class SeekToTimestampTest extends AbstractConsumerTest {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     createTopic(TOPIC_NAME, /* numPartitions= */ 1, /* replicationFactor= */ (short) 1);
   }
 
