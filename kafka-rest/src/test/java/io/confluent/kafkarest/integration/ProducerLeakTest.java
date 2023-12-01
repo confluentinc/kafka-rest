@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -44,8 +45,9 @@ import org.glassfish.jersey.process.internal.RequestScoped;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @Tag("IntegrationTest")
 public class ProducerLeakTest {
@@ -74,8 +76,9 @@ public class ProducerLeakTest {
     kafkaCluster.createTopic(TOPIC_NAME, 3, (short) 1);
   }
 
-  @Test
-  public void producerDoesNotLeak() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void producerDoesNotLeak(String quorum) throws Exception {
     String clusterId = kafkaCluster.getClusterId();
 
     Response response =

@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -32,8 +33,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ListAllTopicsConfigsActionIntegrationTest extends ClusterTestHarness {
 
@@ -54,8 +56,9 @@ public class ListAllTopicsConfigsActionIntegrationTest extends ClusterTestHarnes
     setTopicConfig(TOPIC_2, "delete.retention.ms", "100000");
   }
 
-  @Test
-  public void listTopicConfigs_existingTopics_returnsConfigs() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listTopicConfigs_existingTopics_returnsConfigs(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -188,8 +191,9 @@ public class ListAllTopicsConfigsActionIntegrationTest extends ClusterTestHarnes
         String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic2Config3));
   }
 
-  @Test
-  public void listTopicConfigs_nonExistingCluster_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listTopicConfigs_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/-/configs").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());

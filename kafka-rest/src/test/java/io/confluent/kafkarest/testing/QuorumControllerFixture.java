@@ -15,10 +15,16 @@
 
 package io.confluent.kafkarest.testing;
 
+import java.util.Collections;
+import java.util.Properties;
+import kafka.server.KafkaConfig;
 import kafka.server.QuorumTestHarness;
+import org.apache.kafka.metadata.authorizer.StandardAuthorizer;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import scala.collection.JavaConverters;
+import scala.collection.Seq;
 
 /**
  * An extension that runs a Zookeeper/Kraft controller server.
@@ -38,6 +44,15 @@ public final class QuorumControllerFixture extends QuorumTestHarness
   @Override
   public void afterEach(ExtensionContext extensionContext) {
     super.tearDown();
+  }
+
+  @Override
+  public Seq<Properties> kraftControllerConfigs() {
+    Properties props = new Properties();
+    props.put(KafkaConfig.AuthorizerClassNameProp(), StandardAuthorizer.class.getName());
+    // this setting allows brokers to register to Kraft controller
+    props.put(StandardAuthorizer.ALLOW_EVERYONE_IF_NO_ACL_IS_FOUND_CONFIG, true);
+    return JavaConverters.asScalaBuffer(Collections.singletonList(props));
   }
 
   public static QuorumControllerFixture create() {

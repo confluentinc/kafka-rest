@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,8 +32,9 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTestHarness {
 
@@ -49,8 +51,9 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
     createTopic(TOPIC_NAME, replicaAssignments);
   }
 
-  @Test
-  public void searchReassignmentsByTopic_returnsReassignments() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void searchReassignmentsByTopic_returnsReassignments(String quorum) throws Exception {
     String clusterId = getClusterId();
 
     Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap =
@@ -81,8 +84,10 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
     }
   }
 
-  @Test
-  public void searchReassignmentsByTopic_nonExistingCluster_returnsNotFound() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void searchReassignmentsByTopic_nonExistingCluster_returnsNotFound(String quorum)
+      throws Exception {
 
     Response response =
         request("/v3/clusters/foobar/topics/topic-1/partitions/-/reassignment")
@@ -92,8 +97,10 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void searchReassignmentsByTopic_nonExistingTopic_returnsEmpty() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void searchReassignmentsByTopic_nonExistingTopic_returnsEmpty(String quorum)
+      throws Exception {
     String clusterId = getClusterId();
 
     Response response =

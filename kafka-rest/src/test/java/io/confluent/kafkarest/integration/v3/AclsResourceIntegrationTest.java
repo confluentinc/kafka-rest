@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,9 +42,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.metadata.authorizer.StandardAuthorizer;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class AclsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -84,8 +87,21 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Override
+  protected Properties overrideKraftControllerConfig() {
+    Properties props = new Properties();
+    props.put("authorizer.class.name", StandardAuthorizer.class.getName());
+    // this setting allows brokers to register to Kraft controller
+    props.put(StandardAuthorizer.ALLOW_EVERYONE_IF_NO_ACL_IS_FOUND_CONFIG, true);
+    return props;
+  }
+
+  @Override
   public Properties overrideBrokerProperties(int i, Properties props) {
-    props.put("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
+    if (isKraftTest()) {
+      props.put("authorizer.class.name", StandardAuthorizer.class.getName());
+    } else {
+      props.put("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
+    }
     props.put(
         "listener.name.sasl_plaintext.plain.sasl.jaas.config",
         "org.apache.kafka.common.security.plain.PlainLoginModule required "
@@ -243,8 +259,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         actualPostCreateSearchResponse.readEntity(SearchAclsResponse.class));
   }
 
-  @Test
-  public void testCreateSearchAndSeparateDelete() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testCreateSearchAndSeparateDelete(String quorum) {
     createAliceAndBobAcls();
 
     DeleteAclsResponse expectedDeleteAliceResponse =
@@ -301,8 +318,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         actualPostDeleteSearchResponse.readEntity(SearchAclsResponse.class));
   }
 
-  @Test
-  public void testCreateSearchAndMultiDelete() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testCreateSearchAndMultiDelete(String quorum) {
     createAliceAndBobAcls();
 
     Client webClient = getClient();
@@ -339,8 +357,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         multiDeleteResourceTypeAll.readEntity(DeleteAclsResponse.class));
   }
 
-  @Test
-  public void testMultiDeleteBadQueryParameter() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testMultiDeleteBadQueryParameter(String quorum) {
     createAliceAndBobAcls();
 
     Client webClient = getClient();
@@ -378,8 +397,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         multiDeleteResourceTypeAll.readEntity(DeleteAclsResponse.class));
   }
 
-  @Test
-  public void testBatchAclCreate() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testBatchAclCreate(String quorum) {
 
     SearchAclsResponse expectedPreCreateSearchResponse =
         SearchAclsResponse.create(
@@ -470,8 +490,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         actualPostCreateSearchResponse.readEntity(SearchAclsResponse.class));
   }
 
-  @Test
-  public void testBatchAclCreateWithNoRequestBody() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testBatchAclCreateWithNoRequestBody(String quorum) {
 
     Response nullRequestBodyResponse =
         request(batchAclUrl).post(Entity.entity(null, MediaType.APPLICATION_JSON));
@@ -501,8 +522,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         actualPostCreateSearchResponse.readEntity(SearchAclsResponse.class));
   }
 
-  @Test
-  public void testBatchAclCreateRequestWithBodyAndNoContent() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testBatchAclCreateRequestWithBodyAndNoContent(String quorum) {
 
     Response emptyRequestBodyResponse =
         request(batchAclUrl).post(Entity.entity("{}}", MediaType.APPLICATION_JSON));
@@ -532,8 +554,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         actualPostCreateSearchResponse.readEntity(SearchAclsResponse.class));
   }
 
-  @Test
-  public void testBatchAclCreateWithBodyAndEmptyData() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testBatchAclCreateWithBodyAndEmptyData(String quorum) {
 
     List<CreateAclRequest> acls = Arrays.asList();
 
@@ -569,8 +592,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         actualPostCreateSearchResponse.readEntity(SearchAclsResponse.class));
   }
 
-  @Test
-  public void testBatchAclCreateInvalidEntry() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testBatchAclCreateInvalidEntry(String quorum) {
 
     CreateAclRequest bob =
         CreateAclRequest.builder()

@@ -15,13 +15,15 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class JsonParsingErrorTest extends ClusterTestHarness {
 
@@ -29,8 +31,9 @@ public class JsonParsingErrorTest extends ClusterTestHarness {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
   }
 
-  @Test
-  public void unparseableRequestReturnsBadRequest() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void unparseableRequestReturnsBadRequest(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -41,8 +44,9 @@ public class JsonParsingErrorTest extends ClusterTestHarness {
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void invalidRequestReturnsBadRequest() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void invalidRequestReturnsBadRequest(String quorum) {
     String clusterId = getClusterId();
 
     Response response =

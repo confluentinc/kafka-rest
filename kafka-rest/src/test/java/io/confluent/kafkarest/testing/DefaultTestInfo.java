@@ -23,17 +23,28 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.util.ToStringBuilder;
 
 /** Provide a concrete class for TestInfo that can be used with Fixtures */
-class DefaultTestInfo implements TestInfo {
+public class DefaultTestInfo implements TestInfo {
   private final String displayName;
   private final Set<String> tags;
   private final Optional<Class<?>> testClass;
   private final Optional<Method> testMethod;
 
-  DefaultTestInfo(ExtensionContext extensionContext) {
+  public DefaultTestInfo(ExtensionContext extensionContext) {
     this.displayName = extensionContext.getDisplayName();
     this.tags = extensionContext.getTags();
     this.testClass = extensionContext.getTestClass();
     this.testMethod = extensionContext.getTestMethod();
+  }
+
+  public DefaultTestInfo(
+      String displayName,
+      Set<String> tags,
+      Optional<Class<?>> testClass,
+      Optional<Method> testMethod) {
+    this.displayName = displayName;
+    this.tags = tags;
+    this.testClass = testClass;
+    this.testMethod = testMethod;
   }
 
   @Override
