@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.integration;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -47,8 +48,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -208,13 +210,16 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
   }
 
   @AfterEach
+  @Override
   public void tearDown() throws Exception {
     stopRest();
+    super.tearDown();
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenCustomLoggingDisabled_ThenRequestLogDoesntHaveCustomInfo")
-  public void test_whenCustomLoggingDisabled_ThenRequestLogDoesntHaveCustomInfo() {
+  public void test_whenCustomLoggingDisabled_ThenRequestLogDoesntHaveCustomInfo(String quorum) {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
@@ -234,9 +239,10 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
    * All the test below are run with custom-logging enabled in kafka-rest.
    */
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenNoRateLimitTriggered_ThenRequestLogHasRelevantInfo")
-  public void test_whenNoRateLimitTriggered_ThenRequestLogHasRelevantInfo() {
+  public void test_whenNoRateLimitTriggered_ThenRequestLogHasRelevantInfo(String quorum) {
     int totalRequests = 100;
     int requestsWithStatusOk = 100;
     String url = "/v3/clusters/" + getClusterId() + "/topics/";
@@ -250,9 +256,10 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         false);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenJettyGlobalRateLimitTriggered_ThenRequestLogHasRelevantInfo")
-  public void test_whenJettyGlobalRateLimitTriggered_ThenRequestLogHasRelevantInfo() {
+  public void test_whenJettyGlobalRateLimitTriggered_ThenRequestLogHasRelevantInfo(String quorum) {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
@@ -266,9 +273,11 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         false);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenJettyNonGlobalRateLimitTriggered_ThenRequestLogHasRelevantInfo")
-  public void test_whenJettyNonGlobalRateLimitTriggered_ThenRequestLogHasRelevantInfo() {
+  public void test_whenJettyNonGlobalRateLimitTriggered_ThenRequestLogHasRelevantInfo(
+      String quorum) {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
@@ -283,9 +292,10 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         false);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenGlobalPermitRateLimitTriggered_ThenRequestLogHasRelevantInfo")
-  public void test_whenGlobalPermitRateLimitTriggered_ThenRequestLogHasRelevantInfo() {
+  public void test_whenGlobalPermitRateLimitTriggered_ThenRequestLogHasRelevantInfo(String quorum) {
     // This is global-request-rate-limiter at the Jersey layer.
     int totalRequests = 100;
     // Since rate-limit is 1.
@@ -300,9 +310,11 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         false);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenPerClusterPermitRateLimitTriggered_ThenRequestLogHasRelevantInfo")
-  public void test_whenPerClusterPermitRateLimitTriggered_ThenRequestLogHasRelevantInfo() {
+  public void test_whenPerClusterPermitRateLimitTriggered_ThenRequestLogHasRelevantInfo(
+      String quorum) {
     // This is the per-tenant request-rate-limiter at the Jersey Layer
     int totalRequests = 100;
     // Since rate-limit is 1.
@@ -317,9 +329,11 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         false);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenGlobalProduceRequestsRateLimitTriggered_ThenRequestLogHasRelevantInfo")
-  public void test_whenGlobalProduceRequestsRateLimitTriggered_ThenRequestLogHasRelevantInfo() {
+  public void test_whenGlobalProduceRequestsRateLimitTriggered_ThenRequestLogHasRelevantInfo(
+      String quorum) {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
@@ -333,9 +347,11 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         false);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenPerTenantProduceRequestsRateLimitTriggered_ThenRequestLogHasRelevantInfo")
-  public void test_whenPerTenantProduceRequestsRateLimitTriggered_ThenRequestLogHasRelevantInfo() {
+  public void test_whenPerTenantProduceRequestsRateLimitTriggered_ThenRequestLogHasRelevantInfo(
+      String quorum) {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
@@ -349,9 +365,11 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         false);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenGlobalProduceBytesRateLimitTriggered_ThenRequestLogHasRelevantInfo")
-  public void test_whenGlobalProduceBytesRateLimitTriggered_ThenRequestLogHasRelevantInfo() {
+  public void test_whenGlobalProduceBytesRateLimitTriggered_ThenRequestLogHasRelevantInfo(
+      String quorum) {
     int totalRequests = 100;
     // Since rate-limit is 1, so event first request will have enough data to get rate-limited
     int requestsWithStatusOk = 0;
@@ -365,9 +383,11 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         false);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenPerTenantProduceBytesRateLimitTriggered_ThenRequestLogHasRelevantInfo")
-  public void test_whenPerTenantProduceBytesRateLimitTriggered_ThenRequestLogHasRelevantInfo() {
+  public void test_whenPerTenantProduceBytesRateLimitTriggered_ThenRequestLogHasRelevantInfo(
+      String quorum) {
     int totalRequests = 100;
     // Since rate-limit is 1, so event first request will have enough data to get rate-limited
     int requestsWithStatusOk = 0;

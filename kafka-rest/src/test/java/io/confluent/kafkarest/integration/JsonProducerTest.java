@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
+
 import io.confluent.kafka.serializers.KafkaJsonDeserializer;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest;
@@ -28,8 +30,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class JsonProducerTest
     extends AbstractProducerTest<JsonTopicProduceRequest, JsonPartitionProduceRequest> {
@@ -114,8 +117,9 @@ public class JsonProducerTest
           new PartitionOffset(0, 4L, null, null),
           new PartitionOffset(0, 5L, null, null));
 
-  @Test
-  public void testProduceToTopicKeyAndValue() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testProduceToTopicKeyAndValue(String quorum) {
     JsonTopicProduceRequest request = JsonTopicProduceRequest.create(topicRecordsWithKeys);
     testProduceToTopic(
         topicName,
@@ -127,8 +131,9 @@ public class JsonProducerTest
         request.toProduceRequest().getRecords());
   }
 
-  @Test
-  public void testProduceToTopicNoKey() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testProduceToTopicNoKey(String quorum) {
     JsonTopicProduceRequest request = JsonTopicProduceRequest.create(topicRecordsWithoutKeys);
     testProduceToTopic(
         topicName,
@@ -140,8 +145,9 @@ public class JsonProducerTest
         request.toProduceRequest().getRecords());
   }
 
-  @Test
-  public void testProduceToPartitionKeyAndValue() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testProduceToPartitionKeyAndValue(String quorum) {
     JsonPartitionProduceRequest request =
         JsonPartitionProduceRequest.create(partitionRecordsWithKeys);
     testProduceToPartition(
@@ -154,8 +160,9 @@ public class JsonProducerTest
         request.toProduceRequest().getRecords());
   }
 
-  @Test
-  public void testProduceToPartitionNoKey() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testProduceToPartitionNoKey(String quorum) {
     JsonPartitionProduceRequest request =
         JsonPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     testProduceToPartition(

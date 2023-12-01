@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -37,8 +38,9 @@ import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @Tag("IntegrationTest")
 public class SchemaRegistrySaslInheritTest {
@@ -99,8 +101,9 @@ public class SchemaRegistrySaslInheritTest {
     kafkaCluster.createTopic(TOPIC_NAME, 3, (short) 1);
   }
 
-  @Test
-  public void produceAvroWithRawSchema() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceAvroWithRawSchema(String quorum) throws Exception {
     String clusterId = kafkaCluster.getClusterId();
     String key = "foo";
     String value = "bar";

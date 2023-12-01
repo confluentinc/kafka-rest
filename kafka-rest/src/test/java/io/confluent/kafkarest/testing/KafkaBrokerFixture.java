@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.confluent.kafkarest.testing.QuorumControllerFixture.DefaultTestInfo;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

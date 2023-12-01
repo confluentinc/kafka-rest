@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.entities.v3.GetReassignmentResponse;
@@ -29,8 +30,9 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
 
@@ -49,8 +51,9 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
     createTopic(TOPIC_NAME, replicaAssignments);
   }
 
-  @Test
-  public void getReassignment_returnsReassignment() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getReassignment_returnsReassignment(String quorum) throws Exception {
     String clusterId = getClusterId();
 
     Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap =
@@ -81,8 +84,9 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
             .targetReplicas());
   }
 
-  @Test
-  public void getReassignments_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getReassignments_nonExistingCluster_returnsNotFound(String quorum) {
 
     Response response =
         request(
@@ -96,8 +100,9 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getReassignments_nonExistingTopic_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getReassignments_nonExistingTopic_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -112,8 +117,9 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getReassignments_nonExistingPartition_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getReassignments_nonExistingPartition_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =

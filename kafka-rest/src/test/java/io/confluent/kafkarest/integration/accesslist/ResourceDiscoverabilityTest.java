@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.accesslist;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -30,7 +31,8 @@ import javax.ws.rs.core.Configurable;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ResourceDiscoverabilityTest extends ClusterTestHarness {
 
@@ -60,8 +62,9 @@ public class ResourceDiscoverabilityTest extends ClusterTestHarness {
         Collections.singletonList(NoAuthExtension.class));
   }
 
-  @Test
-  public void testDiscoverability() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testDiscoverability(String quorum) {
     // Trying to access a non-blocklisted resource should result in an HTTP 401, because of the
     // custom authentication filter we've registered in the test.
     Response getResponse = request("/v3/clusters/").accept(MediaType.APPLICATION_JSON).get();

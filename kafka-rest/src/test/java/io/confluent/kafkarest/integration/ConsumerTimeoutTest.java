@@ -15,14 +15,17 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
+
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
 import java.util.List;
 import javax.ws.rs.core.GenericType;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ConsumerTimeoutTest extends AbstractConsumerTest {
 
@@ -44,14 +47,15 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
   public void setUp(TestInfo testInfo) throws Exception {
     restProperties.setProperty("consumer.request.timeout.ms", REQUEST_TIMEOUT_MS.toString());
     restProperties.setProperty("consumer.instance.timeout.ms", INSTANCE_TIMEOUT_MS.toString());
-    super.setUp(testInfo);
+    super.setUp((testInfo));
     final int numPartitions = 3;
     final int replicationFactor = 1;
     createTopic(topicName, numPartitions, (short) replicationFactor);
   }
 
-  @Test
-  public void testConsumerTimeout() throws InterruptedException {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testConsumerTimeout(String quorum) throws InterruptedException {
     String instanceUri =
         startConsumeMessages(
             groupName, topicName, EmbeddedFormat.BINARY, Versions.KAFKA_V2_JSON_BINARY, "earliest");

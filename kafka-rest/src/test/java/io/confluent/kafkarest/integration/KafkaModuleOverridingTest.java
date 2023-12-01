@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Objects.requireNonNull;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.anyString;
@@ -58,8 +59,9 @@ import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.process.internal.RequestScoped;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @Tag("IntegrationTest")
 public class KafkaModuleOverridingTest {
@@ -76,8 +78,9 @@ public class KafkaModuleOverridingTest {
               "kafka.rest.resource.extension.class", TeapotRestContextExtension.class.getName())
           .build();
 
-  @Test
-  public void adminIsCreatedPerRequestAndDisposedAfterRequest() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void adminIsCreatedPerRequestAndDisposedAfterRequest(String quorum) {
     Response response =
         kafkaRest
             .target()
@@ -89,8 +92,9 @@ public class KafkaModuleOverridingTest {
     assertEquals(I_M_A_TEAPOT_STATUS_CODE, response.getStatus());
   }
 
-  @Test
-  public void producerIsCreatedPerRequestAndDisposedAfterRequest() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void producerIsCreatedPerRequestAndDisposedAfterRequest(String quorum) {
     Response response =
         kafkaRest
             .target()
@@ -104,8 +108,9 @@ public class KafkaModuleOverridingTest {
     assertEquals(I_M_A_TEAPOT_STATUS_CODE, error.getErrorCode());
   }
 
-  @Test
-  public void consumersResourceIsInitializedCorrectly() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void consumersResourceIsInitializedCorrectly(String quorum) {
     // ConsumersResource is the only resource requiring a KafkaRestContext. If the context is not
     // injected via a Provider, it will be resolved too early (before filters augmenting the
     // context have kicked in), resulting in NullPointerExceptions leading to HTTP 500 errors
