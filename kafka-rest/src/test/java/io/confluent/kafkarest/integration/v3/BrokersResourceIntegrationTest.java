@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.entities.v3.BrokerData;
@@ -31,7 +32,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.common.Node;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class BrokersResourceIntegrationTest extends ClusterTestHarness {
 
@@ -39,8 +41,9 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
     super(/* numBrokers= */ 3, /* withSchemaRegistry= */ false);
   }
 
-  @Test
-  public void listBrokers_existingCluster_returnsBrokers() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listBrokers_existingCluster_returnsBrokers(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     ArrayList<Node> nodes = getBrokers();
@@ -178,15 +181,17 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expected, actual);
   }
 
-  @Test
-  public void listBrokers_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listBrokers_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/brokers").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getBroker_existingClusterExistingBroker_returnsBroker() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getBroker_existingClusterExistingBroker_returnsBroker(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     ArrayList<Node> nodes = getBrokers();
@@ -234,15 +239,17 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expected, actual);
   }
 
-  @Test
-  public void getBroker_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getBroker_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/brokers/1").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getBroker_nonExistingBroker_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getBroker_nonExistingBroker_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
