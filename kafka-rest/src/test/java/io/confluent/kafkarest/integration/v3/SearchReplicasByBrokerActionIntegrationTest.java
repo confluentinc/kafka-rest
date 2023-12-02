@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.entities.v3.ReplicaData;
@@ -30,7 +31,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarness {
 
@@ -43,8 +46,8 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
 
     HashMap<Integer, List<Integer>> replicas = new HashMap<>();
     replicas.put(/* partition= */ 0, Arrays.asList(/* leader= */ 0, 1));
@@ -53,8 +56,9 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
     createTopic(TOPIC_NAME, replicas);
   }
 
-  @Test
-  public void searchReplicasByBroker_existingBroker_returnsReplicas() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void searchReplicasByBroker_existingBroker_returnsReplicas(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -152,8 +156,9 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
     assertEquals(expected, actual);
   }
 
-  @Test
-  public void searchReplicasByBroker_nonExistingBroker_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void searchReplicasByBroker_nonExistingBroker_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =

@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -22,7 +23,7 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.testing.KafkaClusterFixture;
 import io.confluent.kafkarest.testing.KafkaRestFixture;
-import io.confluent.kafkarest.testing.ZookeeperFixture;
+import io.confluent.kafkarest.testing.QuorumControllerFixture;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,8 +45,9 @@ import org.glassfish.jersey.process.internal.RequestScoped;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @Tag("IntegrationTest")
 public class ProducerLeakTest {
@@ -53,12 +55,12 @@ public class ProducerLeakTest {
 
   @Order(1)
   @RegisterExtension
-  private final ZookeeperFixture zookeeper = ZookeeperFixture.create();
+  private final QuorumControllerFixture quorumController = QuorumControllerFixture.create();
 
   @Order(2)
   @RegisterExtension
   private final KafkaClusterFixture kafkaCluster =
-      KafkaClusterFixture.builder().setNumBrokers(3).setZookeeper(zookeeper).build();
+      KafkaClusterFixture.builder().setNumBrokers(3).setQuorumController(quorumController).build();
 
   @Order(3)
   @RegisterExtension
@@ -74,8 +76,9 @@ public class ProducerLeakTest {
     kafkaCluster.createTopic(TOPIC_NAME, 3, (short) 1);
   }
 
-  @Test
-  public void producerDoesNotLeak() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void producerDoesNotLeak(String quorum) throws Exception {
     String clusterId = kafkaCluster.getClusterId();
 
     Response response =

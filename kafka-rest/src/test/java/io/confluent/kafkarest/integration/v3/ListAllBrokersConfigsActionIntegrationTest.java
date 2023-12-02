@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -32,7 +33,8 @@ import java.util.stream.Collectors;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ListAllBrokersConfigsActionIntegrationTest extends ClusterTestHarness {
 
@@ -40,8 +42,9 @@ public class ListAllBrokersConfigsActionIntegrationTest extends ClusterTestHarne
     super(/* numBrokers= */ 2, /* withSchemaRegistry= */ false);
   }
 
-  @Test
-  public void listBrokersConfigs_existingBrokers_returnsConfigs() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listBrokersConfigs_existingBrokers_returnsConfigs(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -153,8 +156,9 @@ public class ListAllBrokersConfigsActionIntegrationTest extends ClusterTestHarne
         String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker2Config2));
   }
 
-  @Test
-  public void listBrokerConfigs_nonExistingCluster_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listBrokerConfigs_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/brokers/-/configs").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
