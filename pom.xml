@@ -49,6 +49,7 @@
         <checkstyle.config.location>checkstyle/checkstyle.xml</checkstyle.config.location>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
         <io.confluent.kafka-rest.version>7.7.0-0</io.confluent.kafka-rest.version>
+        <argLine>-Xmx4g -Xms2g</argLine>
     </properties>
 
     <repositories>
@@ -228,25 +229,25 @@
                     </configuration>
                 </plugin>
 
-		<plugin>
-		    <groupId>com.diffplug.spotless</groupId>
-		    <artifactId>spotless-maven-plugin</artifactId>
-		    <version>2.12.3</version>
-		    <configuration>
-	  	        <java>
-			    <googleJavaFormat>
-			        <version>1.7</version>
-			    </googleJavaFormat>
-		        </java>
-		    </configuration>
+                <plugin>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>2.12.3</version>
+                    <configuration>
+                        <java>
+                            <googleJavaFormat>
+                                <version>1.7</version>
+                            </googleJavaFormat>
+                        </java>
+                    </configuration>
                     <executions>
-	                <execution>
-			    <phase>compile</phase>
-			    <goals>
-			        <goal>check</goal>
-			    </goals>
-			</execution>
-	            </executions>
+                        <execution>
+                            <phase>compile</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
