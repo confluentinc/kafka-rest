@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,9 +50,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,9 +98,10 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
     testEnv.kafkaRest().closeApp();
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("testStreaming_ProduceRequestSizeNoLimit")
-  public void testStreaming_ProduceRequestSizeNoLimit() throws Exception {
+  public void testStreaming_ProduceRequestSizeNoLimit(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     URI uri =
         testEnv
@@ -156,9 +159,11 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
     }
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("testStreaming_ProduceRequestSizeWithLimit_withinLimit")
-  public void testStreaming_ProduceRequestSizeWithLimit_withinLimit() throws Exception {
+  public void testStreaming_ProduceRequestSizeWithLimit_withinLimit(String quorum)
+      throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     URI uri =
         testEnv
@@ -217,9 +222,10 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
     }
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("testStreaming_ProduceRequestSizeWithLimit_violateLimitFirstMessage")
-  public void testStreaming_ProduceRequestSizeWithLimit_violateLimitFirstMessage()
+  public void testStreaming_ProduceRequestSizeWithLimit_violateLimitFirstMessage(String quorum)
       throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     URI uri =
@@ -282,9 +288,10 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
         containsString("Produce request size is larger than allowed threshold"));
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("testStreaming_ProduceRequestSizeWithLimit_violateLimitSecondMessage")
-  public void testStreaming_ProduceRequestSizeWithLimit_violateLimitSecondMessage()
+  public void testStreaming_ProduceRequestSizeWithLimit_violateLimitSecondMessage(String quorum)
       throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     URI uri =
