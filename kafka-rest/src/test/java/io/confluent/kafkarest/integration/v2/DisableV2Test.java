@@ -39,7 +39,7 @@ public class DisableV2Test extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void v2ApiIsDisabled(String quorum) {
     Response response = request("/").accept(Versions.KAFKA_V2_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());

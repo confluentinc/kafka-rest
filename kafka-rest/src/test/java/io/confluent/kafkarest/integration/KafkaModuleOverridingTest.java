@@ -79,7 +79,7 @@ public class KafkaModuleOverridingTest {
           .build();
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void adminIsCreatedPerRequestAndDisposedAfterRequest(String quorum) {
     Response response =
         kafkaRest
@@ -93,7 +93,7 @@ public class KafkaModuleOverridingTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void producerIsCreatedPerRequestAndDisposedAfterRequest(String quorum) {
     Response response =
         kafkaRest
@@ -109,7 +109,7 @@ public class KafkaModuleOverridingTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void consumersResourceIsInitializedCorrectly(String quorum) {
     // ConsumersResource is the only resource requiring a KafkaRestContext. If the context is not
     // injected via a Provider, it will be resolved too early (before filters augmenting the

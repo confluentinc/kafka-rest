@@ -99,7 +99,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("testStreaming_ProduceRequestSizeNoLimit")
   public void testStreaming_ProduceRequestSizeNoLimit(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
@@ -160,7 +160,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("testStreaming_ProduceRequestSizeWithLimit_withinLimit")
   public void testStreaming_ProduceRequestSizeWithLimit_withinLimit(String quorum)
       throws Exception {
@@ -223,7 +223,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("testStreaming_ProduceRequestSizeWithLimit_violateLimitFirstMessage")
   public void testStreaming_ProduceRequestSizeWithLimit_violateLimitFirstMessage(String quorum)
       throws Exception {
@@ -289,7 +289,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("testStreaming_ProduceRequestSizeWithLimit_violateLimitSecondMessage")
   public void testStreaming_ProduceRequestSizeWithLimit_violateLimitSecondMessage(String quorum)
       throws Exception {

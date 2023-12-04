@@ -51,7 +51,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listPartitions_existingTopic_returnPartitions(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -130,7 +130,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listPartitions_nonExistingTopic_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
@@ -142,7 +142,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listPartitions_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions")
@@ -152,7 +152,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getPartition_existingPartition_returnPartition(String quorum) throws Exception {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -212,7 +212,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getPartition_nonExistingPartition_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
@@ -224,7 +224,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getPartition_nonExistingTopic_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
@@ -236,7 +236,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getPartition_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/0")

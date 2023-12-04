@@ -100,7 +100,7 @@ public class MetadataApiTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testBrokers(String quorum) throws InterruptedException {
     // Listing
     Response response = request("/brokers").get();
@@ -128,7 +128,7 @@ public class MetadataApiTest extends ClusterTestHarness {
   */
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testTopicsList(String quorum) throws InterruptedException {
     // Listing
     testWithRetry(
@@ -163,7 +163,7 @@ public class MetadataApiTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testPartitionsList(String quorum) throws InterruptedException {
     // Listing
 

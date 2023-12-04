@@ -42,7 +42,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listBrokers_existingCluster_returnsBrokers(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -182,7 +182,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listBrokers_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/brokers").accept(MediaType.APPLICATION_JSON).get();
@@ -190,7 +190,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getBroker_existingClusterExistingBroker_returnsBroker(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -240,7 +240,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getBroker_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/brokers/1").accept(MediaType.APPLICATION_JSON).get();
@@ -248,7 +248,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getBroker_nonExistingBroker_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 

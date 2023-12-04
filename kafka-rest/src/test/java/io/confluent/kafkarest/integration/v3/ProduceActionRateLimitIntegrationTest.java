@@ -138,7 +138,7 @@ public class ProduceActionRateLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenGlobalByteLimitReached_thenCallerIsRateLimited")
   public void test_whenGlobalByteLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {
@@ -146,7 +146,7 @@ public class ProduceActionRateLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenClusterByteLimitReached_thenCallerIsRateLimited")
   public void test_whenClusterByteLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {
@@ -200,7 +200,7 @@ public class ProduceActionRateLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited")
   public void test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {
@@ -208,7 +208,7 @@ public class ProduceActionRateLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited")
   public void test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {

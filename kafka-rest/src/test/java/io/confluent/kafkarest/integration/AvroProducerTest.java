@@ -158,7 +158,7 @@ public class AvroProducerTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testProduceToTopicWithPartitionsAndKeys(String quorum) {
     testProduceToTopic(topicRecordsWithPartitionsAndKeys, partitionOffsetsWithPartitionsAndKeys);
   }
@@ -199,7 +199,7 @@ public class AvroProducerTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testProduceToPartitionOnlyValues(String quorum) {
     testProduceToPartition(partitionRecordsOnlyValues, producePartitionOffsetOnlyValues);
   }

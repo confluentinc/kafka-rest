@@ -102,7 +102,7 @@ public class SchemaRegistrySaslInheritTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithRawSchema(String quorum) throws Exception {
     String clusterId = kafkaCluster.getClusterId();
     String key = "foo";

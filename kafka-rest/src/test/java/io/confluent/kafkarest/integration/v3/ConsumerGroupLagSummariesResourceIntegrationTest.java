@@ -71,7 +71,7 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getConsumerGroupLagSummary_returnsConsumerGroupLagSummary(String quorum) {
     KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
     KafkaConsumer<?, ?> consumer2 = createConsumer(group1, "client-2");
@@ -178,7 +178,7 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getConsumerGroupLagSummary_nonExistingOffsets_returnsNotFound(String quorum) {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1, topic2));
@@ -196,7 +196,7 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getConsumerGroupLagSummary_nonExistingConsumerGroup_returnsNotFound(String quorum) {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1));
@@ -213,7 +213,7 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getConsumerGroupLagSummary_nonExistingCluster_returnsNotFound(String quorum) {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1));

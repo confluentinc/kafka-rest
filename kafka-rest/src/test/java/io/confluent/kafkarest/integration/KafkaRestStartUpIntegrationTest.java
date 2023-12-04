@@ -40,7 +40,7 @@ public class KafkaRestStartUpIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void kafkaRest_withInvalidAdminConfigs_startsUp(String quorum) {
     // Make sure that Admin is not created on startup. If it were, the server would fail to startup,
     // since the above security configs are incomplete. See
@@ -52,7 +52,7 @@ public class KafkaRestStartUpIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testHttpResponseHeader(String quorum) {
     Response response = request("/v3/clusters").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(response.getHeaderString("X-XSS-Protection"), "1; mode=block");

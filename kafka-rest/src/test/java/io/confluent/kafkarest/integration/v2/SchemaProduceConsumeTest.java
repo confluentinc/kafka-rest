@@ -73,7 +73,7 @@ public abstract class SchemaProduceConsumeTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceThenConsume_returnsExactlyProduced(String quorum) throws Exception {
     createTopic(TOPIC, /* numPartitions= */ 1, /* replicationFactor= */ (short) 1);
 

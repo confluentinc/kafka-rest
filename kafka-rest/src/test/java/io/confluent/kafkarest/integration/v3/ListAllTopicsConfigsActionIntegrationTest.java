@@ -57,7 +57,7 @@ public class ListAllTopicsConfigsActionIntegrationTest extends ClusterTestHarnes
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listTopicConfigs_existingTopics_returnsConfigs(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -192,7 +192,7 @@ public class ListAllTopicsConfigsActionIntegrationTest extends ClusterTestHarnes
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listTopicConfigs_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/-/configs").accept(MediaType.APPLICATION_JSON).get();

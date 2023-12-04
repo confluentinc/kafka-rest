@@ -53,7 +53,7 @@ public class ProducerTopicAutoCreationTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testProduceToMissingTopic(String quorum) {
     BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecords);
     // Should create topic

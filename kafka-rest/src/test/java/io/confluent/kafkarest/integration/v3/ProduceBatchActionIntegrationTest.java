@@ -131,7 +131,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceBinary(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
@@ -181,7 +181,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceBinaryWithNullData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceBatchRequest request =
@@ -229,7 +229,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceBinaryWithInvalidData_throwsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceBatchRequest request =
@@ -267,7 +267,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceString(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
@@ -317,7 +317,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceStringWithEmptyData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceBatchRequest request =
@@ -365,7 +365,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceStringWithNullData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceBatchRequest request =
@@ -413,7 +413,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceWithInvalidData_throwsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"records\": {\"subject\": \"foobar\" } }";
@@ -434,7 +434,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceJson(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
@@ -486,7 +486,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceJsonWithNullData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceBatchRequest request =
@@ -536,7 +536,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithRawSchema(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
@@ -588,7 +588,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithRawSchemaAndNullData_throwsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceBatchRequest request =
@@ -638,7 +638,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithRawSchemaAndInvalidData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceBatchRequest request =
@@ -678,7 +678,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithSchemaId(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
@@ -736,7 +736,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithSchemaVersion(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
@@ -794,7 +794,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithLatestSchema(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     testEnv
@@ -843,7 +843,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithRawSchemaAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
@@ -897,7 +897,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithSchemaIdAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
@@ -957,7 +957,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithSchemaVersionAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
@@ -1017,7 +1017,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithLatestSchemaAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     testEnv
@@ -1073,7 +1073,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithRawSchemaAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String keyRawSchema =
@@ -1140,7 +1140,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithSchemaIdAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     AvroSchema keySchema =
@@ -1212,7 +1212,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithSchemaVersionAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     AvroSchema keySchema =
@@ -1284,7 +1284,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceAvroWithLatestSchemaAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     AvroSchema keySchema =
@@ -1354,7 +1354,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceStringWithPartitionId(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     int partitionId = 1;
@@ -1406,7 +1406,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceStringWithTimestamp(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     Instant timestamp = Instant.ofEpochMilli(1000);
@@ -1459,7 +1459,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceStringWithHeaders(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
@@ -1526,7 +1526,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceStringAndAvro(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
@@ -1577,7 +1577,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceStringKeyOnly(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
@@ -1621,7 +1621,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceStringValueOnly(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String value = "bar";
@@ -1665,7 +1665,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceNothing(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceBatchRequest request =
@@ -1703,7 +1703,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceJsonBatch(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceBatchRequestEntry[] entries = new ProduceBatchRequestEntry[10];
@@ -1777,7 +1777,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceStringBatch(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceBatchRequestEntry[] entries = new ProduceBatchRequestEntry[10];
@@ -1851,7 +1851,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceBinaryBatchWithInvalidData_throwsMultipleBadRequests(String quorum)
       throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
@@ -1896,7 +1896,7 @@ public class ProduceBatchActionIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void produceBinaryWithLargerSizeMessage(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
@@ -2000,7 +2000,7 @@ public class ProduceBatchActionIntegrationTest {
 
   @DisplayName("test_whenGlobalByteLimitReached_thenCallerIsRateLimited")
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void test_whenGlobalByteLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {
     doByteLimitReachedTest();
@@ -2008,7 +2008,7 @@ public class ProduceBatchActionIntegrationTest {
 
   @DisplayName("test_whenClusterByteLimitReached_thenCallerIsRateLimited")
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void test_whenClusterByteLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {
     doByteLimitReachedTest();
@@ -2071,7 +2071,7 @@ public class ProduceBatchActionIntegrationTest {
 
   @DisplayName("test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited")
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {
     doCountLimitTest();
@@ -2079,7 +2079,7 @@ public class ProduceBatchActionIntegrationTest {
 
   @DisplayName("test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited")
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {
     doCountLimitTest();

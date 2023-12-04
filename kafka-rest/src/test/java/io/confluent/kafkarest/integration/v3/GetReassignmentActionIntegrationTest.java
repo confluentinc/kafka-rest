@@ -52,7 +52,7 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getReassignment_returnsReassignment(String quorum) throws Exception {
     String clusterId = getClusterId();
 
@@ -85,7 +85,7 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getReassignments_nonExistingCluster_returnsNotFound(String quorum) {
 
     Response response =
@@ -101,7 +101,7 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getReassignments_nonExistingTopic_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
@@ -118,7 +118,7 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getReassignments_nonExistingPartition_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 

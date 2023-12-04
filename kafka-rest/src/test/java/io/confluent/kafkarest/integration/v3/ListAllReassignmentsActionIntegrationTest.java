@@ -51,7 +51,7 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listAllReassignments_returnsReassignments(String quorum) {
     String clusterId = getClusterId();
 
@@ -79,7 +79,7 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listAllReassignments_nonExistingCluster_returnsNotFound(String quorum)
       throws Exception {
 

@@ -67,7 +67,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testConsumeOnlyValues(String quorum) {
     // Between these tests we either leave the config null or request the binary embedded format
     // so we can test that both will result in binary consumers. We also us varying accept
@@ -87,7 +87,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testConsumeWithKeys(String quorum) {
     String instanceUri =
         startConsumeMessages(
@@ -105,7 +105,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testConsumeWithAcceptAllHeader(String quorum) {
     // This test ensures that Accept: */* defaults to binary
     String instanceUri =
@@ -124,7 +124,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testConsumeTimeout(String quorum) {
     String instanceUri =
         startConsumeMessages(
@@ -146,7 +146,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testDeleteConsumer(String quorum) {
     String instanceUri =
         startConsumeMessages(groupName, topicName, null, Versions.KAFKA_V2_JSON_BINARY, "earliest");
@@ -165,7 +165,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   // The following tests are only included in the binary consumer because they test functionality
   // that isn't specific to the type of embedded data, but since they need
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testInvalidKafkaConsumerConfig(String quorum) {
     CreateConsumerInstanceRequest config =
         new CreateConsumerInstanceRequest(
@@ -187,7 +187,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testDuplicateConsumerID(String quorum) {
     String instanceUrl =
         startConsumeMessages(groupName, topicName, null, Versions.KAFKA_V2_JSON_BINARY, "earliest");

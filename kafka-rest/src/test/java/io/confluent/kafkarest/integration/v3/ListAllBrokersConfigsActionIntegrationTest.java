@@ -43,7 +43,7 @@ public class ListAllBrokersConfigsActionIntegrationTest extends ClusterTestHarne
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listBrokersConfigs_existingBrokers_returnsConfigs(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -157,7 +157,7 @@ public class ListAllBrokersConfigsActionIntegrationTest extends ClusterTestHarne
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listBrokerConfigs_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/brokers/-/configs").accept(MediaType.APPLICATION_JSON).get();

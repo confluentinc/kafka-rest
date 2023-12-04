@@ -58,7 +58,7 @@ public class SeekToTimestampTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testConsumeOnlyValues(String quorum) throws Exception {
     String consumerUri =
         startConsumeMessages(

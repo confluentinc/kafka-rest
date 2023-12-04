@@ -75,7 +75,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listConsumerLags_returnsConsumerLags(String quorum) {
     // produce to topic1 partition0 and topic2 partition1
     BinaryPartitionProduceRequest request1 =
@@ -194,7 +194,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listConsumerLags_nonExistingConsumerGroup_returnsNotFound(String quorum) {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Collections.singletonList(topic1));
@@ -212,7 +212,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getConsumerLag_returnsConsumerLag(String quorum) {
     // produce to topic1 partition0 and topic2 partition1
     BinaryPartitionProduceRequest request1 =
@@ -323,7 +323,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getConsumerLag_nonExistingOffsets_returnsNotFound(String quorum) {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Collections.singletonList(topic1));
@@ -349,7 +349,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getConsumerLag_nonExistingConsumerGroup_returnsNotFound(String quorum) {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Collections.singletonList(topic1));
@@ -375,7 +375,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getConsumerLag_nonExistingCluster_returnsNotFound(String quorum) {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Collections.singletonList(topic1));

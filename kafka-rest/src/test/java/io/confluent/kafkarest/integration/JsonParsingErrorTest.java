@@ -32,7 +32,7 @@ public class JsonParsingErrorTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void unparseableRequestReturnsBadRequest(String quorum) {
     String clusterId = getClusterId();
 
@@ -45,7 +45,7 @@ public class JsonParsingErrorTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void invalidRequestReturnsBadRequest(String quorum) {
     String clusterId = getClusterId();
 

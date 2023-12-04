@@ -52,7 +52,7 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void searchReassignmentsByTopic_returnsReassignments(String quorum) throws Exception {
     String clusterId = getClusterId();
 
@@ -85,7 +85,7 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void searchReassignmentsByTopic_nonExistingCluster_returnsNotFound(String quorum)
       throws Exception {
 
@@ -98,7 +98,7 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void searchReassignmentsByTopic_nonExistingTopic_returnsEmpty(String quorum)
       throws Exception {
     String clusterId = getClusterId();

@@ -50,7 +50,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listConsumerGroups_returnsConsumerGroups(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -85,7 +85,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listConsumerGroups_nonExistingCluster_returnsNotFound(String quorum) {
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     createTopic("topic-2", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
@@ -106,7 +106,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getConsumerGroup_returnsConsumerGroup(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -141,7 +141,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getConsumerGroup_nonExistingCluster_returnsNotFound(String quorum) {
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     createTopic("topic-2", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
@@ -164,7 +164,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getConsumerGroup_nonExistingConsumerGroup_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);

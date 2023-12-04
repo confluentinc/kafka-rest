@@ -32,7 +32,7 @@ public class ResourceAllowlistTest extends ResourceAccesslistTestBase {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testAllowlist(String quorum) {
     // Even though the checks are not exactly independent (i.e. topic deletion should be tried
     // after topic creation), all of them are executed in a single test, as: (1) they are touching

@@ -85,7 +85,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listTopics_existingCluster_returnsTopics(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -245,7 +245,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void listTopics_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics").accept(MediaType.APPLICATION_JSON).get();
@@ -253,7 +253,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getTopic_existingClusterExistingTopic_returnsTopic(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -306,7 +306,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getTopic_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1).accept(MediaType.APPLICATION_JSON).get();
@@ -314,7 +314,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getTopic_nonExistingTopic_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
@@ -326,7 +326,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void createTopic_nonExistingTopic_returnsCreatedTopic(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -395,7 +395,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void validateOnlyCreateTopic_nonExistingTopic_returnsNonCreatedTopic(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -466,7 +466,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void createTopic_nonExistingTopic_customReplicasAssignments_returnsCreatedTopic(
       String quorum) {
     String baseUrl = restConnect;
@@ -535,7 +535,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void createTopic_existingTopic_returnsBadRequest(String quorum) {
     String clusterId = getClusterId();
 
@@ -553,7 +553,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void validateOnlyCreateTopic_existingTopic_returnsBadRequest(String quorum) {
     String clusterId = getClusterId();
 
@@ -572,7 +572,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void createTopic_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics")
@@ -585,7 +585,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void createTopic_withoutRequestBody_returnsInvalidPayload(String quorum) {
     String clusterId = getClusterId();
     Response response =
@@ -596,7 +596,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void deleteTopic_existingTopic_deletesTopic(String quorum) {
     String clusterId = getClusterId();
 
@@ -614,7 +614,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void deleteTopic_nonExistingTopic_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
@@ -626,7 +626,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void deleteTopic_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1)
@@ -636,14 +636,14 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void deleteTopic_nonExistingCluster_noContentType_returnsNotFound(String quorum) {
     Response response = request("/v3/clusters/foobar/topics/" + TOPIC_1).delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void createAndDelete_nonExisting_returnsNotFoundCreatedAndNotFound(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -849,7 +849,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void updateTopicPartitions_IncreasePartitionsCount_returnsTopicWithIncreasedPartitions(
       String quorum) {
     String baseUrl = restConnect;
@@ -905,7 +905,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void updateTopicPartitions_decreasePartitionsCount_returns40002(String quorum) {
     String clusterId = getClusterId();
 
@@ -919,7 +919,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void updateTopicPartitions_samePartitionsCount_returns40002(String quorum) {
     String clusterId = getClusterId();
 
@@ -933,7 +933,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void updateTopicPartitions_topicDoesntExist_returns404(String quorum) {
     String clusterId = getClusterId();
 

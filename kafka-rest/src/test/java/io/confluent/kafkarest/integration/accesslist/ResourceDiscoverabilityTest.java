@@ -63,7 +63,7 @@ public class ResourceDiscoverabilityTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testDiscoverability(String quorum) {
     // Trying to access a non-blocklisted resource should result in an HTTP 401, because of the
     // custom authentication filter we've registered in the test.

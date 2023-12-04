@@ -260,7 +260,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testCreateSearchAndSeparateDelete(String quorum) {
     createAliceAndBobAcls();
 
@@ -319,7 +319,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testCreateSearchAndMultiDelete(String quorum) {
     createAliceAndBobAcls();
 
@@ -358,7 +358,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testMultiDeleteBadQueryParameter(String quorum) {
     createAliceAndBobAcls();
 
@@ -398,7 +398,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testBatchAclCreate(String quorum) {
 
     SearchAclsResponse expectedPreCreateSearchResponse =
@@ -491,7 +491,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testBatchAclCreateWithNoRequestBody(String quorum) {
 
     Response nullRequestBodyResponse =
@@ -523,7 +523,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testBatchAclCreateRequestWithBodyAndNoContent(String quorum) {
 
     Response emptyRequestBodyResponse =
@@ -555,7 +555,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testBatchAclCreateWithBodyAndEmptyData(String quorum) {
 
     List<CreateAclRequest> acls = Arrays.asList();
@@ -593,7 +593,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testBatchAclCreateInvalidEntry(String quorum) {
 
     CreateAclRequest bob =

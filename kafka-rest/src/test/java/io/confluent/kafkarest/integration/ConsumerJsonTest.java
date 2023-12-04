@@ -97,7 +97,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testConsumeWithKeys(String quorum) {
     String instanceUri =
         startConsumeMessages(
@@ -115,7 +115,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void testConsumeOnlyValues(String quorum) {
     String instanceUri =
         startConsumeMessages(
@@ -133,7 +133,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   @Disabled("This test doesn't verify produce records and is flaky, to be fixed in KREST-10370")
   public void testConsumeWithMultipleParallelConsumers(String quorum) throws InterruptedException {
     class ConsumerTask implements Callable<Void> {

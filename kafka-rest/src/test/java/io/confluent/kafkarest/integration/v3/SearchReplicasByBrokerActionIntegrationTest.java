@@ -57,7 +57,7 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void searchReplicasByBroker_existingBroker_returnsReplicas(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -157,7 +157,7 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void searchReplicasByBroker_nonExistingBroker_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
