@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.Versions;
@@ -29,7 +30,9 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ProducerTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
@@ -104,15 +107,16 @@ public class ProducerTest
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     final int numPartitions = 3;
     final short replicationFactor = 1;
     createTopic(topicName, numPartitions, replicationFactor);
   }
 
-  @Test
-  public void testProduceToTopicWithKeys() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testProduceToTopicWithKeys(String quorum) {
     BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecordsWithKeys);
     testProduceToTopic(
         topicName,
@@ -124,8 +128,9 @@ public class ProducerTest
         request.toProduceRequest().getRecords());
   }
 
-  @Test
-  public void testProduceToTopicWithPartitions() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testProduceToTopicWithPartitions(String quorum) {
     BinaryTopicProduceRequest request =
         BinaryTopicProduceRequest.create(topicRecordsWithPartitions);
     testProduceToTopic(
@@ -138,8 +143,9 @@ public class ProducerTest
         request.toProduceRequest().getRecords());
   }
 
-  @Test
-  public void testProduceToTopicWithPartitionsAndKeys() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testProduceToTopicWithPartitionsAndKeys(String quorum) {
     BinaryTopicProduceRequest request =
         BinaryTopicProduceRequest.create(topicRecordsWithPartitionsAndKeys);
     testProduceToTopic(
@@ -152,8 +158,9 @@ public class ProducerTest
         request.toProduceRequest().getRecords());
   }
 
-  @Test
-  public void testProduceToTopicWithNullValues() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testProduceToTopicWithNullValues(String quorum) {
     BinaryTopicProduceRequest request =
         BinaryTopicProduceRequest.create(topicRecordsWithNullValues);
     testProduceToTopic(
@@ -166,8 +173,9 @@ public class ProducerTest
         request.toProduceRequest().getRecords());
   }
 
-  @Test
-  public void testProduceToInvalidTopic() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testProduceToInvalidTopic(String quorum) {
     BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecordsWithKeys);
     // This test turns auto-create off, so this should generate an error. Ideally it would
     // generate a 404, but Kafka as of 0.8.2.0 doesn't generate the correct exception, see
@@ -188,23 +196,27 @@ public class ProducerTest
         request.toProduceRequest().getRecords());
   }
 
-  @Test
-  public void testProduceToPartitionOnlyValues() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testProduceToPartitionOnlyValues(String quorum) {
     testProduceToPartition(partitionRecordsOnlyValues, produceOffsets);
   }
 
-  @Test
-  public void testProduceToPartitionWithKeys() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testProduceToPartitionWithKeys(String quorum) {
     testProduceToPartition(partitionRecordsWithKeys, produceOffsets);
   }
 
-  @Test
-  public void testProduceToPartitionWithNullValues() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testProduceToPartitionWithNullValues(String quorum) {
     testProduceToPartition(partitionRecordsWithNullValues, produceOffsets);
   }
 
-  @Test
-  public void testNullPayload() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testNullPayload(String quorum) {
 
     List<String> versions =
         Arrays.asList(

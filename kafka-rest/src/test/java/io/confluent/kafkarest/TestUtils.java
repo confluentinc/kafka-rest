@@ -59,6 +59,9 @@ public class TestUtils {
   public static final Duration DEFAULT_WAIT_TIMEOUT = Duration.ofSeconds(30L);
   public static final Duration DEFAULT_RETRY_INTERVAL = Duration.ofMillis(200L);
 
+  // from kafka.utils.TestInfoUtils.TestWithParameterizedQuorumName
+  public static final String TEST_WITH_PARAMETERIZED_QUORUM_NAME = "{displayName}.quorum={0}";
+
   /**
    * Try to read the entity. If parsing fails, errors are rethrown, but the raw entity is also
    * logged for debugging.

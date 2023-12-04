@@ -7,7 +7,8 @@ version: v1.0
 name: build-test-release
 agent:
   machine:
-    type: s1-prod-ubuntu20-04-amd64-1
+    # big enough instance that can run integration tests for both zookeeper and kraft
+    type: s1-prod-ubuntu20-04-amd64-2
 
 fail_fast:
   cancel:
