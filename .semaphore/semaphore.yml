@@ -38,6 +38,8 @@ blocks:
         - name: Test
           commands:
             - . ci-tools ci-update-version
+            - export JAVA_ARGS="-Djava.awt.headless=true -XX:MaxPermSize=512m -Xmx2048m -XX:+CMSClassUnloadingEnabled"
+            - export MAVEN_OPTS="-Djava.awt.headless=true -XX:MaxPermSize=512m -Xmx2048m -XX:+CMSClassUnloadingEnabled"
             - mvn -U -Dmaven.wagon.http.retryHandler.count=10 --batch-mode --no-transfer-progress clean verify install dependency:analyze validate
             - . cache-maven store
       epilogue:
