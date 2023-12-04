@@ -586,18 +586,28 @@ public abstract class ClusterTestHarness {
       Optional<Map<Integer, List<Integer>>> replicasAssignments,
       Properties adminProperties,
       Properties topicConfig) {
-    adminProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
-    try (AdminClient admin = AdminClient.create(adminProperties)) {
-      TestUtils.createTopicWithAdmin(
-          admin,
+    if (quorumTestHarness.isKRaftTest()) {
+      adminProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+      try (AdminClient admin = AdminClient.create(adminProperties)) {
+        TestUtils.createTopicWithAdmin(
+            admin,
+            topicName,
+            JavaConverters.asScalaBuffer(servers).toSeq(),
+            quorumTestHarness.controllerServers(),
+            numPartitions.orElse(1),
+            replicationFactor.orElse((short) 1),
+            JavaConverters.mapAsScalaMapConverter(
+                    convertReplicasAssignmentToScalaCompatibleType(replicasAssignments))
+                .asScala(),
+            topicConfig);
+      }
+    } else {
+      TestUtils.createTopic(
+          quorumTestHarness.zkClient(),
           topicName,
-          JavaConverters.asScalaBuffer(servers).toSeq(),
-          quorumTestHarness.controllerServers(),
           numPartitions.orElse(1),
           replicationFactor.orElse((short) 1),
-          JavaConverters.mapAsScalaMapConverter(
-                  convertReplicasAssignmentToScalaCompatibleType(replicasAssignments))
-              .asScala(),
+          JavaConverters.asScalaBuffer(servers).toSeq(),
           topicConfig);
     }
   }
