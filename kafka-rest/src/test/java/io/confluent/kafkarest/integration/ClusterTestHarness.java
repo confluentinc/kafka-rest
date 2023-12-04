@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.integration;
 
 import static com.google.common.base.Preconditions.checkState;
-import static io.confluent.kafkarest.TestUtils.choosePort;
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.EMPTY_MAP;
 import static java.util.Collections.singletonList;
@@ -35,6 +34,7 @@ import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.common.CompletableFutures;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -156,6 +156,29 @@ public abstract class ClusterTestHarness {
 
     this.schemaRegProperties = new Properties();
     this.restProperties = new Properties();
+  }
+
+  /** Choose a number of random available ports */
+  public static int[] choosePorts(int count) {
+    try {
+      ServerSocket[] sockets = new ServerSocket[count];
+      int[] ports = new int[count];
+      for (int i = 0; i < count; i++) {
+        sockets[i] = new ServerSocket(0);
+        ports[i] = sockets[i].getLocalPort();
+      }
+      for (int i = 0; i < count; i++) {
+        sockets[i].close();
+      }
+      return ports;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** Choose an available port */
+  public static int choosePort() {
+    return choosePorts(1)[0];
   }
 
   public Properties overrideBrokerProperties(int i, Properties props) {
