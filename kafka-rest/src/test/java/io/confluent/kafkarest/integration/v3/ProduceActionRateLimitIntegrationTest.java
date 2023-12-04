@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -37,9 +38,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @Tag("IntegrationTest")
 public class ProduceActionRateLimitIntegrationTest {
@@ -135,15 +137,19 @@ public class ProduceActionRateLimitIntegrationTest {
     assertEquals(actual.get(0).getErrorCode(), 429);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenGlobalByteLimitReached_thenCallerIsRateLimited")
-  public void test_whenGlobalByteLimitReached_thenCallerIsRateLimited() throws Exception {
+  public void test_whenGlobalByteLimitReached_thenCallerIsRateLimited(String quorum)
+      throws Exception {
     doByteLimitReachedTest();
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenClusterByteLimitReached_thenCallerIsRateLimited")
-  public void test_whenClusterByteLimitReached_thenCallerIsRateLimited() throws Exception {
+  public void test_whenClusterByteLimitReached_thenCallerIsRateLimited(String quorum)
+      throws Exception {
     doByteLimitReachedTest();
   }
 
@@ -193,15 +199,19 @@ public class ProduceActionRateLimitIntegrationTest {
     assertEquals(actual.get(0).getErrorCode(), 429);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited")
-  public void test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited() throws Exception {
+  public void test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited(String quorum)
+      throws Exception {
     doCountLimitTest();
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited")
-  public void test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited() throws Exception {
+  public void test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited(String quorum)
+      throws Exception {
     doCountLimitTest();
   }
 
