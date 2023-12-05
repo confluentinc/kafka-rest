@@ -149,6 +149,7 @@
   <allow class="kafka.utils.CoreUtils" />
   <allow class="kafka.utils.TestUtils" />
   <allow class="kafka.utils.TestInfoUtils" />
+  <allow class="kafka.utils.EmptyTestInfo" />
   <allow class="kafka.zk.EmbeddedZookeeper" />
 
 </import-control>

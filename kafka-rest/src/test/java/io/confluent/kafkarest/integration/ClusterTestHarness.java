@@ -60,6 +60,7 @@ import javax.ws.rs.client.WebTarget;
 import kafka.server.KafkaBroker;
 import kafka.server.KafkaConfig;
 import kafka.server.QuorumTestHarness;
+import kafka.utils.EmptyTestInfo;
 import kafka.utils.TestInfoUtils;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -186,6 +187,16 @@ public abstract class ClusterTestHarness {
 
   public Properties overrideSchemaRegistryProps(Properties props) {
     return props;
+  }
+
+  /**
+   * Deprecated method, please use setUp(TestInfo) to fully utilize the customization of either
+   * Kraft/Zookeeper. NOTE: please don't use this with @BeforeEach annotation, otherwise there might
+   * be memory leak issue due to multiple setUp methods are called.
+   */
+  @Deprecated
+  public void setUp() throws Exception {
+    setUp(new EmptyTestInfo());
   }
 
   @BeforeEach
