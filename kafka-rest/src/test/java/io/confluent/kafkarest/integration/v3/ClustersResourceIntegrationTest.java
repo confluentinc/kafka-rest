@@ -38,6 +38,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
     super(/* numBrokers= */ 3, /* withSchemaRegistry= */ false);
   }
 
+  /** Only applicable for Zk because getControllerID() is non-deterministic in Kraft */
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"zk"})
   public void listClusters_returnsArrayWithOwnCluster(String quorum) {
@@ -97,6 +98,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expected, actual);
   }
 
+  /** Only applicable for Zk because getControllerID() is non-deterministic in Kraft */
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"zk"})
   public void getCluster_ownCluster_returnsOwnCluster(String quorum) {
@@ -148,7 +150,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"zk"})
+  @ValueSource(strings = {"kraft", "zk"})
   public void getCluster_differentCluster_returnsNotFound(String quorum) {
     Response response = request("/v3/clusters/foobar").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());

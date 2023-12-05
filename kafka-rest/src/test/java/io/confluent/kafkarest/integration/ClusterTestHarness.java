@@ -388,11 +388,6 @@ public abstract class ClusterTestHarness {
     }
     props.setProperty("auto.create.topics.enable", "false");
     props.setProperty("message.max.bytes", String.valueOf(MAX_MESSAGE_SIZE));
-    if (zkConnect != null) {
-      // We *must* override this to use the port we allocated (Kafka currently allocates one port
-      // that it always uses for ZK
-      props.setProperty("zookeeper.connect", zkConnect);
-    }
     return props;
   }
 
