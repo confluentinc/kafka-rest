@@ -196,15 +196,21 @@ public abstract class ClusterTestHarness {
    */
   @Deprecated
   public void setUp() throws Exception {
-    setUp(new EmptyTestInfo());
+    this.testInfo = new EmptyTestInfo();
+    log.info("Starting setup of {}", getClass().getSimpleName());
+    setupMethod();
+    log.info("Completed setup of {}", getClass().getSimpleName());
   }
 
   @BeforeEach
   public void setUp(TestInfo testInfo) throws Exception {
-    this.testInfo = testInfo;
-    log.info("Starting setup of {}", getClass().getSimpleName());
-    setupMethod();
-    log.info("Completed setup of {}", getClass().getSimpleName());
+    // NOTE: this logic is only temporary, will be removed once setUp() is not used any longer
+    if (!(this.testInfo instanceof EmptyTestInfo)) {
+      this.testInfo = testInfo;
+      log.info("Starting setup of {}", getClass().getSimpleName());
+      setupMethod();
+      log.info("Completed setup of {}", getClass().getSimpleName());
+    }
   }
 
   // Calling setup() in this class calls the setup() from the calling sub-class, which includes the
