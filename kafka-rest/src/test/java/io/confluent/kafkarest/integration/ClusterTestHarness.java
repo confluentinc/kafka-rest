@@ -82,7 +82,6 @@ import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.utils.Time;
-import org.apache.kafka.server.common.MetadataVersion;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
@@ -207,7 +206,7 @@ public abstract class ClusterTestHarness {
     // start controller (either Zk or Kraft)
     this.quorumTestHarness =
         new DefaultQuorumTestHarness(
-            SecurityProtocol.PLAINTEXT, overrideKraftControllerConfig(), MetadataVersion.latest());
+            overrideKraftControllerSecurityProtocol(), overrideKraftControllerConfig());
     quorumTestHarness.setUp(testInfo);
     zkConnect = quorumTestHarness.zkConnectOrNull();
 
@@ -349,6 +348,11 @@ public abstract class ClusterTestHarness {
   /** Only applicable in Kraft tests, no effect in Zk tests */
   protected Properties overrideKraftControllerConfig() {
     return new Properties();
+  }
+
+  /** Only applicable in Kraft tests, no effect in Zk tests */
+  protected SecurityProtocol overrideKraftControllerSecurityProtocol() {
+    return SecurityProtocol.PLAINTEXT;
   }
 
   public boolean isKraftTest() {
@@ -809,15 +813,10 @@ public abstract class ClusterTestHarness {
   static class DefaultQuorumTestHarness extends QuorumTestHarness {
     private final Properties kraftControllerConfig;
     private final SecurityProtocol securityProtocol;
-    private final MetadataVersion metadataVersion;
 
-    DefaultQuorumTestHarness(
-        SecurityProtocol securityProtocol,
-        Properties kraftControllerConfig,
-        MetadataVersion metadataVersion) {
+    DefaultQuorumTestHarness(SecurityProtocol securityProtocol, Properties kraftControllerConfig) {
       this.securityProtocol = securityProtocol;
       this.kraftControllerConfig = kraftControllerConfig;
-      this.metadataVersion = metadataVersion;
     }
 
     @Override
@@ -829,11 +828,6 @@ public abstract class ClusterTestHarness {
     public Seq<Properties> kraftControllerConfigs() {
       // only one Kraft controller is supported in QuorumTestHarness
       return JavaConverters.asScalaBuffer(Collections.singletonList(kraftControllerConfig));
-    }
-
-    @Override
-    public MetadataVersion metadataVersion() {
-      return metadataVersion;
     }
   }
 }
