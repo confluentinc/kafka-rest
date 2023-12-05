@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.integration.v2;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
+
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
 import io.confluent.kafkarest.integration.AbstractConsumerTest;
@@ -24,7 +26,9 @@ import java.util.List;
 import javax.ws.rs.core.GenericType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class SeekToTimestampTest extends AbstractConsumerTest {
 
@@ -48,13 +52,14 @@ public class SeekToTimestampTest extends AbstractConsumerTest {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     createTopic(TOPIC_NAME, /* numPartitions= */ 1, /* replicationFactor= */ (short) 1);
   }
 
-  @Test
-  public void testConsumeOnlyValues() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testConsumeOnlyValues(String quorum) throws Exception {
     String consumerUri =
         startConsumeMessages(
             CONSUMER_GROUP_ID,
