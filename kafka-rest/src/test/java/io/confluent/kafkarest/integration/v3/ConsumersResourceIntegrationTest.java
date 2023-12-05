@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.entities.v3.ConsumerData;
@@ -35,7 +36,8 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.RoundRobinAssignor;
 import org.apache.kafka.common.serialization.BytesDeserializer;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
 
@@ -43,8 +45,9 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
   }
 
-  @Test
-  public void listConsumers_returnsConsumers() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listConsumers_returnsConsumers(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -180,8 +183,9 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expected, response.readEntity(ListConsumersResponse.class));
   }
 
-  @Test
-  public void listConsumers_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listConsumers_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/consumer-groups/consumer-group-1")
             .accept(MediaType.APPLICATION_JSON)
@@ -189,8 +193,9 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getConsumer_returnsConsumer() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getConsumer_returnsConsumer(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -258,8 +263,9 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expected, response.readEntity(GetConsumerResponse.class));
   }
 
-  @Test
-  public void getConsumer_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getConsumer_nonExistingCluster_returnsNotFound(String quorum) {
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     createTopic("topic-2", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     createTopic("topic-3", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
@@ -287,8 +293,9 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getConsumer_nonExistingConsumerGroup_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getConsumer_nonExistingConsumerGroup_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     createTopic("topic-2", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
@@ -319,8 +326,9 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getConsumer_nonExistingConsumer_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getConsumer_nonExistingConsumer_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     createTopic("topic-2", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
