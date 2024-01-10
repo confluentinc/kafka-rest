@@ -33,11 +33,11 @@ import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -47,29 +47,12 @@ import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
-import org.easymock.EasyMockSupport;
 import org.easymock.Mock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.rest.RestConfigException;
 import org.junit.runner.RunWith;
 
 /**
@@ -410,12 +393,12 @@ public class KafkaConsumerManagerTest {
     props.put(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, String.valueOf(backoffMillis));
     setUpConsumer(props);
     bootstrapConsumer(consumer);
-    CopyOnWriteArrayList<Long> pollTimestampsMillis = new CopyOnWriteArrayList<>();
+    List<Long> pollTimestampsNanos = Collections.synchronizedList(new ArrayList<>());
     consumer.schedulePollTask(
         new Runnable() {
           @Override
           public void run() {
-            pollTimestampsMillis.add(TimeUnit.NANOSECONDS.toMillis(System.nanoTime()));
+            pollTimestampsNanos.add(System.nanoTime());
             consumer.schedulePollTask(this);
           }
         });
@@ -437,43 +420,47 @@ public class KafkaConsumerManagerTest {
     //   N. wait max(backoffMillis, remainder of timeoutMillis), poll() returns empty
     assertTrue(
         String.format(
-            "Expected at least 2 poll calls, but got %d instead.", pollTimestampsMillis.size()),
-        pollTimestampsMillis.size() >= 2);
+            "Expected at least 2 poll calls, but got %d instead.", pollTimestampsNanos.size()),
+        pollTimestampsNanos.size() >= 2);
 
     // We need to verify that there's no window of size backoffMillis with more than 2 poll calls,
-    // and no window of size 2 * backofMillis with no poll call at all.
-    for (int i = 1; i < pollTimestampsMillis.size() - 1; i++) {
+    // and no window of size 2 * backoffMillis with no poll call at all.
+    for (int i = 0; i < pollTimestampsNanos.size() - 1; i++) {
       int smallWindowCount = 1;
-      long lastTimestampMillis = pollTimestampsMillis.get(i);
-      for (int j = i + 1; j < pollTimestampsMillis.size(); j++) {
-        long delta  = pollTimestampsMillis.get(j) - pollTimestampsMillis.get(i);
-        if (delta <= backoffMillis) {
+      long lastTimestampNanos = pollTimestampsNanos.get(i);
+      for (int j = i + 1; j < pollTimestampsNanos.size(); j++) {
+        long delta = pollTimestampsNanos.get(j) - pollTimestampsNanos.get(i);
+        if (delta <= TimeUnit.NANOSECONDS.convert(backoffMillis, TimeUnit.MILLISECONDS)) {
           smallWindowCount++;
-          lastTimestampMillis = pollTimestampsMillis.get(j);
+          lastTimestampNanos = pollTimestampsNanos.get(j);
         } else {
           break;
         }
       }
       assertTrue(
           String.format(
-              "Expected at most 2 poll calls in window [%d, %d], but got %d instead.",
-              pollTimestampsMillis.get(i), lastTimestampMillis, smallWindowCount),
+              "Expected at most 2 poll calls in window %d: [%d, %d], but got %d instead.",
+              i, pollTimestampsNanos.get(i), lastTimestampNanos, smallWindowCount),
           smallWindowCount <= 2);
 
       assertTrue(
           String.format(
-              "Expected at least 1 poll call in window (%d, %d), but got none instead.",
-              pollTimestampsMillis.get(i), pollTimestampsMillis.get(i + 1)),
-          pollTimestampsMillis.get(i + 1) - pollTimestampsMillis.get(i) <= 2 * backoffMillis);
+              "Expected at least 1 poll call in window %d: (%d, %d), but got none instead.",
+              i, pollTimestampsNanos.get(i), pollTimestampsNanos.get(i + 1)),
+          pollTimestampsNanos.get(i + 1) - pollTimestampsNanos.get(i)
+              <= TimeUnit.NANOSECONDS.convert(2 * backoffMillis, TimeUnit.MILLISECONDS));
     }
 
-    long lastTimestampMillis = pollTimestampsMillis.get(pollTimestampsMillis.size() - 1);
-    long timeoutTimestampMillis = pollTimestampsMillis.get(0) + timeoutMillis;
+    long lastTimestampNanos = pollTimestampsNanos.get(pollTimestampsNanos.size() - 1);
+    long timeoutTimestampNanos =
+        pollTimestampsNanos.get(0)
+            + TimeUnit.NANOSECONDS.convert(timeoutMillis, TimeUnit.MILLISECONDS);
     assertTrue(
         String.format(
             "Expected at least 1 poll call in window (%d, %d], but got none instead.",
-            lastTimestampMillis, timeoutTimestampMillis),
-        timeoutTimestampMillis - lastTimestampMillis < 2 * backoffMillis);
+            lastTimestampNanos, timeoutTimestampNanos),
+        timeoutTimestampNanos - lastTimestampNanos
+            < TimeUnit.NANOSECONDS.convert(2 * backoffMillis, TimeUnit.MILLISECONDS));
   }
 
     @Test
