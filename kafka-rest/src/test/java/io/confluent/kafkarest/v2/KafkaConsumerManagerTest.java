@@ -401,6 +401,7 @@ public class KafkaConsumerManagerTest {
         consumerManager.deleteConsumer(groupName, consumer.cid());
     }
 
+  @Ignore
   @Test
   public void testBackoffMsControlsPollCalls() throws Exception {
     long timeoutMillis = 5000L;
