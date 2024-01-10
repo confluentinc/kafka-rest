@@ -31,6 +31,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -47,29 +48,12 @@ import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
-import org.easymock.EasyMockSupport;
 import org.easymock.Mock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.rest.RestConfigException;
 import org.junit.runner.RunWith;
 
 /**
@@ -441,8 +425,8 @@ public class KafkaConsumerManagerTest {
         pollTimestampsMillis.size() >= 2);
 
     // We need to verify that there's no window of size backoffMillis with more than 2 poll calls,
-    // and no window of size 2 * backofMillis with no poll call at all.
-    for (int i = 1; i < pollTimestampsMillis.size() - 1; i++) {
+    // and no window of size 2 * backoffMillis with no poll call at all.
+    for (int i = 0; i < pollTimestampsMillis.size() - 1; i++) {
       int smallWindowCount = 1;
       long lastTimestampMillis = pollTimestampsMillis.get(i);
       for (int j = i + 1; j < pollTimestampsMillis.size(); j++) {
@@ -456,9 +440,10 @@ public class KafkaConsumerManagerTest {
       }
       assertTrue(
           String.format(
-              "Expected at most 2 poll calls in window [%d, %d], but got %d instead.",
-              pollTimestampsMillis.get(i), lastTimestampMillis, smallWindowCount),
-          smallWindowCount <= 2);
+              "Expected at most 2 poll calls in window %d: [%d, %d], but got %d instead. Pools size: %d",
+              i, pollTimestampsMillis.get(i), lastTimestampMillis, smallWindowCount, pollTimestampsMillis.size()),
+              // the last window can be smaller than backoffMillis, so there might be 3 poll calls
+              smallWindowCount <= 2 || (i == pollTimestampsMillis.size() - 3 && smallWindowCount == 3));
 
       assertTrue(
           String.format(
