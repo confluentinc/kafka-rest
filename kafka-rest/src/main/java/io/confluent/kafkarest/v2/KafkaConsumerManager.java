@@ -414,7 +414,7 @@ public class KafkaConsumerManager {
     @Override
     public void run() {
       try {
-        log.trace("Executing consumer read task ({})", taskState.task);
+        log.trace("[{}] Executing consumer read task ({})", this, taskState.task);
 
         taskState.task.doPartialRead();
         taskState.consumerState.updateExpiration();
