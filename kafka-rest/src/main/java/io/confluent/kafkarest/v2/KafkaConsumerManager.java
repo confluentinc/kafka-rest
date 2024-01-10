@@ -367,19 +367,16 @@ public class KafkaConsumerManager {
 
   class RunnableReadTask implements Runnable, Delayed {
     private final ReadTaskState taskState;
-    private final Instant started;
     private final Instant requestExpiration;
     private final Duration backoff;
     // Expiration if this task is waiting, considering both the expiration of the whole task and
     // a single backoff, if one is in progress
     private Instant waitExpiration;
-    private final Clock clock = Clock.systemUTC();
 
     public RunnableReadTask(ReadTaskState taskState, KafkaRestConfig config) {
       this.taskState = taskState;
-      this.started = clock.instant();
       this.requestExpiration =
-          this.started.plus(
+          clock.instant().plus(
               Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)));
       this.backoff =
           Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG));
@@ -400,6 +397,7 @@ public class KafkaConsumerManager {
 
       Instant delayTo = clock.instant().plus(delay);
       waitExpiration = Collections.min(Arrays.asList(delayTo, requestExpiration));
+      log.trace("Adding consumer read task ({}) to delayedReadTasks queue", this);
       // add to delayedReadTasks so the scheduler thread can re-schedule another partial read later
       delayedReadTasks.add(this);
     }
@@ -414,7 +412,7 @@ public class KafkaConsumerManager {
     @Override
     public void run() {
       try {
-        log.trace("Executing consumer read task ({})", taskState.task);
+        log.trace("[{}] Executing consumer read task ({})", this, taskState.task);
 
         taskState.task.doPartialRead();
         taskState.consumerState.updateExpiration();
