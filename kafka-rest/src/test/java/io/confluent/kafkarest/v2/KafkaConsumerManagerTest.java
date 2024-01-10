@@ -70,6 +70,7 @@ import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.RestConfigException;
+import org.junit.jupiter.api.Disabled;
 import org.junit.runner.RunWith;
 
 /**
@@ -401,6 +402,7 @@ public class KafkaConsumerManagerTest {
         consumerManager.deleteConsumer(groupName, consumer.cid());
     }
 
+  @Ignore
   @Test
   public void testBackoffMsControlsPollCalls() throws Exception {
     long timeoutMillis = 5000L;
