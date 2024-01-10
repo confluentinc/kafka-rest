@@ -432,7 +432,9 @@ public class KafkaConsumerManager {
 
     @Override
     public long getDelay(TimeUnit unit) {
-      Duration delay = Duration.between(clock.instant(), waitExpiration);
+      // Note that, Duration.between excludes the end instant,
+      // so we need to add 1 millisecond so that the task will be run at the desire time
+      Duration delay = Duration.between(clock.instant(), waitExpiration.plusMillis(1));
       return unit.convert(delay.toMillis(), TimeUnit.MILLISECONDS);
     }
 
