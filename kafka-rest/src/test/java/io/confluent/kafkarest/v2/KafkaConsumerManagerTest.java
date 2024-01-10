@@ -31,6 +31,8 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -395,11 +397,12 @@ public class KafkaConsumerManagerTest {
     setUpConsumer(props);
     bootstrapConsumer(consumer);
     CopyOnWriteArrayList<Long> pollTimestampsMillis = new CopyOnWriteArrayList<>();
+    Clock clock = Clock.systemUTC();
     consumer.schedulePollTask(
         new Runnable() {
           @Override
           public void run() {
-            pollTimestampsMillis.add(TimeUnit.NANOSECONDS.toMillis(System.nanoTime()));
+            pollTimestampsMillis.add(clock.millis());
             consumer.schedulePollTask(this);
           }
         });
