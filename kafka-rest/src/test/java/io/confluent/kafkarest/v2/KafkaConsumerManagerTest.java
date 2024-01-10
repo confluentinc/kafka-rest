@@ -410,7 +410,7 @@ public class KafkaConsumerManagerTest {
         groupName,
         consumer.cid(),
         BinaryKafkaConsumerState.class,
-        Duration.ofMillis(-1),
+        Duration.ofMinutes(1),
         Long.MAX_VALUE,
         (records, e) -> latch.countDown());
 
