@@ -70,7 +70,6 @@ import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.RestConfigException;
-import org.junit.jupiter.api.Disabled;
 import org.junit.runner.RunWith;
 
 /**
