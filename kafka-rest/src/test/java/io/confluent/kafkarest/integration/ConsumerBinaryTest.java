@@ -28,8 +28,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ConsumerBinaryTest extends AbstractConsumerTest {
 
@@ -53,7 +53,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   private static final GenericType<List<BinaryConsumerRecord>> binaryConsumerRecordType =
       new GenericType<List<BinaryConsumerRecord>>() {};
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();

@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.entities.v3.BrokerData;
 import io.confluent.kafkarest.entities.v3.BrokerDataList;
@@ -31,7 +31,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.common.Node;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BrokersResourceIntegrationTest extends ClusterTestHarness {
 

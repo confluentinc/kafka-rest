@@ -1,17 +1,15 @@
 package io.confluent.kafkarest.extension;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.lang.annotation.Annotation;
 import javax.ws.rs.ext.ParamConverter;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-@RunWith(JUnit4.class)
 public class EnumConverterProviderTest {
 
   private final EnumConverterProvider converterProvider = new EnumConverterProvider();
@@ -38,24 +36,37 @@ public class EnumConverterProviderTest {
     assertEquals(EnumWithSingleJsonValue.BAR, converter.fromString("123"));
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void enumWithMultipleJsonValueThrowsException() {
-    converterProvider.getConverter(
-        EnumWithMultipleJsonValue.class, EnumWithMultipleJsonValue.class, new Annotation[0]);
+    assertThrows(
+        RuntimeException.class,
+        () ->
+            converterProvider.getConverter(
+                EnumWithMultipleJsonValue.class,
+                EnumWithMultipleJsonValue.class,
+                new Annotation[0]));
   }
 
   // TODO(rigelbm): Figure out why we are able to call a private method in an enum class.
-  @Ignore
-  @Test(expected = RuntimeException.class)
+  @Disabled
+  @Test
   public void enumWithPrivateJsonValueThrowsException() {
-    converterProvider.getConverter(
-        EnumWithPrivateJsonValue.class, EnumWithPrivateJsonValue.class, new Annotation[0]);
+    assertThrows(
+        RuntimeException.class,
+        () ->
+            converterProvider.getConverter(
+                EnumWithPrivateJsonValue.class, EnumWithPrivateJsonValue.class, new Annotation[0]));
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void enumWithNonStringJsonValueThrowsException() {
-    converterProvider.getConverter(
-        EnumWithNonStringJsonValue.class, EnumWithNonStringJsonValue.class, new Annotation[0]);
+    assertThrows(
+        RuntimeException.class,
+        () ->
+            converterProvider.getConverter(
+                EnumWithNonStringJsonValue.class,
+                EnumWithNonStringJsonValue.class,
+                new Annotation[0]));
   }
 
   public enum EnumWithNoJsonValue {

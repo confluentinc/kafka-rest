@@ -26,7 +26,7 @@ import static org.easymock.EasyMock.newCapture;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.strictMock;
 import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
@@ -58,19 +58,18 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.process.internal.RequestScoped;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-@RunWith(JUnit4.class)
+@Tag("IntegrationTest")
 public class KafkaModuleOverridingTest {
   /** HTTP 418 I'm a teapot */
   private static final int I_M_A_TEAPOT_STATUS_CODE = 418;
 
   private static final String KAFKA_REST_CONTEXT_PROPERTY_NAME = "i.m.a.teapot";
 
-  @Rule
+  @RegisterExtension
   public final KafkaRestFixture kafkaRest =
       KafkaRestFixture.builder()
           .setConfig("bootstrap.servers", "foobar")

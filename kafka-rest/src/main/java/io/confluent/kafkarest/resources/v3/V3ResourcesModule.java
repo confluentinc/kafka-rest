@@ -15,7 +15,11 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static java.util.Objects.requireNonNull;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.config.ConfigModule.ProduceResponseThreadPoolSizeConfig;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
@@ -29,6 +33,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
 import org.glassfish.hk2.api.AnnotationLiteral;
@@ -47,6 +52,7 @@ public final class V3ResourcesModule extends AbstractBinder {
         .qualifiedBy(new ProduceResponseThreadPoolImpl())
         .to(ExecutorService.class)
         .in(Singleton.class);
+    bindFactory(ProducerMetricsFactory.class).to(ProducerMetrics.class).in(Singleton.class);
   }
 
   @Qualifier
@@ -86,5 +92,22 @@ public final class V3ResourcesModule extends AbstractBinder {
         executorService.shutdownNow();
       }
     }
+  }
+
+  private static final class ProducerMetricsFactory implements Factory<ProducerMetrics> {
+    private final Provider<KafkaRestConfig> config;
+
+    @Inject
+    ProducerMetricsFactory(Provider<KafkaRestConfig> config) {
+      this.config = requireNonNull(config);
+    }
+
+    @Override
+    public ProducerMetrics provide() {
+      return new ProducerMetrics(config.get(), Time.SYSTEM);
+    }
+
+    @Override
+    public void dispose(ProducerMetrics producerMetrics) {}
   }
 }

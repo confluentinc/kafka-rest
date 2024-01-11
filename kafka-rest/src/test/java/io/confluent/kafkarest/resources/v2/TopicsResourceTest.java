@@ -22,7 +22,7 @@ import static java.util.Collections.emptySet;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
@@ -44,12 +44,13 @@ import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(EasyMockExtension.class)
 public class TopicsResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
@@ -350,8 +351,6 @@ public class TopicsResourceTest
           ConfigSource.DYNAMIC_TOPIC_CONFIG,
           /* synonyms= */ emptyList());
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private TopicManager topicManager;
 
   @Mock private TopicConfigManager topicConfigManager;
@@ -360,7 +359,7 @@ public class TopicsResourceTest
     super();
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     addResource(new TopicsResource(() -> topicManager, () -> topicConfigManager));

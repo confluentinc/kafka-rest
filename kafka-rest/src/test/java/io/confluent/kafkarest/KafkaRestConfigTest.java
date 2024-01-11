@@ -6,7 +6,7 @@ import static io.confluent.kafkarest.KafkaRestMetricsContext.RESOURCE_LABEL_CLUS
 import static io.confluent.kafkarest.KafkaRestMetricsContext.RESOURCE_LABEL_COMMIT_ID;
 import static io.confluent.kafkarest.KafkaRestMetricsContext.RESOURCE_LABEL_VERSION;
 import static java.util.Collections.singletonMap;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafka.serializers.subject.DefaultReferenceSubjectNameStrategy;
@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.Properties;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.utils.AppInfoParser;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class KafkaRestConfigTest {
 

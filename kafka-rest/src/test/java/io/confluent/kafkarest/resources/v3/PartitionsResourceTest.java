@@ -18,7 +18,7 @@ package io.confluent.kafkarest.resources.v3;
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.controllers.PartitionManager;
 import io.confluent.kafkarest.entities.Partition;
@@ -36,15 +36,13 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.ws.rs.NotFoundException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class PartitionsResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -132,13 +130,11 @@ public class PartitionsResourceTest {
                   /* isLeader= */ false,
                   /* isInSync= */ false)));
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private PartitionManager partitionManager;
 
   private PartitionsResource partitionsResource;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     partitionsResource =
         new PartitionsResource(

@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.entities.v3.ReplicaData;
 import io.confluent.kafkarest.entities.v3.ReplicaDataList;
@@ -29,8 +29,8 @@ import java.util.List;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarness {
 
@@ -41,7 +41,7 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
     super(/* numBrokers= */ 2, /* withSchemaRegistry= */ false);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();

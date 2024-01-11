@@ -15,7 +15,8 @@
 
 package io.confluent.kafkarest.unit;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.UriUtils;
@@ -24,14 +25,14 @@ import java.util.Properties;
 import javax.ws.rs.core.UriInfo;
 import org.apache.kafka.common.config.ConfigException;
 import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class UriUtilsTest {
 
   private UriInfo uriInfo;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     uriInfo = EasyMock.createMock(UriInfo.class);
   }
@@ -71,7 +72,7 @@ public class UriUtilsTest {
     EasyMock.verify(uriInfo);
   }
 
-  @Test(expected = ConfigException.class)
+  @Test
   public void testAbsoluteURIBuilderWithInvalidListener() {
     Properties props = new Properties();
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
@@ -81,7 +82,7 @@ public class UriUtilsTest {
     EasyMock.expect(uriInfo.getBaseUri()).andReturn(URI.create("http://foo.com:9091"));
     EasyMock.replay(uriInfo);
 
-    UriUtils.absoluteUri(config, uriInfo);
+    assertThrows(ConfigException.class, () -> UriUtils.absoluteUri(config, uriInfo));
   }
 
   @Test

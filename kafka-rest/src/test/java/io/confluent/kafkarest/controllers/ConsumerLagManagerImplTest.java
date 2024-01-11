@@ -23,8 +23,8 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.newCapture;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Consumer;
@@ -52,15 +52,13 @@ import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class ConsumerLagManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -199,8 +197,6 @@ public class ConsumerLagManagerImplTest {
   private static final List<ConsumerLag> CONSUMER_LAG_LIST =
       Arrays.asList(CONSUMER_LAG_1, CONSUMER_LAG_2, CONSUMER_LAG_3);
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private Admin kafkaAdminClient;
 
   @Mock private ConsumerGroupManager consumerGroupManager;
@@ -209,7 +205,7 @@ public class ConsumerLagManagerImplTest {
 
   @Mock private ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     consumerLagManager = new ConsumerLagManagerImpl(kafkaAdminClient, consumerGroupManager);
   }

@@ -2,8 +2,8 @@ package io.confluent.kafkarest.integration.v2;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableMap;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
@@ -26,19 +26,18 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-@RunWith(JUnit4.class)
+@Tag("IntegrationTest")
 public abstract class SchemaProduceConsumeTest {
 
   private static final String TOPIC = "topic-1";
 
   private static final String CONSUMER_GROUP = "group-1";
 
-  @Rule
+  @RegisterExtension
   public final DefaultKafkaRestTestEnvironment testEnv = new DefaultKafkaRestTestEnvironment();
 
   protected abstract EmbeddedFormat getFormat();

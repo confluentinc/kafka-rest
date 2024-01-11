@@ -16,9 +16,9 @@ package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.Errors;
@@ -123,8 +123,8 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertNotNull(instanceResponse.getInstanceId());
     assertTrue(instanceResponse.getInstanceId().length() > 0);
     assertTrue(
-        "Base URI should contain the consumer instance ID",
-        instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
+        instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()),
+        "Base URI should contain the consumer instance ID");
 
     ConsumerSubscriptionRecord subscribeRequest =
         new ConsumerSubscriptionRecord(topics, /* topicPattern= */ null);
@@ -270,11 +270,11 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     // end, but for now we can give it lots of slack
     long elapsed = finished - started;
     assertTrue(
-        "Consumer request should not return before the timeout when no data is available",
-        elapsed > TIMEOUT);
+        elapsed > TIMEOUT,
+        "Consumer request should not return before the timeout when no data is available");
     assertTrue(
-        "Consumer request should timeout approximately within the request timeout period",
-        (elapsed - TIMEOUT) < TIMEOUT_SLACK);
+        (elapsed - TIMEOUT) < TIMEOUT_SLACK,
+        "Consumer request should timeout approximately within the request timeout period");
   }
 
   protected void seekToTimestamp(

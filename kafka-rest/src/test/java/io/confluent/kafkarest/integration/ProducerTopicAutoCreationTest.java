@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ProducerTopicAutoCreationTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {

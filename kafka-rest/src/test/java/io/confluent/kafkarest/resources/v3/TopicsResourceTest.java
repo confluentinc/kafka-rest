@@ -22,9 +22,9 @@ import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -53,15 +53,13 @@ import java.util.concurrent.TimeoutException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class TopicsResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -327,8 +325,6 @@ public class TopicsResourceTest {
           /* isInternal= */ false,
           /* authorizedOperations= */ emptySet());
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private TopicManager topicManager;
 
   private TopicsResource topicsResource;
@@ -360,7 +356,7 @@ public class TopicsResourceTest {
         .build();
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     topicsResource =
         new TopicsResource(

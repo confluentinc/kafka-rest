@@ -30,11 +30,13 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.security.auth.login.Configuration;
 import org.apache.kafka.common.security.JaasUtils;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * An {@link ExternalResource} that creates and sets a {@link
- * org.eclipse.jetty.jaas.spi.PropertyFileLoginModule} as the default Java Login Module.
+ * An extension that creates and sets a {@link org.eclipse.jetty.jaas.spi.PropertyFileLoginModule}
+ * as the default Java Login Module.
  *
  * <p>This fixture should be used only when you don't have any other option, for example, when
  * configuring Kafka REST or Schema Registry Basic Authentication. Using it might cause unforeseen
@@ -43,7 +45,8 @@ import org.junit.rules.ExternalResource;
  * Instead of using this fixture, you should use the respective {@code sasl.jaas.config} config
  * whenever possible, for example, {@code client.sasl.jaas.config} in Kafka REST.
  */
-public final class JvmPropertyFileLoginModuleFixture extends ExternalResource {
+public final class JvmPropertyFileLoginModuleFixture
+    implements BeforeEachCallback, AfterEachCallback {
 
   private final String name;
   private final ImmutableMap<String, PasswordAndRoles> users;
@@ -57,7 +60,7 @@ public final class JvmPropertyFileLoginModuleFixture extends ExternalResource {
   }
 
   @Override
-  protected void before() throws Exception {
+  public void beforeEach(ExtensionContext extensionContext) throws Exception {
     jaasConfig = Files.createTempFile("jaas-config-", ".conf");
     passConfig = Files.createTempFile("pass-config-", ".properties");
     Files.write(
@@ -78,7 +81,7 @@ public final class JvmPropertyFileLoginModuleFixture extends ExternalResource {
   }
 
   @Override
-  protected void after() {
+  public void afterEach(ExtensionContext extensionContext) {
     System.clearProperty(JaasUtils.JAVA_LOGIN_CONFIG_PARAM);
     Configuration.setConfiguration(null);
     if (jaasConfig != null) {

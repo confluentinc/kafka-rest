@@ -17,8 +17,8 @@ package io.confluent.kafkarest.integration.v3;
 
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
@@ -33,8 +33,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -44,7 +44,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -173,14 +173,14 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     ListTopicConfigsResponse responseBody = response.readEntity(ListTopicConfigsResponse.class);
     assertEquals(expectedMetadata, responseBody.getValue().getMetadata());
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig1),
-        responseBody.getValue().getData().contains(expectedConfig1));
+        responseBody.getValue().getData().contains(expectedConfig1),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig1));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig2),
-        responseBody.getValue().getData().contains(expectedConfig2));
+        responseBody.getValue().getData().contains(expectedConfig2),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig2));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig3),
-        responseBody.getValue().getData().contains(expectedConfig3));
+        responseBody.getValue().getData().contains(expectedConfig3),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig3));
   }
 
   @Test

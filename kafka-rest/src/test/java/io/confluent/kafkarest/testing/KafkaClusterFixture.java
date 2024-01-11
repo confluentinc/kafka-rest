@@ -41,10 +41,12 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
-/** An {@link ExternalResource} that runs a {@link KafkaBrokerFixture Kafka} cluster. */
-public final class KafkaClusterFixture extends ExternalResource {
+/** An extension that runs a {@link KafkaBrokerFixture Kafka} cluster. */
+public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachCallback {
 
   private final ImmutableList<KafkaBrokerFixture> brokers;
 
@@ -55,7 +57,7 @@ public final class KafkaClusterFixture extends ExternalResource {
   }
 
   @Override
-  public void before() {
+  public void beforeEach(ExtensionContext extensionContext) {
     CompletableFutures.allAsList(
             brokers.stream()
                 .map(
@@ -63,7 +65,7 @@ public final class KafkaClusterFixture extends ExternalResource {
                         CompletableFuture.runAsync(
                             () -> {
                               try {
-                                broker.before();
+                                broker.beforeEach(extensionContext);
                               } catch (Exception e) {
                                 throw new RuntimeException(e);
                               }
@@ -75,7 +77,7 @@ public final class KafkaClusterFixture extends ExternalResource {
   }
 
   @Override
-  public void after() {
+  public void afterEach(ExtensionContext extensionContext) {
     if (adminClient != null) {
       adminClient.close();
     }
@@ -87,7 +89,7 @@ public final class KafkaClusterFixture extends ExternalResource {
                         CompletableFuture.runAsync(
                             () -> {
                               try {
-                                broker.after();
+                                broker.afterEach(extensionContext);
                               } catch (Exception e) {
                                 throw new RuntimeException(e);
                               }
