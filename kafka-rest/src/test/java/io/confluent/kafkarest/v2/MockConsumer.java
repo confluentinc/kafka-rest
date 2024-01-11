@@ -50,8 +50,7 @@ public class MockConsumer<K, V> extends org.apache.kafka.clients.consumer.MockCo
       String topic, int partition, long offset, Instant timestamp) {
     SortedSet<OffsetAndTimestamp> offsets =
         offsetForTimes.computeIfAbsent(
-            new TopicPartition(topic, partition),
-            key -> new TreeSet<>(Comparator.comparing(OffsetAndTimestamp::timestamp)));
+            new TopicPartition(topic, partition), key -> createSortedSetOfOffsetAndTimestamps());
     offsets.add(new OffsetAndTimestamp(offset, timestamp.toEpochMilli()));
   }
 
@@ -61,7 +60,7 @@ public class MockConsumer<K, V> extends org.apache.kafka.clients.consumer.MockCo
     Map<TopicPartition, OffsetAndTimestamp> result = new HashMap<>();
     for (Entry<TopicPartition, Long> entry : timestampsToSearch.entrySet()) {
       SortedSet<OffsetAndTimestamp> offsets =
-          offsetForTimes.getOrDefault(entry.getKey(), new TreeSet<>());
+          offsetForTimes.getOrDefault(entry.getKey(), createSortedSetOfOffsetAndTimestamps());
       SortedSet<OffsetAndTimestamp> tail =
           offsets.tailSet(new OffsetAndTimestamp(0L, entry.getValue()));
       if (tail.isEmpty()) {
@@ -71,5 +70,9 @@ public class MockConsumer<K, V> extends org.apache.kafka.clients.consumer.MockCo
       }
     }
     return unmodifiableMap(result);
+  }
+
+  private static SortedSet<OffsetAndTimestamp> createSortedSetOfOffsetAndTimestamps() {
+    return new TreeSet<>(Comparator.comparing(OffsetAndTimestamp::timestamp));
   }
 }
