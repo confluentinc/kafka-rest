@@ -367,19 +367,16 @@ public class KafkaConsumerManager {
 
   class RunnableReadTask implements Runnable, Delayed {
     private final ReadTaskState taskState;
-    private final Instant started;
     private final Instant requestExpiration;
     private final Duration backoff;
     // Expiration if this task is waiting, considering both the expiration of the whole task and
     // a single backoff, if one is in progress
     private Instant waitExpiration;
-    private final Clock clock = Clock.systemUTC();
 
     public RunnableReadTask(ReadTaskState taskState, KafkaRestConfig config) {
       this.taskState = taskState;
-      this.started = clock.instant();
       this.requestExpiration =
-          this.started.plus(
+          clock.instant().plus(
               Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)));
       this.backoff =
           Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG));
@@ -390,7 +387,10 @@ public class KafkaConsumerManager {
      * Delays for a minimum of {@code delayMs} or until the read request expires
      */
     public void delayFor(Duration delay) {
-      if (!requestExpiration.isAfter(clock.instant())) {
+      // the first condition means that the request has expired,
+      // the second one means that the request has been retried for
+      // the last time, so if it goes to this block again, it will be expired
+      if (!requestExpiration.isAfter(clock.instant()) || requestExpiration.equals(waitExpiration)) {
         // no need to delay if the request has expired
         taskState.task.finish();
         log.trace("Finished executing  consumer read task ({}) due to request expiry",
@@ -432,7 +432,9 @@ public class KafkaConsumerManager {
 
     @Override
     public long getDelay(TimeUnit unit) {
-      Duration delay = Duration.between(clock.instant(), waitExpiration);
+      // Note that, Duration.between excludes the end instant,
+      // so we need to add 1 millisecond so that the task will be run at the desire time
+      Duration delay = Duration.between(clock.instant(), waitExpiration.plusMillis(1));
       return unit.convert(delay.toMillis(), TimeUnit.MILLISECONDS);
     }
 
