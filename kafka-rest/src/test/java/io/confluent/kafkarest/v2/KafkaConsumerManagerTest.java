@@ -404,9 +404,6 @@ public class KafkaConsumerManagerTest {
     consumerManager.deleteConsumer(groupName, consumer.cid());
   }
 
-  // TODO ddimitrov This continues being way too flaky, even after some fix attempts.
-  //  Until we fix it (KREST-2300), we should ignore it, as it might be hiding even worse errors.
-  @Ignore
   @Test
   public void testBackoffMsControlsPollCalls() throws Exception {
     long timeoutMillis = 5000L;
