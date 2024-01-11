@@ -18,7 +18,6 @@ package io.confluent.kafkarest.integration.v3;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import io.confluent.kafkarest.entities.v3.ListAllReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.entities.v3.SearchReassignmentsByTopicResponse;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
@@ -61,18 +60,26 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
 
     alterPartitionReassignment(reassignmentMap);
 
-    Response response = request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME +
-        "/partitions/-/reassignment")
-        .accept(MediaType.APPLICATION_JSON)
-        .get();
+    Response response =
+        request(
+                "/v3/clusters/"
+                    + clusterId
+                    + "/topics/"
+                    + TOPIC_NAME
+                    + "/partitions/-/reassignment")
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
     SearchReassignmentsByTopicResponse actualReassignments =
         response.readEntity(SearchReassignmentsByTopicResponse.class);
     for (ReassignmentData data : actualReassignments.getValue().getData()) {
-      assertEquals(data.getAddingReplicas(),
-          reassignmentMap.get(new TopicPartition(TOPIC_NAME,
-              data.getPartitionId())).get().targetReplicas());
+      assertEquals(
+          data.getAddingReplicas(),
+          reassignmentMap
+              .get(new TopicPartition(TOPIC_NAME, data.getPartitionId()))
+              .get()
+              .targetReplicas());
     }
   }
 
@@ -98,6 +105,10 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
 
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
     assertTrue(
-        response.readEntity(SearchReassignmentsByTopicResponse.class).getValue().getData().isEmpty());
+        response
+            .readEntity(SearchReassignmentsByTopicResponse.class)
+            .getValue()
+            .getData()
+            .isEmpty());
   }
 }

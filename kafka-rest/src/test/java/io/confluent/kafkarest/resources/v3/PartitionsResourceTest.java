@@ -132,11 +132,9 @@ public class PartitionsResourceTest {
                   /* isLeader= */ false,
                   /* isInSync= */ false)));
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private PartitionManager partitionManager;
+  @Mock private PartitionManager partitionManager;
 
   private PartitionsResource partitionsResource;
 
@@ -181,8 +179,8 @@ public class PartitionsResourceTest {
                             .setPartitionId(PARTITION_1.getPartitionId())
                             .setLeader(
                                 Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/0" +
-                                        "/replicas/1"))
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/0"
+                                        + "/replicas/1"))
                             .setReplicas(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas"))
@@ -203,8 +201,8 @@ public class PartitionsResourceTest {
                             .setPartitionId(PARTITION_2.getPartitionId())
                             .setLeader(
                                 Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/1" +
-                                        "/replicas/2"))
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/1"
+                                        + "/replicas/2"))
                             .setReplicas(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas"))
@@ -225,8 +223,8 @@ public class PartitionsResourceTest {
                             .setPartitionId(PARTITION_3.getPartitionId())
                             .setLeader(
                                 Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/2" +
-                                        "/replicas/3"))
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/2"
+                                        + "/replicas/3"))
                             .setReplicas(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas"))

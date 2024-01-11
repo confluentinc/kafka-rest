@@ -29,7 +29,7 @@ public class SeekToTimestampTest extends AbstractConsumerTest {
           new ProducerRecord<>(TOPIC_NAME, "value-6".getBytes()));
 
   private static final GenericType<List<BinaryConsumerRecord>> BINARY_CONSUMER_RECORD_TYPE =
-      new GenericType<List<BinaryConsumerRecord>>() { };
+      new GenericType<List<BinaryConsumerRecord>>() {};
 
   @Before
   @Override
@@ -37,7 +37,7 @@ public class SeekToTimestampTest extends AbstractConsumerTest {
     super.setUp();
     createTopic(TOPIC_NAME, /* numPartitions= */ 1, /* replicationFactor= */ (short) 1);
   }
-  
+
   @Test
   public void testConsumeOnlyValues() throws Exception {
     String consumerUri =

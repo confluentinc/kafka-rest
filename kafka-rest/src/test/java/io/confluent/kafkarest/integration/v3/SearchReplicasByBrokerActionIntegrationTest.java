@@ -65,8 +65,10 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
                     ResourceCollection.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/brokers/" + BROKER_ID
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/brokers/"
+                                + BROKER_ID
                                 + "/partition-replicas")
                         .build())
                 .setData(
@@ -76,13 +78,19 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
                                 Resource.Metadata.builder()
                                     .setSelf(
                                         baseUrl
-                                            + "/v3/clusters/" + clusterId
-                                            + "/topics/" + TOPIC_NAME
-                                            + "/partitions/0/replicas/" + BROKER_ID)
+                                            + "/v3/clusters/"
+                                            + clusterId
+                                            + "/topics/"
+                                            + TOPIC_NAME
+                                            + "/partitions/0/replicas/"
+                                            + BROKER_ID)
                                     .setResourceName(
-                                        "crn:///kafka=" + clusterId
-                                            + "/topic=" + TOPIC_NAME
-                                            + "/partition=0/replica=" + BROKER_ID)
+                                        "crn:///kafka="
+                                            + clusterId
+                                            + "/topic="
+                                            + TOPIC_NAME
+                                            + "/partition=0/replica="
+                                            + BROKER_ID)
                                     .build())
                             .setClusterId(clusterId)
                             .setTopicName(TOPIC_NAME)
@@ -93,25 +101,32 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
                             .setBroker(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/brokers/" + BROKER_ID))
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/brokers/"
+                                        + BROKER_ID))
                             .build(),
                         ReplicaData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
                                     .setSelf(
                                         baseUrl
-                                            + "/v3/clusters/" + clusterId
-                                            + "/topics/" + TOPIC_NAME
-                                            + "/partitions/1/replicas/" + BROKER_ID)
+                                            + "/v3/clusters/"
+                                            + clusterId
+                                            + "/topics/"
+                                            + TOPIC_NAME
+                                            + "/partitions/1/replicas/"
+                                            + BROKER_ID)
                                     .setResourceName(
-                                        "crn:///kafka=" + clusterId
-                                            + "/topic=" + TOPIC_NAME
-                                            + "/partition=1/replica=" + BROKER_ID)
+                                        "crn:///kafka="
+                                            + clusterId
+                                            + "/topic="
+                                            + TOPIC_NAME
+                                            + "/partition=1/replica="
+                                            + BROKER_ID)
                                     .build())
                             .setClusterId(clusterId)
                             .setTopicName(TOPIC_NAME)
-
                             .setPartitionId(1)
                             .setBrokerId(BROKER_ID)
                             .setLeader(false)
@@ -119,8 +134,10 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
                             .setBroker(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/brokers/" + BROKER_ID))
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/brokers/"
+                                        + BROKER_ID))
                             .build()))
                 .build());
 

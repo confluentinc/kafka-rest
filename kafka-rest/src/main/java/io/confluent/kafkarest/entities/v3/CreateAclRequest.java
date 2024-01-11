@@ -26,8 +26,7 @@ import io.confluent.kafkarest.entities.Acl.ResourceType;
 @AutoValue
 public abstract class CreateAclRequest {
 
-  CreateAclRequest() {
-  }
+  CreateAclRequest() {}
 
   @JsonProperty("resource_type")
   public abstract ResourceType getResourceType();
@@ -62,8 +61,7 @@ public abstract class CreateAclRequest {
       @JsonProperty("principal") String principal,
       @JsonProperty("host") String host,
       @JsonProperty("operation") Operation operation,
-      @JsonProperty("permission") Permission permission
-  ) {
+      @JsonProperty("permission") Permission permission) {
     return builder()
         .setResourceType(resourceType)
         .setResourceName(resourceName)
@@ -76,10 +74,9 @@ public abstract class CreateAclRequest {
   }
 
   @AutoValue.Builder
-  public abstract static class Builder  {
+  public abstract static class Builder {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setResourceType(ResourceType resourceType);
 

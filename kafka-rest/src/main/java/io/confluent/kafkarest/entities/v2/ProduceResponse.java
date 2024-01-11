@@ -28,22 +28,17 @@ import javax.ws.rs.core.Response;
 
 public final class ProduceResponse {
 
-  @NotEmpty
-  @Nullable
-  private final List<PartitionOffset> offsets;
+  @NotEmpty @Nullable private final List<PartitionOffset> offsets;
 
-  @Nullable
-  private final Integer keySchemaId;
+  @Nullable private final Integer keySchemaId;
 
-  @Nullable
-  private final Integer valueSchemaId;
+  @Nullable private final Integer valueSchemaId;
 
   @JsonCreator
   public ProduceResponse(
       @JsonProperty("offsets") @Nullable List<PartitionOffset> offsets,
       @JsonProperty("key_schema_id") @Nullable Integer keySchemaId,
-      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId
-  ) {
+      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId) {
     this.offsets = offsets;
     this.keySchemaId = keySchemaId;
     this.valueSchemaId = valueSchemaId;

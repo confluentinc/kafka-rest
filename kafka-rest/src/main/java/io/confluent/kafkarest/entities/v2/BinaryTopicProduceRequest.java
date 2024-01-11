@@ -32,9 +32,7 @@ import javax.validation.constraints.PositiveOrZero;
 
 public final class BinaryTopicProduceRequest {
 
-  @NotEmpty
-  @Nullable
-  private final List<BinaryTopicProduceRecord> records;
+  @NotEmpty @Nullable private final List<BinaryTopicProduceRecord> records;
 
   @JsonCreator
   private BinaryTopicProduceRequest(
@@ -42,8 +40,7 @@ public final class BinaryTopicProduceRequest {
       @JsonProperty("key_schema") @Nullable String keySchema,
       @JsonProperty("key_schema_id") @Nullable Integer keySchemaId,
       @JsonProperty("value_schema") @Nullable String valueSchema,
-      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId
-  ) {
+      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId) {
     this.records = records;
   }
 
@@ -98,30 +95,24 @@ public final class BinaryTopicProduceRequest {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", BinaryTopicProduceRequest.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", BinaryTopicProduceRequest.class.getSimpleName() + "[", "]")
         .add("records=" + records)
         .toString();
   }
 
   public static final class BinaryTopicProduceRecord {
 
-    @Nullable
-    private final byte[] key;
+    @Nullable private final byte[] key;
 
-    @Nullable
-    private final byte[] value;
+    @Nullable private final byte[] value;
 
-    @PositiveOrZero
-    @Nullable
-    private final Integer partition;
+    @PositiveOrZero @Nullable private final Integer partition;
 
     @JsonCreator
     public BinaryTopicProduceRecord(
         @JsonProperty("key") @Nullable String key,
         @JsonProperty("value") @Nullable String value,
-        @JsonProperty("partition") @Nullable Integer partition
-    ) {
+        @JsonProperty("partition") @Nullable Integer partition) {
       try {
         this.key = (key != null) ? EntityUtils.parseBase64Binary(key) : null;
       } catch (IllegalArgumentException e) {

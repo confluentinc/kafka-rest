@@ -7,13 +7,13 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>[7.0.14-0, 7.0.15-0)</version>
+        <version>[7.1.12-0, 7.1.13-0)</version>
     </parent>
 
     <artifactId>kafka-rest-parent</artifactId>
     <packaging>pom</packaging>
     <name>kafka-rest-parent</name>
-    <version>7.0.14-0</version>
+    <version>7.1.12-0</version>
     <organization>
         <name>Confluent, Inc.</name>
         <url>http://confluent.io</url>
@@ -47,7 +47,7 @@
     <properties>
         <confluent.maven.repo>https://packages.confluent.io/maven/</confluent.maven.repo>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
-        <io.confluent.kafka-rest.version>7.0.14-0</io.confluent.kafka-rest.version>
+        <io.confluent.kafka-rest.version>7.1.12-0</io.confluent.kafka-rest.version>
     </properties>
 
     <repositories>
@@ -85,7 +85,11 @@
                 <artifactId>gson</artifactId>
                 <version>${gson.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-ratelimiter</artifactId>
+                <version>1.7.1</version>
+            </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-api</artifactId>
@@ -186,6 +190,27 @@
                             </path>
                         </annotationProcessorPaths>
                     </configuration>
+                </plugin>
+
+		<plugin>
+		    <groupId>com.diffplug.spotless</groupId>
+		    <artifactId>spotless-maven-plugin</artifactId>
+		    <version>2.12.3</version>
+		    <configuration>
+	  	        <java>
+			    <googleJavaFormat>
+			        <version>1.7</version>
+			    </googleJavaFormat>
+		        </java>
+		    </configuration>
+                    <executions>
+	                <execution>
+			    <phase>compile</phase>
+			    <goals>
+			        <goal>check</goal>
+			    </goals>
+			</execution>
+	            </executions>
                 </plugin>
             </plugins>
         </pluginManagement>

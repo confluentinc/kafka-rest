@@ -103,32 +103,23 @@ public class AclManagerImplTest {
               AclOperation.WRITE,
               AclPermissionType.DENY));
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private Admin adminClient;
+  @Mock private Admin adminClient;
 
-  @Mock
-  private ClusterManager clusterManager;
+  @Mock private ClusterManager clusterManager;
 
-  @Mock
-  private DescribeAclsResult describeAclsResult;
+  @Mock private DescribeAclsResult describeAclsResult;
 
-  @Mock
-  private CreateAclsResult createAclsResult;
+  @Mock private CreateAclsResult createAclsResult;
 
-  @Mock
-  private DeleteAclsResult deleteAclsResult;
+  @Mock private DeleteAclsResult deleteAclsResult;
 
-  @Mock
-  private FilterResults deleteFilterResults;
+  @Mock private FilterResults deleteFilterResults;
 
-  @Mock
-  private FilterResult deleteFilterResult1;
+  @Mock private FilterResult deleteFilterResult1;
 
-  @Mock
-  private FilterResult deleteFilterResult2;
+  @Mock private FilterResult deleteFilterResult2;
 
   private AclManagerImpl aclManager;
 
@@ -144,29 +135,31 @@ public class AclManagerImplTest {
             completedFuture(
                 Optional.of(Cluster.create(CLUSTER_ID, /* controller= */ null, emptyList()))));
     expect(
-        adminClient.describeAcls(
-            new AclBindingFilter(
-                new ResourcePatternFilter(ResourceType.ANY, /* name= */ null, PatternType.ANY),
-                new AccessControlEntryFilter(
-                    /* principal= */ null,
-                    /* host= */ null,
-                    AclOperation.ANY,
-                    AclPermissionType.ANY))))
+            adminClient.describeAcls(
+                new AclBindingFilter(
+                    new ResourcePatternFilter(ResourceType.ANY, /* name= */ null, PatternType.ANY),
+                    new AccessControlEntryFilter(
+                        /* principal= */ null,
+                        /* host= */ null,
+                        AclOperation.ANY,
+                        AclPermissionType.ANY))))
         .andReturn(describeAclsResult);
     expect(describeAclsResult.values())
         .andReturn(KafkaFuture.completedFuture(Arrays.asList(ACL_BINDING_1, ACL_BINDING_2)));
     replay(clusterManager, adminClient, describeAclsResult);
 
     List<Acl> acls =
-        aclManager.searchAcls(
-            CLUSTER_ID,
-            Acl.ResourceType.ANY,
-            /* resourceName= */ null,
-            Acl.PatternType.ANY,
-            /* principal= */ null,
-            /* host= */ null,
-            Acl.Operation.ANY,
-            Acl.Permission.ANY).get();
+        aclManager
+            .searchAcls(
+                CLUSTER_ID,
+                Acl.ResourceType.ANY,
+                /* resourceName= */ null,
+                Acl.PatternType.ANY,
+                /* principal= */ null,
+                /* host= */ null,
+                Acl.Operation.ANY,
+                Acl.Permission.ANY)
+            .get();
 
     assertEquals(Arrays.asList(ACL_1, ACL_2), acls);
   }
@@ -177,15 +170,17 @@ public class AclManagerImplTest {
     replay(clusterManager);
 
     try {
-      aclManager.searchAcls(
-          CLUSTER_ID,
-          Acl.ResourceType.ANY,
-          /* resourceName= */ null,
-          Acl.PatternType.ANY,
-          /* principal= */ null,
-          /* host= */ null,
-          Acl.Operation.ANY,
-          Acl.Permission.ANY).get();
+      aclManager
+          .searchAcls(
+              CLUSTER_ID,
+              Acl.ResourceType.ANY,
+              /* resourceName= */ null,
+              Acl.PatternType.ANY,
+              /* principal= */ null,
+              /* host= */ null,
+              Acl.Operation.ANY,
+              Acl.Permission.ANY)
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -203,15 +198,17 @@ public class AclManagerImplTest {
         .andReturn(Collections.singletonMap(ACL_BINDING_1, KafkaFuture.completedFuture(null)));
     replay(clusterManager, adminClient, createAclsResult);
 
-    aclManager.createAcl(
-        CLUSTER_ID,
-        Acl.ResourceType.CLUSTER,
-        /* resourceName= */ "*",
-        Acl.PatternType.LITERAL,
-        /* principal= */ "User:alice",
-        /* host= */ "*",
-        Acl.Operation.READ,
-        Acl.Permission.ALLOW).get();
+    aclManager
+        .createAcl(
+            CLUSTER_ID,
+            Acl.ResourceType.CLUSTER,
+            /* resourceName= */ "*",
+            Acl.PatternType.LITERAL,
+            /* principal= */ "User:alice",
+            /* host= */ "*",
+            Acl.Operation.READ,
+            Acl.Permission.ALLOW)
+        .get();
 
     verify(adminClient);
   }
@@ -222,15 +219,17 @@ public class AclManagerImplTest {
     replay(clusterManager);
 
     try {
-      aclManager.createAcl(
-        CLUSTER_ID,
-        Acl.ResourceType.CLUSTER,
-        /* resourceName= */ "*",
-        Acl.PatternType.LITERAL,
-        /* principal= */ "User:alice",
-        /* host= */ "*",
-        Acl.Operation.READ,
-        Acl.Permission.ALLOW).get();
+      aclManager
+          .createAcl(
+              CLUSTER_ID,
+              Acl.ResourceType.CLUSTER,
+              /* resourceName= */ "*",
+              Acl.PatternType.LITERAL,
+              /* principal= */ "User:alice",
+              /* host= */ "*",
+              Acl.Operation.READ,
+              Acl.Permission.ALLOW)
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -243,10 +242,7 @@ public class AclManagerImplTest {
         new AclBindingFilter(
             new ResourcePatternFilter(ResourceType.ANY, /* name= */ null, PatternType.ANY),
             new AccessControlEntryFilter(
-                /* principal= */ null,
-                /* host= */ null,
-                AclOperation.ANY,
-                AclPermissionType.ANY));
+                /* principal= */ null, /* host= */ null, AclOperation.ANY, AclPermissionType.ANY));
     expect(clusterManager.getCluster(CLUSTER_ID))
         .andReturn(
             completedFuture(
@@ -268,15 +264,17 @@ public class AclManagerImplTest {
         deleteFilterResult2);
 
     List<Acl> acls =
-        aclManager.deleteAcls(
-            CLUSTER_ID,
-            Acl.ResourceType.ANY,
-            /* resourceName= */ null,
-            Acl.PatternType.ANY,
-            /* principal= */ null,
-            /* host= */ null,
-            Acl.Operation.ANY,
-            Acl.Permission.ANY).get();
+        aclManager
+            .deleteAcls(
+                CLUSTER_ID,
+                Acl.ResourceType.ANY,
+                /* resourceName= */ null,
+                Acl.PatternType.ANY,
+                /* principal= */ null,
+                /* host= */ null,
+                Acl.Operation.ANY,
+                Acl.Permission.ANY)
+            .get();
 
     assertEquals(Arrays.asList(ACL_1, ACL_2), acls);
   }
@@ -287,15 +285,17 @@ public class AclManagerImplTest {
     replay(clusterManager);
 
     try {
-      aclManager.deleteAcls(
-          CLUSTER_ID,
-          Acl.ResourceType.ANY,
-          /* resourceName= */ null,
-          Acl.PatternType.ANY,
-          /* principal= */ null,
-          /* host= */ null,
-          Acl.Operation.ANY,
-          Acl.Permission.ANY).get();
+      aclManager
+          .deleteAcls(
+              CLUSTER_ID,
+              Acl.ResourceType.ANY,
+              /* resourceName= */ null,
+              Acl.PatternType.ANY,
+              /* principal= */ null,
+              /* host= */ null,
+              Acl.Operation.ANY,
+              Acl.Permission.ANY)
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());

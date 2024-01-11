@@ -28,8 +28,12 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class ProduceControllerImpl implements ProduceController {
+
+  private static final Logger log = LoggerFactory.getLogger(ProduceController.class);
 
   private final Producer<byte[], byte[]> producer;
 
@@ -46,9 +50,9 @@ final class ProduceControllerImpl implements ProduceController {
       Multimap<String, Optional<ByteString>> headers,
       Optional<ByteString> key,
       Optional<ByteString> value,
-      Instant timestamp
-  ) {
+      Instant timestamp) {
     CompletableFuture<ProduceResult> result = new CompletableFuture<>();
+    log.debug("Producing to kafka");
     producer.send(
         new ProducerRecord<>(
             topicName,
@@ -65,9 +69,11 @@ final class ProduceControllerImpl implements ProduceController {
                 .collect(Collectors.toList())),
         (metadata, exception) -> {
           if (exception != null) {
+            log.debug("Received exception from kafka", exception);
             result.completeExceptionally(exception);
           } else {
-            result.complete(ProduceResult.fromRecordMetadata(metadata));
+            log.debug("Received response from kafka");
+            result.complete(ProduceResult.fromRecordMetadata(metadata, Instant.now()));
           }
         });
     return result;

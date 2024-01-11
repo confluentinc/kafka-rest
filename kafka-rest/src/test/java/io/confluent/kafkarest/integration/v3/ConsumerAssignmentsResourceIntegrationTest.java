@@ -59,7 +59,10 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
                         .setSelf(
-                            baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups"
+                            baseUrl
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/consumer-groups"
                                 + "/consumer-group-1/consumers/"
                                 + consumer.groupMetadata().memberId()
                                 + "/assignments")
@@ -70,14 +73,18 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
                             .setMetadata(
                                 Resource.Metadata.builder()
                                     .setSelf(
-                                        baseUrl + "/v3/clusters/" + clusterId
+                                        baseUrl
+                                            + "/v3/clusters/"
+                                            + clusterId
                                             + "/consumer-groups/consumer-group-1/consumers/"
                                             + consumer.groupMetadata().memberId()
                                             + "/assignments/topic-1/partitions/0")
                                     .setResourceName(
-                                        "crn:///kafka=" + clusterId
+                                        "crn:///kafka="
+                                            + clusterId
                                             + "/consumer-group=consumer-group-1"
-                                            + "/consumer=" + consumer.groupMetadata().memberId()
+                                            + "/consumer="
+                                            + consumer.groupMetadata().memberId()
                                             + "/assignment=topic-1/partition=0")
                                     .build())
                             .setClusterId(clusterId)
@@ -87,26 +94,36 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
                             .setPartitionId(0)
                             .setPartition(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/topics/topic-1"
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/topic-1"
                                         + "/partitions/0"))
                             .setLag(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId +
-                                        "/consumer-groups/consumer-group-1" + "/lags/topic-1"
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/consumer-groups/consumer-group-1"
+                                        + "/lags/topic-1"
                                         + "/partitions/0"))
                             .build(),
                         ConsumerAssignmentData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
                                     .setSelf(
-                                        baseUrl + "/v3/clusters/" + clusterId
+                                        baseUrl
+                                            + "/v3/clusters/"
+                                            + clusterId
                                             + "/consumer-groups/consumer-group-1/consumers/"
                                             + consumer.groupMetadata().memberId()
                                             + "/assignments/topic-1/partitions/1")
                                     .setResourceName(
-                                        "crn:///kafka=" + clusterId
+                                        "crn:///kafka="
+                                            + clusterId
                                             + "/consumer-group=consumer-group-1"
-                                            + "/consumer=" + consumer.groupMetadata().memberId()
+                                            + "/consumer="
+                                            + consumer.groupMetadata().memberId()
                                             + "/assignment=topic-1/partition=1")
                                     .build())
                             .setClusterId(clusterId)
@@ -116,26 +133,36 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
                             .setPartitionId(1)
                             .setPartition(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/topics/topic-1"
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/topic-1"
                                         + "/partitions/1"))
                             .setLag(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId +
-                                        "/consumer-groups/consumer-group-1" + "/lags/topic-1"
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/consumer-groups/consumer-group-1"
+                                        + "/lags/topic-1"
                                         + "/partitions/1"))
                             .build(),
                         ConsumerAssignmentData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
                                     .setSelf(
-                                        baseUrl + "/v3/clusters/" + clusterId
+                                        baseUrl
+                                            + "/v3/clusters/"
+                                            + clusterId
                                             + "/consumer-groups/consumer-group-1/consumers/"
                                             + consumer.groupMetadata().memberId()
                                             + "/assignments/topic-1/partitions/2")
                                     .setResourceName(
-                                        "crn:///kafka=" + clusterId
+                                        "crn:///kafka="
+                                            + clusterId
                                             + "/consumer-group=consumer-group-1"
-                                            + "/consumer=" + consumer.groupMetadata().memberId()
+                                            + "/consumer="
+                                            + consumer.groupMetadata().memberId()
                                             + "/assignment=topic-1/partition=2")
                                     .build())
                             .setClusterId(clusterId)
@@ -145,20 +172,29 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
                             .setPartitionId(2)
                             .setPartition(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/topics/topic-1"
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/topic-1"
                                         + "/partitions/2"))
                             .setLag(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId +
-                                        "/consumer-groups/consumer-group-1" + "/lags/topic-1"
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/consumer-groups/consumer-group-1"
+                                        + "/lags/topic-1"
                                         + "/partitions/2"))
                             .build()))
                 .build());
 
     Response response =
         request(
-            "/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1/consumers/"
-                + consumer.groupMetadata().memberId() + "/assignments")
+                "/v3/clusters/"
+                    + clusterId
+                    + "/consumer-groups/consumer-group-1/consumers/"
+                    + consumer.groupMetadata().memberId()
+                    + "/assignments")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
@@ -174,8 +210,9 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
 
     Response response =
         request(
-            "/v3/clusters/foobar/consumer-groups/consumer-group-1/consumers/"
-                + consumer.groupMetadata().memberId() + "/assignments")
+                "/v3/clusters/foobar/consumer-groups/consumer-group-1/consumers/"
+                    + consumer.groupMetadata().memberId()
+                    + "/assignments")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -197,14 +234,18 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf(
-                            baseUrl + "/v3/clusters/" + clusterId
+                            baseUrl
+                                + "/v3/clusters/"
+                                + clusterId
                                 + "/consumer-groups/consumer-group-1/consumers/"
                                 + consumer.groupMetadata().memberId()
                                 + "/assignments/topic-1/partitions/0")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
+                            "crn:///kafka="
+                                + clusterId
                                 + "/consumer-group=consumer-group-1"
-                                + "/consumer=" + consumer.groupMetadata().memberId()
+                                + "/consumer="
+                                + consumer.groupMetadata().memberId()
                                 + "/assignment=topic-1/partition=0")
                         .build())
                 .setClusterId(clusterId)
@@ -214,20 +255,29 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
                 .setPartitionId(0)
                 .setPartition(
                     Relationship.create(
-                        baseUrl + "/v3/clusters/" + clusterId + "/topics/topic-1"
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/topic-1"
                             + "/partitions/0"))
                 .setLag(
                     Relationship.create(
-                        baseUrl + "/v3/clusters/" + clusterId +
-                            "/consumer-groups/consumer-group-1" + "/lags/topic-1"
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/consumer-groups/consumer-group-1"
+                            + "/lags/topic-1"
                             + "/partitions/0"))
                 .build());
 
     Response response =
         request(
-            "/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1"
-                + "/consumers/" + consumer.groupMetadata().memberId()
-                + "/assignments/topic-1/partitions/0")
+                "/v3/clusters/"
+                    + clusterId
+                    + "/consumer-groups/consumer-group-1"
+                    + "/consumers/"
+                    + consumer.groupMetadata().memberId()
+                    + "/assignments/topic-1/partitions/0")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
@@ -243,9 +293,10 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
 
     Response response =
         request(
-            "/v3/clusters/foobar/consumer-groups/consumer-group-1"
-                + "/consumers/" + consumer.groupMetadata().memberId()
-                + "/assignments/topic-1/partitions/0")
+                "/v3/clusters/foobar/consumer-groups/consumer-group-1"
+                    + "/consumers/"
+                    + consumer.groupMetadata().memberId()
+                    + "/assignments/topic-1/partitions/0")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -261,9 +312,12 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
 
     Response response =
         request(
-            "/v3/clusters/" + clusterId + "/consumer-groups/foobar"
-                + "/consumers/" + consumer.groupMetadata().memberId()
-                + "/assignments/topic-1/partitions/0")
+                "/v3/clusters/"
+                    + clusterId
+                    + "/consumer-groups/foobar"
+                    + "/consumers/"
+                    + consumer.groupMetadata().memberId()
+                    + "/assignments/topic-1/partitions/0")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -279,9 +333,11 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
 
     Response response =
         request(
-            "/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1"
-                + "/consumers/foobar"
-                + "/assignments/topic-1/partitions/0")
+                "/v3/clusters/"
+                    + clusterId
+                    + "/consumer-groups/consumer-group-1"
+                    + "/consumers/foobar"
+                    + "/assignments/topic-1/partitions/0")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -297,9 +353,12 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
 
     Response response =
         request(
-            "/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1"
-                + "/consumers/" + consumer.groupMetadata().memberId()
-                + "/assignments/foobar/partitions/0")
+                "/v3/clusters/"
+                    + clusterId
+                    + "/consumer-groups/consumer-group-1"
+                    + "/consumers/"
+                    + consumer.groupMetadata().memberId()
+                    + "/assignments/foobar/partitions/0")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());

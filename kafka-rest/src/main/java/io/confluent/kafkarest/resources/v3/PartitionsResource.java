@@ -53,10 +53,7 @@ public final class PartitionsResource {
 
   @Inject
   public PartitionsResource(
-      Provider<PartitionManager> partitionManager,
-      CrnFactory crnFactory,
-      UrlFactory urlFactory
-  ) {
+      Provider<PartitionManager> partitionManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.partitionManager = requireNonNull(partitionManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -71,7 +68,8 @@ public final class PartitionsResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName) {
     CompletableFuture<ListPartitionsResponse> response =
-        partitionManager.get()
+        partitionManager
+            .get()
             .listPartitions(clusterId, topicName)
             .thenApply(
                 partitions ->
@@ -108,7 +106,8 @@ public final class PartitionsResource {
       @PathParam("topicName") String topicName,
       @PathParam("partitionId") Integer partitionId) {
     CompletableFuture<GetPartitionResponse> response =
-        partitionManager.get()
+        partitionManager
+            .get()
             .getPartition(clusterId, topicName, partitionId)
             .thenApply(partition -> partition.orElseThrow(NotFoundException::new))
             .thenApply(partition -> GetPartitionResponse.create(toPartitionData(partition)));
@@ -155,19 +154,20 @@ public final class PartitionsResource {
                         "partitions",
                         Integer.toString(partition.getPartitionId()),
                         "replicas")))
-        .setReassignment(
-            Resource.Relationship.create(
-                urlFactory.create(
-                    "v3",
-                    "clusters",
-                    partition.getClusterId(),
-                    "topics",
-                    partition.getTopicName(),
-                    "partitions",
-                    Integer.toString(partition.getPartitionId()),
-                    "reassignment")));
+            .setReassignment(
+                Resource.Relationship.create(
+                    urlFactory.create(
+                        "v3",
+                        "clusters",
+                        partition.getClusterId(),
+                        "topics",
+                        partition.getTopicName(),
+                        "partitions",
+                        Integer.toString(partition.getPartitionId()),
+                        "reassignment")));
 
-    partition.getLeader()
+    partition
+        .getLeader()
         .map(
             replica ->
                 Resource.Relationship.create(

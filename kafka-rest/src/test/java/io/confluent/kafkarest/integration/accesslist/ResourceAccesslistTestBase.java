@@ -54,7 +54,9 @@ public class ResourceAccesslistTestBase extends ClusterTestHarness {
         .accept(MediaType.APPLICATION_JSON)
         .post(
             Entity.entity(
-                "{\"topic_name\":\"" + TOPIC_1 + "\",\"partitions_count\":3,\"replication_factor\":3}",
+                "{\"topic_name\":\""
+                    + TOPIC_1
+                    + "\",\"partitions_count\":3,\"replication_factor\":3}",
                 MediaType.APPLICATION_JSON));
   }
 
@@ -91,8 +93,7 @@ public class ResourceAccesslistTestBase extends ClusterTestHarness {
    */
 
   Response updateClusterConfig() {
-    return request(
-        "/v3/clusters/" + getClusterId() + "/broker-configs:alter")
+    return request("/v3/clusters/" + getClusterId() + "/broker-configs:alter")
         .accept(MediaType.APPLICATION_JSON)
         .post(
             Entity.entity(
@@ -102,4 +103,3 @@ public class ResourceAccesslistTestBase extends ClusterTestHarness {
                 MediaType.APPLICATION_JSON));
   }
 }
-

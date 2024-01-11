@@ -55,34 +55,34 @@ public class ProduceControllerImplTest {
                   "topic-1",
                   0,
                   new Node(1, "localhost", 1234),
-                  new Node[]{new Node(1, "localhost", 1234)},
-                  new Node[]{new Node(1, "localhost", 1234)}),
+                  new Node[] {new Node(1, "localhost", 1234)},
+                  new Node[] {new Node(1, "localhost", 1234)}),
               new PartitionInfo(
                   "topic-1",
                   1,
                   new Node(1, "localhost", 1234),
-                  new Node[]{new Node(1, "localhost", 1234)},
-                  new Node[]{new Node(1, "localhost", 1234)}),
+                  new Node[] {new Node(1, "localhost", 1234)},
+                  new Node[] {new Node(1, "localhost", 1234)}),
               new PartitionInfo(
                   "topic-1",
                   2,
                   new Node(1, "localhost", 1234),
-                  new Node[]{new Node(1, "localhost", 1234)},
-                  new Node[]{new Node(1, "localhost", 1234)})),
+                  new Node[] {new Node(1, "localhost", 1234)},
+                  new Node[] {new Node(1, "localhost", 1234)})),
           emptySet(),
           emptySet());
 
   private static final Function<
-      ProducerRecord<byte[], byte[]>,
-      ProducerRecord<ByteString, ByteString>> BYTE_ARRAY_TO_BYTE_STRING_RECORD_FUNCTION =
-      record ->
-          new ProducerRecord<>(
-              record.topic(),
-              record.partition(),
-              record.timestamp(),
-              record.key() != null ? ByteString.copyFrom(record.key()) : null,
-              record.value() != null ? ByteString.copyFrom(record.value()) : null,
-              record.headers());
+          ProducerRecord<byte[], byte[]>, ProducerRecord<ByteString, ByteString>>
+      BYTE_ARRAY_TO_BYTE_STRING_RECORD_FUNCTION =
+          record ->
+              new ProducerRecord<>(
+                  record.topic(),
+                  record.partition(),
+                  record.timestamp(),
+                  record.key() != null ? ByteString.copyFrom(record.key()) : null,
+                  record.value() != null ? ByteString.copyFrom(record.value()) : null,
+                  record.headers());
 
   private MockProducer<byte[], byte[]> producer;
   private ProduceController produceController;
@@ -133,10 +133,15 @@ public class ProduceControllerImplTest {
     producer.completeNext();
     producer.completeNext();
 
-    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize.
-    assertEquals(ProduceResult.create(1, 0, null, 0, 0), result1.join());
-    assertEquals(ProduceResult.create(1, 1, null, 0, 0), result2.join());
-    assertEquals(ProduceResult.create(1, 2, null, 0, 0), result3.join());
+    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize,
+    // so we only need to confirm offset and partition.
+    int expectedPartition = 1;
+    assertEquals(expectedPartition, result1.join().getPartitionId());
+    assertEquals(0, result1.join().getOffset());
+    assertEquals(expectedPartition, result2.join().getPartitionId());
+    assertEquals(1, result2.join().getOffset());
+    assertEquals(expectedPartition, result3.join().getPartitionId());
+    assertEquals(2, result3.join().getOffset());
 
     assertProducerRecordsEquals(
         Arrays.asList(
@@ -198,10 +203,15 @@ public class ProduceControllerImplTest {
     producer.completeNext();
     producer.completeNext();
 
-    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize.
-    assertEquals(ProduceResult.create(0, 0, null, 0, 0), result1.join());
-    assertEquals(ProduceResult.create(1, 0, null, 0, 0), result2.join());
-    assertEquals(ProduceResult.create(2, 0, null, 0, 0), result3.join());
+    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize,
+    // so we only need to confirm offset and partition.
+    int expectedOffset = 0;
+    assertEquals(0, result1.join().getPartitionId());
+    assertEquals(expectedOffset, result1.join().getOffset());
+    assertEquals(1, result2.join().getPartitionId());
+    assertEquals(expectedOffset, result2.join().getOffset());
+    assertEquals(2, result3.join().getPartitionId());
+    assertEquals(expectedOffset, result3.join().getOffset());
 
     assertProducerRecordsEquals(
         Arrays.asList(
@@ -263,10 +273,15 @@ public class ProduceControllerImplTest {
     producer.completeNext();
     producer.completeNext();
 
-    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize.
-    assertEquals(ProduceResult.create(1, 0, null, 0, 0), result1.join());
-    assertEquals(ProduceResult.create(1, 1, null, 0, 0), result2.join());
-    assertEquals(ProduceResult.create(1, 2, null, 0, 0), result3.join());
+    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize,
+    // so we only need to confirm offset and partition.
+    int expectedPartition = 1;
+    assertEquals(expectedPartition, result1.join().getPartitionId());
+    assertEquals(0, result1.join().getOffset());
+    assertEquals(expectedPartition, result2.join().getPartitionId());
+    assertEquals(1, result2.join().getOffset());
+    assertEquals(expectedPartition, result3.join().getPartitionId());
+    assertEquals(2, result3.join().getOffset());
 
     assertProducerRecordsEquals(
         Arrays.asList(
@@ -328,10 +343,15 @@ public class ProduceControllerImplTest {
     producer.completeNext();
     producer.completeNext();
 
-    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize.
-    assertEquals(ProduceResult.create(1, 0, null, 0, 0), result1.join());
-    assertEquals(ProduceResult.create(1, 1, null, 0, 0), result2.join());
-    assertEquals(ProduceResult.create(1, 2, null, 0, 0), result3.join());
+    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize,
+    // so we only need to confirm offset and partition.
+    int expectedPartition = 1;
+    assertEquals(expectedPartition, result1.join().getPartitionId());
+    assertEquals(0, result1.join().getOffset());
+    assertEquals(expectedPartition, result2.join().getPartitionId());
+    assertEquals(1, result2.join().getOffset());
+    assertEquals(expectedPartition, result3.join().getPartitionId());
+    assertEquals(2, result3.join().getOffset());
 
     assertProducerRecordsEquals(
         Arrays.asList(
@@ -393,10 +413,15 @@ public class ProduceControllerImplTest {
     producer.completeNext();
     producer.completeNext();
 
-    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize.
-    assertEquals(ProduceResult.create(0, 0, null, 0, 0), result1.join());
-    assertEquals(ProduceResult.create(1, 0, null, 0, 0), result2.join());
-    assertEquals(ProduceResult.create(2, 0, null, 0, 0), result3.join());
+    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize,
+    // so we only need to confirm offset and partition.
+    int expectedOffset = 0;
+    assertEquals(0, result1.join().getPartitionId());
+    assertEquals(expectedOffset, result1.join().getOffset());
+    assertEquals(1, result2.join().getPartitionId());
+    assertEquals(expectedOffset, result2.join().getOffset());
+    assertEquals(2, result3.join().getPartitionId());
+    assertEquals(expectedOffset, result3.join().getOffset());
 
     assertProducerRecordsEquals(
         Arrays.asList(

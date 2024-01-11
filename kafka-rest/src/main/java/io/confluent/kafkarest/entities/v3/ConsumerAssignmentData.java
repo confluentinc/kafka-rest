@@ -23,8 +23,7 @@ import io.confluent.kafkarest.entities.ConsumerAssignment;
 @AutoValue
 public abstract class ConsumerAssignmentData extends Resource {
 
-  ConsumerAssignmentData() {
-  }
+  ConsumerAssignmentData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -70,8 +69,7 @@ public abstract class ConsumerAssignmentData extends Resource {
       @JsonProperty("topic_name") String topicName,
       @JsonProperty("partition_id") int partitionId,
       @JsonProperty("partition") Relationship partition,
-      @JsonProperty("lag") Relationship lag
-  ) {
+      @JsonProperty("lag") Relationship lag) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -88,8 +86,7 @@ public abstract class ConsumerAssignmentData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

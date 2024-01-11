@@ -30,21 +30,15 @@ import javax.validation.constraints.PositiveOrZero;
 
 public final class SchemaTopicProduceRequest {
 
-  @NotEmpty
-  @Nullable
-  private final List<SchemaTopicProduceRecord> records;
+  @NotEmpty @Nullable private final List<SchemaTopicProduceRecord> records;
 
-  @Nullable
-  private final String keySchema;
+  @Nullable private final String keySchema;
 
-  @Nullable
-  private final Integer keySchemaId;
+  @Nullable private final Integer keySchemaId;
 
-  @Nullable
-  private final String valueSchema;
+  @Nullable private final String valueSchema;
 
-  @Nullable
-  private final Integer valueSchemaId;
+  @Nullable private final Integer valueSchemaId;
 
   @JsonCreator
   public SchemaTopicProduceRequest(
@@ -52,8 +46,7 @@ public final class SchemaTopicProduceRequest {
       @JsonProperty("key_schema") @Nullable String keySchema,
       @JsonProperty("key_schema_id") @Nullable Integer keySchemaId,
       @JsonProperty("value_schema") @Nullable String valueSchema,
-      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId
-  ) {
+      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId) {
     this.records = records;
     this.keySchema = keySchema;
     this.keySchemaId = keySchemaId;
@@ -141,8 +134,7 @@ public final class SchemaTopicProduceRequest {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", SchemaTopicProduceRequest.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", SchemaTopicProduceRequest.class.getSimpleName() + "[", "]")
         .add("records=" + records)
         .add("keySchema='" + keySchema + "'")
         .add("keySchemaId=" + keySchemaId)
@@ -153,23 +145,18 @@ public final class SchemaTopicProduceRequest {
 
   public static final class SchemaTopicProduceRecord {
 
-    @Nullable
-    private final JsonNode key;
+    @Nullable private final JsonNode key;
 
-    @Nullable
-    private final JsonNode value;
+    @Nullable private final JsonNode value;
 
-    @PositiveOrZero
-    @Nullable
-    private final Integer partition;
+    @PositiveOrZero @Nullable private final Integer partition;
 
     @JsonCreator
     public SchemaTopicProduceRecord(
         @JsonProperty("key") @Nullable JsonNode key,
         @JsonProperty("value") @Nullable JsonNode value,
-        @JsonProperty("partition") @Nullable Integer partition
+        @JsonProperty("partition") @Nullable Integer partition) {
 
-    ) {
       this.key = key;
       this.value = value;
       this.partition = partition;

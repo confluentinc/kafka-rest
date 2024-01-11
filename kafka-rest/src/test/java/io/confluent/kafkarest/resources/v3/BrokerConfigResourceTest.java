@@ -75,11 +75,9 @@ public final class BrokerConfigResourceTest {
           ConfigSource.DYNAMIC_BROKER_CONFIG,
           /* synonyms= */ emptyList());
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private BrokerConfigManager brokerConfigManager;
+  @Mock private BrokerConfigManager brokerConfigManager;
 
   private BrokerConfigsResource brokerConfigsResource;
 
@@ -88,15 +86,14 @@ public final class BrokerConfigResourceTest {
     brokerConfigsResource =
         new BrokerConfigsResource(
             () -> brokerConfigManager,
-            new CrnFactoryImpl(/* crnAuthorityConfig= */""),
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
             new FakeUrlFactory());
   }
 
   @Test
   public void listBrokerConfigs_existingBroker_returnsConfigs() {
     expect(brokerConfigManager.listBrokerConfigs(CLUSTER_ID, BROKER_ID))
-        .andReturn(
-            completedFuture(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)));
+        .andReturn(completedFuture(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)));
     replay(brokerConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -107,16 +104,14 @@ public final class BrokerConfigResourceTest {
             BrokerConfigDataList.builder()
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/brokers/1/configs")
+                        .setSelf("/v3/clusters/cluster-1/brokers/1/configs")
                         .build())
                 .setData(
                     Arrays.asList(
                         BrokerConfigData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/brokers/1/configs/config-1")
+                                    .setSelf("/v3/clusters/cluster-1/brokers/1/configs/config-1")
                                     .setResourceName(
                                         "crn:///kafka=cluster-1/broker=1/config=config-1")
                                     .build())
@@ -136,8 +131,7 @@ public final class BrokerConfigResourceTest {
                         BrokerConfigData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/brokers/1/configs/config-2")
+                                    .setSelf("/v3/clusters/cluster-1/brokers/1/configs/config-2")
                                     .setResourceName(
                                         "crn:///kafka=cluster-1/broker=1/config=config-2")
                                     .build())
@@ -157,8 +151,7 @@ public final class BrokerConfigResourceTest {
                         BrokerConfigData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/brokers/1/configs/config-3")
+                                    .setSelf("/v3/clusters/cluster-1/brokers/1/configs/config-3")
                                     .setResourceName(
                                         "crn:///kafka=cluster-1/broker=1/config=config-3")
                                     .build())
@@ -194,8 +187,7 @@ public final class BrokerConfigResourceTest {
 
   @Test
   public void getBrokerConfig_existingConfig_returnsConfig() {
-    expect(brokerConfigManager.getBrokerConfig(
-        CLUSTER_ID, BROKER_ID, CONFIG_1.getName()))
+    expect(brokerConfigManager.getBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName()))
         .andReturn(completedFuture(Optional.of(CONFIG_1)));
     replay(brokerConfigManager);
 
@@ -206,10 +198,8 @@ public final class BrokerConfigResourceTest {
             BrokerConfigData.builder()
                 .setMetadata(
                     Resource.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/brokers/1/configs/config-1")
-                        .setResourceName(
-                            "crn:///kafka=cluster-1/broker=1/config=config-1")
+                        .setSelf("/v3/clusters/cluster-1/brokers/1/configs/config-1")
+                        .setResourceName("crn:///kafka=cluster-1/broker=1/config=config-1")
                         .build())
                 .setClusterId(CLUSTER_ID)
                 .setBrokerId(BROKER_ID)
@@ -230,28 +220,24 @@ public final class BrokerConfigResourceTest {
 
   @Test
   public void getBrokerConfig_nonExistingConfig_throwsNotFound() {
-    expect(brokerConfigManager.getBrokerConfig(
-        CLUSTER_ID, BROKER_ID, CONFIG_1.getName()))
+    expect(brokerConfigManager.getBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName()))
         .andReturn(failedFuture(new NotFoundException()));
     replay(brokerConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    brokerConfigsResource.getBrokerConfig(
-        response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
+    brokerConfigsResource.getBrokerConfig(response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
 
   @Test
   public void getBrokerConfig_nonExistingBrokerorCluster_throwsNotFound() {
-    expect(brokerConfigManager.getBrokerConfig(
-        CLUSTER_ID, BROKER_ID, CONFIG_1.getName()))
+    expect(brokerConfigManager.getBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName()))
         .andReturn(failedFuture(new NotFoundException()));
     replay(brokerConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    brokerConfigsResource.getBrokerConfig(
-        response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
+    brokerConfigsResource.getBrokerConfig(response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
@@ -259,11 +245,8 @@ public final class BrokerConfigResourceTest {
   @Test
   public void updateBrokerConfig_existingConfig_updatesConfig() {
     expect(
-        brokerConfigManager.updateBrokerConfig(
-            CLUSTER_ID,
-            BROKER_ID,
-            CONFIG_1.getName(),
-            "new-value"))
+            brokerConfigManager.updateBrokerConfig(
+                CLUSTER_ID, BROKER_ID, CONFIG_1.getName(), "new-value"))
         .andReturn(completedFuture(null));
     replay(brokerConfigManager);
 
@@ -282,11 +265,8 @@ public final class BrokerConfigResourceTest {
   @Test
   public void updateConfig_nonExistingConfigOrBrokerOrCluster_throwsNotFound() {
     expect(
-        brokerConfigManager.updateBrokerConfig(
-            CLUSTER_ID,
-            BROKER_ID,
-            CONFIG_1.getName(),
-            "new-value"))
+            brokerConfigManager.updateBrokerConfig(
+                CLUSTER_ID, BROKER_ID, CONFIG_1.getName(), "new-value"))
         .andReturn(failedFuture(new NotFoundException()));
     replay(brokerConfigManager);
 
@@ -303,17 +283,12 @@ public final class BrokerConfigResourceTest {
 
   @Test
   public void resetBrokerConfig_existingConfig_resetsConfig() {
-    expect(
-        brokerConfigManager.resetBrokerConfig(
-            CLUSTER_ID,
-            BROKER_ID,
-            CONFIG_1.getName()))
+    expect(brokerConfigManager.resetBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName()))
         .andReturn(completedFuture(null));
     replay(brokerConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    brokerConfigsResource.resetBrokerConfig(
-        response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
+    brokerConfigsResource.resetBrokerConfig(response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
 
     assertNull(response.getValue());
     assertNull(response.getException());
@@ -322,17 +297,12 @@ public final class BrokerConfigResourceTest {
 
   @Test
   public void resetBrokerConfig_nonExistingConfigOrBrokerOrCluster_throwsNotFound() {
-    expect(
-        brokerConfigManager.resetBrokerConfig(
-            CLUSTER_ID,
-            BROKER_ID,
-            CONFIG_1.getName()))
+    expect(brokerConfigManager.resetBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName()))
         .andReturn(failedFuture(new NotFoundException()));
     replay(brokerConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    brokerConfigsResource.resetBrokerConfig(
-        response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
+    brokerConfigsResource.resetBrokerConfig(response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

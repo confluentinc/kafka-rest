@@ -28,53 +28,51 @@ import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
 
 public class MockConsumer<K, V> extends org.apache.kafka.clients.consumer.MockConsumer<K, V> {
-    private String cid;
-    String groupName;
+  private String cid;
+  String groupName;
 
-    private final Map<TopicPartition, SortedSet<OffsetAndTimestamp>> offsetForTimes =
-        new HashMap<>();
+  private final Map<TopicPartition, SortedSet<OffsetAndTimestamp>> offsetForTimes = new HashMap<>();
 
-    MockConsumer(OffsetResetStrategy offsetResetStrategy, String groupName) {
-        super(offsetResetStrategy);
-        this.groupName = groupName;
+  MockConsumer(OffsetResetStrategy offsetResetStrategy, String groupName) {
+    super(offsetResetStrategy);
+    this.groupName = groupName;
+  }
+
+  public String cid() {
+    return cid;
+  }
+
+  public void cid(String cid) {
+    this.cid = cid;
+  }
+
+  synchronized void updateOffsetForTime(
+      String topic, int partition, long offset, Instant timestamp) {
+    SortedSet<OffsetAndTimestamp> offsets =
+        offsetForTimes.computeIfAbsent(
+            new TopicPartition(topic, partition), key -> createSortedSetOfOffsetAndTimestamps());
+    offsets.add(new OffsetAndTimestamp(offset, timestamp.toEpochMilli()));
+  }
+
+  @Override
+  public synchronized Map<TopicPartition, OffsetAndTimestamp> offsetsForTimes(
+      Map<TopicPartition, Long> timestampsToSearch) {
+    Map<TopicPartition, OffsetAndTimestamp> result = new HashMap<>();
+    for (Entry<TopicPartition, Long> entry : timestampsToSearch.entrySet()) {
+      SortedSet<OffsetAndTimestamp> offsets =
+          offsetForTimes.getOrDefault(entry.getKey(), createSortedSetOfOffsetAndTimestamps());
+      SortedSet<OffsetAndTimestamp> tail =
+          offsets.tailSet(new OffsetAndTimestamp(0L, entry.getValue()));
+      if (tail.isEmpty()) {
+        result.put(entry.getKey(), /* value= */ null);
+      } else {
+        result.put(entry.getKey(), tail.first());
+      }
     }
+    return unmodifiableMap(result);
+  }
 
-    public String cid() {
-        return cid;
-    }
-
-    public void cid(String cid) {
-        this.cid = cid;
-    }
-
-    synchronized void updateOffsetForTime(
-        String topic, int partition, long offset, Instant timestamp) {
-        SortedSet<OffsetAndTimestamp> offsets =
-            offsetForTimes.computeIfAbsent(
-                new TopicPartition(topic, partition),
-                key -> createSortedSetOfOffsetAndTimestamps());
-        offsets.add(new OffsetAndTimestamp(offset, timestamp.toEpochMilli()));
-    }
-
-    @Override
-    public synchronized Map<TopicPartition, OffsetAndTimestamp> offsetsForTimes(
-        Map<TopicPartition, Long> timestampsToSearch) {
-        Map<TopicPartition, OffsetAndTimestamp> result = new HashMap<>();
-        for (Entry<TopicPartition, Long> entry : timestampsToSearch.entrySet()) {
-            SortedSet<OffsetAndTimestamp> offsets =
-                offsetForTimes.getOrDefault(entry.getKey(), createSortedSetOfOffsetAndTimestamps());
-            SortedSet<OffsetAndTimestamp> tail =
-                offsets.tailSet(new OffsetAndTimestamp(0L, entry.getValue()));
-            if (tail.isEmpty()) {
-                result.put(entry.getKey(), /* value= */ null);
-            } else {
-                result.put(entry.getKey(), tail.first());
-            }
-        }
-        return unmodifiableMap(result);
-    }
-
-    private static SortedSet<OffsetAndTimestamp> createSortedSetOfOffsetAndTimestamps() {
-        return new TreeSet<>(Comparator.comparing(OffsetAndTimestamp::timestamp));
-    }
+  private static SortedSet<OffsetAndTimestamp> createSortedSetOfOffsetAndTimestamps() {
+    return new TreeSet<>(Comparator.comparing(OffsetAndTimestamp::timestamp));
+  }
 }

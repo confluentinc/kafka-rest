@@ -24,18 +24,18 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.converters.JsonSchemaConverter;
 import io.confluent.kafkarest.converters.ProtobufConverter;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v2.ConsumerAssignmentRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerAssignmentResponse;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedResponse;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSeekRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import java.time.Clock;
@@ -79,12 +79,10 @@ import org.slf4j.LoggerFactory;
  * Manages consumer instances by mapping instance IDs to consumer objects, processing read requests,
  * and cleaning up when consumers disappear.
  *
- * <p>For read and commitOffsets tasks, it uses a {@link ThreadPoolExecutor}
- *  which spins up threads for handling read tasks.
- * Since read tasks do not complete on the first run but rather call the AK consumer's poll() method
- * continuously, we re-schedule them via a {@link DelayQueue}.
- * A {@link ReadTaskSchedulerThread} runs in a separate thread
- *  and re-submits the tasks to the executor.
+ * <p>For read and commitOffsets tasks, it uses a {@link ThreadPoolExecutor} which spins up threads
+ * for handling read tasks. Since read tasks do not complete on the first run but rather call the AK
+ * consumer's poll() method continuously, we re-schedule them via a {@link DelayQueue}. A {@link
+ * ReadTaskSchedulerThread} runs in a separate thread and re-submits the tasks to the executor.
  */
 public class KafkaConsumerManager {
 
@@ -113,36 +111,42 @@ public class KafkaConsumerManager {
     this.config = config;
 
     // Cached thread pool
-    int maxThreadCount = config.getInt(CONSUMER_MAX_THREADS_CONFIG) < 0 ? Integer.MAX_VALUE
+    int maxThreadCount =
+        config.getInt(CONSUMER_MAX_THREADS_CONFIG) < 0
+            ? Integer.MAX_VALUE
             : config.getInt(CONSUMER_MAX_THREADS_CONFIG);
 
-    this.executor = new KafkaConsumerThreadPoolExecutor(0, maxThreadCount,
-            60L, TimeUnit.SECONDS,
+    this.executor =
+        new KafkaConsumerThreadPoolExecutor(
+            0,
+            maxThreadCount,
+            60L,
+            TimeUnit.SECONDS,
             new SynchronousQueue<Runnable>(),
             new RejectedExecutionHandler() {
-            @Override
-            public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-              if (r instanceof ReadFutureTask) {
-                RunnableReadTask readTask = ((ReadFutureTask)r).readTask;
-                Duration retry = Duration.ofMillis(ThreadLocalRandom.current().nextInt(25, 76));
-                log.debug(
-                    "The runnable {} was rejected execution because the thread pool is saturated. "
-                        + "Delaying execution for {}ms.",
-                    r, retry.toMillis());
-                readTask.delayFor(retry);
-              } else {
-                log.debug(
-                    "The runnable {} was rejected execution because the thread pool is saturated. "
-                        + "Executing on calling thread.",
-                    r);
-                // run commitOffset and consumer close tasks from the caller thread
-                if (!executor.isShutdown()) {
-                  r.run();
+              @Override
+              public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+                if (r instanceof ReadFutureTask) {
+                  RunnableReadTask readTask = ((ReadFutureTask) r).readTask;
+                  Duration retry = Duration.ofMillis(ThreadLocalRandom.current().nextInt(25, 76));
+                  log.debug(
+                      "The runnable {} was rejected execution because the thread pool is saturated."
+                          + " Delaying execution for {}ms.",
+                      r,
+                      retry.toMillis());
+                  readTask.delayFor(retry);
+                } else {
+                  log.debug(
+                      "The runnable {} was rejected execution because the thread pool is saturated."
+                          + " Executing on calling thread.",
+                      r);
+                  // run commitOffset and consumer close tasks from the caller thread
+                  if (!executor.isShutdown()) {
+                    r.run();
+                  }
                 }
               }
-            }
-          }
-    );
+            });
     this.consumerFactory = null;
     this.expirationThread = new ExpirationThread();
     this.readTaskSchedulerThread = new ReadTaskSchedulerThread();
@@ -169,19 +173,7 @@ public class KafkaConsumerManager {
     // local name) and the ID (consumer.id setting in the consumer). Otherwise, the 'name' field
     // only applies to the local name. When we replace with the new consumer, we may want to
     // provide an alternate app name, or just reuse the name.
-    String name = instanceConfig.getName();
-    if (instanceConfig.getId() != null) { // Explicit ID request always overrides name
-      name = instanceConfig.getId();
-    }
-    if (name == null) {
-      name = "rest-consumer-";
-      String serverId = this.config.getString(KafkaRestConfig.ID_CONFIG);
-      if (!serverId.isEmpty()) {
-        name += serverId + "-";
-      }
-      name += UUID.randomUUID().toString();
-    }
-
+    String name = getConsumerInstanceName(instanceConfig);
     ConsumerInstanceId cid = new ConsumerInstanceId(group, name);
     // Perform this check before
     synchronized (this) {
@@ -198,59 +190,7 @@ public class KafkaConsumerManager {
     try {
       log.debug("Creating consumer " + name + " in group " + group);
 
-      // Note the ordering here. We want to allow overrides, but almost all the
-      // consumer-specific settings don't make sense to override globally (e.g. group ID, consumer
-      // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
-      // intentionally name differently in our own configs).
-      //Properties props = (Properties) config.getOriginalProperties().clone();
-      Properties props = config.getConsumerProperties();
-      props.setProperty("group.id", group);
-      // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
-      // was passed in. This generally shouldn't be used, but is maintained for compatibility.
-      if (instanceConfig.getId() != null) {
-        props.setProperty("consumer.id", instanceConfig.getId());
-      }
-      if (instanceConfig.getAutoCommitEnable() != null) {
-        props.setProperty("enable.auto.commit", instanceConfig.getAutoCommitEnable());
-      }
-      if (instanceConfig.getAutoOffsetReset() != null) {
-        props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
-      }
-      // override request.timeout.ms to the default
-      // the consumer.request.timeout.ms setting given by the user denotes
-      // how much time the proxy should wait before returning a response
-      // and should not be propagated to the consumer
-      props.setProperty("request.timeout.ms", "30000");
-
-      switch (instanceConfig.getFormat()) {
-        case AVRO:
-          props.put("key.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
-          props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
-          break;
-        case JSONSCHEMA:
-          props.put("key.deserializer",
-              "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer");
-          props.put("value.deserializer",
-              "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer");
-          break;
-        case PROTOBUF:
-          props.put("key.deserializer",
-              "io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer");
-          props.put("value.deserializer",
-              "io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer");
-          break;
-        case JSON:
-        case BINARY:
-        default:
-          props.put(
-              "key.deserializer",
-              "org.apache.kafka.common.serialization.ByteArrayDeserializer"
-          );
-          props.put(
-              "value.deserializer",
-              "org.apache.kafka.common.serialization.ByteArrayDeserializer"
-          );
-      }
+      Properties props = getConsumerInstanceProperties(group, instanceConfig);
 
       Consumer consumer;
       try {
@@ -278,10 +218,83 @@ public class KafkaConsumerManager {
     }
   }
 
+  private String getConsumerInstanceName(ConsumerInstanceConfig instanceConfig) {
+    if (instanceConfig.getId() != null) { // Explicit ID request always overrides name
+      return instanceConfig.getId();
+    }
+    if (instanceConfig.getName() != null) {
+      return instanceConfig.getName();
+    }
+    StringBuilder name = new StringBuilder("rest-consumer-");
+    String serverId = this.config.getString(KafkaRestConfig.ID_CONFIG);
+    if (!serverId.isEmpty()) {
+      name.append(serverId + "-");
+    }
+    name.append(UUID.randomUUID().toString());
+    return name.toString();
+  }
+
+  private Properties getConsumerInstanceProperties(
+      String group, ConsumerInstanceConfig instanceConfig) {
+    // Note the ordering here. We want to allow overrides, but almost all the
+    // consumer-specific settings don't make sense to override globally (e.g. group ID, consumer
+    // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
+    // intentionally name differently in our own configs).
+    // Properties props = (Properties) config.getOriginalProperties().clone();
+    Properties props = config.getConsumerProperties();
+    props.setProperty("group.id", group);
+    // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
+    // was passed in. This generally shouldn't be used, but is maintained for compatibility.
+    if (instanceConfig.getId() != null) {
+      props.setProperty("consumer.id", instanceConfig.getId());
+    }
+    if (instanceConfig.getAutoCommitEnable() != null) {
+      props.setProperty("enable.auto.commit", instanceConfig.getAutoCommitEnable());
+    }
+    if (instanceConfig.getAutoOffsetReset() != null) {
+      props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
+    }
+    // override request.timeout.ms to the default
+    // the consumer.request.timeout.ms setting given by the user denotes
+    // how much time the proxy should wait before returning a response
+    // and should not be propagated to the consumer
+    props.setProperty("request.timeout.ms", "30000");
+
+    switch (instanceConfig.getFormat()) {
+      case AVRO:
+        props.put("key.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+        props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+        break;
+      case JSONSCHEMA:
+        props.put(
+            "key.deserializer", "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer");
+        props.put(
+            "value.deserializer",
+            "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer");
+        break;
+      case PROTOBUF:
+        props.put(
+            "key.deserializer",
+            "io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer");
+        props.put(
+            "value.deserializer",
+            "io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer");
+        break;
+      case JSON:
+      case BINARY:
+      default:
+        props.put(
+            "key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+        props.put(
+            "value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+    }
+
+    return props;
+  }
+
   private KafkaConsumerState createConsumerState(
-          ConsumerInstanceConfig instanceConfig,
-          ConsumerInstanceId cid, Consumer consumer
-  ) throws RestServerErrorException {
+      ConsumerInstanceConfig instanceConfig, ConsumerInstanceId cid, Consumer consumer)
+      throws RestServerErrorException {
     switch (instanceConfig.getFormat()) {
       case BINARY:
         return new BinaryKafkaConsumerState(config, instanceConfig, cid, consumer);
@@ -298,10 +311,9 @@ public class KafkaConsumerManager {
             config, instanceConfig, cid, consumer, new ProtobufConverter());
       default:
         throw new RestServerErrorException(
-                String.format("Invalid embedded format %s for new consumer.",
-                    instanceConfig.getFormat()),
-                Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
-        );
+            String.format(
+                "Invalid embedded format %s for new consumer.", instanceConfig.getFormat()),
+            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
   }
 
@@ -315,8 +327,7 @@ public class KafkaConsumerManager {
           consumerStateType,
       final Duration timeout,
       final long maxBytes,
-      final ConsumerReadCallback<ClientKeyT, ClientValueT> callback
-  ) {
+      final ConsumerReadCallback<ClientKeyT, ClientValueT> callback) {
     final KafkaConsumerState state;
     try {
       state = getConsumerInstance(group, instance);
@@ -347,12 +358,13 @@ public class KafkaConsumerManager {
   }
 
   class KafkaConsumerThreadPoolExecutor extends ThreadPoolExecutor {
-    private KafkaConsumerThreadPoolExecutor(int corePoolSize,
-                                            int maximumPoolSize,
-                                            long keepAliveTime,
-                                            TimeUnit unit,
-                                            BlockingQueue<Runnable> workQueue,
-                                            RejectedExecutionHandler handler) {
+    private KafkaConsumerThreadPoolExecutor(
+        int corePoolSize,
+        int maximumPoolSize,
+        long keepAliveTime,
+        TimeUnit unit,
+        BlockingQueue<Runnable> workQueue,
+        RejectedExecutionHandler handler) {
       super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
     }
 
@@ -376,16 +388,17 @@ public class KafkaConsumerManager {
     public RunnableReadTask(ReadTaskState taskState, KafkaRestConfig config) {
       this.taskState = taskState;
       this.requestExpiration =
-          clock.instant().plus(
-              Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)));
+          clock
+              .instant()
+              .plus(
+                  Duration.ofMillis(
+                      config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)));
       this.backoff =
           Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG));
       this.waitExpiration = Instant.EPOCH;
     }
 
-    /**
-     * Delays for a minimum of {@code delayMs} or until the read request expires
-     */
+    /** Delays for a minimum of {@code delayMs} or until the read request expires */
     public void delayFor(Duration delay) {
       // the first condition means that the request has expired,
       // the second one means that the request has been retried for
@@ -393,8 +406,8 @@ public class KafkaConsumerManager {
       if (!requestExpiration.isAfter(clock.instant()) || requestExpiration.equals(waitExpiration)) {
         // no need to delay if the request has expired
         taskState.task.finish();
-        log.trace("Finished executing  consumer read task ({}) due to request expiry",
-            taskState.task);
+        log.trace(
+            "Finished executing  consumer read task ({}) due to request expiry", taskState.task);
         return;
       }
 
@@ -406,7 +419,8 @@ public class KafkaConsumerManager {
 
     @Override
     public String toString() {
-      return String.format("RunnableReadTask consumer id: %s; Read task: %s; "
+      return String.format(
+          "RunnableReadTask consumer id: %s; Read task: %s; "
               + "Request expiration time: %s; Wait expiration: %s",
           taskState.consumerState.getId(), taskState.task, requestExpiration, waitExpiration);
     }
@@ -424,8 +438,11 @@ public class KafkaConsumerManager {
           log.trace("Finished executing consumer read task ({})", taskState.task);
         }
       } catch (Exception e) {
-        log.error("Failed to read records from consumer {} while executing read task ({}). {}",
-                  taskState.consumerState.getId().toString(), taskState.task, e);
+        log.error(
+            "Failed to read records from consumer {} while executing read task ({}). {}",
+            taskState.consumerState.getId().toString(),
+            taskState.task,
+            e);
         taskState.callback.onCompletion(null, e);
       }
     }
@@ -456,9 +473,11 @@ public class KafkaConsumerManager {
   }
 
   public Future commitOffsets(
-      String group, String instance, final String async,
-      final ConsumerOffsetCommitRequest offsetCommitRequest, final CommitCallback callback
-  ) {
+      String group,
+      String instance,
+      final String async,
+      final ConsumerOffsetCommitRequest offsetCommitRequest,
+      final CommitCallback callback) {
     final KafkaConsumerState state;
     try {
       state = getConsumerInstance(group, instance);
@@ -467,33 +486,30 @@ public class KafkaConsumerManager {
       return null;
     }
 
-    return executor.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          List<TopicPartitionOffset> offsets = state.commitOffsets(async, offsetCommitRequest);
-          callback.onCompletion(offsets, null);
-        } catch (Exception e) {
-          log.error("Failed to commit offsets for consumer " + state.getId().toString(), e);
-          callback.onCompletion(null, e);
-        } finally {
-          state.updateExpiration();
-        }
-      }
+    return executor.submit(
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              List<TopicPartitionOffset> offsets = state.commitOffsets(async, offsetCommitRequest);
+              callback.onCompletion(offsets, null);
+            } catch (Exception e) {
+              log.error("Failed to commit offsets for consumer " + state.getId().toString(), e);
+              callback.onCompletion(null, e);
+            } finally {
+              state.updateExpiration();
+            }
+          }
 
-      @Override
-      public String toString() {
-        return String.format("OffsetCommit consumer id: %s; Async: %s;",
-            state.getId(), async);
-      }
-    });
+          @Override
+          public String toString() {
+            return String.format("OffsetCommit consumer id: %s; Async: %s;", state.getId(), async);
+          }
+        });
   }
 
   public ConsumerCommittedResponse committed(
-      String group,
-      String instance,
-      ConsumerCommittedRequest request
-  ) {
+      String group, String instance, ConsumerCommittedRequest request) {
     log.debug("Committed offsets for consumer " + instance + " in group " + group);
     ConsumerCommittedResponse response;
     KafkaConsumerState state = getConsumerInstance(group, instance);
@@ -505,18 +521,14 @@ public class KafkaConsumerManager {
     return response;
   }
 
-  /**
-   * Returns the beginning offset of the {@code topic} {@code partition}.
-   */
+  /** Returns the beginning offset of the {@code topic} {@code partition}. */
   public long getBeginningOffset(String topic, int partition) {
     log.debug("Beginning offset for topic {} and partition {}.", topic, partition);
     KafkaConsumerState<?, ?, ?, ?> consumer = getAdminConsumerInstance();
     return consumer.getBeginningOffset(topic, partition);
   }
 
-  /**
-   * Returns the end offset of the {@code topic} {@code partition}.
-   */
+  /** Returns the end offset of the {@code topic} {@code partition}. */
   public long getEndOffset(String topic, int partition) {
     log.debug("End offset for topic {} and partition {}.", topic, partition);
     KafkaConsumerState<?, ?, ?, ?> consumer = getAdminConsumerInstance();
@@ -527,8 +539,7 @@ public class KafkaConsumerManager {
    * Returns the earliest offset whose timestamp is greater than or equal to the given {@code
    * timestamp} in the {@code topic} {@code partition}, or empty if such offset does not exist.
    */
-  public Optional<Long> getOffsetForTime(
-      String topic, int partition, Instant timestamp) {
+  public Optional<Long> getOffsetForTime(String topic, int partition, Instant timestamp) {
     log.debug("Offset for topic {} and partition {} at timestamp {}.", topic, partition, timestamp);
     KafkaConsumerState<?, ?, ?, ?> consumer = getAdminConsumerInstance();
     return consumer.getOffsetForTime(topic, partition, timestamp);
@@ -555,8 +566,8 @@ public class KafkaConsumerManager {
 
   private ConsumerInstanceId createAdminConsumerInstance() {
     String consumerGroup = createAdminConsumerGroup();
-    String consumerInstance = createConsumer(consumerGroup, ConsumerInstanceConfig.create(
-        EmbeddedFormat.BINARY));
+    String consumerInstance =
+        createConsumer(consumerGroup, ConsumerInstanceConfig.create(EmbeddedFormat.BINARY));
     return new ConsumerInstanceId(consumerGroup, consumerInstance);
   }
 
@@ -631,13 +642,11 @@ public class KafkaConsumerManager {
       java.util.Set<TopicPartition> topicPartitions = state.assignment();
       for (TopicPartition t : topicPartitions) {
         partitions.add(
-            new io.confluent.kafkarest.entities.v2.TopicPartition(t.topic(), t.partition())
-        );
+            new io.confluent.kafkarest.entities.v2.TopicPartition(t.topic(), t.partition()));
       }
     }
     return new ConsumerAssignmentResponse(partitions);
   }
-
 
   public void shutdown() {
     log.debug("Shutting down consumers");
@@ -661,10 +670,7 @@ public class KafkaConsumerManager {
    * consumer's expiration timeout so it is not cleaned up mid-operation.
    */
   private synchronized KafkaConsumerState<?, ?, ?, ?> getConsumerInstance(
-      String group,
-      String instance,
-      boolean toRemove
-  ) {
+      String group, String instance, boolean toRemove) {
     ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
     final KafkaConsumerState state = toRemove ? consumers.remove(id) : consumers.get(id);
     if (state == null) {
@@ -693,9 +699,8 @@ public class KafkaConsumerManager {
     final KafkaConsumerState consumerState;
     final ConsumerReadCallback callback;
 
-    public ReadTaskState(KafkaConsumerReadTask task,
-                         KafkaConsumerState state,
-                         ConsumerReadCallback callback) {
+    public ReadTaskState(
+        KafkaConsumerReadTask task, KafkaConsumerState state, ConsumerReadCallback callback) {
 
       this.task = task;
       this.consumerState = state;
@@ -761,12 +766,13 @@ public class KafkaConsumerManager {
               if (state != null && state.expired(now)) {
                 log.debug("Removing the expired consumer {}", state.getId());
                 itr.remove();
-                executor.submit(new Runnable() {
-                  @Override
-                  public void run() {
-                    state.close();
-                  }
-                });
+                executor.submit(
+                    new Runnable() {
+                      @Override
+                      public void run() {
+                        state.close();
+                      }
+                    });
               }
             }
           }

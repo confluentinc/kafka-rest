@@ -64,8 +64,7 @@ public final class BrokerConfigsResource {
   public BrokerConfigsResource(
       Provider<BrokerConfigManager> brokerConfigManager,
       CrnFactory crnFactory,
-      UrlFactory urlFactory
-  ) {
+      UrlFactory urlFactory) {
     this.brokerConfigManager = requireNonNull(brokerConfigManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -120,8 +119,7 @@ public final class BrokerConfigsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("brokerId") int brokerId,
-      @PathParam("name") String name
-  ) {
+      @PathParam("name") String name) {
     CompletableFuture<GetBrokerConfigResponse> response =
         brokerConfigManager
             .get()
@@ -146,8 +144,7 @@ public final class BrokerConfigsResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("brokerId") int brokerId,
       @PathParam("name") String name,
-      @Valid UpdateBrokerConfigRequest request
-  ) {
+      @Valid UpdateBrokerConfigRequest request) {
     String newValue = request.getValue().orElse(null);
 
     CompletableFuture<Void> response =
@@ -167,8 +164,7 @@ public final class BrokerConfigsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("brokerId") int brokerId,
-      @PathParam("name") String name
-  ) {
+      @PathParam("name") String name) {
     CompletableFuture<Void> response =
         brokerConfigManager.get().resetBrokerConfig(clusterId, brokerId, name);
 
@@ -178,9 +174,7 @@ public final class BrokerConfigsResource {
   }
 
   public static BrokerConfigData toBrokerConfigData(
-      BrokerConfig brokerConfig,
-      CrnFactory crnFactory,
-      UrlFactory urlFactory) {
+      BrokerConfig brokerConfig, CrnFactory crnFactory, UrlFactory urlFactory) {
     return BrokerConfigData.fromBrokerConfig(brokerConfig)
         .setMetadata(
             Resource.Metadata.builder()

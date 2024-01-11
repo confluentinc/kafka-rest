@@ -20,9 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * A service to manage Kafka {@link Consumer Consumers}.
- */
+/** A service to manage Kafka {@link Consumer Consumers}. */
 public interface ConsumerManager {
 
   /**
@@ -31,9 +29,7 @@ public interface ConsumerManager {
    */
   CompletableFuture<List<Consumer>> listConsumers(String clusterId, String consumerGroupId);
 
-  /**
-   * Returns the Kafka {@link Consumer} with the given {@code consumerId}.
-   */
+  /** Returns the Kafka {@link Consumer} with the given {@code consumerId}. */
   CompletableFuture<Optional<Consumer>> getConsumer(
       String clusterId, String consumerGroupId, String consumerId);
 }

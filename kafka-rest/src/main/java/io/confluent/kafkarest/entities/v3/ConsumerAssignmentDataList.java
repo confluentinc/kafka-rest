@@ -24,8 +24,7 @@ import java.util.List;
 public abstract class ConsumerAssignmentDataList
     extends ResourceCollection<ConsumerAssignmentData> {
 
-  ConsumerAssignmentDataList() {
-  }
+  ConsumerAssignmentDataList() {}
 
   public static Builder builder() {
     return new AutoValue_ConsumerAssignmentDataList.Builder()
@@ -36,21 +35,15 @@ public abstract class ConsumerAssignmentDataList
   static ConsumerAssignmentDataList fromJson(
       @JsonProperty("kind") String kind,
       @JsonProperty("metadata") Metadata metadata,
-      @JsonProperty("data") List<ConsumerAssignmentData> data
-  ) {
-    return builder()
-        .setKind(kind)
-        .setMetadata(metadata)
-        .setData(data)
-        .build();
+      @JsonProperty("data") List<ConsumerAssignmentData> data) {
+    return builder().setKind(kind).setMetadata(metadata).setData(data).build();
   }
 
   @AutoValue.Builder
   public abstract static class Builder
       extends ResourceCollection.Builder<
-      ConsumerAssignmentData, ConsumerAssignmentDataList, Builder> {
+          ConsumerAssignmentData, ConsumerAssignmentDataList, Builder> {
 
-    Builder() {
-    }
+    Builder() {}
   }
 }

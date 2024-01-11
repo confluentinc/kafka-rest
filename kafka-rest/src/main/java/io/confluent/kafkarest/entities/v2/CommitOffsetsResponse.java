@@ -29,8 +29,7 @@ import javax.validation.constraints.PositiveOrZero;
 
 public final class CommitOffsetsResponse {
 
-  @Nullable
-  private final List<Offset> offsets;
+  @Nullable private final List<Offset> offsets;
 
   @JsonCreator
   private CommitOffsetsResponse(@Nullable List<Offset> offsets) {
@@ -74,29 +73,20 @@ public final class CommitOffsetsResponse {
 
   public static final class Offset {
 
-    @NotEmpty
-    @Nullable
-    private String topic;
+    @NotEmpty @Nullable private String topic;
 
-    @PositiveOrZero
-    @Nullable
-    private Integer partition;
+    @PositiveOrZero @Nullable private Integer partition;
 
-    @PositiveOrZero
-    @Nullable
-    private Long consumed;
+    @PositiveOrZero @Nullable private Long consumed;
 
-    @PositiveOrZero
-    @Nullable
-    private Long committed;
+    @PositiveOrZero @Nullable private Long committed;
 
     @JsonCreator
     private Offset(
         @JsonProperty("topic") @Nullable String topic,
         @JsonProperty("partition") @Nullable Integer partition,
         @JsonProperty("consumed") @Nullable Long consumed,
-        @JsonProperty("committed") @Nullable Long committed
-    ) {
+        @JsonProperty("committed") @Nullable Long committed) {
       this.topic = topic;
       this.partition = partition;
       this.consumed = consumed;

@@ -24,8 +24,7 @@ import javax.annotation.Nullable;
 
 public final class ConsumerSubscriptionResponse {
 
-  @Nullable
-  private final List<String> topics;
+  @Nullable private final List<String> topics;
 
   @JsonCreator
   public ConsumerSubscriptionResponse(@JsonProperty("topics") @Nullable List<String> topics) {
@@ -57,8 +56,7 @@ public final class ConsumerSubscriptionResponse {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", ConsumerSubscriptionResponse.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", ConsumerSubscriptionResponse.class.getSimpleName() + "[", "]")
         .add("topics=" + topics)
         .toString();
   }

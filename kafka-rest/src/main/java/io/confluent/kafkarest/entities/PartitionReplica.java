@@ -20,8 +20,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class PartitionReplica {
 
-  PartitionReplica() {
-  }
+  PartitionReplica() {}
 
   public abstract String getClusterId();
 

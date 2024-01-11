@@ -75,11 +75,9 @@ public class ConsumerAssignmentsResourceTest {
           .setPartitionId(3)
           .build();
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ConsumerAssignmentManager consumerAssignmentManager;
+  @Mock private ConsumerAssignmentManager consumerAssignmentManager;
 
   private ConsumerAssignmentsResource consumerAssignmentsResource;
 
@@ -93,8 +91,8 @@ public class ConsumerAssignmentsResourceTest {
   @Test
   public void listConsumers_returnsConsumers() {
     expect(
-        consumerAssignmentManager.listConsumerAssignments(
-            CLUSTER_ID, CONSUMER_GROUP_ID, CONSUMER_ID))
+            consumerAssignmentManager.listConsumerAssignments(
+                CLUSTER_ID, CONSUMER_GROUP_ID, CONSUMER_ID))
         .andReturn(
             completedFuture(
                 Arrays.asList(
@@ -184,8 +182,8 @@ public class ConsumerAssignmentsResourceTest {
   @Test
   public void getConsumer_returnsConsumer() {
     expect(
-        consumerAssignmentManager.getConsumerAssignment(
-            CLUSTER_ID, CONSUMER_GROUP_ID, CONSUMER_ID, "topic-1", 1))
+            consumerAssignmentManager.getConsumerAssignment(
+                CLUSTER_ID, CONSUMER_GROUP_ID, CONSUMER_ID, "topic-1", 1))
         .andReturn(completedFuture(Optional.of(CONSUMER_ASSIGNMENT_1)));
     replay(consumerAssignmentManager);
 
@@ -208,8 +206,7 @@ public class ConsumerAssignmentsResourceTest {
                                 + "/assignment=topic-1/partition=1")
                         .build())
                 .setPartition(
-                    Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1"))
+                    Relationship.create("/v3/clusters/cluster-1/topics/topic-1/partitions/1"))
                 .setLag(
                     Relationship.create(
                         "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags"
@@ -222,8 +219,8 @@ public class ConsumerAssignmentsResourceTest {
   @Test
   public void getConsumer_nonExistingConsumer_throwsNotFound() {
     expect(
-        consumerAssignmentManager.getConsumerAssignment(
-            CLUSTER_ID, CONSUMER_GROUP_ID, CONSUMER_ID, "topic-1", 1))
+            consumerAssignmentManager.getConsumerAssignment(
+                CLUSTER_ID, CONSUMER_GROUP_ID, CONSUMER_ID, "topic-1", 1))
         .andReturn(completedFuture(Optional.empty()));
     replay(consumerAssignmentManager);
 

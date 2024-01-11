@@ -29,11 +29,11 @@ import javax.ws.rs.ext.Provider;
 /**
  * A {@link ParamConverterProvider} for {@link InstantConverter}.
  *
- * <p>By default it uses {@link DateTimeFormatter#ISO_INSTANT} format.</p>
+ * <p>By default it uses {@link DateTimeFormatter#ISO_INSTANT} format.
  *
- * <p>TODO: If more formats are needed, create an annotation, e.g. DateTimeParam, and an
- * enum, e.g. DateTimeFormat, and map from enum value to DateTimeFormatter. The annotation will be
- * passed in {@link #getConverter(Class, Type, Annotation[])}.</p>
+ * <p>TODO: If more formats are needed, create an annotation, e.g. DateTimeParam, and an enum, e.g.
+ * DateTimeFormat, and map from enum value to DateTimeFormatter. The annotation will be passed in
+ * {@link #getConverter(Class, Type, Annotation[])}.
  */
 @Provider
 public final class InstantConverterProvider implements ParamConverterProvider {
@@ -48,9 +48,7 @@ public final class InstantConverterProvider implements ParamConverterProvider {
     return (ParamConverter<T>) new InstantConverter(DateTimeFormatter.ISO_INSTANT);
   }
 
-  /**
-   * A {@link ParamConverter} for {@link Instant}.
-   */
+  /** A {@link ParamConverter} for {@link Instant}. */
   private static final class InstantConverter implements ParamConverter<Instant> {
 
     private final DateTimeFormatter formatter;

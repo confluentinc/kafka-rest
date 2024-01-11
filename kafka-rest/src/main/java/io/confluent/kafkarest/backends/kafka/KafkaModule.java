@@ -17,91 +17,129 @@ package io.confluent.kafkarest.backends.kafka;
 
 import static java.util.Objects.requireNonNull;
 
+import io.confluent.kafkarest.DefaultKafkaRestContext;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.extension.KafkaRestContextProvider;
+import io.confluent.kafkarest.ProducerMetrics;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.common.utils.Time;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.process.internal.RequestScoped;
 
 /**
  * A module to configure access to Kafka.
  *
  * <p>Right now this module does little but delegate to {@link KafkaRestContext}, since access to
  * Kafka is currently being configured there. It's the author's intention to move such logic here,
- * and eliminate {@code KafkaRestContext}, once dependence injection is properly used elsewhere.</p>
+ * and eliminate {@code KafkaRestContext}, once dependence injection is properly used elsewhere.
  */
 public final class KafkaModule extends AbstractBinder {
 
   @Override
   protected void configure() {
-    bindFactory(KafkaRestContextFactory.class)
-        .to(KafkaRestContext.class)
-        .in(RequestScoped.class);
+    bindFactory(KafkaRestContextFactory.class).to(KafkaRestContext.class).in(Singleton.class);
 
-    bindFactory(AdminFactory.class)
-        .to(Admin.class)
-        .in(RequestScoped.class);
+    bindFactory(AdminFactory.class).to(Admin.class).in(Singleton.class);
 
     bindFactory(ProducerFactory.class)
-        .to(new TypeLiteral<Producer<byte[], byte[]>>() { })
-        .in(RequestScoped.class);
+        .to(new TypeLiteral<Producer<byte[], byte[]>>() {})
+        .in(Singleton.class);
+
+    bindFactory(ProducerMetricsFactory.class, Singleton.class)
+        .to(ProducerMetrics.class)
+        .in(Singleton.class);
   }
 
   private static final class KafkaRestContextFactory implements Factory<KafkaRestContext> {
+    private final KafkaRestConfig config;
 
-    @Override
-    public KafkaRestContext provide() {
-      return KafkaRestContextProvider.getCurrentContext();
+    @Inject
+    private KafkaRestContextFactory(KafkaRestConfig config) {
+      this.config = requireNonNull(config);
     }
 
     @Override
-    public void dispose(KafkaRestContext instance) {
-      // Do nothing.
+    public KafkaRestContext provide() {
+      return new DefaultKafkaRestContext(config);
+    }
+
+    @Override
+    public void dispose(KafkaRestContext context) {
+      context.shutdown();
     }
   }
 
   private static final class AdminFactory implements Factory<Admin> {
-
-    private final Provider<KafkaRestContext> context;
+    private final KafkaRestContext context;
 
     @Inject
-    private AdminFactory(Provider<KafkaRestContext> context) {
+    private AdminFactory(KafkaRestContext context) {
       this.context = requireNonNull(context);
     }
 
     @Override
     public Admin provide() {
-      return context.get().getAdmin();
+      return context.getAdmin();
     }
 
     @Override
-    public void dispose(Admin instance) {
-      // Do nothing.
+    public void dispose(Admin admin) {
+      admin.close();
     }
   }
 
-  private static final class ProducerFactory implements Factory<Producer<?, ?>> {
-
-    private final Provider<KafkaRestContext> context;
+  private static final class ProducerFactory implements Factory<Producer<byte[], byte[]>> {
+    private final KafkaRestContext context;
 
     @Inject
-    private ProducerFactory(Provider<KafkaRestContext> context) {
+    private ProducerFactory(KafkaRestContext context) {
       this.context = requireNonNull(context);
     }
 
     @Override
     public Producer<byte[], byte[]> provide() {
-      return context.get().getProducer();
+      return context.getProducer();
     }
 
     @Override
-    public void dispose(Producer<?, ?> producer) {
-      // Do nothing.
+    public void dispose(Producer<byte[], byte[]> producer) {
+      producer.close();
+    }
+  }
+
+  private static final class ProducerMetricsFactory implements Factory<ProducerMetrics> {
+
+    private final Provider<KafkaRestContext> context;
+    private volatile ProducerMetrics producerMetrics;
+
+    @Inject
+    ProducerMetricsFactory(Provider<KafkaRestContext> context) {
+      this.context = requireNonNull(context);
+    }
+
+    @Override
+    public ProducerMetrics provide() {
+      ProducerMetrics localProducerMetrics = producerMetrics;
+      if (localProducerMetrics == null) {
+        synchronized (this) {
+          localProducerMetrics = producerMetrics;
+          if (localProducerMetrics == null) {
+            producerMetrics =
+                localProducerMetrics = new ProducerMetrics(context.get().getConfig(), Time.SYSTEM);
+          }
+        }
+      }
+      return localProducerMetrics;
+    }
+
+    @Override
+    public void dispose(ProducerMetrics producerMetrics) {
+      // the JVM will close JMX
     }
   }
 }

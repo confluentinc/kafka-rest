@@ -22,43 +22,42 @@ import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafkarest.config.SchemaRegistryConfig;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import java.net.URI;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
-
-import java.net.URI;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
- * ProducerPool, AdminClientWrapper and KafkaConsumerManager instances are initialized lazily
- * if required.
+ * ProducerPool, AdminClientWrapper and KafkaConsumerManager instances are initialized lazily if
+ * required.
  */
 public class DefaultKafkaRestContext implements KafkaRestContext {
+
+  private static final Logger log = LoggerFactory.getLogger(DefaultKafkaRestContext.class);
 
   private final KafkaRestConfig config;
   private KafkaConsumerManager kafkaConsumerManager;
 
-  private Admin adminClient;
-  private Producer<byte[], byte[]> producer;
   private SchemaRegistryClient schemaRegistryClient;
 
-  /**
-   * @deprecated Use {@link #DefaultKafkaRestContext(KafkaRestConfig)} instead.
-   */
+  /** @deprecated Use {@link #DefaultKafkaRestContext(KafkaRestConfig)} instead. */
   @Deprecated
   public DefaultKafkaRestContext(
       KafkaRestConfig config,
       ProducerPool producerPool,
-      KafkaConsumerManager kafkaConsumerManager
-  ) {
+      KafkaConsumerManager kafkaConsumerManager) {
     this(config);
   }
 
   public DefaultKafkaRestContext(KafkaRestConfig config) {
+    log.debug("Creating context with config: {}", config);
     this.config = requireNonNull(config);
   }
 
@@ -81,21 +80,14 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
-  public synchronized Admin getAdmin() {
-    if (adminClient == null) {
-      adminClient = AdminClient.create(config.getAdminProperties());
-    }
-    return adminClient;
+  public Admin getAdmin() {
+    return AdminClient.create(config.getAdminProperties());
   }
 
   @Override
-  public synchronized Producer<byte[], byte[]> getProducer() {
-    if (producer == null) {
-      producer =
-          new KafkaProducer<>(
-              config.getProducerConfigs(), new ByteArraySerializer(), new ByteArraySerializer());
-    }
-    return producer;
+  public Producer<byte[], byte[]> getProducer() {
+    return new KafkaProducer<>(
+        config.getProducerConfigs(), new ByteArraySerializer(), new ByteArraySerializer());
   }
 
   @Override
@@ -103,30 +95,27 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     if (schemaRegistryClient == null) {
       SchemaRegistryConfig schemaRegistryConfig =
           new SchemaRegistryConfig(config.getSchemaRegistryConfigs());
-      List<String> schemaRegistryUrls = schemaRegistryConfig.getSchemaRegistryUrls().stream()
-          .map(URI::create)
-          .map(Object::toString)
-          .collect(Collectors.toList());
-      schemaRegistryClient = new CachedSchemaRegistryClient(
-        schemaRegistryUrls,
-        schemaRegistryConfig.getMaxSchemasPerSubject(),
-        SCHEMA_PROVIDERS,
-        config.getSchemaRegistryConfigs(),
-        schemaRegistryConfig.requestHeaders());
+      List<String> schemaRegistryUrls =
+          schemaRegistryConfig.getSchemaRegistryUrls().stream()
+              .map(URI::create)
+              .map(Object::toString)
+              .collect(Collectors.toList());
+      schemaRegistryClient =
+          new CachedSchemaRegistryClient(
+              schemaRegistryUrls,
+              schemaRegistryConfig.getMaxSchemasPerSubject(),
+              SCHEMA_PROVIDERS,
+              config.getSchemaRegistryConfigs(),
+              schemaRegistryConfig.requestHeaders());
     }
     return schemaRegistryClient;
   }
 
   @Override
   public void shutdown() {
+    log.debug("Shutting down");
     if (kafkaConsumerManager != null) {
       kafkaConsumerManager.shutdown();
-    }
-    if (adminClient != null) {
-      adminClient.close();
-    }
-    if (producer != null) {
-      producer.close();
     }
   }
 }

@@ -85,8 +85,10 @@ public class TopicsResourceBinaryProduceTest
           ProduceRecord.create(/* partition= */ 0, /* key= */ null, TextNode.valueOf("value2")));
   private static final List<ProduceRecord> PRODUCE_RECORDS_WITH_PARTITIONS_AND_KEYS =
       Arrays.asList(
-          ProduceRecord.create(/* partition= */ 0, TextNode.valueOf("key"), TextNode.valueOf("value")),
-          ProduceRecord.create(/* partition= */ 0, TextNode.valueOf("key2"), TextNode.valueOf("value2")));
+          ProduceRecord.create(
+              /* partition= */ 0, TextNode.valueOf("key"), TextNode.valueOf("value")),
+          ProduceRecord.create(
+              /* partition= */ 0, TextNode.valueOf("key2"), TextNode.valueOf("value2")));
   private static final List<ProduceRecord> PRODUCE_RECORDS_WITH_NULL_VALUES =
       Arrays.asList(
           ProduceRecord.create(TextNode.valueOf("key"), /* value= */ null),
@@ -97,9 +99,7 @@ public class TopicsResourceBinaryProduceTest
           CompletableFuture.completedFuture(new RecordMetadata(PARTITION, 0L, 0L, 0L, 0L, 1, 1)),
           CompletableFuture.completedFuture(new RecordMetadata(PARTITION, 0L, 1L, 0L, 0L, 1, 1)));
   private static final List<PartitionOffset> OFFSETS =
-      Arrays.asList(
-          new PartitionOffset(0, 0L, null, null),
-          new PartitionOffset(0, 1L, null, null));
+      Arrays.asList(new PartitionOffset(0, 0L, null, null), new PartitionOffset(0, 1L, null, null));
   private static final List<ProduceRecord> PRODUCE_EXCEPTION_DATA =
       Collections.singletonList(ProduceRecord.create(/* key= */ null, /* value= */ null));
   private static final String EXCEPTION_MESSAGE = "Error message";
@@ -113,18 +113,16 @@ public class TopicsResourceBinaryProduceTest
           new PartitionOffset(null, null, Errors.KAFKA_ERROR_ERROR_CODE, EXCEPTION_MESSAGE));
   private static final List<CompletableFuture<RecordMetadata>>
       PRODUCE_KAFKA_RETRIABLE_EXCEPTION_RESULTS =
-      Collections.singletonList(
-          CompletableFutures.failedFuture(new RetriableException(EXCEPTION_MESSAGE) {
-          }));
+          Collections.singletonList(
+              CompletableFutures.failedFuture(new RetriableException(EXCEPTION_MESSAGE) {}));
   private static final List<PartitionOffset> KAFKA_RETRIABLE_EXCEPTION_RESULTS =
       Collections.singletonList(
           new PartitionOffset(
               null, null, Errors.KAFKA_RETRIABLE_ERROR_ERROR_CODE, EXCEPTION_MESSAGE));
   private static final List<CompletableFuture<RecordMetadata>>
       PRODUCE_KAFKA_AUTHENTICATION_EXCEPTION_RESULTS =
-      Collections.singletonList(
-          CompletableFutures.failedFuture(new SaslAuthenticationException(TOPIC_NAME) {
-          }));
+          Collections.singletonList(
+              CompletableFutures.failedFuture(new SaslAuthenticationException(TOPIC_NAME) {}));
   private static final List<PartitionOffset> KAFKA_AUTHENTICATION_EXCEPTION_RESULTS =
       Collections.singletonList(
           new PartitionOffset(
@@ -134,9 +132,8 @@ public class TopicsResourceBinaryProduceTest
               new SaslAuthenticationException(TOPIC_NAME).getMessage()));
   private static final List<CompletableFuture<RecordMetadata>>
       PRODUCE_KAFKA_AUTHORIZATION_EXCEPTION_RESULTS =
-      Collections.singletonList(
-          CompletableFutures.failedFuture(new TopicAuthorizationException(TOPIC_NAME) {
-          }));
+          Collections.singletonList(
+              CompletableFutures.failedFuture(new TopicAuthorizationException(TOPIC_NAME) {}));
   private static final List<PartitionOffset> KAFKA_AUTHORIZATION_EXCEPTION_RESULTS =
       Collections.singletonList(
           new PartitionOffset(
@@ -145,24 +142,18 @@ public class TopicsResourceBinaryProduceTest
               Errors.KAFKA_AUTHORIZATION_ERROR_CODE,
               new TopicAuthorizationException(TOPIC_NAME).getMessage()));
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private SchemaManager schemaManager;
+  @Mock private SchemaManager schemaManager;
 
-  @Mock
-  private RecordSerializer recordSerializer;
+  @Mock private RecordSerializer recordSerializer;
 
-  @Mock
-  private ProduceController produceController;
+  @Mock private ProduceController produceController;
 
   public TopicsResourceBinaryProduceTest() throws RestConfigException {
     addResource(
         new ProduceToTopicAction(
-            () -> schemaManager,
-            () -> recordSerializer,
-            () -> produceController));
+            () -> schemaManager, () -> recordSerializer, () -> produceController));
   }
 
   private Response produceToTopic(
@@ -174,42 +165,44 @@ public class TopicsResourceBinaryProduceTest
       Optional<ByteString> serializedKey =
           record.getKey().map(key -> ByteString.copyFromUtf8(String.valueOf(record.getKey())));
       Optional<ByteString> serializedValue =
-          record.getValue()
+          record
+              .getValue()
               .map(value -> ByteString.copyFromUtf8(String.valueOf(record.getValue())));
 
       expect(
-          recordSerializer.serialize(
-              EmbeddedFormat.BINARY,
-              TOPIC_NAME,
-              /* schema= */ Optional.empty(),
-              record.getKey().orElse(NullNode.getInstance()),
-              /* isKey= */ true))
+              recordSerializer.serialize(
+                  EmbeddedFormat.BINARY,
+                  TOPIC_NAME,
+                  /* schema= */ Optional.empty(),
+                  record.getKey().orElse(NullNode.getInstance()),
+                  /* isKey= */ true))
           .andReturn(serializedKey);
       expect(
-          recordSerializer.serialize(
-              EmbeddedFormat.BINARY,
-              TOPIC_NAME,
-              /* schema= */ Optional.empty(),
-              record.getValue().orElse(NullNode.getInstance()),
-              /* isKey= */ false))
+              recordSerializer.serialize(
+                  EmbeddedFormat.BINARY,
+                  TOPIC_NAME,
+                  /* schema= */ Optional.empty(),
+                  record.getValue().orElse(NullNode.getInstance()),
+                  /* isKey= */ false))
           .andReturn(serializedValue);
 
       expect(
-          produceController.produce(
-              /* clusterId= */ eq(""),
-              eq(TOPIC_NAME),
-              eq(record.getPartition()),
-              /* headers= */ eq(ImmutableMultimap.of()),
-              eq(serializedKey),
-              eq(serializedValue),
-              /* timestamp= */ isA(Instant.class)))
+              produceController.produce(
+                  /* clusterId= */ eq(""),
+                  eq(TOPIC_NAME),
+                  eq(record.getPartition()),
+                  /* headers= */ eq(ImmutableMultimap.of()),
+                  eq(serializedKey),
+                  eq(serializedValue),
+                  /* timestamp= */ isA(Instant.class)))
           .andReturn(results.get(i).thenApply(ProduceResult::fromRecordMetadata));
     }
 
     replay(schemaManager, recordSerializer, produceController);
 
-    Response response = request("/topics/" + TOPIC_NAME, Versions.KAFKA_V2_JSON)
-        .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
+    Response response =
+        request("/topics/" + TOPIC_NAME, Versions.KAFKA_V2_JSON)
+            .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
 
     verify(schemaManager, recordSerializer, produceController);
 
@@ -253,29 +246,29 @@ public class TopicsResourceBinaryProduceTest
 
   @Test
   public void testProduceInvalidRequest() {
-    Response response = request("/topics/topic1", Versions.KAFKA_V2_JSON)
-        .post(Entity.entity("{}", Versions.KAFKA_V2_JSON_BINARY));
-    assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
+    Response response =
+        request("/topics/topic1", Versions.KAFKA_V2_JSON)
+            .post(Entity.entity("{}", Versions.KAFKA_V2_JSON_BINARY));
+    assertErrorResponse(
+        ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
         response,
         ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
         null,
         Versions.KAFKA_V2_JSON);
   }
 
-  private void testProduceToTopicException(List<CompletableFuture<RecordMetadata>> produceResults,
-                                           List<PartitionOffset> produceExceptionResults) {
-    Response
-        rawResponse =
-        produceToTopic(
-            PRODUCE_EXCEPTION_DATA, produceResults);
+  private void testProduceToTopicException(
+      List<CompletableFuture<RecordMetadata>> produceResults,
+      List<PartitionOffset> produceExceptionResults) {
+    Response rawResponse = produceToTopic(PRODUCE_EXCEPTION_DATA, produceResults);
 
     if (produceExceptionResults == null) {
       assertErrorResponse(
-          Response.Status.INTERNAL_SERVER_ERROR, rawResponse,
+          Response.Status.INTERNAL_SERVER_ERROR,
+          rawResponse,
           RestServerErrorException.DEFAULT_ERROR_CODE,
           AbstractProduceAction.UNEXPECTED_PRODUCER_EXCEPTION,
-          Versions.KAFKA_V2_JSON
-      );
+          Versions.KAFKA_V2_JSON);
     } else {
       assertOKResponse(rawResponse, Versions.KAFKA_V2_JSON);
       ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
@@ -298,29 +291,31 @@ public class TopicsResourceBinaryProduceTest
 
   @Test
   public void testProduceToTopicKafkaRetriableException() {
-    testProduceToTopicException(PRODUCE_KAFKA_RETRIABLE_EXCEPTION_RESULTS,
-        KAFKA_RETRIABLE_EXCEPTION_RESULTS);
+    testProduceToTopicException(
+        PRODUCE_KAFKA_RETRIABLE_EXCEPTION_RESULTS, KAFKA_RETRIABLE_EXCEPTION_RESULTS);
   }
 
   @Test
   public void testProduceToTopicKafkaAuthorizationException() {
-    testProduceSecurityException(PRODUCE_KAFKA_AUTHORIZATION_EXCEPTION_RESULTS,
-        KAFKA_AUTHORIZATION_EXCEPTION_RESULTS, Response.Status.FORBIDDEN);
+    testProduceSecurityException(
+        PRODUCE_KAFKA_AUTHORIZATION_EXCEPTION_RESULTS,
+        KAFKA_AUTHORIZATION_EXCEPTION_RESULTS,
+        Response.Status.FORBIDDEN);
   }
 
   @Test
   public void testProduceToTopicKafkaAuthenticationException() {
-    testProduceSecurityException(PRODUCE_KAFKA_AUTHENTICATION_EXCEPTION_RESULTS,
-        KAFKA_AUTHENTICATION_EXCEPTION_RESULTS, Response.Status.UNAUTHORIZED);
+    testProduceSecurityException(
+        PRODUCE_KAFKA_AUTHENTICATION_EXCEPTION_RESULTS,
+        KAFKA_AUTHENTICATION_EXCEPTION_RESULTS,
+        Response.Status.UNAUTHORIZED);
   }
 
-  private void testProduceSecurityException(List<CompletableFuture<RecordMetadata>> produceResults,
-                                            List<PartitionOffset> produceExceptionResults,
-                                            Response.Status expectedStatus) {
-    Response
-        rawResponse =
-        produceToTopic(
-            PRODUCE_EXCEPTION_DATA, produceResults);
+  private void testProduceSecurityException(
+      List<CompletableFuture<RecordMetadata>> produceResults,
+      List<PartitionOffset> produceExceptionResults,
+      Response.Status expectedStatus) {
+    Response rawResponse = produceToTopic(PRODUCE_EXCEPTION_DATA, produceResults);
 
     assertEquals(expectedStatus.getStatusCode(), rawResponse.getStatus());
     ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);

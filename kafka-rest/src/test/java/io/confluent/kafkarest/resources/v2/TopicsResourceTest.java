@@ -18,6 +18,7 @@ package io.confluent.kafkarest.resources.v2;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -114,7 +115,7 @@ public class TopicsResourceTest
               Partition.create(
                   CLUSTER_ID,
                   "topic-1",
-                  /* partitionId= */2,
+                  /* partitionId= */ 2,
                   Arrays.asList(
                       PartitionReplica.create(
                           CLUSTER_ID,
@@ -138,7 +139,8 @@ public class TopicsResourceTest
                           /* isLeader= */ true,
                           /* isInSync= */ true)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ true);
+          /* isInternal= */ true,
+          emptySet());
 
   private static final Topic TOPIC_2 =
       Topic.create(
@@ -200,7 +202,7 @@ public class TopicsResourceTest
               Partition.create(
                   CLUSTER_ID,
                   "topic-2",
-                  /* partitionId= */2,
+                  /* partitionId= */ 2,
                   Arrays.asList(
                       PartitionReplica.create(
                           CLUSTER_ID,
@@ -224,7 +226,8 @@ public class TopicsResourceTest
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ true);
+          /* isInternal= */ true,
+          emptySet());
 
   private static final Topic TOPIC_3 =
       Topic.create(
@@ -286,7 +289,7 @@ public class TopicsResourceTest
               Partition.create(
                   CLUSTER_ID,
                   "topic-3",
-                  /* partitionId= */2,
+                  /* partitionId= */ 2,
                   Arrays.asList(
                       PartitionReplica.create(
                           CLUSTER_ID,
@@ -310,7 +313,8 @@ public class TopicsResourceTest
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ false);
+          /* isInternal= */ false,
+          emptySet());
 
   private static final TopicConfig CONFIG_1 =
       TopicConfig.create(
@@ -346,14 +350,11 @@ public class TopicsResourceTest
           ConfigSource.DYNAMIC_TOPIC_CONFIG,
           /* synonyms= */ emptyList());
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private TopicManager topicManager;
+  @Mock private TopicManager topicManager;
 
-  @Mock
-  private TopicConfigManager topicConfigManager;
+  @Mock private TopicConfigManager topicConfigManager;
 
   public TopicsResourceTest() throws RestConfigException {
     super();
@@ -374,9 +375,8 @@ public class TopicsResourceTest
 
     Response response = request("/topics", Versions.KAFKA_V2_JSON).get();
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
-    final List<String> topicsResponse = TestUtils
-        .tryReadEntityOrLog(response, new GenericType<List<String>>() {
-        });
+    final List<String> topicsResponse =
+        TestUtils.tryReadEntityOrLog(response, new GenericType<List<String>>() {});
 
     assertEquals(
         Arrays.asList(TOPIC_1.getName(), TOPIC_2.getName(), TOPIC_3.getName()), topicsResponse);
@@ -407,8 +407,11 @@ public class TopicsResourceTest
     replay(topicManager);
 
     Response response = request("/topics/nonexistanttopic", Versions.KAFKA_V2_JSON).get();
-    assertErrorResponse(Response.Status.NOT_FOUND, response,
-        Errors.TOPIC_NOT_FOUND_ERROR_CODE, Errors.TOPIC_NOT_FOUND_MESSAGE,
+    assertErrorResponse(
+        Response.Status.NOT_FOUND,
+        response,
+        Errors.TOPIC_NOT_FOUND_ERROR_CODE,
+        Errors.TOPIC_NOT_FOUND_MESSAGE,
         Versions.KAFKA_V2_JSON);
   }
 }

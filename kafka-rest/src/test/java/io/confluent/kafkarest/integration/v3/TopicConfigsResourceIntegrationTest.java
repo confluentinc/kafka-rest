@@ -59,11 +59,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     ResourceCollection.Metadata expectedMetadata =
         ResourceCollection.Metadata.builder()
-            .setSelf(
-                baseUrl
-                    + "/v3/clusters/" + clusterId
-                    + "/topics/" + TOPIC_1
-                    + "/configs")
+            .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs")
             .build();
 
     TopicConfigData expectedConfig1 =
@@ -72,13 +68,17 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 Resource.Metadata.builder()
                     .setSelf(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_1
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + TOPIC_1
                             + "/configs/cleanup.policy")
                     .setResourceName(
                         "crn:///kafka="
-                            + clusterId + "/topic="
-                            + TOPIC_1 + "/config=cleanup.policy")
+                            + clusterId
+                            + "/topic="
+                            + TOPIC_1
+                            + "/config=cleanup.policy")
                     .build())
             .setClusterId(clusterId)
             .setTopicName(TOPIC_1)
@@ -102,12 +102,16 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 Resource.Metadata.builder()
                     .setSelf(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_1
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + TOPIC_1
                             + "/configs/compression.type")
                     .setResourceName(
-                        "crn:///kafka=" + clusterId
-                            + "/topic=" + TOPIC_1
+                        "crn:///kafka="
+                            + clusterId
+                            + "/topic="
+                            + TOPIC_1
                             + "/config=compression.type")
                     .build())
             .setClusterId(clusterId)
@@ -131,14 +135,17 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
             .setMetadata(
                 Resource.Metadata.builder()
                     .setSelf(
-
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_1
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + TOPIC_1
                             + "/configs/delete.retention.ms")
                     .setResourceName(
-                        "crn:///kafka=" + clusterId
-                            + "/topic=" + TOPIC_1
+                        "crn:///kafka="
+                            + clusterId
+                            + "/topic="
+                            + TOPIC_1
                             + "/config=delete.retention.ms")
                     .build())
             .setClusterId(clusterId)
@@ -207,14 +214,17 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf(
-
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/topics/" + TOPIC_1
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/topics/"
+                                + TOPIC_1
                                 + "/configs/cleanup.policy")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/topic=" + TOPIC_1
+                            "crn:///kafka="
+                                + clusterId
+                                + "/topic="
+                                + TOPIC_1
                                 + "/config=cleanup.policy")
                         .build())
                 .setClusterId(clusterId)
@@ -235,16 +245,12 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 .build());
 
     Response response =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/topics/" + TOPIC_1
-                + "/configs/cleanup.policy")
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    GetTopicConfigResponse actual =
-        response.readEntity(GetTopicConfigResponse.class);
+    GetTopicConfigResponse actual = response.readEntity(GetTopicConfigResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -290,14 +296,17 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf(
-
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/topics/" + TOPIC_1
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/topics/"
+                                + TOPIC_1
                                 + "/configs/cleanup.policy")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/topic=" + TOPIC_1
+                            "crn:///kafka="
+                                + clusterId
+                                + "/topic="
+                                + TOPIC_1
                                 + "/config=cleanup.policy")
                         .build())
                 .setClusterId(clusterId)
@@ -318,10 +327,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 .build());
 
     Response responseBeforeUpdate =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/topics/" + TOPIC_1
-                + "/configs/cleanup.policy")
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseBeforeUpdate.getStatus());
@@ -332,8 +338,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expectedBeforeUpdate, actualResponseBeforeUpdate);
 
     Response updateResponse =
-        request(
-            "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(MediaType.APPLICATION_JSON)
             .put(Entity.entity("{\"value\":\"compact\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
@@ -344,14 +349,17 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf(
-
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/topics/" + TOPIC_1
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/topics/"
+                                + TOPIC_1
                                 + "/configs/cleanup.policy")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/topic=" + TOPIC_1
+                            "crn:///kafka="
+                                + clusterId
+                                + "/topic="
+                                + TOPIC_1
                                 + "/config=cleanup.policy")
                         .build())
                 .setClusterId(clusterId)
@@ -380,9 +388,11 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
         () -> {
           Response responseAfterUpdate =
               request(
-                  "/v3/clusters/" + clusterId
-                      + "/topics/" + TOPIC_1
-                      + "/configs/cleanup.policy")
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_1
+                          + "/configs/cleanup.policy")
                   .accept(MediaType.APPLICATION_JSON)
                   .get();
           assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
@@ -393,8 +403,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
         });
 
     Response resetResponse =
-        request(
-            "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NO_CONTENT.getStatusCode(), resetResponse.getStatus());
@@ -405,14 +414,17 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf(
-
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/topics/" + TOPIC_1
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/topics/"
+                                + TOPIC_1
                                 + "/configs/cleanup.policy")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/topic=" + TOPIC_1
+                            "crn:///kafka="
+                                + clusterId
+                                + "/topic="
+                                + TOPIC_1
                                 + "/config=cleanup.policy")
                         .build())
                 .setClusterId(clusterId)
@@ -436,9 +448,11 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
         () -> {
           Response responseAfterReset =
               request(
-                  "/v3/clusters/" + clusterId
-                      + "/topics/" + TOPIC_1
-                      + "/configs/cleanup.policy")
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_1
+                          + "/configs/cleanup.policy")
                   .accept(MediaType.APPLICATION_JSON)
                   .get();
           assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
@@ -522,8 +536,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
   @Test
   public void resetTopicConfig_nonExistingCluster_noContentType_throwsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
-            .delete();
+        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy").delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -533,8 +546,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
 
     Response updateResponse =
-        request(
-            "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs:alter")
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs:alter")
             .accept(MediaType.APPLICATION_JSON)
             .post(
                 Entity.entity(
@@ -551,12 +563,16 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/topics/" + TOPIC_1
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/topics/"
+                                + TOPIC_1
                                 + "/configs/cleanup.policy")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/topic=" + TOPIC_1
+                            "crn:///kafka="
+                                + clusterId
+                                + "/topic="
+                                + TOPIC_1
                                 + "/config=cleanup.policy")
                         .build())
                 .setClusterId(clusterId)
@@ -587,12 +603,16 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/topics/" + TOPIC_1
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/topics/"
+                                + TOPIC_1
                                 + "/configs/compression.type")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/topic=" + TOPIC_1
+                            "crn:///kafka="
+                                + clusterId
+                                + "/topic="
+                                + TOPIC_1
                                 + "/config=compression.type")
                         .build())
                 .setClusterId(clusterId)
@@ -621,9 +641,11 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
         () -> {
           Response responseAfterUpdate1 =
               request(
-                  "/v3/clusters/" + clusterId
-                      + "/topics/" + TOPIC_1
-                      + "/configs/cleanup.policy")
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_1
+                          + "/configs/cleanup.policy")
                   .accept(MediaType.APPLICATION_JSON)
                   .get();
           assertEquals(Status.OK.getStatusCode(), responseAfterUpdate1.getStatus());
@@ -636,9 +658,11 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
         () -> {
           Response responseAfterUpdate2 =
               request(
-                  "/v3/clusters/" + clusterId
-                      + "/topics/" + TOPIC_1
-                      + "/configs/compression.type")
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_1
+                          + "/configs/compression.type")
                   .accept(MediaType.APPLICATION_JSON)
                   .get();
           assertEquals(Status.OK.getStatusCode(), responseAfterUpdate2.getStatus());

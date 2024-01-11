@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class ListAllReassignmentsResponse {
 
-  ListAllReassignmentsResponse() {
-  }
+  ListAllReassignmentsResponse() {}
 
   @JsonValue
   public abstract ReassignmentDataList getValue();

@@ -63,8 +63,7 @@ public class BrokerConfigManagerImplTest {
   private static final String CLUSTER_ID = "cluster-1";
   private static final int BROKER_ID = 1;
 
-  private static final Cluster CLUSTER =
-      Cluster.create(CLUSTER_ID, null, emptyList());
+  private static final Cluster CLUSTER = Cluster.create(CLUSTER_ID, null, emptyList());
 
   private static final BrokerConfig CONFIG_1 =
       BrokerConfig.create(
@@ -72,9 +71,9 @@ public class BrokerConfigManagerImplTest {
           BROKER_ID,
           "config-1",
           "value-1",
-          /* isDefault= */true,
-          /* isReadOnly= */false,
-          /* isSensitive= */false,
+          /* isDefault= */ true,
+          /* isReadOnly= */ false,
+          /* isSensitive= */ false,
           ConfigSource.DEFAULT_CONFIG,
           /* synonyms= */ emptyList());
   private static final BrokerConfig CONFIG_2 =
@@ -83,9 +82,9 @@ public class BrokerConfigManagerImplTest {
           BROKER_ID,
           "config-2",
           "value-2",
-          /* isDefault= */false,
-          /* isReadOnly= */true,
-          /* isSensitive= */false,
+          /* isDefault= */ false,
+          /* isReadOnly= */ true,
+          /* isSensitive= */ false,
           ConfigSource.UNKNOWN,
           /* synonyms= */ emptyList());
   private static final BrokerConfig CONFIG_3 =
@@ -94,9 +93,9 @@ public class BrokerConfigManagerImplTest {
           BROKER_ID,
           "config-3",
           "value-3",
-          /* isDefault= */false,
-          /* isReadOnly= */false,
-          /* isSensitive= */true,
+          /* isDefault= */ false,
+          /* isReadOnly= */ false,
+          /* isSensitive= */ true,
           ConfigSource.UNKNOWN,
           /* synonyms= */ emptyList());
 
@@ -122,20 +121,15 @@ public class BrokerConfigManagerImplTest {
                   CONFIG_3.isSensitive(),
                   CONFIG_3.isReadOnly())));
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private Admin adminClient;
+  @Mock private Admin adminClient;
 
-  @Mock
-  private ClusterManager clusterManager;
+  @Mock private ClusterManager clusterManager;
 
-  @Mock
-  private DescribeConfigsResult describeConfigsResult;
+  @Mock private DescribeConfigsResult describeConfigsResult;
 
-  @Mock
-  private AlterConfigsResult alterConfigsResult;
+  @Mock private AlterConfigsResult alterConfigsResult;
 
   private BrokerConfigManagerImpl brokerConfigManager;
 
@@ -148,36 +142,38 @@ public class BrokerConfigManagerImplTest {
   public void listBrokerConfigs_existingBroker_returnsConfigs() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
     List<BrokerConfig> configs = brokerConfigManager.listBrokerConfigs(CLUSTER_ID, BROKER_ID).get();
 
-    assertEquals(new HashSet<>(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)),
-        new HashSet<>(configs));
+    assertEquals(
+        new HashSet<>(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)), new HashSet<>(configs));
   }
 
   @Test
   public void listBrokerConfigs_nonExistingBroker_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
-        .andReturn(
-            KafkaFutures.failedFuture(new NotFoundException("Broker not found.")));
+        .andReturn(KafkaFutures.failedFuture(new NotFoundException("Broker not found.")));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -204,23 +200,23 @@ public class BrokerConfigManagerImplTest {
   @Test
   public void getBrokerConfig_existingConfig_returnsConfig() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
-    expect(adminClient.describeConfigs(
-        eq(singletonList(
-            new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-        anyObject(DescribeConfigsOptions.class)))
+    expect(
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
     BrokerConfig config =
-        brokerConfigManager.getBrokerConfig(
-            CLUSTER_ID, BROKER_ID, CONFIG_1.getName())
-            .get()
-            .get();
+        brokerConfigManager.getBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName()).get().get();
 
     assertEquals(CONFIG_1, config);
   }
@@ -229,16 +225,18 @@ public class BrokerConfigManagerImplTest {
   public void getBrokerConfig_nonExistingConfig_returnsEmpty() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
     Optional<BrokerConfig> config =
@@ -251,19 +249,18 @@ public class BrokerConfigManagerImplTest {
   public void getBrokerConfig_nonExistingBroker_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
-        .andReturn(
-            KafkaFutures.failedFuture(new NotFoundException("Broker not found.")));
+        .andReturn(KafkaFutures.failedFuture(new NotFoundException("Broker not found.")));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      brokerConfigManager.getBrokerConfig(
-          CLUSTER_ID, BROKER_ID, CONFIG_1.getName()).get();
+      brokerConfigManager.getBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -287,24 +284,26 @@ public class BrokerConfigManagerImplTest {
   public void updateBrokerConfig_existingConfig_updatesConfigs() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    CONFIG)));
     expect(
-        adminClient.incrementalAlterConfigs(
-            singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                singletonList(
-                    new AlterConfigOp(
-                        new ConfigEntry(CONFIG_1.getName(), "new-value"),
-                        AlterConfigOp.OpType.SET)))))
+            adminClient.incrementalAlterConfigs(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    singletonList(
+                        new AlterConfigOp(
+                            new ConfigEntry(CONFIG_1.getName(), "new-value"),
+                            AlterConfigOp.OpType.SET)))))
         .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values())
         .andReturn(
@@ -313,8 +312,9 @@ public class BrokerConfigManagerImplTest {
                 KafkaFuture.completedFuture(null)));
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
-    brokerConfigManager.updateBrokerConfig(
-        CLUSTER_ID, BROKER_ID, CONFIG_1.getName(), "new-value").get();
+    brokerConfigManager
+        .updateBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName(), "new-value")
+        .get();
 
     verify(adminClient);
   }
@@ -323,21 +323,22 @@ public class BrokerConfigManagerImplTest {
   public void updateBrokerConfig_nonExistingConfig_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    CONFIG)));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      brokerConfigManager.updateBrokerConfig(
-          CLUSTER_ID, BROKER_ID, "foobar", "new-value").get();
+      brokerConfigManager.updateBrokerConfig(CLUSTER_ID, BROKER_ID, "foobar", "new-value").get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -350,19 +351,20 @@ public class BrokerConfigManagerImplTest {
   public void updateBrokerConfig_nonExistingBroker_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
-        .andReturn(
-            KafkaFutures.failedFuture(new NotFoundException()));
+        .andReturn(KafkaFutures.failedFuture(new NotFoundException()));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      brokerConfigManager.updateBrokerConfig(
-          CLUSTER_ID, BROKER_ID, CONFIG_1.getName(), "new-value").get();
+      brokerConfigManager
+          .updateBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName(), "new-value")
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -377,8 +379,9 @@ public class BrokerConfigManagerImplTest {
     replay(clusterManager, adminClient);
 
     try {
-      brokerConfigManager.updateBrokerConfig(
-          CLUSTER_ID, BROKER_ID, CONFIG_1.getName(), "new-value").get();
+      brokerConfigManager
+          .updateBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName(), "new-value")
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -391,24 +394,26 @@ public class BrokerConfigManagerImplTest {
   public void resetBrokerConfig_existingConfig_resetsConfig() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    CONFIG)));
     expect(
-        adminClient.incrementalAlterConfigs(
-            singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                singletonList(
-                    new AlterConfigOp(
-                        new ConfigEntry(CONFIG_1.getName(), /* value= */ null),
-                        AlterConfigOp.OpType.DELETE)))))
+            adminClient.incrementalAlterConfigs(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    singletonList(
+                        new AlterConfigOp(
+                            new ConfigEntry(CONFIG_1.getName(), /* value= */ null),
+                            AlterConfigOp.OpType.DELETE)))))
         .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values())
         .andReturn(
@@ -417,8 +422,7 @@ public class BrokerConfigManagerImplTest {
                 KafkaFuture.completedFuture(null)));
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
-    brokerConfigManager.resetBrokerConfig(
-        CLUSTER_ID, BROKER_ID, CONFIG_1.getName()).get();
+    brokerConfigManager.resetBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName()).get();
 
     verify(adminClient);
   }
@@ -426,16 +430,19 @@ public class BrokerConfigManagerImplTest {
   @Test
   public void resetBrokerConfig_nonExistingConfig_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
-    expect(adminClient.describeConfigs(
-        eq(singletonList(
-            new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-        anyObject(DescribeConfigsOptions.class)))
+    expect(
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    CONFIG)));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -452,19 +459,18 @@ public class BrokerConfigManagerImplTest {
   public void resetBrokerConfig_nonExistingBroker_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
-        .andReturn(
-            KafkaFutures.failedFuture(new NotFoundException()));
+        .andReturn(KafkaFutures.failedFuture(new NotFoundException()));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      brokerConfigManager.resetBrokerConfig(
-          CLUSTER_ID, BROKER_ID, CONFIG_1.getName()).get();
+      brokerConfigManager.resetBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -479,8 +485,7 @@ public class BrokerConfigManagerImplTest {
     replay(clusterManager, adminClient);
 
     try {
-      brokerConfigManager.resetBrokerConfig(
-          CLUSTER_ID, BROKER_ID, CONFIG_1.getName()).get();
+      brokerConfigManager.resetBrokerConfig(CLUSTER_ID, BROKER_ID, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -493,27 +498,29 @@ public class BrokerConfigManagerImplTest {
   public void alterBrokerConfigs_existingConfigs_alterConfigs() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    CONFIG)));
     expect(
-        adminClient.incrementalAlterConfigs(
-            singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                Arrays.asList(
-                    new AlterConfigOp(
-                        new ConfigEntry(CONFIG_1.getName(), "new-value"),
-                        AlterConfigOp.OpType.SET),
-                    new AlterConfigOp(
-                        new ConfigEntry(CONFIG_2.getName(), /* value= */ null),
-                        AlterConfigOp.OpType.DELETE)))))
+            adminClient.incrementalAlterConfigs(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    Arrays.asList(
+                        new AlterConfigOp(
+                            new ConfigEntry(CONFIG_1.getName(), "new-value"),
+                            AlterConfigOp.OpType.SET),
+                        new AlterConfigOp(
+                            new ConfigEntry(CONFIG_2.getName(), /* value= */ null),
+                            AlterConfigOp.OpType.DELETE)))))
         .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values())
         .andReturn(
@@ -522,12 +529,13 @@ public class BrokerConfigManagerImplTest {
                 KafkaFuture.completedFuture(null)));
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
-    brokerConfigManager.alterBrokerConfigs(
-        CLUSTER_ID,
-        BROKER_ID,
-        Arrays.asList(
-            AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
-            AlterConfigCommand.delete(CONFIG_2.getName())))
+    brokerConfigManager
+        .alterBrokerConfigs(
+            CLUSTER_ID,
+            BROKER_ID,
+            Arrays.asList(
+                AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
+                AlterConfigCommand.delete(CONFIG_2.getName())))
         .get();
 
     verify(adminClient);
@@ -539,12 +547,13 @@ public class BrokerConfigManagerImplTest {
     replay(clusterManager);
 
     try {
-      brokerConfigManager.alterBrokerConfigs(
-          CLUSTER_ID,
-          BROKER_ID,
-          Arrays.asList(
-              AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
-              AlterConfigCommand.delete(CONFIG_2.getName())))
+      brokerConfigManager
+          .alterBrokerConfigs(
+              CLUSTER_ID,
+              BROKER_ID,
+              Arrays.asList(
+                  AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
+                  AlterConfigCommand.delete(CONFIG_2.getName())))
           .get();
       fail();
     } catch (ExecutionException e) {
@@ -556,24 +565,28 @@ public class BrokerConfigManagerImplTest {
   public void alterBrokerConfigs_oneNonExistingConfig_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    CONFIG)));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      brokerConfigManager.alterBrokerConfigs(
-          CLUSTER_ID,
-          BROKER_ID,
-          Arrays.asList(
-              AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
-              AlterConfigCommand.delete("foobar")))
+      brokerConfigManager
+          .alterBrokerConfigs(
+              CLUSTER_ID,
+              BROKER_ID,
+              Arrays.asList(
+                  AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
+                  AlterConfigCommand.delete("foobar")))
           .get();
       fail();
     } catch (ExecutionException e) {

@@ -59,11 +59,9 @@ public class ConsumerGroupLagSummariesResourceTest {
           .setMaxLagPartitionId(1)
           .build();
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ConsumerGroupLagSummaryManager consumerGroupLagSummaryManager;
+  @Mock private ConsumerGroupLagSummaryManager consumerGroupLagSummaryManager;
 
   private ConsumerGroupLagSummariesResource consumerGroupLagSummariesResource;
 
@@ -81,20 +79,23 @@ public class ConsumerGroupLagSummariesResourceTest {
     replay(consumerGroupLagSummaryManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    consumerGroupLagSummariesResource.getConsumerGroupLagSummary(response, CLUSTER_ID, CONSUMER_GROUP_ID);
+    consumerGroupLagSummariesResource.getConsumerGroupLagSummary(
+        response, CLUSTER_ID, CONSUMER_GROUP_ID);
 
     GetConsumerGroupLagSummaryResponse expected =
         GetConsumerGroupLagSummaryResponse.create(
             ConsumerGroupLagSummaryData.fromConsumerGroupLagSummary(CONSUMER_GROUP_LAG_1)
                 .setMetadata(
                     Resource.Metadata.builder()
-                        .setSelf("/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag-summary")
+                        .setSelf(
+                            "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag-summary")
                         .setResourceName(
                             "crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag-summary")
                         .build())
                 .setMaxLagConsumer(
-                    Relationship.create("/v3/clusters/cluster-1/consumer-groups/consumer-group-1/"
-                        + "consumers/consumer-1"))
+                    Relationship.create(
+                        "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/"
+                            + "consumers/consumer-1"))
                 .setMaxLagPartition(
                     Relationship.create("/v3/clusters/cluster-1/topics/topic-1/partitions/1"))
                 .build());
@@ -109,7 +110,8 @@ public class ConsumerGroupLagSummariesResourceTest {
     replay(consumerGroupLagSummaryManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    consumerGroupLagSummariesResource.getConsumerGroupLagSummary(response, CLUSTER_ID, CONSUMER_GROUP_ID);
+    consumerGroupLagSummariesResource.getConsumerGroupLagSummary(
+        response, CLUSTER_ID, CONSUMER_GROUP_ID);
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

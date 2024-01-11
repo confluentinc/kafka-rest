@@ -114,25 +114,17 @@ public class ReplicaManagerImplTest {
           Arrays.asList(REPLICA_1_1, REPLICA_1_2, REPLICA_1_3));
   private static final Partition PARTITION_2 =
       Partition.create(
-          CLUSTER_ID,
-          TOPIC_NAME,
-          PARTITION_ID_2,
-          Arrays.asList(REPLICA_2_1, REPLICA_2_2));
+          CLUSTER_ID, TOPIC_NAME, PARTITION_ID_2, Arrays.asList(REPLICA_2_1, REPLICA_2_2));
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private Admin adminClient;
+  @Mock private Admin adminClient;
 
-  @Mock
-  private DescribeLogDirsResult describeLogDirsResult;
+  @Mock private DescribeLogDirsResult describeLogDirsResult;
 
-  @Mock
-  private BrokerManager brokerManager;
+  @Mock private BrokerManager brokerManager;
 
-  @Mock
-  private PartitionManager partitionManager;
+  @Mock private PartitionManager partitionManager;
 
   private ReplicaManagerImpl replicaManager;
 
@@ -188,7 +180,8 @@ public class ReplicaManagerImplTest {
     replay(partitionManager);
 
     Optional<PartitionReplica> replica =
-        replicaManager.getReplica(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_1, REPLICA_1_1.getBrokerId())
+        replicaManager
+            .getReplica(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_1, REPLICA_1_1.getBrokerId())
             .get();
 
     assertEquals(REPLICA_1_1, replica.get());
@@ -213,7 +206,8 @@ public class ReplicaManagerImplTest {
     replay(partitionManager);
 
     try {
-      replicaManager.getReplica(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_1, REPLICA_1_1.getBrokerId())
+      replicaManager
+          .getReplica(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_1, REPLICA_1_1.getBrokerId())
           .get();
       fail();
     } catch (ExecutionException e) {
@@ -228,7 +222,8 @@ public class ReplicaManagerImplTest {
     replay(partitionManager);
 
     try {
-      replicaManager.getReplica(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_1, REPLICA_1_1.getBrokerId())
+      replicaManager
+          .getReplica(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_1, REPLICA_1_1.getBrokerId())
           .get();
       fail();
     } catch (ExecutionException e) {

@@ -53,10 +53,7 @@ public final class BrokersResource {
 
   @Inject
   public BrokersResource(
-      Provider<BrokerManager> brokerManager,
-      CrnFactory crnFactory,
-      UrlFactory urlFactory
-  ) {
+      Provider<BrokerManager> brokerManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.brokerManager = requireNonNull(brokerManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -69,7 +66,8 @@ public final class BrokersResource {
   public void listBrokers(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListBrokersResponse> response =
-        brokerManager.get()
+        brokerManager
+            .get()
             .listBrokers(clusterId)
             .thenApply(
                 brokers ->
@@ -97,10 +95,10 @@ public final class BrokersResource {
   public void getBroker(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("brokerId") Integer brokerId
-  ) {
+      @PathParam("brokerId") Integer brokerId) {
     CompletableFuture<GetBrokerResponse> response =
-        brokerManager.get()
+        brokerManager
+            .get()
             .getBroker(clusterId, brokerId)
             .thenApply(broker -> broker.orElseThrow(NotFoundException::new))
             .thenApply(broker -> GetBrokerResponse.create(toBrokerData(broker)));

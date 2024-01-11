@@ -22,6 +22,7 @@ public final class V3ResourcesFeature implements Feature {
 
   @Override
   public boolean configure(FeatureContext configurable) {
+    configurable.register(V3ResourcesModule.class);
     configurable.register(AclsResource.class);
     configurable.register(AlterBrokerConfigBatchAction.class);
     configurable.register(AlterClusterConfigBatchAction.class);

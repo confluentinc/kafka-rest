@@ -32,11 +32,11 @@ import org.slf4j.LoggerFactory;
 /**
  * State for tracking the progress of a single consumer read request.
  *
- * <p>To support embedded formats that require translation between the format deserialized
- * by the Kafka decoder and the format returned in the ConsumerRecord entity sent back to
- * the client, this class uses two pairs of key-value generic type parameters: KafkaK/KafkaV
- * is the format returned by the Kafka consumer's decoder/deserializer, ClientK/ClientV is
- * the format returned to the client in the HTTP response. In some cases these may be identical.
+ * <p>To support embedded formats that require translation between the format deserialized by the
+ * Kafka decoder and the format returned in the ConsumerRecord entity sent back to the client, this
+ * class uses two pairs of key-value generic type parameters: KafkaK/KafkaV is the format returned
+ * by the Kafka consumer's decoder/deserializer, ClientK/ClientV is the format returned to the
+ * client in the HTTP response. In some cases these may be identical.
  */
 class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
@@ -60,14 +60,12 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   private final Instant started;
   private final Clock clock = Clock.systemUTC();
 
-
   public KafkaConsumerReadTask(
       KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> parent,
       Duration timeout,
       long maxBytes,
       ConsumerReadCallback<ClientKeyT, ClientValueT> callback,
-      KafkaRestConfig config
-  ) {
+      KafkaRestConfig config) {
     this.parent = parent;
     this.maxResponseBytes =
         Math.min(maxBytes, config.getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG));
@@ -85,16 +83,13 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
             : config.getInt(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG);
     this.responseMinBytes = responseMinBytes < 0 ? Integer.MAX_VALUE : responseMinBytes;
 
-
     this.callback = callback;
     this.finished = false;
 
     started = clock.instant();
   }
 
-  /**
-   * Performs one iteration of reading from a consumer iterator.
-   */
+  /** Performs one iteration of reading from a consumer iterator. */
   public void doPartialRead() {
     try {
       // Initial setup requires locking, which must be done on this thread.
@@ -109,8 +104,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
               + " complete",
           this,
           messages.size(),
-          bytesConsumed
-      );
+          bytesConsumed);
 
       Instant now = clock.instant();
       Duration elapsed = Duration.between(started, now);
@@ -125,8 +119,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
             this,
             requestTimedOut,
             exceededMaxResponseBytes,
-            exceededMinResponseBytes
-        );
+            exceededMinResponseBytes);
         finish();
       }
     } catch (Exception e) {
@@ -140,8 +133,8 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   }
 
   /**
-   * Polls for and reads records until either the minimum response bytes are filled,
-   *  the maximum response bytes will be reached, or no more records can be read from polling.
+   * Polls for and reads records until either the minimum response bytes are filled, the maximum
+   * response bytes will be reached, or no more records can be read from polling.
    */
   private void addRecords() {
     while (!exceededMinResponseBytes && !exceededMaxResponseBytes && parent.hasNext()) {
@@ -161,14 +154,13 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   }
 
   /**
-   * Tries to add the latest record from the iterator
-   * to the read records if it doesn't go over the maximum response bytes.
-   * Keeps track and marks when we are about to exceed the max response bytes, and
-   * have exceeded the min response bytes
+   * Tries to add the latest record from the iterator to the read records if it doesn't go over the
+   * maximum response bytes. Keeps track and marks when we are about to exceed the max response
+   * bytes, and have exceeded the min response bytes
    */
   private void maybeAddRecord() {
     ConsumerRecordAndSize<ClientKeyT, ClientValueT> recordAndSize =
-            parent.createConsumerRecord(parent.peek());
+        parent.createConsumerRecord(parent.peek());
     long roughMsgSize = recordAndSize.getSize();
     if (bytesConsumed + roughMsgSize >= maxResponseBytes) {
       this.exceededMaxResponseBytes = true;

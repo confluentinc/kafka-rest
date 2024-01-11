@@ -55,14 +55,11 @@ public class ClusterManagerImplTest {
   private static final Node NODE_3 = new Node(3, "broker-3", 9093);
   private static final List<Node> NODES = Arrays.asList(NODE_1, NODE_2, NODE_3);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private Admin adminClient;
+  @Mock private Admin adminClient;
 
-  @Mock
-  private DescribeClusterResult describeClusterResult;
+  @Mock private DescribeClusterResult describeClusterResult;
 
   private ClusterManagerImpl clusterManager;
 
@@ -109,7 +106,7 @@ public class ClusterManagerImplTest {
       clusterManager.listClusters().get();
       fail();
     } catch (ExecutionException e) {
-      assertEquals(UnsupportedProtocolException.class,  e.getCause().getClass());
+      assertEquals(UnsupportedProtocolException.class, e.getCause().getClass());
     }
   }
 
@@ -158,8 +155,7 @@ public class ClusterManagerImplTest {
   }
 
   @Test
-  public void listClusters_timeoutException_returnTimeoutException()
-      throws Exception {
+  public void listClusters_timeoutException_returnTimeoutException() throws Exception {
     expect(adminClient.describeCluster(anyObject())).andReturn(describeClusterResult);
     expect(describeClusterResult.clusterId()).andReturn(failedFuture(new TimeoutException()));
     expect(describeClusterResult.controller()).andReturn(failedFuture(new TimeoutException()));
@@ -247,7 +243,7 @@ public class ClusterManagerImplTest {
       clusterManager.getLocalCluster().get();
       fail();
     } catch (ExecutionException e) {
-      assertEquals(UnsupportedProtocolException.class,  e.getCause().getClass());
+      assertEquals(UnsupportedProtocolException.class, e.getCause().getClass());
     }
   }
 }

@@ -52,8 +52,7 @@ public final class ConsumerGroupLagSummariesResource {
   public ConsumerGroupLagSummariesResource(
       Provider<ConsumerGroupLagSummaryManager> consumerGroupLagSummaryManager,
       CrnFactory crnFactory,
-      UrlFactory urlFactory
-  ) {
+      UrlFactory urlFactory) {
     this.consumerGroupLagSummaryManager = requireNonNull(consumerGroupLagSummaryManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -66,10 +65,10 @@ public final class ConsumerGroupLagSummariesResource {
   public void getConsumerGroupLagSummary(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("consumerGroupId") String consumerGroupId
-  ) {
+      @PathParam("consumerGroupId") String consumerGroupId) {
     CompletableFuture<GetConsumerGroupLagSummaryResponse> response =
-        consumerGroupLagSummaryManager.get()
+        consumerGroupLagSummaryManager
+            .get()
             .getConsumerGroupLagSummary(clusterId, consumerGroupId)
             .thenApply(groupLagSummary -> groupLagSummary.orElseThrow(NotFoundException::new))
             .thenApply(
@@ -81,8 +80,7 @@ public final class ConsumerGroupLagSummariesResource {
   }
 
   private ConsumerGroupLagSummaryData toConsumerGroupLagSummaryData(
-      ConsumerGroupLagSummary groupLagSummary
-  ) {
+      ConsumerGroupLagSummary groupLagSummary) {
     return ConsumerGroupLagSummaryData.fromConsumerGroupLagSummary(groupLagSummary)
         .setMetadata(
             Resource.Metadata.builder()

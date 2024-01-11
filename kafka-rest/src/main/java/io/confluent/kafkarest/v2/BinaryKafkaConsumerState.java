@@ -23,7 +23,6 @@ import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
-
 /**
  * Binary implementation of KafkaConsumerState that does no decoding, returning the raw bytes
  * directly.
@@ -35,16 +34,16 @@ public class BinaryKafkaConsumerState
       KafkaRestConfig config,
       ConsumerInstanceConfig consumerInstanceConfig,
       ConsumerInstanceId instanceId,
-      Consumer consumer
-  ) {
+      Consumer consumer) {
     super(config, consumerInstanceConfig, instanceId, consumer);
   }
 
   @Override
   public ConsumerRecordAndSize<ByteString, ByteString> createConsumerRecord(
       ConsumerRecord<byte[], byte[]> record) {
-    long approxSize = (record.key() != null ? record.key().length : 0)
-        + (record.value() != null ? record.value().length : 0);
+    long approxSize =
+        (record.key() != null ? record.key().length : 0)
+            + (record.value() != null ? record.value().length : 0);
 
     return new ConsumerRecordAndSize<>(
         io.confluent.kafkarest.entities.ConsumerRecord.create(

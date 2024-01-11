@@ -25,8 +25,8 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 /**
- * Schema-specific implementation of KafkaConsumerState, which decodes
- * into Objects or primitive types.
+ * Schema-specific implementation of KafkaConsumerState, which decodes into Objects or primitive
+ * types.
  */
 public final class SchemaKafkaConsumerState
     extends KafkaConsumerState<Object, Object, JsonNode, JsonNode> {

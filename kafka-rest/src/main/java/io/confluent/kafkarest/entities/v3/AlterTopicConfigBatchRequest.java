@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class AlterTopicConfigBatchRequest {
 
-  AlterTopicConfigBatchRequest() {
-  }
+  AlterTopicConfigBatchRequest() {}
 
   @JsonValue
   public abstract AlterConfigBatchRequestData getValue();

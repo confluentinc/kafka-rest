@@ -84,8 +84,7 @@ public final class AclsResource {
       @QueryParam("principal") @DefaultValue("") String principal,
       @QueryParam("host") @DefaultValue("") String host,
       @QueryParam("operation") @DefaultValue("any") Operation operation,
-      @QueryParam("permission") @DefaultValue("any") Permission permission
-  ) {
+      @QueryParam("permission") @DefaultValue("any") Permission permission) {
     if (resourceType == Acl.ResourceType.UNKNOWN) {
       throw new BadRequestException("resource_type cannot be ANY");
     }
@@ -100,7 +99,8 @@ public final class AclsResource {
     }
 
     CompletableFuture<SearchAclsResponse> response =
-        aclManager.get()
+        aclManager
+            .get()
             .searchAcls(
                 clusterId,
                 resourceType,
@@ -117,7 +117,8 @@ public final class AclsResource {
                             .setMetadata(
                                 ResourceCollection.Metadata.builder()
                                     .setSelf(
-                                        urlFactory.newUrlBuilder()
+                                        urlFactory
+                                            .newUrlBuilder()
                                             .appendPathSegment("v3")
                                             .appendPathSegment("clusters")
                                             .appendPathSegment(clusterId)
@@ -156,8 +157,7 @@ public final class AclsResource {
   public void createAcl(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @Valid CreateAclRequest request
-  ) {
+      @Valid CreateAclRequest request) {
     if (request.getResourceType() == Acl.ResourceType.ANY
         || request.getResourceType() == Acl.ResourceType.UNKNOWN) {
       throw new BadRequestException("resource_type cannot be ANY");
@@ -178,7 +178,8 @@ public final class AclsResource {
     }
 
     CompletableFuture<Void> response =
-        aclManager.get()
+        aclManager
+            .get()
             .createAcl(
                 clusterId,
                 request.getResourceType(),
@@ -190,22 +191,23 @@ public final class AclsResource {
                 request.getPermission());
 
     AsyncResponseBuilder.from(
-        Response.status(Status.CREATED)
-            .location(
-                URI.create(
-                    urlFactory.newUrlBuilder()
-                        .appendPathSegment("v3")
-                        .appendPathSegment("clusters")
-                        .appendPathSegment(clusterId)
-                        .appendPathSegment("acls")
-                        .putQueryParameter("resource_type", request.getResourceType().name())
-                        .putQueryParameter("resource_name", request.getResourceName())
-                        .putQueryParameter("pattern_type", request.getPatternType().name())
-                        .putQueryParameter("principal", request.getPrincipal())
-                        .putQueryParameter("host", request.getHost())
-                        .putQueryParameter("operation", request.getOperation().name())
-                        .putQueryParameter("permission", request.getPermission().name())
-                        .build())))
+            Response.status(Status.CREATED)
+                .location(
+                    URI.create(
+                        urlFactory
+                            .newUrlBuilder()
+                            .appendPathSegment("v3")
+                            .appendPathSegment("clusters")
+                            .appendPathSegment(clusterId)
+                            .appendPathSegment("acls")
+                            .putQueryParameter("resource_type", request.getResourceType().name())
+                            .putQueryParameter("resource_name", request.getResourceName())
+                            .putQueryParameter("pattern_type", request.getPatternType().name())
+                            .putQueryParameter("principal", request.getPrincipal())
+                            .putQueryParameter("host", request.getHost())
+                            .putQueryParameter("operation", request.getOperation().name())
+                            .putQueryParameter("permission", request.getPermission().name())
+                            .build())))
         .entity(response)
         .asyncResume(asyncResponse);
   }
@@ -223,8 +225,7 @@ public final class AclsResource {
       @QueryParam("principal") @DefaultValue("") String principal,
       @QueryParam("host") @DefaultValue("") String host,
       @QueryParam("operation") @DefaultValue("unknown") Operation operation,
-      @QueryParam("permission") @DefaultValue("unknown") Permission permission
-  ) {
+      @QueryParam("permission") @DefaultValue("unknown") Permission permission) {
     if (resourceType == Acl.ResourceType.UNKNOWN) {
       throw new BadRequestException("resource_type cannot be unspecified or UNKNOWN");
     }
@@ -239,7 +240,8 @@ public final class AclsResource {
     }
 
     CompletableFuture<DeleteAclsResponse> response =
-        aclManager.get()
+        aclManager
+            .get()
             .deleteAcls(
                 clusterId,
                 resourceType,
@@ -272,7 +274,8 @@ public final class AclsResource {
         .setMetadata(
             Resource.Metadata.builder()
                 .setSelf(
-                    urlFactory.newUrlBuilder()
+                    urlFactory
+                        .newUrlBuilder()
                         .appendPathSegment("v3")
                         .appendPathSegment("clusters")
                         .appendPathSegment(acl.getClusterId())

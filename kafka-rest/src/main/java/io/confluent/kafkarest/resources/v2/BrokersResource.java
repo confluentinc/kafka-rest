@@ -35,9 +35,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
-/**
- * Resource representing the collection of all available brokers.
- */
+/** Resource representing the collection of all available brokers. */
 @Path("/brokers")
 @Produces(Versions.KAFKA_V2_JSON_WEIGHTED)
 @Consumes()
@@ -56,7 +54,8 @@ public final class BrokersResource {
   @ResourceName("api.v2.brokers.list")
   public void list(@Suspended AsyncResponse asyncResponse) {
     CompletableFuture<BrokerList> response =
-        brokerManager.get()
+        brokerManager
+            .get()
             .listLocalBrokers()
             .thenApply(
                 brokers ->

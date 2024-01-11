@@ -67,7 +67,9 @@ public final class GetReassignmentAction {
       @PathParam("topicName") String topicName,
       @PathParam("partitionId") Integer partitionId) {
     CompletableFuture<GetReassignmentResponse> response =
-        reassignmentManager.get().getReassignment(clusterId, topicName, partitionId)
+        reassignmentManager
+            .get()
+            .getReassignment(clusterId, topicName, partitionId)
             .thenApply(reassignment -> reassignment.orElseThrow(NotFoundException::new))
             .thenApply(
                 reassignment -> GetReassignmentResponse.create(toReassignmentData(reassignment)));

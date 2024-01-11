@@ -15,16 +15,15 @@
 
 package io.confluent.kafkarest.backends.schemaregistry;
 
+import static java.util.Objects.requireNonNull;
+
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafkarest.KafkaRestContext;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.process.internal.RequestScoped;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
-
-import static java.util.Objects.requireNonNull;
 
 public final class SchemaRegistryModule extends AbstractBinder {
 
@@ -50,7 +49,6 @@ public final class SchemaRegistryModule extends AbstractBinder {
     }
 
     @Override
-    public void dispose(SchemaRegistryClient schemaRegistryClient) {
-    }
+    public void dispose(SchemaRegistryClient schemaRegistryClient) {}
   }
 }

@@ -24,27 +24,19 @@ import javax.validation.constraints.PositiveOrZero;
 
 public final class TopicPartitionOffsetMetadata {
 
-  @NotEmpty
-  @Nullable
-  private final String topic;
+  @NotEmpty @Nullable private final String topic;
 
-  @PositiveOrZero
-  @Nullable
-  private final Integer partition;
+  @PositiveOrZero @Nullable private final Integer partition;
 
-  @PositiveOrZero
-  @Nullable
-  private final Long offset;
+  @PositiveOrZero @Nullable private final Long offset;
 
-  @Nullable
-  private final String metadata;
+  @Nullable private final String metadata;
 
   public TopicPartitionOffsetMetadata(
       @JsonProperty("topic") @Nullable String topic,
       @JsonProperty("partition") @Nullable Integer partition,
       @JsonProperty("offset") @Nullable Long offset,
-      @JsonProperty("metadata") @Nullable String metadata
-  ) {
+      @JsonProperty("metadata") @Nullable String metadata) {
     this.topic = topic;
     this.partition = partition;
     this.offset = offset;
@@ -97,8 +89,7 @@ public final class TopicPartitionOffsetMetadata {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", TopicPartitionOffsetMetadata.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", TopicPartitionOffsetMetadata.class.getSimpleName() + "[", "]")
         .add("topic='" + topic + "'")
         .add("partition=" + partition)
         .add("offset=" + offset)
