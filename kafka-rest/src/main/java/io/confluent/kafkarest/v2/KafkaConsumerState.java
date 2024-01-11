@@ -22,6 +22,7 @@ import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v2.ConsumerAssignmentRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedResponse;
@@ -29,7 +30,6 @@ import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSeekRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v2.TopicPartitionOffsetMetadata;
 import java.time.Clock;
 import java.time.Duration;
@@ -57,8 +57,8 @@ import org.apache.kafka.common.TopicPartition;
 
 /**
  * Tracks all the state for a consumer. This class is abstract in order to support multiple
- * serialization formats. Implementations must provide decoders and a method to convert
- * {@code KafkaMessageAndMetadata<K,V>} values to ConsumerRecords that can be returned to the client
+ * serialization formats. Implementations must provide decoders and a method to convert {@code
+ * KafkaMessageAndMetadata<K,V>} values to ConsumerRecords that can be returned to the client
  * (including translation if the decoded Kafka consumer type and ConsumerRecord types differ).
  */
 public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
@@ -78,8 +78,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       KafkaRestConfig config,
       ConsumerInstanceConfig consumerInstanceConfig,
       ConsumerInstanceId instanceId,
-      Consumer<KafkaKeyT, KafkaValueT> consumer
-  ) {
+      Consumer<KafkaKeyT, KafkaValueT> consumer) {
     this.instanceId = instanceId;
     this.consumer = consumer;
     this.consumerInstanceTimeout =
@@ -103,16 +102,11 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * determine when to trigger the response.
    */
   public abstract ConsumerRecordAndSize<ClientKeyT, ClientValueT> createConsumerRecord(
-      ConsumerRecord<KafkaKeyT, KafkaValueT> msg
-  );
+      ConsumerRecord<KafkaKeyT, KafkaValueT> msg);
 
-  /**
-   * Commit the given list of offsets
-   */
+  /** Commit the given list of offsets */
   public synchronized List<TopicPartitionOffset> commitOffsets(
-      String async,
-      ConsumerOffsetCommitRequest offsetCommitRequest
-  ) {
+      String async, ConsumerOffsetCommitRequest offsetCommitRequest) {
     // If no offsets are given, then commit all the records read so far
     if (offsetCommitRequest == null) {
       if (async == null) {
@@ -124,20 +118,17 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       Map<TopicPartition, OffsetAndMetadata> offsetMap =
           new HashMap<TopicPartition, OffsetAndMetadata>();
 
-      //commit each given offset
+      // commit each given offset
       for (TopicPartitionOffsetMetadata t : offsetCommitRequest.getOffsets()) {
         if (t.getMetadata() == null) {
           offsetMap.put(
               new TopicPartition(t.getTopic(), t.getPartition()),
-              new OffsetAndMetadata(t.getOffset() + 1)
-          );
+              new OffsetAndMetadata(t.getOffset() + 1));
         } else {
           offsetMap.put(
               new TopicPartition(t.getTopic(), t.getPartition()),
-              new OffsetAndMetadata(t.getOffset() + 1, t.getMetadata())
-          );
+              new OffsetAndMetadata(t.getOffset() + 1, t.getMetadata()));
         }
-
       }
       consumer.commitSync(offsetMap);
     }
@@ -145,9 +136,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     return result;
   }
 
-  /**
-   * Seek to the first offset for each of the given partitions.
-   */
+  /** Seek to the first offset for each of the given partitions. */
   public synchronized void seekToBeginning(ConsumerSeekToRequest seekToRequest) {
     if (seekToRequest != null) {
       Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
@@ -159,9 +148,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     }
   }
 
-  /**
-   * Seek to the last offset for each of the given partitions.
-   */
+  /** Seek to the last offset for each of the given partitions. */
   public synchronized void seekToEnd(ConsumerSeekToRequest seekToRequest) {
     if (seekToRequest != null) {
       Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
@@ -173,9 +160,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     }
   }
 
-  /**
-   * Overrides the fetch offsets that the consumer will use on the next poll(timeout).
-   */
+  /** Overrides the fetch offsets that the consumer will use on the next poll(timeout). */
   public synchronized void seek(ConsumerSeekRequest request) {
     if (request == null) {
       return;
@@ -191,8 +176,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         request.getTimestamps().stream()
             .collect(
                 Collectors.toMap(
-                    partition ->
-                        new TopicPartition(partition.getTopic(), partition.getPartition()),
+                    partition -> new TopicPartition(partition.getTopic(), partition.getPartition()),
                     ConsumerSeekRequest.PartitionTimestamp::getMetadata));
 
     Map<TopicPartition, OffsetAndTimestamp> offsets =
@@ -212,24 +196,20 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     }
   }
 
-  /**
-   * Manually assign a list of partitions to this consumer.
-   */
+  /** Manually assign a list of partitions to this consumer. */
   public synchronized void assign(ConsumerAssignmentRequest assignmentRequest) {
     if (assignmentRequest != null) {
       Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
 
-      for (io.confluent.kafkarest.entities.v2.TopicPartition t
-          : assignmentRequest.getPartitions()) {
+      for (io.confluent.kafkarest.entities.v2.TopicPartition t :
+          assignmentRequest.getPartitions()) {
         topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
       }
       consumer.assign(topicPartitions);
     }
   }
 
-  /**
-   * Close the consumer,
-   */
+  /** Close the consumer, */
   public synchronized void close() {
     if (consumer != null) {
       consumer.close();
@@ -238,9 +218,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     consumer = null;
   }
 
-  /**
-   * Subscribe to the given list of topics to get dynamically assigned partitions.
-   */
+  /** Subscribe to the given list of topics to get dynamically assigned partitions. */
   public synchronized void subscribe(ConsumerSubscriptionRecord subscription) {
     if (subscription == null) {
       return;
@@ -257,18 +235,14 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     }
   }
 
-  /**
-   * Unsubscribe from topics currently subscribed with subscribe(Collection).
-   */
+  /** Unsubscribe from topics currently subscribed with subscribe(Collection). */
   public synchronized void unsubscribe() {
     if (consumer != null) {
       consumer.unsubscribe();
     }
   }
 
-  /**
-   * Get the current list of topics subscribed.
-   */
+  /** Get the current list of topics subscribed. */
   public synchronized Set<String> subscription() {
     Set<String> currSubscription = null;
     if (consumer != null) {
@@ -277,9 +251,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     return currSubscription;
   }
 
-  /**
-   * Get the set of partitions currently assigned to this consumer.
-   */
+  /** Get the set of partitions currently assigned to this consumer. */
   public synchronized Set<TopicPartition> assignment() {
     Set<TopicPartition> currAssignment = null;
     if (consumer != null) {
@@ -288,10 +260,9 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     return currAssignment;
   }
 
-
   /**
-   * Get the last committed offset for the given partition (whether the commit happened by
-   * this process or another).
+   * Get the last committed offset for the given partition (whether the commit happened by this
+   * process or another).
    */
   public synchronized ConsumerCommittedResponse committed(ConsumerCommittedRequest request) {
     Vector<TopicPartitionOffsetMetadata> offsets = new Vector<>();
@@ -305,18 +276,14 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
                   partition.topic(),
                   partition.partition(),
                   offsetMetadata.offset(),
-                  offsetMetadata.metadata()
-              )
-          );
+                  offsetMetadata.metadata()));
         }
       }
     }
     return new ConsumerCommittedResponse(offsets);
   }
 
-  /**
-   * Returns the beginning offset of the {@code topic} {@code partition}.
-   */
+  /** Returns the beginning offset of the {@code topic} {@code partition}. */
   synchronized long getBeginningOffset(String topic, int partition) {
     if (consumer == null) {
       throw new IllegalStateException("KafkaConsumerState has been closed.");
@@ -333,9 +300,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     return response.values().stream().findAny().get();
   }
 
-  /**
-   * Returns the end offset of the {@code topic} {@code partition}.
-   */
+  /** Returns the end offset of the {@code topic} {@code partition}. */
   synchronized long getEndOffset(String topic, int partition) {
     if (consumer == null) {
       throw new IllegalStateException("KafkaConsumerState has been closed.");
@@ -412,13 +377,12 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
 
   /**
    * Initiate poll(0) request to retrieve consumer records that are available immediately, or return
-   * the existing
-   * consumer records if the records have not been fully consumed by client yet. Must be
-   * invoked with the lock held, i.e. after startRead().
+   * the existing consumer records if the records have not been fully consumed by client yet. Must
+   * be invoked with the lock held, i.e. after startRead().
    */
   private synchronized void getOrCreateConsumerRecords() {
     ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(0);
-    //drain the iterator and buffer to list
+    // drain the iterator and buffer to list
     for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : polledRecords) {
       consumerRecords.add(consumerRecord);
     }
@@ -426,14 +390,10 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
 
   private class NoOpOnRebalance implements ConsumerRebalanceListener {
 
-    public NoOpOnRebalance() {
-    }
+    public NoOpOnRebalance() {}
 
-    public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-    }
+    public void onPartitionsRevoked(Collection<TopicPartition> partitions) {}
 
-    public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-    }
+    public void onPartitionsAssigned(Collection<TopicPartition> partitions) {}
   }
 }
-

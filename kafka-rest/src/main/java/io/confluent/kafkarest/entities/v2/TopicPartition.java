@@ -24,18 +24,13 @@ import javax.validation.constraints.PositiveOrZero;
 
 public final class TopicPartition {
 
-  @NotEmpty
-  @Nullable
-  private final String topic;
+  @NotEmpty @Nullable private final String topic;
 
-  @PositiveOrZero
-  @Nullable
-  private final Integer partition;
-    
+  @PositiveOrZero @Nullable private final Integer partition;
+
   public TopicPartition(
       @JsonProperty("topic") @Nullable String topic,
-      @JsonProperty("partition") @Nullable Integer partition
-  ) {
+      @JsonProperty("partition") @Nullable Integer partition) {
     this.topic = topic;
     this.partition = partition;
   }

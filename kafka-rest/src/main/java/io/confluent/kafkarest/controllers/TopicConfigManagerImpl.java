@@ -17,7 +17,6 @@ package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.TopicConfig;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,8 +26,8 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.common.config.ConfigResource;
 
-final class TopicConfigManagerImpl
-    extends AbstractConfigManager<TopicConfig, TopicConfig.Builder> implements TopicConfigManager {
+final class TopicConfigManagerImpl extends AbstractConfigManager<TopicConfig, TopicConfig.Builder>
+    implements TopicConfigManager {
 
   @Inject
   TopicConfigManagerImpl(Admin adminClient, ClusterManager clusterManager) {
@@ -36,8 +35,7 @@ final class TopicConfigManagerImpl
   }
 
   @Override
-  public CompletableFuture<List<TopicConfig>> listTopicConfigs(
-      String clusterId, String topicName) {
+  public CompletableFuture<List<TopicConfig>> listTopicConfigs(String clusterId, String topicName) {
     return listConfigs(
         clusterId,
         new ConfigResource(ConfigResource.Type.TOPIC, topicName),
@@ -47,28 +45,35 @@ final class TopicConfigManagerImpl
   @Override
   public CompletableFuture<Map<String, List<TopicConfig>>> listTopicConfigs(
       String clusterId, List<String> topicNames) {
-    List<ConfigResource> topicResources = topicNames.stream()
-        .map(topicName -> new ConfigResource(ConfigResource.Type.TOPIC, topicName))
-        .collect(Collectors.toList());
+    List<ConfigResource> topicResources =
+        topicNames.stream()
+            .map(topicName -> new ConfigResource(ConfigResource.Type.TOPIC, topicName))
+            .collect(Collectors.toList());
     return listConfigs(
-        clusterId,
-        topicResources,
-        TopicConfig.builder().setClusterId(clusterId).setTopicName(""))
-        .thenApply(configs -> configs.entrySet().stream().collect(Collectors.toMap(
-            e -> e.getKey().name(),
-            e -> e.getValue().stream().map(config -> TopicConfig.create(
-                config.getClusterId(),
-                e.getKey().name(),
-                config.getName(),
-                config.getValue(),
-                config.isDefault(),
-                config.isReadOnly(),
-                config.isSensitive(),
-                config.getSource(),
-                config.getSynonyms()
-            )).collect(Collectors.toList())
-            )
-        ));
+            clusterId,
+            topicResources,
+            TopicConfig.builder().setClusterId(clusterId).setTopicName(""))
+        .thenApply(
+            configs ->
+                configs.entrySet().stream()
+                    .collect(
+                        Collectors.toMap(
+                            e -> e.getKey().name(),
+                            e ->
+                                e.getValue().stream()
+                                    .map(
+                                        config ->
+                                            TopicConfig.create(
+                                                config.getClusterId(),
+                                                e.getKey().name(),
+                                                config.getName(),
+                                                config.getValue(),
+                                                config.isDefault(),
+                                                config.isReadOnly(),
+                                                config.isSensitive(),
+                                                config.getSource(),
+                                                config.getSynonyms()))
+                                    .collect(Collectors.toList()))));
   }
 
   @Override
@@ -93,8 +98,7 @@ final class TopicConfigManagerImpl
   }
 
   @Override
-  public CompletableFuture<Void> resetTopicConfig(
-      String clusterId, String topicName, String name) {
+  public CompletableFuture<Void> resetTopicConfig(String clusterId, String topicName, String name) {
     return safeResetConfig(
         clusterId,
         new ConfigResource(ConfigResource.Type.TOPIC, topicName),

@@ -57,10 +57,10 @@ public final class AlterTopicConfigBatchAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      @Valid AlterTopicConfigBatchRequest request
-  ) {
+      @Valid AlterTopicConfigBatchRequest request) {
     CompletableFuture<Void> response =
-        topicConfigManager.get()
+        topicConfigManager
+            .get()
             .alterTopicConfigs(clusterId, topicName, request.getValue().toAlterConfigCommands());
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))

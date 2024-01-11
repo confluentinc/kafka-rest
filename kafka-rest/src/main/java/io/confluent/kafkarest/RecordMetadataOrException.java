@@ -15,7 +15,6 @@
 
 package io.confluent.kafkarest;
 
-
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 public class RecordMetadataOrException {

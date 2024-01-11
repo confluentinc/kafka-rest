@@ -76,8 +76,7 @@ public class PartitionsResourceTest extends JerseyTest {
           /* earliestOffset= */ 100L,
           /* latestOffset= */ 1000L);
 
-  @Mock
-  private PartitionManager partitionManager;
+  @Mock private PartitionManager partitionManager;
 
   @Override
   protected Application configure() {
@@ -109,8 +108,7 @@ public class PartitionsResourceTest extends JerseyTest {
     assertEquals(
         String.format(
             "{\"beginning_offset\":%d,\"end_offset\":%d}",
-            PARTITION.getEarliestOffset(),
-            PARTITION.getLatestOffset()),
+            PARTITION.getEarliestOffset(), PARTITION.getLatestOffset()),
         response);
 
     verify(partitionManager);

@@ -27,8 +27,7 @@ public abstract class ClusterData extends Resource {
 
   public static final String ELEMENT_TYPE = "kafka";
 
-  ClusterData() {
-  }
+  ClusterData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -73,8 +72,7 @@ public abstract class ClusterData extends Resource {
       @JsonProperty("broker_configs") Relationship brokerConfigs,
       @JsonProperty("consumer_groups") Relationship consumerGroups,
       @JsonProperty("topics") Relationship topics,
-      @JsonProperty("partition_reassignments") Relationship partitionReassignments
-  ) {
+      @JsonProperty("partition_reassignments") Relationship partitionReassignments) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -92,8 +90,7 @@ public abstract class ClusterData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

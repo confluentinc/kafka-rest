@@ -25,36 +25,26 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-/**
- * Utilities to deal with {@link AsyncResponse}.
- */
+/** Utilities to deal with {@link AsyncResponse}. */
 public final class AsyncResponses {
 
-  private AsyncResponses() {
-  }
+  private AsyncResponses() {}
 
-  /**
-   * Resumes the given {@code asyncResponse} with the result of {@code entity}.
-   */
+  /** Resumes the given {@code asyncResponse} with the result of {@code entity}. */
   public static <T> void asyncResume(AsyncResponse asyncResponse, CompletableFuture<T> entity) {
     AsyncResponseBuilder.<T>from(Response.ok()).entity(entity).asyncResume(asyncResponse);
   }
 
-  /**
-   * A analogous of {@link AsyncResponse} for {@link ResponseBuilder}.
-   */
+  /** A analogous of {@link AsyncResponse} for {@link ResponseBuilder}. */
   public static final class AsyncResponseBuilder<T> {
 
     private final ResponseBuilder responseBuilder;
 
-    @Nullable
-    private CompletableFuture<? extends T> entityFuture;
+    @Nullable private CompletableFuture<? extends T> entityFuture;
 
-    @Nullable
-    private Annotation[] entityAnnotations;
+    @Nullable private Annotation[] entityAnnotations;
 
-    @Nullable
-    private Function<? super T, Response.Status> statusFunction;
+    @Nullable private Function<? super T, Response.Status> statusFunction;
 
     private AsyncResponseBuilder(ResponseBuilder responseBuilder) {
       this.responseBuilder = responseBuilder.clone();
@@ -68,17 +58,13 @@ public final class AsyncResponses {
       return new AsyncResponseBuilder<>(responseBuilder);
     }
 
-    /**
-     * See {@link ResponseBuilder#entity(Object)}.
-     */
+    /** See {@link ResponseBuilder#entity(Object)}. */
     public AsyncResponseBuilder<T> entity(CompletableFuture<? extends T> entity) {
       entityFuture = entity;
       return this;
     }
 
-    /**
-     * See {@link ResponseBuilder#entity(Object, Annotation[])}.
-     */
+    /** See {@link ResponseBuilder#entity(Object, Annotation[])}. */
     public AsyncResponseBuilder<T> entity(
         CompletableFuture<? extends T> entity, Annotation[] annotations) {
       entityFuture = entity;
@@ -100,9 +86,7 @@ public final class AsyncResponses {
       return this;
     }
 
-    /**
-     * Resumes this {@code AsyncResponseBuilder}.
-     */
+    /** Resumes this {@code AsyncResponseBuilder}. */
     public void asyncResume(AsyncResponse asyncResponse) {
       if (entityFuture == null) {
         throw new IllegalStateException();

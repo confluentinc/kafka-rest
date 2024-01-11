@@ -23,15 +23,11 @@ import java.util.concurrent.CompletableFuture;
 
 public interface ClusterConfigManager {
 
-  /**
-   * Returns the list of Kafka {@link ClusterConfig ClusterConfigs}.
-   */
+  /** Returns the list of Kafka {@link ClusterConfig ClusterConfigs}. */
   CompletableFuture<List<ClusterConfig>> listClusterConfigs(
       String clusterId, ClusterConfig.Type type);
 
-  /**
-   * Returns the Kafka {@link ClusterConfig} with the given {@code name}.
-   */
+  /** Returns the Kafka {@link ClusterConfig} with the given {@code name}. */
   CompletableFuture<Optional<ClusterConfig>> getClusterConfig(
       String clusterId, ClusterConfig.Type type, String name);
 
@@ -42,9 +38,7 @@ public interface ClusterConfigManager {
   CompletableFuture<Void> upsertClusterConfig(
       String clusterId, ClusterConfig.Type type, String name, String newValue);
 
-  /**
-   * Resets the Kafka {@link ClusterConfig} with the given {@code name} to its default value.
-   */
+  /** Resets the Kafka {@link ClusterConfig} with the given {@code name} to its default value. */
   CompletableFuture<Void> deleteClusterConfig(
       String clusterId, ClusterConfig.Type type, String name);
 

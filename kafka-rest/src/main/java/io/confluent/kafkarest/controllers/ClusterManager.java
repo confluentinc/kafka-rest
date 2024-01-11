@@ -20,16 +20,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * A service to manage Kafka {@link Cluster Clusters}.
- */
+/** A service to manage Kafka {@link Cluster Clusters}. */
 public interface ClusterManager {
 
   /**
    * Returns the list of Kafka {@link Cluster Clusters} known.
    *
    * <p>Right now only one cluster is known, namely, the cluster to which this application is
-   * connected to. Therefore, this method will always return at most 1 cluster.</p>
+   * connected to. Therefore, this method will always return at most 1 cluster.
    *
    * @see #getLocalCluster()
    */
@@ -41,8 +39,6 @@ public interface ClusterManager {
    */
   CompletableFuture<Optional<Cluster>> getCluster(String clusterId);
 
-  /**
-   * Returns the Kafka {@link Cluster} this application is connected to.
-   */
+  /** Returns the Kafka {@link Cluster} this application is connected to. */
   CompletableFuture<Cluster> getLocalCluster();
 }

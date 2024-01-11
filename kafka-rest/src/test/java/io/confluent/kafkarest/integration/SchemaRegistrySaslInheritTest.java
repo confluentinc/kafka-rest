@@ -127,13 +127,12 @@ public class SchemaRegistrySaslInheritTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        kafkaCluster
-            .getRecord(
-                TOPIC_NAME,
-                actual.getPartitionId(),
-                actual.getOffset(),
-                schemaRegistry.createAvroDeserializer(),
-                schemaRegistry.createAvroDeserializer());
+        kafkaCluster.getRecord(
+            TOPIC_NAME,
+            actual.getPartitionId(),
+            actual.getOffset(),
+            schemaRegistry.createAvroDeserializer(),
+            schemaRegistry.createAvroDeserializer());
     assertEquals(key, produced.key());
     assertEquals(value, produced.value());
   }

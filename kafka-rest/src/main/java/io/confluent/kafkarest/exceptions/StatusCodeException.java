@@ -19,9 +19,7 @@ import static java.util.Objects.requireNonNull;
 
 import javax.ws.rs.core.Response.Status;
 
-/**
- * An exception that can be returned as an HTTP response.
- */
+/** An exception that can be returned as an HTTP response. */
 public class StatusCodeException extends RuntimeException {
 
   private final Status status;
@@ -36,7 +34,7 @@ public class StatusCodeException extends RuntimeException {
     return new StatusCodeException(status, title, detail);
   }
 
-  StatusCodeException(Status status, String title, String detail) {
+  public StatusCodeException(Status status, String title, String detail) {
     this(status, status.getStatusCode(), title, detail);
   }
 

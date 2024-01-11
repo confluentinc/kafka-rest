@@ -24,8 +24,7 @@ import javax.annotation.Nullable;
 
 public final class ConsumerSeekToRequest {
 
-  @Nullable
-  private final List<TopicPartition> partitions;
+  @Nullable private final List<TopicPartition> partitions;
 
   @JsonCreator
   public ConsumerSeekToRequest(

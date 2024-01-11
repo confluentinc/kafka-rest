@@ -20,14 +20,11 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/**
- * A Kafka cluster.
- */
+/** A Kafka cluster. */
 @AutoValue
 public abstract class Cluster {
 
-  Cluster() {
-  }
+  Cluster() {}
 
   public abstract String getClusterId();
 
@@ -59,8 +56,7 @@ public abstract class Cluster {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

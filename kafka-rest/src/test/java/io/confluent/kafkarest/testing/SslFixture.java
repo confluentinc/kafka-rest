@@ -69,10 +69,7 @@ public final class SslFixture extends ExternalResource {
         trustStoreLocation.toString(),
         new Password(trustStorePassword),
         keys.entrySet().stream()
-            .collect(
-                Collectors.toMap(
-                    Entry::getKey,
-                    entry -> entry.getValue().getCertificate())));
+            .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().getCertificate())));
   }
 
   private ImmutableMap<String, Key> generateKeys() throws Exception {
@@ -179,8 +176,7 @@ public final class SslFixture extends ExternalResource {
   public static final class Builder {
     private final ImmutableSet.Builder<String> keyNames = ImmutableSet.builder();
 
-    private Builder() {
-    }
+    private Builder() {}
 
     public Builder addKey(String name) {
       keyNames.add(name);
@@ -195,8 +191,7 @@ public final class SslFixture extends ExternalResource {
   @AutoValue
   public abstract static class Key {
 
-    Key() {
-    }
+    Key() {}
 
     public abstract Path getKeyStoreLocation();
 

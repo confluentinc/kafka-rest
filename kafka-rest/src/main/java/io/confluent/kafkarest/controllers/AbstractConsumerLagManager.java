@@ -43,32 +43,26 @@ abstract class AbstractConsumerLagManager {
   }
 
   final CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> getCurrentOffsets(
-      String consumerGroupId
-  ) {
+      String consumerGroupId) {
     return KafkaFutures.toCompletableFuture(
-        kafkaAdminClient.listConsumerGroupOffsets(
-            consumerGroupId, new ListConsumerGroupOffsetsOptions())
+        kafkaAdminClient
+            .listConsumerGroupOffsets(consumerGroupId, new ListConsumerGroupOffsetsOptions())
             .partitionsToOffsetAndMetadata());
   }
 
   final CompletableFuture<Map<TopicPartition, ListOffsetsResultInfo>> getLatestOffsets(
-      Map<TopicPartition, OffsetAndMetadata> currentOffsets
-  ) {
+      Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
     Map<TopicPartition, OffsetSpec> latestOffsetSpecs =
-        currentOffsets.keySet()
-            .stream()
-            .collect(
-                Collectors.toMap(Function.identity(), topicPartition -> OffsetSpec.latest()));
+        currentOffsets.keySet().stream()
+            .collect(Collectors.toMap(Function.identity(), topicPartition -> OffsetSpec.latest()));
     return KafkaFutures.toCompletableFuture(
-        kafkaAdminClient.listOffsets(
-            latestOffsetSpecs,
-            new ListOffsetsOptions(ISOLATION_LEVEL)).all());
+        kafkaAdminClient
+            .listOffsets(latestOffsetSpecs, new ListOffsetsOptions(ISOLATION_LEVEL))
+            .all());
   }
 
   static final Optional<Long> getCurrentOffset(
-      Map<TopicPartition, OffsetAndMetadata> currentOffsets,
-      TopicPartition topicPartition
-  ) {
+      Map<TopicPartition, OffsetAndMetadata> currentOffsets, TopicPartition topicPartition) {
     OffsetAndMetadata offsetAndMetadata = currentOffsets.get(topicPartition);
     if (offsetAndMetadata == null) {
       return Optional.empty();
@@ -77,9 +71,7 @@ abstract class AbstractConsumerLagManager {
   }
 
   static final Optional<Long> getLatestOffset(
-      Map<TopicPartition, ListOffsetsResultInfo> latestOffsets,
-      TopicPartition topicPartition
-  ) {
+      Map<TopicPartition, ListOffsetsResultInfo> latestOffsets, TopicPartition topicPartition) {
     ListOffsetsResultInfo offsetInfo = latestOffsets.get(topicPartition);
     if (offsetInfo == null) {
       return Optional.empty();
@@ -88,10 +80,7 @@ abstract class AbstractConsumerLagManager {
   }
 
   static final <T extends Map<?, ?>> T checkOffsetsExist(
-      T offsets,
-      String message,
-      Object... args
-  ) {
+      T offsets, String message, Object... args) {
     if (offsets.isEmpty()) {
       throw new NotFoundException(String.format(message, args));
     }

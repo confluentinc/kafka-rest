@@ -65,10 +65,10 @@ public final class SearchReplicasByBrokerAction {
   public void searchReplicasByBroker(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("brokerId") Integer brokerId
-  ) {
+      @PathParam("brokerId") Integer brokerId) {
     CompletableFuture<SearchReplicasByBrokerResponse> response =
-        replicaManager.get()
+        replicaManager
+            .get()
             .searchReplicasByBrokerId(clusterId, brokerId)
             .thenApply(
                 replicas ->

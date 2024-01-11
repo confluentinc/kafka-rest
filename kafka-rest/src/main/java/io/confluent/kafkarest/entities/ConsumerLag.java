@@ -23,8 +23,7 @@ import java.util.Optional;
 @AutoValue
 public abstract class ConsumerLag {
 
-  ConsumerLag() {
-  }
+  ConsumerLag() {}
 
   public abstract String getClusterId();
 
@@ -55,8 +54,7 @@ public abstract class ConsumerLag {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

@@ -24,17 +24,14 @@ import javax.annotation.Nullable;
 
 public final class ConsumerSubscriptionRecord {
 
-  @Nullable
-  private final List<String> topics;
+  @Nullable private final List<String> topics;
 
-  @Nullable
-  private final String topicPattern;
+  @Nullable private final String topicPattern;
 
   @JsonCreator
   public ConsumerSubscriptionRecord(
       @JsonProperty("topics") @Nullable List<String> topics,
-      @JsonProperty("topic_pattern") @Nullable String topicPattern
-  ) {
+      @JsonProperty("topic_pattern") @Nullable String topicPattern) {
     this.topics = topics;
     this.topicPattern = topicPattern;
   }
@@ -70,8 +67,7 @@ public final class ConsumerSubscriptionRecord {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", ConsumerSubscriptionRecord.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", ConsumerSubscriptionRecord.class.getSimpleName() + "[", "]")
         .add("topics=" + topics)
         .add("topicPattern='" + topicPattern + "'")
         .toString();

@@ -23,8 +23,7 @@ import java.util.List;
 @AutoValue
 public abstract class AclDataList extends ResourceCollection<AclData> {
 
-  AclDataList() {
-  }
+  AclDataList() {}
 
   public static Builder builder() {
     return new AutoValue_AclDataList.Builder().setKind("KafkaAclList");
@@ -34,20 +33,14 @@ public abstract class AclDataList extends ResourceCollection<AclData> {
   static AclDataList fromJson(
       @JsonProperty("kind") String kind,
       @JsonProperty("metadata") Metadata metadata,
-      @JsonProperty("data") List<AclData> data
-  ) {
-    return builder()
-        .setKind(kind)
-        .setMetadata(metadata)
-        .setData(data)
-        .build();
+      @JsonProperty("data") List<AclData> data) {
+    return builder().setKind(kind).setMetadata(metadata).setData(data).build();
   }
 
   @AutoValue.Builder
   public abstract static class Builder
       extends ResourceCollection.Builder<AclData, AclDataList, Builder> {
 
-    Builder() {
-    }
+    Builder() {}
   }
 }

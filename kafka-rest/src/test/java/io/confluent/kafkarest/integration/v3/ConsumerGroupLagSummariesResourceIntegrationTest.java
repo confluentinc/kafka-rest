@@ -56,8 +56,7 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
       Arrays.asList(
           new BinaryPartitionProduceRecord(null, "value"),
           new BinaryPartitionProduceRecord(null, "value2"),
-          new BinaryPartitionProduceRecord(null, "value3")
-      );
+          new BinaryPartitionProduceRecord(null, "value3"));
 
   @Before
   @Override
@@ -118,10 +117,18 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf(
-                            baseUrl + "/v3/clusters/" + clusterId
-                                + "/consumer-groups/" + group1 + "/lag-summary")
+                            baseUrl
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/consumer-groups/"
+                                + group1
+                                + "/lag-summary")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId + "/consumer-group=" + group1 + "/lag-summary")
+                            "crn:///kafka="
+                                + clusterId
+                                + "/consumer-group="
+                                + group1
+                                + "/lag-summary")
                         .build())
                 .setClusterId(clusterId)
                 .setConsumerGroupId(group1)
@@ -132,13 +139,23 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
                 .setMaxLag(6L)
                 .setTotalLag(9L)
                 .setMaxLagConsumer(
-                    Relationship
-                        .create(baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups/" +
-                            group1 + "/consumers/" + consumer2.groupMetadata().memberId()))
+                    Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/consumer-groups/"
+                            + group1
+                            + "/consumers/"
+                            + consumer2.groupMetadata().memberId()))
                 .setMaxLagPartition(
-                    Relationship
-                        .create(baseUrl + "/v3/clusters/" + clusterId
-                            + "/topics/" + topic2 + "/partitions/" + 1))
+                    Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topic2
+                            + "/partitions/"
+                            + 1))
                 .build());
 
     // group lag request returns maxLag=6, totalLag=9, maxTopicName=topic2, maxPartitionId=1

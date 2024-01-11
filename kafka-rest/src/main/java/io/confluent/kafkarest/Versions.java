@@ -54,7 +54,6 @@ public class Versions {
   // information was specified in the request headers.
   public static final String ANYTHING = "*/*";
 
-
   public static final List<String> PREFERRED_RESPONSE_TYPES =
       Arrays.asList(MediaType.APPLICATION_JSON, Versions.KAFKA_V2_JSON);
 

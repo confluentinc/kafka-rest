@@ -29,23 +29,15 @@ import javax.validation.constraints.PositiveOrZero;
 
 public final class BinaryConsumerRecord {
 
-  @NotNull
-  @Nullable
-  private final String topic;
+  @NotNull @Nullable private final String topic;
 
-  @Nullable
-  private final byte[] key;
+  @Nullable private final byte[] key;
 
-  @Nullable
-  private final byte[] value;
+  @Nullable private final byte[] value;
 
-  @PositiveOrZero
-  @Nullable
-  private final Integer partition;
+  @PositiveOrZero @Nullable private final Integer partition;
 
-  @PositiveOrZero
-  @Nullable
-  private final Long offset;
+  @PositiveOrZero @Nullable private final Long offset;
 
   @JsonCreator
   private BinaryConsumerRecord(

@@ -72,11 +72,9 @@ public final class AlterBrokerConfigBatchActionTest {
           ConfigSource.STATIC_BROKER_CONFIG,
           /* synonyms= */ emptyList());
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private BrokerConfigManager brokerConfigManager;
+  @Mock private BrokerConfigManager brokerConfigManager;
 
   private AlterBrokerConfigBatchAction alterBrokerConfigBatchAction;
 
@@ -88,12 +86,12 @@ public final class AlterBrokerConfigBatchActionTest {
   @Test
   public void alterBrokerConfigs_existingConfig_alterConfigs() {
     expect(
-        brokerConfigManager.alterBrokerConfigs(
-            CLUSTER_ID,
-            BROKER_ID,
-            Arrays.asList(
-                AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
-                AlterConfigCommand.delete(CONFIG_2.getName()))))
+            brokerConfigManager.alterBrokerConfigs(
+                CLUSTER_ID,
+                BROKER_ID,
+                Arrays.asList(
+                    AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
+                    AlterConfigCommand.delete(CONFIG_2.getName()))))
         .andReturn(completedFuture(null));
     replay(brokerConfigManager);
 
@@ -105,10 +103,7 @@ public final class AlterBrokerConfigBatchActionTest {
         AlterBrokerConfigBatchRequest.create(
             AlterConfigBatchRequestData.create(
                 Arrays.asList(
-                    AlterEntry.builder()
-                        .setName(CONFIG_1.getName())
-                        .setValue("newValue")
-                        .build(),
+                    AlterEntry.builder().setName(CONFIG_1.getName()).setValue("newValue").build(),
                     AlterEntry.builder()
                         .setName(CONFIG_2.getName())
                         .setOperation(AlterOperation.DELETE)
@@ -122,12 +117,12 @@ public final class AlterBrokerConfigBatchActionTest {
   @Test
   public void alterBrokerConfigs_nonExistingCluster_throwsNotFound() {
     expect(
-        brokerConfigManager.alterBrokerConfigs(
-            CLUSTER_ID,
-            BROKER_ID,
-            Arrays.asList(
-                AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
-                AlterConfigCommand.delete(CONFIG_2.getName()))))
+            brokerConfigManager.alterBrokerConfigs(
+                CLUSTER_ID,
+                BROKER_ID,
+                Arrays.asList(
+                    AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
+                    AlterConfigCommand.delete(CONFIG_2.getName()))))
         .andReturn(failedFuture(new NotFoundException()));
     replay(brokerConfigManager);
 
@@ -139,10 +134,7 @@ public final class AlterBrokerConfigBatchActionTest {
         AlterBrokerConfigBatchRequest.create(
             AlterConfigBatchRequestData.create(
                 Arrays.asList(
-                    AlterEntry.builder()
-                        .setName(CONFIG_1.getName())
-                        .setValue("newValue")
-                        .build(),
+                    AlterEntry.builder().setName(CONFIG_1.getName()).setValue("newValue").build(),
                     AlterEntry.builder()
                         .setName(CONFIG_2.getName())
                         .setOperation(AlterOperation.DELETE)

@@ -19,14 +19,11 @@ import com.google.auto.value.AutoValue;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/**
- * A Kafka broker config
- */
+/** A Kafka broker config */
 @AutoValue
 public abstract class BrokerConfig extends AbstractConfig {
 
-  BrokerConfig() {
-  }
+  BrokerConfig() {}
 
   public abstract int getBrokerId();
 
@@ -57,14 +54,11 @@ public abstract class BrokerConfig extends AbstractConfig {
         .build();
   }
 
-  /**
-   * A builder for {@link BrokerConfig}.
-   */
+  /** A builder for {@link BrokerConfig}. */
   @AutoValue.Builder
   public abstract static class Builder extends AbstractConfig.Builder<BrokerConfig, Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setBrokerId(int brokerId);
   }

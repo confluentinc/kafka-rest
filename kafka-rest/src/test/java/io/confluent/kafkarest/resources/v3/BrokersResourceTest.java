@@ -52,11 +52,9 @@ public final class BrokersResourceTest {
   private static final Broker BROKER_2 = Broker.create(CLUSTER_ID, 2, "broker-2", 9092, null);
   private static final Broker BROKER_3 = Broker.create(CLUSTER_ID, 3, "broker-3", 9093, null);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private BrokerManager brokerManager;
+  @Mock private BrokerManager brokerManager;
 
   private BrokersResource brokersResource;
 

@@ -34,8 +34,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class ConsumerGroupLagSummaryManagerImpl
-    extends AbstractConsumerLagManager implements ConsumerGroupLagSummaryManager {
+final class ConsumerGroupLagSummaryManagerImpl extends AbstractConsumerLagManager
+    implements ConsumerGroupLagSummaryManager {
 
   private final ConsumerGroupManager consumerGroupManager;
   private static final Logger log =
@@ -43,22 +43,20 @@ final class ConsumerGroupLagSummaryManagerImpl
 
   @Inject
   ConsumerGroupLagSummaryManagerImpl(
-      Admin kafkaAdminClient,
-      ConsumerGroupManager consumerGroupManager) {
+      Admin kafkaAdminClient, ConsumerGroupManager consumerGroupManager) {
     super(kafkaAdminClient);
     this.consumerGroupManager = requireNonNull(consumerGroupManager);
   }
 
   @Override
   public CompletableFuture<Optional<ConsumerGroupLagSummary>> getConsumerGroupLagSummary(
-      String clusterId,
-      String consumerGroupId
-  ) {
-    return consumerGroupManager.getConsumerGroup(clusterId, consumerGroupId)
+      String clusterId, String consumerGroupId) {
+    return consumerGroupManager
+        .getConsumerGroup(clusterId, consumerGroupId)
         .thenApply(
             consumerGroup ->
-                checkEntityExists(consumerGroup,
-                    "Consumer Group %s could not be found.", consumerGroupId))
+                checkEntityExists(
+                    consumerGroup, "Consumer Group %s could not be found.", consumerGroupId))
         .thenCompose(
             consumerGroup ->
                 getCurrentOffsets(consumerGroupId)
@@ -72,11 +70,12 @@ final class ConsumerGroupLagSummaryManagerImpl
                             getLatestOffsets(fetchedCurrentOffsets)
                                 .thenApply(
                                     latestOffsets ->
-                                       Optional.of(createConsumerGroupLagSummary(
-                                           clusterId,
-                                           consumerGroup,
-                                           fetchedCurrentOffsets,
-                                           latestOffsets)))));
+                                        Optional.of(
+                                            createConsumerGroupLagSummary(
+                                                clusterId,
+                                                consumerGroup,
+                                                fetchedCurrentOffsets,
+                                                latestOffsets)))));
   }
 
   private static ConsumerGroupLagSummary createConsumerGroupLagSummary(
@@ -89,38 +88,41 @@ final class ConsumerGroupLagSummaryManagerImpl
         ConsumerGroupLagSummary.builder()
             .setClusterId(clusterId)
             .setConsumerGroupId(consumerGroup.getConsumerGroupId());
-    fetchedCurrentOffsets.keySet().forEach(
-        topicPartition -> {
-          Optional<Consumer> consumer =
-              Optional.ofNullable(partitionAssignment.get(
-                  Partition.create(
-                      clusterId,
-                      topicPartition.topic(),
-                      topicPartition.partition(),
-                      emptyList())));
-          Optional<Long> currentOffset =
-              getCurrentOffset(fetchedCurrentOffsets, topicPartition);
-          Optional<Long> latestOffset =
-              getLatestOffset(latestOffsets, topicPartition);
-          if (currentOffset.isPresent() && latestOffset.isPresent()) {
-            consumerGroupLagSummary.addOffset(
-                topicPartition.topic(),
-                consumer.map(Consumer::getConsumerId).orElse(""),
-                consumer.flatMap(Consumer::getInstanceId),
-                consumer.map(Consumer::getClientId).orElse(""),
-                topicPartition.partition(),
-                currentOffset.get(),
-                latestOffset.get());
-          } else {
-            log.debug("missing offset for consumerId={} topic={} partition={} "
-                    + "current={} latest={}",
-                consumer.map(Consumer::getConsumerId).orElse(""),
-                topicPartition.topic(),
-                topicPartition.partition(),
-                currentOffset.orElse(null),
-                latestOffset.orElse(null));
-          }
-        });
+    fetchedCurrentOffsets
+        .keySet()
+        .forEach(
+            topicPartition -> {
+              Optional<Consumer> consumer =
+                  Optional.ofNullable(
+                      partitionAssignment.get(
+                          Partition.create(
+                              clusterId,
+                              topicPartition.topic(),
+                              topicPartition.partition(),
+                              emptyList())));
+              Optional<Long> currentOffset =
+                  getCurrentOffset(fetchedCurrentOffsets, topicPartition);
+              Optional<Long> latestOffset = getLatestOffset(latestOffsets, topicPartition);
+              if (currentOffset.isPresent() && latestOffset.isPresent()) {
+                consumerGroupLagSummary.addOffset(
+                    topicPartition.topic(),
+                    consumer.map(Consumer::getConsumerId).orElse(""),
+                    consumer.flatMap(Consumer::getInstanceId),
+                    consumer.map(Consumer::getClientId).orElse(""),
+                    topicPartition.partition(),
+                    currentOffset.get(),
+                    latestOffset.get());
+              } else {
+                log.debug(
+                    "missing offset for consumerId={} topic={} partition={} "
+                        + "current={} latest={}",
+                    consumer.map(Consumer::getConsumerId).orElse(""),
+                    topicPartition.topic(),
+                    topicPartition.partition(),
+                    currentOffset.orElse(null),
+                    latestOffset.orElse(null));
+              }
+            });
     return consumerGroupLagSummary.build();
   }
 }

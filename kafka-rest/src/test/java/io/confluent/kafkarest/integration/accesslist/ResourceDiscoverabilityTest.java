@@ -54,9 +54,7 @@ public class ResourceDiscoverabilityTest extends ClusterTestHarness {
 
   @Override
   protected void overrideKafkaRestConfigs(Properties restProperties) {
-    restProperties.put(
-        KafkaRestConfig.API_ENDPOINTS_BLOCKLIST_CONFIG,
-        "api.v3.clusters.get");
+    restProperties.put(KafkaRestConfig.API_ENDPOINTS_BLOCKLIST_CONFIG, "api.v3.clusters.get");
     restProperties.put(
         KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG,
         Collections.singletonList(NoAuthExtension.class));

@@ -22,27 +22,23 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * A service to manage Kafka {@link TopicConfig TopicConfigs}.
- */
+/** A service to manage Kafka {@link TopicConfig TopicConfigs}. */
 public interface TopicConfigManager {
 
   /**
-   * Returns the list of Kafka {@link TopicConfig TopicConfigs} belonging to the
-   * {@link io.confluent.kafkarest.entities.Topic Topic} with the given {@code topicName}.
+   * Returns the list of Kafka {@link TopicConfig TopicConfigs} belonging to the {@link
+   * io.confluent.kafkarest.entities.Topic Topic} with the given {@code topicName}.
    */
   CompletableFuture<List<TopicConfig>> listTopicConfigs(String clusterId, String topicName);
 
   /**
-   * Returns a map of topic name -> Kafka {@link TopicConfig TopicConfigs} belonging to the
-   * {@link io.confluent.kafkarest.entities.Topic Topics} with the given {@code topicNames}.
+   * Returns a map of topic name -> Kafka {@link TopicConfig TopicConfigs} belonging to the {@link
+   * io.confluent.kafkarest.entities.Topic Topics} with the given {@code topicNames}.
    */
-  CompletableFuture<Map<String,List<TopicConfig>>> listTopicConfigs(
+  CompletableFuture<Map<String, List<TopicConfig>>> listTopicConfigs(
       String clusterId, List<String> topicNames);
 
-  /**
-   * Returns the Kafka {@link TopicConfig} with the given {@code name}.
-   */
+  /** Returns the Kafka {@link TopicConfig} with the given {@code name}. */
   CompletableFuture<Optional<TopicConfig>> getTopicConfig(
       String clusterId, String topicName, String name);
 
@@ -53,9 +49,7 @@ public interface TopicConfigManager {
   CompletableFuture<Void> updateTopicConfig(
       String clusterId, String topicName, String name, String newValue);
 
-  /**
-   * Resets the Kafka {@link TopicConfig} with the given {@code name} to its default value.
-   */
+  /** Resets the Kafka {@link TopicConfig} with the given {@code name} to its default value. */
   CompletableFuture<Void> resetTopicConfig(String clusterId, String topicName, String name);
 
   /**

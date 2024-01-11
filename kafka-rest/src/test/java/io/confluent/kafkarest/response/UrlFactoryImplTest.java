@@ -33,11 +33,9 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class UrlFactoryImplTest {
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private UriInfo requestUriInfo;
+  @Mock private UriInfo requestUriInfo;
 
   @Test
   public void create_withHostNameAndPortConfig_returnsUrlRelativeToHostNameAndPortConfig() {
@@ -56,7 +54,7 @@ public class UrlFactoryImplTest {
 
   @Test
   public void
-  create_withAdvertisedListenerSameScheme_returnsUrlRelativeToAdvertisedListenerSameScheme() {
+      create_withAdvertisedListenerSameScheme_returnsUrlRelativeToAdvertisedListenerSameScheme() {
     expect(requestUriInfo.getAbsolutePath())
         .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
     expect(requestUriInfo.getBaseUri()).andReturn(URI.create("http://1.2.3.4:1000/"));
@@ -77,8 +75,7 @@ public class UrlFactoryImplTest {
 
   @Test
   public void
-  create_withAdvertisedListenerDifferentSchemeAndListenerSameScheme_returnsUrlRelativeToRequestUri
-      () {
+      create_withAdvertisedListenerDifferentSchemeAndListenerSameScheme_returnsUrlRelativeToRequestUri() {
     expect(requestUriInfo.getAbsolutePath())
         .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
     expect(requestUriInfo.getBaseUri()).andReturn(URI.create("http://1.2.3.4:1000/"));
@@ -269,7 +266,8 @@ public class UrlFactoryImplTest {
     UrlBuilder urlBuilder = urlFactory.newUrlBuilder();
 
     String url =
-        urlBuilder.appendPathSegment("foobar")
+        urlBuilder
+            .appendPathSegment("foobar")
             .putQueryParameter("foo", "b a r")
             .putQueryParameter("foz", "b!a@z")
             .build();

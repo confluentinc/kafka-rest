@@ -17,9 +17,7 @@ package io.confluent.kafkarest.converters;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-/**
- * Provides conversion of JSON to/from an object for a specific schema type.
- */
+/** Provides conversion of JSON to/from an object for a specific schema type. */
 public interface SchemaConverter {
 
   /**

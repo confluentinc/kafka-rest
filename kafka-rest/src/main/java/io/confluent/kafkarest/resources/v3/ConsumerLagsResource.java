@@ -56,8 +56,7 @@ public final class ConsumerLagsResource {
   public ConsumerLagsResource(
       Provider<ConsumerLagManager> consumerLagManager,
       CrnFactory crnFactory,
-      UrlFactory urlFactory
-  ) {
+      UrlFactory urlFactory) {
     this.consumerLagManager = requireNonNull(consumerLagManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -70,17 +69,18 @@ public final class ConsumerLagsResource {
   public void listConsumerLags(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("consumerGroupId") String consumerGroupId
-  ) {
+      @PathParam("consumerGroupId") String consumerGroupId) {
     CompletableFuture<ListConsumerLagsResponse> response =
-        consumerLagManager.get()
+        consumerLagManager
+            .get()
             .listConsumerLags(clusterId, consumerGroupId)
             .thenApply(
                 lags -> {
                   if (lags.isEmpty()) {
                     throw new NotFoundException("Consumer lags not found.");
                   }
-                  return lags; })
+                  return lags;
+                })
             .thenApply(
                 lags ->
                     ListConsumerLagsResponse.create(
@@ -98,10 +98,10 @@ public final class ConsumerLagsResource {
                                     .build())
                             .setData(
                                 lags.stream()
-                                    .map(
-                                        this::toConsumerLagData)
+                                    .map(this::toConsumerLagData)
                                     .sorted(
-                                        Comparator.comparing(ConsumerLagData::getLag).reversed()
+                                        Comparator.comparing(ConsumerLagData::getLag)
+                                            .reversed()
                                             .thenComparing(ConsumerLagData::getTopicName)
                                             .thenComparing(ConsumerLagData::getPartitionId))
                                     .collect(Collectors.toList()))
@@ -120,15 +120,13 @@ public final class ConsumerLagsResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("consumerGroupId") String consumerGroupId,
       @PathParam("topicName") String topicName,
-      @PathParam("partitionId") Integer partitionId
-  ) {
+      @PathParam("partitionId") Integer partitionId) {
     CompletableFuture<GetConsumerLagResponse> response =
-        consumerLagManager.get()
+        consumerLagManager
+            .get()
             .getConsumerLag(clusterId, consumerGroupId, topicName, partitionId)
             .thenApply(lag -> lag.orElseThrow(NotFoundException::new))
-            .thenApply(
-                lag ->
-                    GetConsumerLagResponse.create(toConsumerLagData(lag)));
+            .thenApply(lag -> GetConsumerLagResponse.create(toConsumerLagData(lag)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }

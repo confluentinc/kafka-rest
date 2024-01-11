@@ -37,8 +37,7 @@ final class BrokerConfigManagerImpl
   }
 
   @Override
-  public CompletableFuture<List<BrokerConfig>> listBrokerConfigs(
-      String clusterId, int brokerId) {
+  public CompletableFuture<List<BrokerConfig>> listBrokerConfigs(String clusterId, int brokerId) {
     return listConfigs(
         clusterId,
         new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(brokerId)),
@@ -48,28 +47,35 @@ final class BrokerConfigManagerImpl
   @Override
   public CompletableFuture<Map<Integer, List<BrokerConfig>>> listAllBrokerConfigs(
       String clusterId, List<Integer> brokerIds) {
-    List<ConfigResource> brokerResources = brokerIds.stream()
+    List<ConfigResource> brokerResources =
+        brokerIds.stream()
             .map(brokerId -> new ConfigResource(Type.BROKER, String.valueOf(brokerId)))
             .collect(Collectors.toList());
     return listConfigs(
-        clusterId,
-        brokerResources,
-        BrokerConfig.builder().setClusterId(clusterId).setBrokerId(-1))
-        .thenApply(configs -> configs.entrySet().stream().collect(Collectors.toMap(
-            e -> Integer.parseInt(e.getKey().name()),
-            e -> e.getValue().stream().map(config -> BrokerConfig.create(
-                    config.getClusterId(),
-                    Integer.parseInt(e.getKey().name()),
-                    config.getName(),
-                    config.getValue(),
-                    config.isDefault(),
-                    config.isReadOnly(),
-                    config.isSensitive(),
-                    config.getSource(),
-                    config.getSynonyms()
-              )).collect(Collectors.toList())
-            )
-        ));
+            clusterId,
+            brokerResources,
+            BrokerConfig.builder().setClusterId(clusterId).setBrokerId(-1))
+        .thenApply(
+            configs ->
+                configs.entrySet().stream()
+                    .collect(
+                        Collectors.toMap(
+                            e -> Integer.parseInt(e.getKey().name()),
+                            e ->
+                                e.getValue().stream()
+                                    .map(
+                                        config ->
+                                            BrokerConfig.create(
+                                                config.getClusterId(),
+                                                Integer.parseInt(e.getKey().name()),
+                                                config.getName(),
+                                                config.getValue(),
+                                                config.isDefault(),
+                                                config.isReadOnly(),
+                                                config.isSensitive(),
+                                                config.getSource(),
+                                                config.getSynonyms()))
+                                    .collect(Collectors.toList()))));
   }
 
   @Override
@@ -94,8 +100,7 @@ final class BrokerConfigManagerImpl
   }
 
   @Override
-  public CompletableFuture<Void> resetBrokerConfig(
-      String clusterId, int brokerId, String name) {
+  public CompletableFuture<Void> resetBrokerConfig(String clusterId, int brokerId, String name) {
     return safeResetConfig(
         clusterId,
         new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(brokerId)),

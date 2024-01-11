@@ -55,11 +55,9 @@ public class ClustersResourceTest {
   private static final Cluster CLUSTER_1 =
       Cluster.create("cluster-1", BROKER_1, Arrays.asList(BROKER_1, BROKER_2, BROKER_3));
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ClusterManager clusterManager;
+  @Mock private ClusterManager clusterManager;
 
   private ClustersResource clustersResource;
 
@@ -154,8 +152,8 @@ public class ClustersResourceTest {
                     Resource.Relationship.create("/v3/clusters/cluster-1/consumer-groups"))
                 .setTopics(Resource.Relationship.create("/v3/clusters/cluster-1/topics"))
                 .setPartitionReassignments(
-                    Resource.Relationship.create("/v3/clusters/cluster-1/topics/-/partitions"
-                        + "/-/reassignment"))
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/-/partitions" + "/-/reassignment"))
                 .build());
 
     assertEquals(expected, response.getValue());

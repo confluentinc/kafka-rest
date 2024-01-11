@@ -29,9 +29,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.ExceptionMapper;
 
-/**
- * Module to install exception handlers for {@link StatusCodeException}.
- */
+/** Module to install exception handlers for {@link StatusCodeException}. */
 public final class ExceptionsModule implements Feature {
   private static final LinkedHashMap<String, ExceptionMapper<StatusCodeException>> mappers;
 

@@ -29,33 +29,26 @@ import javax.annotation.Nullable;
  */
 public final class TopicPartitionOffsetResponse {
 
-  @Nullable
-  private final Long beginningOffset;
+  @Nullable private final Long beginningOffset;
 
-  @Nullable
-  private final Long endOffset;
+  @Nullable private final Long endOffset;
 
   @JsonCreator
   public TopicPartitionOffsetResponse(
       @JsonProperty("beginning_offset") @Nullable Long beginningOffset,
-      @JsonProperty("end_offset") @Nullable Long endOffset
-  ) {
+      @JsonProperty("end_offset") @Nullable Long endOffset) {
     this.beginningOffset = beginningOffset;
     this.endOffset = endOffset;
   }
 
-  /**
-   * The earliest offset in the topic partition.
-   */
+  /** The earliest offset in the topic partition. */
   @JsonProperty(value = "beginning_offset", access = Access.READ_ONLY)
   @Nullable
   public Long getBeginningOffset() {
     return beginningOffset;
   }
 
-  /**
-   * The latest offset in the topic partition.
-   */
+  /** The latest offset in the topic partition. */
   @JsonProperty(value = "end_offset", access = Access.READ_ONLY)
   @Nullable
   public Long getEndOffset() {
@@ -82,8 +75,7 @@ public final class TopicPartitionOffsetResponse {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", TopicPartitionOffsetResponse.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", TopicPartitionOffsetResponse.class.getSimpleName() + "[", "]")
         .add("beginningOffset=" + beginningOffset)
         .add("endOffset=" + endOffset)
         .toString();

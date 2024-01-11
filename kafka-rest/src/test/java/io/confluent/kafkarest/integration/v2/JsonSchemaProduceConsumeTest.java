@@ -10,7 +10,6 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.JsonSchemaConverter;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,8 +17,7 @@ public final class JsonSchemaProduceConsumeTest extends SchemaProduceConsumeTest
 
   private static final JsonSchemaConverter JSON_SCHEMA_CONVERTER = new JsonSchemaConverter();
 
-  private static final JsonSchema KEY_SCHEMA =
-      new JsonSchema("{\"type\":\"number\"}");
+  private static final JsonSchema KEY_SCHEMA = new JsonSchema("{\"type\":\"number\"}");
 
   private static final JsonSchema VALUE_SCHEMA =
       new JsonSchema("{\"type\":\"object\",\"properties\":{\"value\":{\"type\":\"number\"}}}");

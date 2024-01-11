@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class ListBrokersResponse {
 
-  ListBrokersResponse() {
-  }
+  ListBrokersResponse() {}
 
   @JsonValue
   public abstract BrokerDataList getValue();

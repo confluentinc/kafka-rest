@@ -23,8 +23,7 @@ import java.util.stream.Collectors;
 
 public final class CompletableFutures {
 
-  private CompletableFutures() {
-  }
+  private CompletableFutures() {}
 
   /**
    * Returns a {@link CompletableFuture} which will complete after all {@code futures} have
@@ -62,18 +61,19 @@ public final class CompletableFutures {
       CompletableFuture<T> future,
       Class<E> exceptionClass,
       Function<? super E, ? extends CompletableFuture<T>> handler) {
-    return future.handle(
-        (value, error) -> {
-          if (error == null) {
-            return CompletableFuture.completedFuture(value);
-          } else if (exceptionClass.isInstance(error.getCause())) {
-            return handler.apply(exceptionClass.cast(error.getCause()));
-          } else if (error instanceof CompletionException) {
-            throw (CompletionException) error;
-          } else {
-            throw new AssertionError(error); // If this happens, CompletableFuture is broken.
-          }
-        })
+    return future
+        .handle(
+            (value, error) -> {
+              if (error == null) {
+                return CompletableFuture.completedFuture(value);
+              } else if (exceptionClass.isInstance(error.getCause())) {
+                return handler.apply(exceptionClass.cast(error.getCause()));
+              } else if (error instanceof CompletionException) {
+                throw (CompletionException) error;
+              } else {
+                throw new AssertionError(error); // If this happens, CompletableFuture is broken.
+              }
+            })
         .thenCompose(wrapped -> wrapped);
   }
 }

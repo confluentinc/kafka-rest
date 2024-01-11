@@ -74,15 +74,13 @@ public final class EnumConverterProvider implements ParamConverterProvider {
         returnedValue = (String) jsonValueMethod.invoke(constant);
       } catch (IllegalAccessException e) {
         throw new RuntimeException(
-            String.format(
-                "@JsonValue annotated method in %s is not public.", rawType.getName()));
+            String.format("@JsonValue annotated method in %s is not public.", rawType.getName()));
       } catch (InvocationTargetException e) {
         throw new RuntimeException(e);
       } catch (ClassCastException e) {
         throw new RuntimeException(
             String.format(
-                "@JsonValue annotated method in %s does not return String.",
-                rawType.getName()));
+                "@JsonValue annotated method in %s does not return String.", rawType.getName()));
       }
 
       enumMapper.put(rawType, returnedValue.toUpperCase(), (Enum<?>) constant);
@@ -91,8 +89,7 @@ public final class EnumConverterProvider implements ParamConverterProvider {
     return converter;
   }
 
-  private static final class EnumConverter<T extends Enum<T>>
-      implements ParamConverter<T> {
+  private static final class EnumConverter<T extends Enum<T>> implements ParamConverter<T> {
 
     private final Class<T> enumClass;
 

@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class SearchReassignmentsByTopicResponse {
 
-  SearchReassignmentsByTopicResponse() {
-  }
+  SearchReassignmentsByTopicResponse() {}
 
   @JsonValue
   public abstract ReassignmentDataList getValue();

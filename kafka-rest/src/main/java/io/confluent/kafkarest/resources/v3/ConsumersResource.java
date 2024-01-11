@@ -68,10 +68,10 @@ public final class ConsumersResource {
   public void listConsumers(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("consumerGroupId") String consumerGroupId
-  ) {
+      @PathParam("consumerGroupId") String consumerGroupId) {
     CompletableFuture<ListConsumersResponse> response =
-        consumerManager.get()
+        consumerManager
+            .get()
             .listConsumers(clusterId, consumerGroupId)
             .thenApply(
                 consumers ->
@@ -107,14 +107,13 @@ public final class ConsumersResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("consumerGroupId") String consumerGroupId,
-      @PathParam("consumerId") String consumerId
-  ) {
+      @PathParam("consumerId") String consumerId) {
     CompletableFuture<GetConsumerResponse> response =
-        consumerManager.get()
+        consumerManager
+            .get()
             .getConsumer(clusterId, consumerGroupId, consumerId)
             .thenApply(consumer -> consumer.orElseThrow(NotFoundException::new))
-            .thenApply(
-                consumer -> GetConsumerResponse.create(toConsumerData(consumer)));
+            .thenApply(consumer -> GetConsumerResponse.create(toConsumerData(consumer)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }

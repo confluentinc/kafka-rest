@@ -18,9 +18,8 @@ package io.confluent.kafkarest.exceptions;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
-import org.apache.kafka.common.errors.SerializationException;
-
 import javax.ws.rs.core.Response;
+import org.apache.kafka.common.errors.SerializationException;
 
 public final class KafkaRestExceptionMapper extends KafkaExceptionMapper {
 
@@ -44,4 +43,3 @@ public final class KafkaRestExceptionMapper extends KafkaExceptionMapper {
     return Response.status(status).entity(errorMessage).build();
   }
 }
-

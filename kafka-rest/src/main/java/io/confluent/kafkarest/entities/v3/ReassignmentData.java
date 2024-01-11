@@ -25,8 +25,7 @@ import java.util.List;
 @AutoValue
 public abstract class ReassignmentData extends Resource {
 
-  ReassignmentData() {
-  }
+  ReassignmentData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -68,8 +67,7 @@ public abstract class ReassignmentData extends Resource {
       @JsonProperty("partition_id") int partitionId,
       @JsonProperty("adding_replicas") List<Integer> addingReplicas,
       @JsonProperty("removing_replicas") List<Integer> removingReplicas,
-      @JsonProperty("replicas") Relationship replicas
-  ) {
+      @JsonProperty("replicas") Relationship replicas) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -85,8 +83,7 @@ public abstract class ReassignmentData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

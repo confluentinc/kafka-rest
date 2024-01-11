@@ -19,11 +19,8 @@ import io.confluent.rest.metrics.RestMetricsContext;
 import java.util.Map;
 import org.apache.kafka.common.utils.AppInfoParser;
 
-
 public final class KafkaRestMetricsContext {
-  /**
-   * MetricsContext Label's for use by Confluent's TelemetryReporter
-   */
+  /** MetricsContext Label's for use by Confluent's TelemetryReporter */
   private final RestMetricsContext metricsContext;
 
   public static final String RESOURCE_LABEL_PREFIX = "resource.";
@@ -39,25 +36,22 @@ public final class KafkaRestMetricsContext {
     metricsContext = new RestMetricsContext(namespace, config);
 
     setResourceLabel(RESOURCE_LABEL_TYPE, KAFKA_REST_RESOURCE_TYPE);
-    setResourceLabel(RESOURCE_LABEL_CLUSTER_ID,
-            (String) config.getOrDefault(RESOURCE_LABEL_CLUSTER_ID,
-                    KAFKA_REST_RESOURCE_CLUSTER_ID_DEFAULT));
+    setResourceLabel(
+        RESOURCE_LABEL_CLUSTER_ID,
+        (String)
+            config.getOrDefault(RESOURCE_LABEL_CLUSTER_ID, KAFKA_REST_RESOURCE_CLUSTER_ID_DEFAULT));
     setResourceLabel(RESOURCE_LABEL_VERSION, AppInfoParser.getVersion());
     setResourceLabel(RESOURCE_LABEL_COMMIT_ID, AppInfoParser.getCommitId());
   }
 
-  /**
-   * Sets {@link RestMetricsContext} resource label if not previously set.
-   */
+  /** Sets {@link RestMetricsContext} resource label if not previously set. */
   private void setResourceLabel(String resource, String value) {
     if (metricsContext.getLabel(resource) == null) {
       metricsContext.setLabel(resource, value);
     }
   }
 
-  /**
-   * Returns internal RestMetricsContext
-   */
+  /** Returns internal RestMetricsContext */
   public RestMetricsContext metricsContext() {
     return metricsContext;
   }

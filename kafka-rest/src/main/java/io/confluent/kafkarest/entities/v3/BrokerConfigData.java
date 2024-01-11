@@ -27,8 +27,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class BrokerConfigData extends AbstractConfigData {
 
-  BrokerConfigData() {
-  }
+  BrokerConfigData() {}
 
   @JsonProperty("broker_id")
   public abstract int getBrokerId();
@@ -48,8 +47,7 @@ public abstract class BrokerConfigData extends AbstractConfigData {
         .setSensitive(config.isSensitive())
         .setSource(config.getSource())
         .setSynonyms(
-            config.getSynonyms()
-                .stream()
+            config.getSynonyms().stream()
                 .map(ConfigSynonymData::fromConfigSynonym)
                 .collect(Collectors.toList()));
   }
@@ -67,8 +65,7 @@ public abstract class BrokerConfigData extends AbstractConfigData {
       @JsonProperty("is_read_only") boolean isReadOnly,
       @JsonProperty("is_sensitive") boolean isSensitive,
       @JsonProperty("source") ConfigSource source,
-      @JsonProperty("synonyms") List<ConfigSynonymData> synonyms
-  ) {
+      @JsonProperty("synonyms") List<ConfigSynonymData> synonyms) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -88,8 +85,7 @@ public abstract class BrokerConfigData extends AbstractConfigData {
   @AutoValue.Builder
   public abstract static class Builder extends AbstractConfigData.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setBrokerId(int brokerId);
 

@@ -15,6 +15,14 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.*;
+
 import io.confluent.kafkarest.controllers.TopicConfigManager;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.ConfigSource;
@@ -29,6 +37,12 @@ import io.confluent.kafkarest.entities.v3.TopicConfigDataList;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
 import org.junit.Before;
@@ -36,20 +50,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
-import static java.util.Collections.emptyList;
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.*;
 
 @RunWith(JUnit4.class)
 public class ListAllTopicsConfigsActionTest {
@@ -91,14 +91,11 @@ public class ListAllTopicsConfigsActionTest {
           ConfigSource.DYNAMIC_TOPIC_CONFIG,
           /* synonyms= */ emptyList());
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private TopicConfigManager topicConfigManager;
+  @Mock private TopicConfigManager topicConfigManager;
 
-  @Mock
-  private TopicManager topicManager;
+  @Mock private TopicManager topicManager;
 
   private ListAllTopicsConfigsAction allTopicConfigsResource;
 
@@ -116,20 +113,19 @@ public class ListAllTopicsConfigsActionTest {
   public void listTopicConfigs_existingTopic_returnsConfigs() {
     expect(topicManager.listTopics(CLUSTER_ID))
         .andReturn(
-            completedFuture(Arrays.asList(Topic.create(
-                CLUSTER_ID,
-                TOPIC_NAME,
-                new ArrayList<>(),
-                (short) 1,
-                false
-            )))
-        );
+            completedFuture(
+                Arrays.asList(
+                    Topic.create(
+                        CLUSTER_ID, TOPIC_NAME, new ArrayList<>(), (short) 1, false, emptySet()))));
 
     expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, Arrays.asList(TOPIC_NAME)))
         .andReturn(
-            completedFuture(new HashMap<String, List<TopicConfig>>() {{
-              put(TOPIC_NAME, Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3));
-            }}));
+            completedFuture(
+                new HashMap<String, List<TopicConfig>>() {
+                  {
+                    put(TOPIC_NAME, Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3));
+                  }
+                }));
     replay(topicManager, topicConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -140,8 +136,7 @@ public class ListAllTopicsConfigsActionTest {
             TopicConfigDataList.builder()
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/topics/-/configs")
+                        .setSelf("/v3/clusters/cluster-1/topics/-/configs")
                         .build())
                 .setData(
                     Arrays.asList(
@@ -215,14 +210,10 @@ public class ListAllTopicsConfigsActionTest {
 
   @Test
   public void listTopicConfigs_noTopics_returnsEmptyConfigs() {
-    expect(topicManager.listTopics(CLUSTER_ID))
-        .andReturn(
-            completedFuture(new ArrayList<>())
-        );
+    expect(topicManager.listTopics(CLUSTER_ID)).andReturn(completedFuture(new ArrayList<>()));
 
     expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, new ArrayList<>()))
-        .andReturn(
-            completedFuture(new HashMap<String, List<TopicConfig>>()));
+        .andReturn(completedFuture(new HashMap<String, List<TopicConfig>>()));
     replay(topicManager, topicConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -233,8 +224,7 @@ public class ListAllTopicsConfigsActionTest {
             TopicConfigDataList.builder()
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/topics/-/configs")
+                        .setSelf("/v3/clusters/cluster-1/topics/-/configs")
                         .build())
                 .setData(new ArrayList<>())
                 .build());
@@ -244,8 +234,7 @@ public class ListAllTopicsConfigsActionTest {
 
   @Test
   public void listTopicConfigs_nonExistingCluster_throwsNotFound() {
-    expect(topicManager.listTopics(CLUSTER_ID))
-        .andReturn(failedFuture(new NotFoundException()));
+    expect(topicManager.listTopics(CLUSTER_ID)).andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -253,5 +242,4 @@ public class ListAllTopicsConfigsActionTest {
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
-
 }

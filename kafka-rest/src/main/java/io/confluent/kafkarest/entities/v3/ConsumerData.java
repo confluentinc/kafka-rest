@@ -25,8 +25,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ConsumerData extends Resource {
 
-  ConsumerData() {
-  }
+  ConsumerData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -68,8 +67,7 @@ public abstract class ConsumerData extends Resource {
       @JsonProperty("consumer_id") String consumerId,
       @JsonProperty("instance_id") @Nullable String instanceId,
       @JsonProperty("client_id") String clientId,
-      @JsonProperty("assignments") Relationship assignments
-  ) {
+      @JsonProperty("assignments") Relationship assignments) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -85,8 +83,7 @@ public abstract class ConsumerData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

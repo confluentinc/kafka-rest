@@ -39,7 +39,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.BytesDeserializer;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +50,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
   private static final String topic1 = "topic-1";
   private static final String topic2 = "topic-2";
-  private static final String[] topics = new String[]{topic1, topic2};
+  private static final String[] topics = new String[] {topic1, topic2};
   private static final String group1 = "consumer-group-1";
   private static final int numTopics = 2;
   private static final int numPartitions = 2;
@@ -62,8 +61,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
       Arrays.asList(
           new BinaryPartitionProduceRecord(null, "value"),
           new BinaryPartitionProduceRecord(null, "value2"),
-          new BinaryPartitionProduceRecord(null, "value3")
-      );
+          new BinaryPartitionProduceRecord(null, "value3"));
 
   @Before
   @Override
@@ -123,12 +121,9 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
               final int finalT = t;
               final int finalP = p;
               ConsumerLagData consumerLagData =
-                  consumerLagDataList.getData()
-                      .stream()
-                      .filter(lagData ->
-                          lagData.getTopicName().equals(topics[finalT]))
-                      .filter(lagData ->
-                          lagData.getPartitionId() == finalP)
+                  consumerLagDataList.getData().stream()
+                      .filter(lagData -> lagData.getTopicName().equals(topics[finalT]))
+                      .filter(lagData -> lagData.getPartitionId() == finalP)
                       .findAny()
                       .get();
 
@@ -154,38 +149,44 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
             ConsumerLagDataList.builder()
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
-                        .setSelf(baseUrl + "/v3/clusters/" + clusterId +
-                            "/consumer-groups/" + group1 + "/lags")
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/consumer-groups/"
+                                + group1
+                                + "/lags")
                         .build())
-                .setData(Arrays.asList(
-                    expectedConsumerLagData(
-                        /* topicName= */ topic2,
-                        /* partitionId=*/ 1,
-                        /* consumerId= */ consumer2.groupMetadata().memberId(),
-                        /* clientId= */ "client-2",
-                        /* currentOffset= */ 3,
-                        /* logEndOffset= */ 6),
-                    expectedConsumerLagData(
-                        /* topicName= */ topic1,
-                        /* partitionId=*/ 0,
-                        /* consumerId= */ consumer1.groupMetadata().memberId(),
-                        /* clientId= */ "client-1",
-                        /* currentOffset= */ 3,
-                        /* logEndOffset= */ 3),
-                    expectedConsumerLagData(
-                        /* topicName= */ topic1,
-                        /* partitionId=*/ 1,
-                        /* consumerId= */ consumer1.groupMetadata().memberId(),
-                        /* clientId= */ "client-1",
-                        /* currentOffset= */ 0,
-                        /* logEndOffset= */ 0),
-                    expectedConsumerLagData(
-                        /* topicName= */ topic2,
-                        /* partitionId=*/ 0,
-                        /* consumerId= */  consumer2.groupMetadata().memberId(),
-                        /* clientId= */ "client-2",
-                        /* currentOffset= */ 0,
-                        /* logEndOffset= */ 0)))
+                .setData(
+                    Arrays.asList(
+                        expectedConsumerLagData(
+                            /* topicName= */ topic2,
+                            /* partitionId=*/ 1,
+                            /* consumerId= */ consumer2.groupMetadata().memberId(),
+                            /* clientId= */ "client-2",
+                            /* currentOffset= */ 3,
+                            /* logEndOffset= */ 6),
+                        expectedConsumerLagData(
+                            /* topicName= */ topic1,
+                            /* partitionId=*/ 0,
+                            /* consumerId= */ consumer1.groupMetadata().memberId(),
+                            /* clientId= */ "client-1",
+                            /* currentOffset= */ 3,
+                            /* logEndOffset= */ 3),
+                        expectedConsumerLagData(
+                            /* topicName= */ topic1,
+                            /* partitionId=*/ 1,
+                            /* consumerId= */ consumer1.groupMetadata().memberId(),
+                            /* clientId= */ "client-1",
+                            /* currentOffset= */ 0,
+                            /* logEndOffset= */ 0),
+                        expectedConsumerLagData(
+                            /* topicName= */ topic2,
+                            /* partitionId=*/ 0,
+                            /* consumerId= */ consumer2.groupMetadata().memberId(),
+                            /* clientId= */ "client-2",
+                            /* currentOffset= */ 0,
+                            /* logEndOffset= */ 0)))
                 .build());
 
     assertEquals(expected, response2.readEntity(ListConsumerLagsResponse.class));
@@ -237,19 +238,27 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
         testWithRetry(
             () -> {
               Response response =
-                  request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 +
-                      "/lags/" + topics[finalT] + "/partitions/" + finalP)
+                  request(
+                          "/v3/clusters/"
+                              + clusterId
+                              + "/consumer-groups/"
+                              + group1
+                              + "/lags/"
+                              + topics[finalT]
+                              + "/partitions/"
+                              + finalP)
                       .accept(MediaType.APPLICATION_JSON)
                       .get();
 
               assertEquals(Status.OK.getStatusCode(), response.getStatus());
               ConsumerLagData consumerLagData =
                   response.readEntity(GetConsumerLagResponse.class).getValue();
-              assertEquals(expectedOffsets[finalT][finalP], (long) consumerLagData.getCurrentOffset());
-              assertEquals(expectedOffsets[finalT][finalP], (long) consumerLagData.getLogEndOffset());
+              assertEquals(
+                  expectedOffsets[finalT][finalP], (long) consumerLagData.getCurrentOffset());
+              assertEquals(
+                  expectedOffsets[finalT][finalP], (long) consumerLagData.getLogEndOffset());
               assertEquals(0, (long) consumerLagData.getLag());
-            }
-        );
+            });
       }
     }
 
@@ -259,8 +268,15 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic2, 1, request2);
 
     Response response2 =
-        request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 +
-            "/lags/" + topic2 + "/partitions/" + 1)
+        request(
+                "/v3/clusters/"
+                    + clusterId
+                    + "/consumer-groups/"
+                    + group1
+                    + "/lags/"
+                    + topic2
+                    + "/partitions/"
+                    + 1)
             .accept(MediaType.APPLICATION_JSON)
             .get();
 
@@ -270,11 +286,24 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf(
-                            baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups/" + group1 +
-                                "/lags/" + topic2 + "/partitions/" + 1)
+                            baseUrl
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/consumer-groups/"
+                                + group1
+                                + "/lags/"
+                                + topic2
+                                + "/partitions/"
+                                + 1)
                         .setResourceName(
-                            "crn:///kafka=" + clusterId + "/consumer-group=" + group1 +
-                                "/lag=" + topic2 + "/partition=" + 1)
+                            "crn:///kafka="
+                                + clusterId
+                                + "/consumer-group="
+                                + group1
+                                + "/lag="
+                                + topic2
+                                + "/partition="
+                                + 1)
                         .build())
                 .setClusterId(clusterId)
                 .setConsumerGroupId(group1)
@@ -301,8 +330,15 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic2, 1, request);
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 +
-            "/lags/" + topic1 + "/partitions/" + 0)
+        request(
+                "/v3/clusters/"
+                    + clusterId
+                    + "/consumer-groups/"
+                    + group1
+                    + "/lags/"
+                    + topic1
+                    + "/partitions/"
+                    + 0)
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -319,8 +355,15 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     consumer.commitSync();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/consumer-groups/" + "foo" +
-            "/lags/" + topic1 + "/partitions/" + 0)
+        request(
+                "/v3/clusters/"
+                    + clusterId
+                    + "/consumer-groups/"
+                    + "foo"
+                    + "/lags/"
+                    + topic1
+                    + "/partitions/"
+                    + 0)
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -337,8 +380,15 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     consumer.commitSync();
 
     Response response =
-        request("/v3/clusters/" + "foo" + "/consumer-groups/" + group1 +
-            "/lags/" + topic1 + "/partitions/" + 0)
+        request(
+                "/v3/clusters/"
+                    + "foo"
+                    + "/consumer-groups/"
+                    + group1
+                    + "/lags/"
+                    + topic1
+                    + "/partitions/"
+                    + 0)
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -369,11 +419,24 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
         .setMetadata(
             Resource.Metadata.builder()
                 .setSelf(
-                    baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups/" + group1 +
-                        "/lags/" + topicName + "/partitions/" + partitionId)
+                    baseUrl
+                        + "/v3/clusters/"
+                        + clusterId
+                        + "/consumer-groups/"
+                        + group1
+                        + "/lags/"
+                        + topicName
+                        + "/partitions/"
+                        + partitionId)
                 .setResourceName(
-                    "crn:///kafka=" + clusterId + "/consumer-group=" + group1 +
-                        "/lag=" + topicName + "/partition=" + partitionId)
+                    "crn:///kafka="
+                        + clusterId
+                        + "/consumer-group="
+                        + group1
+                        + "/lag="
+                        + topicName
+                        + "/partition="
+                        + partitionId)
                 .build())
         .setClusterId(clusterId)
         .setConsumerGroupId(group1)

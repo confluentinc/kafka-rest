@@ -20,9 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * A service to manage Kafka {@link ConsumerAssignment Consumer Assignments}.
- */
+/** A service to manage Kafka {@link ConsumerAssignment Consumer Assignments}. */
 public interface ConsumerAssignmentManager {
 
   /**
@@ -41,6 +39,5 @@ public interface ConsumerAssignmentManager {
       String consumerGroupId,
       String consumerId,
       String topicName,
-      int partitionId
-  );
+      int partitionId);
 }
