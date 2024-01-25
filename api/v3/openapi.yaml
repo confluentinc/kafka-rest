@@ -1422,6 +1422,10 @@ paths:
                     error_code. An error_code of 200 indicates success. The HTTP status code will be HTTP 
                     200 OK as long as the connection is successfully established. To identify records
                     that have encountered an error, check the error_code of each delivery report.
+
+        Note that the cluster_id is validated only when running in Confluent
+        Cloud.
+
       tags:
         - Records (v3)
       requestBody:
