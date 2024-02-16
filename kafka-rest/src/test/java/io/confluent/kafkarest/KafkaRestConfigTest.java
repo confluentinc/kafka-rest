@@ -256,13 +256,16 @@ public class KafkaRestConfigTest {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "foobar");
     properties.put("producer.acks", 1);
+    // this is one of specific avro configs, added by stripping "producer." prefix
+    properties.put("producer.avro.use.logical.type.converters", true);
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     assertEquals(
         ImmutableMap.of(
             "schema.registry.url", "foobar",
             "auto.register.schemas", false,
-            "use.latest.version", false),
+            "use.latest.version", false,
+            "avro.use.logical.type.converters", true),
         config.getAvroSerializerConfigs());
   }
 
