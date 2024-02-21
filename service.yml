@@ -10,3 +10,9 @@ semaphore:
   downstream_projects: ["confluent-security-plugins", "ce-kafka-rest", "confluent-cloud-plugins"]
 git:
   enable: true
+code_artifact:
+  enable: true
+  package_paths:
+    - maven-snapshots/maven/io.confluent/kafka-rest
+    - maven-snapshots/maven/io.confluent/kafka-rest-parent
+    - maven-snapshots/maven/io.confluent/kafka-rest-console-scripts
