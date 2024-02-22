@@ -959,15 +959,23 @@ public class KafkaRestConfig extends RestConfig {
     this(config, props);
   }
 
+  public KafkaRestConfig(Properties props, boolean doLog) {
+    this(config, props, doLog);
+  }
+
   public KafkaRestConfig(ConfigDef configDef, Properties props) {
-    super(configDef, props);
-    metricsContext =
-        new KafkaRestMetricsContext(
-            getString(METRICS_JMX_PREFIX_CONFIG), originalsWithPrefix(METRICS_CONTEXT_PREFIX));
+    this(configDef, props, true);
   }
 
   public KafkaRestConfig(ConfigDef configDef, Properties props, Time time) {
     this(configDef, props);
+  }
+
+  public KafkaRestConfig(ConfigDef configDef, Properties props, boolean doLog) {
+    super(configDef, props, doLog);
+    metricsContext =
+        new KafkaRestMetricsContext(
+            getString(METRICS_JMX_PREFIX_CONFIG), originalsWithPrefix(METRICS_CONTEXT_PREFIX));
   }
 
   /**
