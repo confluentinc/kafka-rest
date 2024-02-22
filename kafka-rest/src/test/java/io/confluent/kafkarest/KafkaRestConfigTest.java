@@ -41,26 +41,30 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.types.Password;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class KafkaRestConfigTest {
 
-  @Test
-  public void getMetricsContext_propagateMetricsConfigs() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getMetricsContext_propagateMetricsConfigs(boolean doLog) {
     Properties properties = new Properties();
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "context_cluster_id");
 
-    RestMetricsContext config = new KafkaRestConfig(properties).getMetricsContext();
+    RestMetricsContext config = new KafkaRestConfig(properties, doLog).getMetricsContext();
 
     assertEquals(AppInfoParser.getCommitId(), config.getLabel(RESOURCE_LABEL_COMMIT_ID));
     assertEquals(AppInfoParser.getVersion(), config.getLabel(RESOURCE_LABEL_VERSION));
     assertEquals("context_cluster_id", config.getLabel(RESOURCE_LABEL_CLUSTER_ID));
   }
 
-  @Test
-  public void getProducerProperties_propagateMetrics_defaultClusterId() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getProducerProperties_propagateMetrics_defaultClusterId(boolean doLog) {
     Properties properties = new Properties();
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties producerProperties = config.getProducerProperties();
 
@@ -69,8 +73,9 @@ public class KafkaRestConfigTest {
         producerProperties.get(context_config(RESOURCE_LABEL_CLUSTER_ID)));
   }
 
-  @Test
-  public void getProducerProperties_propagateMetricsProperties() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getProducerProperties_propagateMetricsProperties(boolean doLog) {
     Properties properties = new Properties();
     properties.put(
         METRICS_REPORTER_CLASSES_CONFIG,
@@ -78,7 +83,7 @@ public class KafkaRestConfigTest {
     properties.put(reporter_config("api.key"), "my_api_key");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "producer_cluster_id");
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties producerProperties = config.getProducerProperties();
     assertEquals(
@@ -94,21 +99,23 @@ public class KafkaRestConfigTest {
         "producer_cluster_id", producerProperties.get(context_config(RESOURCE_LABEL_CLUSTER_ID)));
   }
 
-  @Test
-  public void getConsumerProperties_propagatesSchemaRegistryProperties() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getConsumerProperties_propagatesSchemaRegistryProperties(boolean doLog) {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "https://schemaregistry:8085");
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties consumerProperties = config.getConsumerProperties();
     assertEquals("https://schemaregistry:8085", consumerProperties.get("schema.registry.url"));
   }
 
-  @Test
-  public void getConsumerProperties_propagateMetrics_defaultClusterId() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getConsumerProperties_propagateMetrics_defaultClusterId(boolean doLog) {
     Properties properties = new Properties();
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties consumerProperties = config.getConsumerProperties();
 
@@ -117,8 +124,9 @@ public class KafkaRestConfigTest {
         consumerProperties.get(context_config(RESOURCE_LABEL_CLUSTER_ID)));
   }
 
-  @Test
-  public void getConsumerProperties_propagateMetricsProperties() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getConsumerProperties_propagateMetricsProperties(boolean doLog) {
     Properties properties = new Properties();
     properties.put(
         METRICS_REPORTER_CLASSES_CONFIG,
@@ -126,7 +134,7 @@ public class KafkaRestConfigTest {
     properties.put(reporter_config("api.key"), "my_api_key");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "consumer_cluster_id");
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties consumerProperties = config.getConsumerProperties();
     assertEquals(
@@ -142,11 +150,12 @@ public class KafkaRestConfigTest {
         "consumer_cluster_id", consumerProperties.get(context_config(RESOURCE_LABEL_CLUSTER_ID)));
   }
 
-  @Test
-  public void getAdminProperties_propagateMetrics_defaultClusterId() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getAdminProperties_propagateMetrics_defaultClusterId(boolean doLog) {
     Properties properties = new Properties();
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties adminProperties = config.getAdminProperties();
 
@@ -155,15 +164,16 @@ public class KafkaRestConfigTest {
         adminProperties.get(context_config(RESOURCE_LABEL_CLUSTER_ID)));
   }
 
-  @Test
-  public void getAdminProperties_propagateMetricsProperties() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getAdminProperties_propagateMetricsProperties(boolean doLog) {
     Properties properties = new Properties();
     properties.put(
         METRICS_REPORTER_CLASSES_CONFIG,
         "metrics.reporter.1, metrics.reporter.2, metrics.reporter.3");
     properties.put(reporter_config("api.key"), "my_api_key");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "admin_cluster_id");
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties adminProperties = config.getAdminProperties();
     assertEquals(
@@ -178,97 +188,105 @@ public class KafkaRestConfigTest {
         "admin_cluster_id", adminProperties.get(context_config(RESOURCE_LABEL_CLUSTER_ID)));
   }
 
-  @Test
-  public void getConsumerProperties_propagatesSchemaRegistryConfigs() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getConsumerProperties_propagatesSchemaRegistryConfigs(boolean doLog) {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "foobar");
     properties.put("schema.registry.basic.auth.user.info", "fozbaz");
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties producerProperties = config.getConsumerProperties();
     assertEquals("foobar", producerProperties.get("schema.registry.url"));
     assertEquals("fozbaz", producerProperties.get("basic.auth.user.info"));
   }
 
-  @Test
-  public void getConsumerProperties_propagatesClientSchemaRegistryConfigs() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getConsumerProperties_propagatesClientSchemaRegistryConfigs(boolean doLog) {
     Properties properties = new Properties();
     properties.put("client.schema.registry.url", "foobar");
     properties.put("client.schema.registry.basic.auth.user.info", "fozbaz");
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties producerProperties = config.getConsumerProperties();
     assertEquals("foobar", producerProperties.get("schema.registry.url"));
     assertEquals("fozbaz", producerProperties.get("schema.registry.basic.auth.user.info"));
   }
 
-  @Test
-  public void getConsumerProperties_propagatesConsumerSchemaRegistryConfigs() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getConsumerProperties_propagatesConsumerSchemaRegistryConfigs(boolean doLog) {
     Properties properties = new Properties();
     properties.put("consumer.schema.registry.url", "foobar");
     properties.put("consumer.schema.registry.basic.auth.user.info", "fozbaz");
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties producerProperties = config.getConsumerProperties();
     assertEquals("foobar", producerProperties.get("schema.registry.url"));
     assertEquals("fozbaz", producerProperties.get("schema.registry.basic.auth.user.info"));
   }
 
-  @Test
-  public void getProducerProperties_propagatesSchemaRegistryConfigs() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getProducerProperties_propagatesSchemaRegistryConfigs(boolean doLog) {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "foobar");
     properties.put("schema.registry.basic.auth.user.info", "fozbaz");
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties producerProperties = config.getProducerProperties();
     assertEquals("foobar", producerProperties.get("schema.registry.url"));
     assertEquals("fozbaz", producerProperties.get("schema.registry.basic.auth.user.info"));
   }
 
-  @Test
-  public void getProducerProperties_propagatesClientSchemaRegistryConfigs() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getProducerProperties_propagatesClientSchemaRegistryConfigs(boolean doLog) {
     Properties properties = new Properties();
     properties.put("client.schema.registry.url", "foobar");
     properties.put("client.schema.registry.basic.auth.user.info", "fozbaz");
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties producerProperties = config.getProducerProperties();
     assertEquals("foobar", producerProperties.get("schema.registry.url"));
     assertEquals("fozbaz", producerProperties.get("schema.registry.basic.auth.user.info"));
   }
 
-  @Test
-  public void getProducerProperties_propagatesProducerSchemaRegistryConfigs() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getProducerProperties_propagatesProducerSchemaRegistryConfigs(boolean doLog) {
     Properties properties = new Properties();
     properties.put("producer.schema.registry.url", "foobar");
     properties.put("producer.schema.registry.basic.auth.user.info", "fozbaz");
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     Properties producerProperties = config.getProducerProperties();
     assertEquals("foobar", producerProperties.get("schema.registry.url"));
     assertEquals("fozbaz", producerProperties.get("schema.registry.basic.auth.user.info"));
   }
 
-  @Test
-  public void getJsonSerializerConfigs() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getJsonSerializerConfigs(boolean doLog) {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "foobar");
     properties.put("producer.acks", 1);
     properties.put("producer.json.indent.output", true);
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     assertEquals(singletonMap("json.indent.output", true), config.getJsonSerializerConfigs());
   }
 
-  @Test
-  public void getAvroSerializerConfigs() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getAvroSerializerConfigs(boolean doLog) {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "foobar");
     properties.put("producer.acks", 1);
     // this is one of specific avro configs, added by stripping "producer." prefix
     properties.put("producer.avro.use.logical.type.converters", true);
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     assertEquals(
         ImmutableMap.of(
@@ -279,14 +297,15 @@ public class KafkaRestConfigTest {
         config.getAvroSerializerConfigs());
   }
 
-  @Test
-  public void getJsonschemaSerializerConfigs() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getJsonschemaSerializerConfigs(boolean doLog) {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "foobar");
     properties.put("client.json.fail.invalid.schema", true);
     properties.put("producer.acks", 1);
     properties.put("producer.json.fail.invalid.schema", true);
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     assertEquals(
         ImmutableMap.of(
@@ -297,14 +316,15 @@ public class KafkaRestConfigTest {
         config.getJsonschemaSerializerConfigs());
   }
 
-  @Test
-  public void getProtobufSerializerConfigs() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void getProtobufSerializerConfigs(boolean doLog) {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "foobar");
     properties.put("producer.acks", 1);
     properties.put(
         "producer.reference.subject.name.strategy", DefaultReferenceSubjectNameStrategy.class);
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
 
     assertEquals(
         ImmutableMap.of(
@@ -345,15 +365,16 @@ public class KafkaRestConfigTest {
     assertThat(ret, containsString("max.request.size=100"));
   }
 
-  @Test
-  public void testGetAdminProperties_HideSensitiveInfo() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testGetAdminProperties_HideSensitiveInfo(boolean doLog) {
     Properties properties = new Properties();
     // below configs will be stripped down prefix "client" or "admin"
     properties.put("admin.sasl.jaas.config", "super secret sasl.jaas.config");
     properties.put("client.ssl.truststore.password", "super secret");
     properties.put("client.sasl.kerberos.kinit.cmd", "/usr/bin/kinit");
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
     Properties adminProperties = config.getAdminProperties();
 
     // check that the config values can be retrieved as normal
@@ -368,15 +389,16 @@ public class KafkaRestConfigTest {
     assertThat(loggedToString, containsString("sasl.kerberos.kinit.cmd=/usr/bin/kinit"));
   }
 
-  @Test
-  public void testGetProducerProperties_HideSensitiveInfo() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testGetProducerProperties_HideSensitiveInfo(boolean doLog) {
     Properties properties = new Properties();
     // below configs will be stripped down prefix "client" or "producer"
     properties.put("producer.sasl.jaas.config", "super secret sasl.jaas.config");
     properties.put("producer.max.request.size", "1024");
     properties.put("client.ssl.truststore.password", "super secret");
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
     Properties producerProperties = config.getProducerProperties();
 
     // check that the config values can be retrieved as normal
@@ -391,15 +413,16 @@ public class KafkaRestConfigTest {
     assertThat(loggedToString, containsString("ssl.truststore.password=" + Password.HIDDEN));
   }
 
-  @Test
-  public void testGetProducerConfigs_HideSensitiveInfo() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testGetProducerConfigs_HideSensitiveInfo(boolean doLog) {
     Properties properties = new Properties();
     // below configs will be stripped down prefix "client" or "producer"
     properties.put("producer.sasl.jaas.config", "super secret sasl.jaas.config");
     properties.put("producer.max.request.size", "1024");
     properties.put("client.ssl.truststore.password", "super secret");
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
     Map<String, Object> producerConfigs = config.getProducerConfigs();
 
     // check that the config values can be retrieved as normal
@@ -414,15 +437,16 @@ public class KafkaRestConfigTest {
     assertThat(loggedToString, containsString("ssl.truststore.password=" + Password.HIDDEN));
   }
 
-  @Test
-  public void testGetConsumerProperties_HideSensitiveInfo() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testGetConsumerProperties_HideSensitiveInfo(boolean doLog) {
     Properties properties = new Properties();
     // below configs will be stripped down prefix "client" or "consumer"
     properties.put("consumer.sasl.jaas.config", "super secret sasl.jaas.config");
     properties.put("consumer.max.poll.records", "500");
     properties.put("client.ssl.truststore.password", "super secret");
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
     Properties consumerProperties = config.getConsumerProperties();
 
     // check that the config values can be retrieved as normal
@@ -437,14 +461,15 @@ public class KafkaRestConfigTest {
     assertThat(loggedToString, containsString("ssl.truststore.password=" + Password.HIDDEN));
   }
 
-  @Test
-  public void testGetSchemaRegistryConfigs_HideSensitiveInfo() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testGetSchemaRegistryConfigs_HideSensitiveInfo(boolean doLog) {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "http://localhost:8081");
     properties.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
     properties.put("schema.registry.basic.auth.user.info", "base64 encoded secret");
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
     Map<String, Object> schemaRegistryConfigs = config.getSchemaRegistryConfigs();
 
     // check that the config values can be retrieved as normal
@@ -459,8 +484,9 @@ public class KafkaRestConfigTest {
     assertThat(loggedToString, containsString("basic.auth.credentials.source=USER_INFO"));
   }
 
-  @Test
-  public void testGetAvroSerializerConfigs_HideSensitiveInfo() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testGetAvroSerializerConfigs_HideSensitiveInfo(boolean doLog) {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "http://localhost:8081");
     properties.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
@@ -468,7 +494,7 @@ public class KafkaRestConfigTest {
     properties.put("schema.registry.max.schemas.per.subject", "1000");
     properties.put("producer.sasl.jaas.config", "super secret sasl.jaas.config");
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
     Map<String, Object> serializerConfigs = config.getAvroSerializerConfigs();
 
     // check that the config values can be retrieved as normal
@@ -487,8 +513,9 @@ public class KafkaRestConfigTest {
     assertThat(loggedToString, containsString("sasl.jaas.config=" + Password.HIDDEN));
   }
 
-  @Test
-  public void testGetJsonschemaSerializerConfigs_HideSensitiveInfo() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testGetJsonschemaSerializerConfigs_HideSensitiveInfo(boolean doLog) {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "http://localhost:8081");
     properties.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
@@ -496,7 +523,7 @@ public class KafkaRestConfigTest {
     properties.put("producer.json.oneof.for.nullables", "true");
     properties.put("producer.sasl.jaas.config", "super secret sasl.jaas.config");
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
     Map<String, Object> serializerConfigs = config.getJsonschemaSerializerConfigs();
 
     // check that the config values can be retrieved as normal
@@ -515,8 +542,9 @@ public class KafkaRestConfigTest {
     assertThat(loggedToString, containsString("sasl.jaas.config=" + Password.HIDDEN));
   }
 
-  @Test
-  public void testGetProtobufSerializerConfigs_HideSensitiveInfo() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testGetProtobufSerializerConfigs_HideSensitiveInfo(boolean doLog) {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "http://localhost:8081");
     properties.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
@@ -526,7 +554,7 @@ public class KafkaRestConfigTest {
         "io.confluent.kafka.serializers.subject.QualifiedReferenceSubjectNameStrategy");
     properties.put("producer.sasl.jaas.config", "super secret sasl.jaas.config");
 
-    KafkaRestConfig config = new KafkaRestConfig(properties);
+    KafkaRestConfig config = new KafkaRestConfig(properties, doLog);
     Map<String, Object> serializerConfigs = config.getProtobufSerializerConfigs();
 
     // check that the config values can be retrieved as normal
