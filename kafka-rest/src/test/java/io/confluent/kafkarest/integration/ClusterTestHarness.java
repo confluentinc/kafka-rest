@@ -82,6 +82,7 @@ import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Server;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
@@ -160,11 +161,19 @@ public abstract class ClusterTestHarness {
 
   private static final long ONE_SECOND_MS = 1000L;
 
+  private boolean manageRest = true;
+
   public ClusterTestHarness() {
     this(DEFAULT_NUM_BROKERS, false);
   }
 
   public ClusterTestHarness(int numBrokers, boolean withSchemaRegistry) {
+    this(numBrokers, withSchemaRegistry, true);
+  }
+
+  /** @param manageRest If false, child-class is expected to create, start/stop REST-app. */
+  public ClusterTestHarness(int numBrokers, boolean withSchemaRegistry, boolean manageRest) {
+    this.manageRest = manageRest;
     this.numBrokers = numBrokers;
     this.withSchemaRegistry = withSchemaRegistry;
 
@@ -232,6 +241,16 @@ public abstract class ClusterTestHarness {
       schemaRegApp.postServerStart();
     }
 
+    if (manageRest) {
+      startRest(null, null);
+    }
+
+    log.info("Completed setup of {}", getClass().getSimpleName());
+  }
+
+  protected void startRest(RequestLog.Writer requestLogWriter, String requestLogFormat)
+      throws Exception {
+    log.info("Setting up REST.");
     int restPort = choosePort();
     restProperties.put(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
     restProperties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
@@ -249,30 +268,26 @@ public abstract class ClusterTestHarness {
         "producer." + ProducerConfig.MAX_REQUEST_SIZE_CONFIG, String.valueOf((2 << 20) * 10));
 
     restConfig = new KafkaRestConfig(restProperties);
+    restApp = new KafkaRestApplication(restConfig, "", null, requestLogWriter, requestLogFormat);
 
     try {
-      startRest();
-    } catch (IOException e) { // sometimes we get an address already in use exception
-      log.warn("IOException when attempting to start rest, trying again", e);
+      restServer = restApp.createServer();
+      restServer.start();
+    } catch (IOException e1) { // sometimes we get an address already in use exception
+      log.warn("IOException when attempting to start rest, trying again", e1);
       stopRest();
       Thread.sleep(ONE_SECOND_MS);
       try {
-        startRest();
+        startRest(null, null);
       } catch (IOException e2) {
         log.error("Restart of rest server failed", e2);
         throw e2;
       }
     }
-    log.info("Completed setup of {}", getClass().getSimpleName());
   }
 
-  private void startRest() throws Exception {
-    restApp = new KafkaRestApplication(restConfig);
-    restServer = restApp.createServer();
-    restServer.start();
-  }
-
-  private void stopRest() throws Exception {
+  protected void stopRest() throws Exception {
+    log.info("Stopping REST.");
     restProperties.clear();
     if (restApp != null) {
       restApp.stop();
@@ -356,7 +371,9 @@ public abstract class ClusterTestHarness {
   @AfterEach
   public void tearDown() throws Exception {
     log.info("Starting teardown of {}", getClass().getSimpleName());
-    stopRest();
+    if (manageRest) {
+      stopRest();
+    }
     tearDownMethod();
     log.info("Completed teardown of {}", getClass().getSimpleName());
   }

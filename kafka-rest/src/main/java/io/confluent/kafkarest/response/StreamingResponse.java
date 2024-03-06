@@ -28,6 +28,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.exceptions.BadRequestException;
+import io.confluent.kafkarest.exceptions.ProduceRequestTooLargeException;
 import io.confluent.kafkarest.exceptions.RestConstraintViolationExceptionMapper;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
@@ -205,7 +206,7 @@ public abstract class StreamingResponse<T> {
             executorService.shutdownNow();
           }
         } catch (InterruptedException e) {
-          log.debug("Exception thrown when attempting to shutdown executorService {}", e);
+          log.debug("Exception thrown when attempting to shutdown executorService", e);
         }
       }
     }
@@ -276,6 +277,15 @@ public abstract class StreamingResponse<T> {
     public CompletableFuture<T> next() {
       try {
         return CompletableFuture.completedFuture(inputStream.nextValue());
+      } catch (JsonMappingException e) {
+        if (e.getCause() instanceof ProduceRequestTooLargeException) {
+          // we stop the stream if we detect a produce request over the size limit
+          throw new BadRequestException(
+              String.format("Error processing message: %s", e.getCause().getMessage()),
+              e.getCause());
+        } else {
+          return CompletableFutures.failedFuture(e);
+        }
       } catch (Throwable e) {
         return CompletableFutures.failedFuture(e);
       }

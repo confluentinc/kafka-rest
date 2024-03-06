@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -431,5 +432,18 @@ public class TestUtils {
         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializerClassName);
     consumerConfig.putAll(deserializerProps);
     return new KafkaConsumer<>(consumerConfig);
+  }
+
+  /** Generate a random alphanumeric string with specific length */
+  public static String generateAlphanumericString(Random random, int length) {
+    int leftLimit = 48; // numeral '0'
+    int rightLimit = 122; // letter 'z'
+    return random
+        .ints(leftLimit, rightLimit + 1)
+        // this make sure that the character is alphanumeric
+        .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
+        .limit(length)
+        .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+        .toString();
   }
 }

@@ -18,6 +18,7 @@ package io.confluent.kafkarest.resources;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED;
 import static org.easymock.EasyMock.anyInt;
+import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.mock;
@@ -34,6 +35,7 @@ import java.time.Duration;
 import java.util.Properties;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 
 public class ProduceRateLimitersTest {
@@ -53,6 +55,7 @@ public class ProduceRateLimitersTest {
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+    HttpServletRequest mockRequest = mock(HttpServletRequest.class);
 
     replay(
         countLimitProvider,
@@ -60,7 +63,8 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount,
         rateLimiterForBytes,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        mockRequest);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
@@ -71,8 +75,7 @@ public class ProduceRateLimitersTest {
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
-
-    assertDoesNotThrow(() -> produceRateLimiters.rateLimit("clusterId", 10L));
+    assertDoesNotThrow(() -> produceRateLimiters.rateLimit("clusterId", 10L, mockRequest));
 
     verify(
         countLimitProvider,
@@ -80,7 +83,8 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount,
         rateLimiterForBytes,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        mockRequest);
   }
 
   @Test
@@ -100,6 +104,7 @@ public class ProduceRateLimitersTest {
     RequestRateLimiter rateLimiterForBytes1 = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount2 = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes2 = mock(RequestRateLimiter.class);
+    HttpServletRequest mockRequest = mock(HttpServletRequest.class);
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount1);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes1);
@@ -129,7 +134,8 @@ public class ProduceRateLimitersTest {
         countLimiterGlobal,
         bytesLimiterGlobal,
         countLimiterGlobalProvider,
-        bytesLimiterGlobalProvider);
+        bytesLimiterGlobalProvider,
+        mockRequest);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
@@ -141,9 +147,9 @@ public class ProduceRateLimitersTest {
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
 
-    produceRateLimiters.rateLimit("clusterId", 10L);
+    produceRateLimiters.rateLimit("clusterId", 10L, mockRequest);
 
-    produceRateLimiters.rateLimit("clusterId2", 10L);
+    produceRateLimiters.rateLimit("clusterId2", 10L, mockRequest);
 
     verify(
         countLimitProvider,
@@ -153,7 +159,8 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount2,
         rateLimiterForBytes2,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        mockRequest);
   }
 
   @Test
@@ -172,6 +179,9 @@ public class ProduceRateLimitersTest {
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+    HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+    mockRequest.setAttribute(anyString(), anyInt());
+    expectLastCall();
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
@@ -197,7 +207,8 @@ public class ProduceRateLimitersTest {
         countLimiterGlobal,
         bytesLimiterGlobal,
         countLimiterGlobalProvider,
-        bytesLimiterGlobalProvider);
+        bytesLimiterGlobalProvider,
+        mockRequest);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
@@ -209,12 +220,12 @@ public class ProduceRateLimitersTest {
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
 
-    produceRateLimiters.rateLimit("clusterId", 10L);
+    produceRateLimiters.rateLimit("clusterId", 10L, mockRequest);
 
     RateLimitExceededException e =
         assertThrows(
             RateLimitExceededException.class,
-            () -> produceRateLimiters.rateLimit("clusterId", 10L));
+            () -> produceRateLimiters.rateLimit("clusterId", 10L, mockRequest));
 
     assertEquals("The rate limit of requests per second has been exceeded.", e.getMessage());
 
@@ -224,7 +235,8 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount,
         rateLimiterForBytes,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        mockRequest);
   }
 
   @Test
@@ -244,6 +256,10 @@ public class ProduceRateLimitersTest {
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
 
+    HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+    mockRequest.setAttribute(anyString(), anyInt());
+    expectLastCall();
+
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
@@ -269,7 +285,8 @@ public class ProduceRateLimitersTest {
         countLimiterGlobal,
         bytesLimiterGlobal,
         countLimiterGlobalProvider,
-        bytesLimiterGlobalProvider);
+        bytesLimiterGlobalProvider,
+        mockRequest);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
@@ -281,12 +298,12 @@ public class ProduceRateLimitersTest {
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
 
-    produceRateLimiters.rateLimit("clusterId", 10L);
+    produceRateLimiters.rateLimit("clusterId", 10L, mockRequest);
 
     RateLimitExceededException e =
         assertThrows(
             RateLimitExceededException.class,
-            () -> produceRateLimiters.rateLimit("clusterId", 10L));
+            () -> produceRateLimiters.rateLimit("clusterId", 10L, mockRequest));
 
     assertEquals("The rate limit of requests per second has been exceeded.", e.getMessage());
 
@@ -296,7 +313,8 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount,
         rateLimiterForBytes,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        mockRequest);
   }
 
   @Test
@@ -314,6 +332,7 @@ public class ProduceRateLimitersTest {
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+    HttpServletRequest mockRequest = mock(HttpServletRequest.class);
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
@@ -343,7 +362,8 @@ public class ProduceRateLimitersTest {
         countLimiterGlobal,
         bytesLimiterGlobal,
         countLimiterGlobalProvider,
-        bytesLimiterGlobalProvider);
+        bytesLimiterGlobalProvider,
+        mockRequest);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
@@ -355,11 +375,11 @@ public class ProduceRateLimitersTest {
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
 
-    produceRateLimiters.rateLimit("clusterId", 10L);
+    produceRateLimiters.rateLimit("clusterId", 10L, mockRequest);
 
     Thread.sleep(50);
     // Cache should have expired, and count reset back to 10L.
-    produceRateLimiters.rateLimit("clusterId", 10L);
+    produceRateLimiters.rateLimit("clusterId", 10L, mockRequest);
 
     verify(
         countLimitProvider,
@@ -367,7 +387,8 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount,
         rateLimiterForBytes,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        mockRequest);
   }
 
   @Test
@@ -387,6 +408,10 @@ public class ProduceRateLimitersTest {
     RequestRateLimiter rateLimiterForCount1 = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes1 = mock(RequestRateLimiter.class);
 
+    HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+    mockRequest.setAttribute(anyString(), anyInt());
+    expectLastCall();
+
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
 
@@ -401,7 +426,8 @@ public class ProduceRateLimitersTest {
         countLimiterGlobal,
         bytesLimiterGlobal,
         countLimiterGlobalProvider,
-        bytesLimiterGlobalProvider);
+        bytesLimiterGlobalProvider,
+        mockRequest);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
@@ -416,7 +442,7 @@ public class ProduceRateLimitersTest {
     RateLimitExceededException e =
         assertThrows(
             RateLimitExceededException.class,
-            () -> produceRateLimiters.rateLimit("clusterId1", 10L));
+            () -> produceRateLimiters.rateLimit("clusterId1", 10L, mockRequest));
 
     verify(
         countLimitProvider,
@@ -424,7 +450,8 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount1,
         rateLimiterForBytes1,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        mockRequest);
   }
 
   @Test
@@ -444,6 +471,10 @@ public class ProduceRateLimitersTest {
     RequestRateLimiter rateLimiterForCount1 = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes1 = mock(RequestRateLimiter.class);
 
+    HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+    mockRequest.setAttribute(anyString(), anyInt());
+    expectLastCall();
+
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     countLimiterGlobal.rateLimit(anyInt());
@@ -458,7 +489,8 @@ public class ProduceRateLimitersTest {
         countLimiterGlobal,
         bytesLimiterGlobal,
         countLimiterGlobalProvider,
-        bytesLimiterGlobalProvider);
+        bytesLimiterGlobalProvider,
+        mockRequest);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
@@ -473,7 +505,7 @@ public class ProduceRateLimitersTest {
     RateLimitExceededException e =
         assertThrows(
             RateLimitExceededException.class,
-            () -> produceRateLimiters.rateLimit("clusterId1", 10L));
+            () -> produceRateLimiters.rateLimit("clusterId1", 10L, mockRequest));
 
     verify(
         countLimitProvider,
@@ -481,6 +513,7 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount1,
         rateLimiterForBytes1,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        mockRequest);
   }
 }

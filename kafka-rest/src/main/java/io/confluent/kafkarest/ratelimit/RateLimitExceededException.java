@@ -25,6 +25,27 @@ import javax.ws.rs.core.Response;
  */
 public final class RateLimitExceededException extends StatusCodeException {
 
+  /*
+   *  These error-codes signify which rate-limit got exceeded, and then
+   *  logged with request in CustomLog.
+   */
+  public static class ErrorCodes {
+
+    // Only apply to Produce APIs.
+    public static final int PRODUCE_MAX_REQUESTS_GLOBAL_LIMIT_EXCEEDED = 429001;
+    public static final int PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED = 429002;
+    public static final int PRODUCE_MAX_BYTES_GLOBAL_LIMIT_EXCEEDED = 429003;
+    public static final int PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED = 429004;
+
+    // Only apply to Admin APIs for now.
+    public static final int PERMITS_MAX_GLOBAL_LIMIT_EXCEEDED = 429005;
+    public static final int PERMITS_MAX_PER_CLUSTER_LIMIT_EXCEEDED = 429006;
+
+    // Apply to all APIs, via the Dos-filters at Jetty layer.
+    public static final int DOS_FILTER_MAX_REQUEST_LIMIT_EXCEEDED = 429007;
+    public static final int DOS_FILTER_MAX_REQUEST_PER_CONNECTION_LIMIT_EXCEEDED = 429008;
+  }
+
   public RateLimitExceededException() {
     super(
         Response.Status.TOO_MANY_REQUESTS,
