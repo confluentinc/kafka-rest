@@ -7,13 +7,13 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>[7.6.1-0, 7.6.2-0)</version>
+        <version>[7.7.0-0, 7.7.1-0)</version>
     </parent>
 
     <artifactId>kafka-rest-parent</artifactId>
     <packaging>pom</packaging>
     <name>kafka-rest-parent</name>
-    <version>7.6.1-0</version>
+    <version>7.7.0-0</version>
     <organization>
         <name>Confluent, Inc.</name>
         <url>http://confluent.io</url>
@@ -48,7 +48,9 @@
         <confluent.maven.repo>https://packages.confluent.io/maven/</confluent.maven.repo>
         <checkstyle.config.location>checkstyle/checkstyle.xml</checkstyle.config.location>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
-        <io.confluent.kafka-rest.version>7.6.1-0</io.confluent.kafka-rest.version>
+        <io.confluent.kafka-rest.version>7.7.0-0</io.confluent.kafka-rest.version>
+        <!-- Allow enough heap space for integration tests with both Kraft and Zookeeper -->
+        <argLine>-Xmx4g -Xms2g</argLine>
     </properties>
 
     <repositories>
@@ -99,6 +101,11 @@
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.jupiter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
                 <version>${junit.jupiter.version}</version>
             </dependency>
             <dependency>
@@ -158,6 +165,11 @@
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-core</artifactId>
                 <version>4.1.12.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>${snappy.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -223,25 +235,25 @@
                     </configuration>
                 </plugin>
 
-		<plugin>
-		    <groupId>com.diffplug.spotless</groupId>
-		    <artifactId>spotless-maven-plugin</artifactId>
-		    <version>2.12.3</version>
-		    <configuration>
-	  	        <java>
-			    <googleJavaFormat>
-			        <version>1.7</version>
-			    </googleJavaFormat>
-		        </java>
-		    </configuration>
+                <plugin>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>2.12.3</version>
+                    <configuration>
+                        <java>
+                            <googleJavaFormat>
+                                <version>1.7</version>
+                            </googleJavaFormat>
+                        </java>
+                    </configuration>
                     <executions>
-	                <execution>
-			    <phase>compile</phase>
-			    <goals>
-			        <goal>check</goal>
-			    </goals>
-			</execution>
-	            </executions>
+                        <execution>
+                            <phase>compile</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>

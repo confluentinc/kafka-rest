@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>kafka-rest-parent</artifactId>
-        <version>7.6.1-0</version>
+        <version>7.7.0-0</version>
     </parent>
 
     <artifactId>kafka-rest</artifactId>
@@ -112,6 +112,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${kafka.scala.version}</artifactId>
             <version>${kafka.version}</version>
@@ -171,6 +176,11 @@
         <dependency>
             <groupId>org.glassfish.jersey.connectors</groupId>
             <artifactId>jersey-apache-connector</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.xerial.snappy</groupId>
+            <artifactId>snappy-java</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -235,16 +245,16 @@
                 </configuration>
             </plugin>
 
-	    <plugin>
-	        <groupId>com.diffplug.spotless</groupId>
-	        <artifactId>spotless-maven-plugin</artifactId>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
                 <executions>
-	            <execution>
-		        <goals>
-		            <goal>check</goal>
-		        </goals>
-		    </execution>
-	        </executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
