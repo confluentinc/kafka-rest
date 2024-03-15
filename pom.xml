@@ -51,6 +51,7 @@
         <io.confluent.kafka-rest.version>7.7.0-0</io.confluent.kafka-rest.version>
         <!-- Allow enough heap space for integration tests with both Kraft and Zookeeper -->
         <argLine>-Xmx4g -Xms2g</argLine>
+        <guava.version>32.0.1-jre</guava.version>
     </properties>
 
     <repositories>
