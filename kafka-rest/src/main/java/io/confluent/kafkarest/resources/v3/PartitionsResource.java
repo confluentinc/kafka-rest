@@ -143,7 +143,7 @@ public final class PartitionsResource {
                             "partition",
                             Integer.toString(partition.getPartitionId())))
                     .build())
-            .setReplicas(
+            .setReplicas(  // TODO remove in cloud
                 Resource.Relationship.create(
                     urlFactory.create(
                         "v3",
@@ -154,7 +154,7 @@ public final class PartitionsResource {
                         "partitions",
                         Integer.toString(partition.getPartitionId()),
                         "replicas")))
-            .setReassignment(
+            .setReassignment( //TODO remove in cloud
                 Resource.Relationship.create(
                     urlFactory.create(
                         "v3",
@@ -181,7 +181,7 @@ public final class PartitionsResource {
                         Integer.toString(partition.getPartitionId()),
                         "replicas",
                         Integer.toString(replica.getBrokerId()))))
-        .ifPresent(partitionData::setLeader);
+        .ifPresent(partitionData::setLeader);  //TODO dont set in cloud
 
     return partitionData.build();
   }

@@ -77,13 +77,13 @@ public abstract class ClusterData extends Resource {
         .setKind(kind)
         .setMetadata(metadata)
         .setClusterId(clusterId)
-        .setController(controller)
+        .setController(controller) //TODO remove in cloud
         .setAcls(acls)
-        .setBrokers(brokers)
+        .setBrokers(brokers) // TODO remove in cloud
         .setBrokerConfigs(brokerConfigs)
         .setConsumerGroups(consumerGroups)
         .setTopics(topics)
-        .setPartitionReassignments(partitionReassignments)
+        .setPartitionReassignments(partitionReassignments) //TODO remove in cloud
         .build();
   }
 

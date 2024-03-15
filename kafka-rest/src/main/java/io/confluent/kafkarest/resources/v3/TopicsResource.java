@@ -295,7 +295,7 @@ public final class TopicsResource {
             Resource.Relationship.create(
                 urlFactory.create(
                     "v3", "clusters", topic.getClusterId(), "topics", topic.getName(), "configs")))
-        .setPartitionReassignments(
+        .setPartitionReassignments(  //TODO remove in cloud
             Resource.Relationship.create(
                 urlFactory.create(
                     "v3",

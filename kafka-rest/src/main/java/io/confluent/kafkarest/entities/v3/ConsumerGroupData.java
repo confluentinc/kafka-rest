@@ -83,7 +83,7 @@ public abstract class ConsumerGroupData extends Resource {
         .setSimple(isSimple)
         .setPartitionAssignor(partitionAssignor)
         .setState(state)
-        .setCoordinator(coordinator)
+        .setCoordinator(coordinator) //TODO don't set in cloud
         .setConsumers(consumers)
         .setLagSummary(lagSummary)
         .build();

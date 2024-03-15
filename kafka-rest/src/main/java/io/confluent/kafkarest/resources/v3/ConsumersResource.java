@@ -140,7 +140,7 @@ public final class ConsumersResource {
                         "consumer",
                         consumer.getConsumerId()))
                 .build())
-        .setAssignments(
+        .setAssignments(  //TODO not in cloud
             Relationship.create(
                 urlFactory.create(
                     "v3",

@@ -129,7 +129,7 @@ public final class ConsumerGroupsResource {
                     crnFactory.create(
                         "kafka", clusterId, "consumer-group", consumerGroup.getConsumerGroupId()))
                 .build())
-        .setCoordinator(
+        .setCoordinator(  //TODO remove in cloud
             Relationship.create(
                 urlFactory.create(
                     "v3",
