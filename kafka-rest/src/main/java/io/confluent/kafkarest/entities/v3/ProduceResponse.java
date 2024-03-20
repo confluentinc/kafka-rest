@@ -30,6 +30,9 @@ public abstract class ProduceResponse {
 
   ProduceResponse() {}
 
+  @JsonProperty("error_code")
+  public abstract int getErrorCode();
+
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
 
@@ -56,6 +59,7 @@ public abstract class ProduceResponse {
 
   @JsonCreator
   static ProduceResponse fromJson(
+      @JsonProperty("error_code") int errorCode,
       @JsonProperty("cluster_id") String clusterId,
       @JsonProperty("topic_name") String topicName,
       @JsonProperty("partition_id") int partitionId,
@@ -64,6 +68,7 @@ public abstract class ProduceResponse {
       @JsonProperty("key") @Nullable ProduceResponseData key,
       @JsonProperty("value") @Nullable ProduceResponseData value) {
     return builder()
+        .setErrorCode(errorCode)
         .setClusterId(clusterId)
         .setTopicName(topicName)
         .setPartitionId(partitionId)
@@ -82,6 +87,8 @@ public abstract class ProduceResponse {
   public abstract static class Builder {
 
     Builder() {}
+
+    public abstract Builder setErrorCode(int errorCode);
 
     public abstract Builder setClusterId(String clusterId);
 

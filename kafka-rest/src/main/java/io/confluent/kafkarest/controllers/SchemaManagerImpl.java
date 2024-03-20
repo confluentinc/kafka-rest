@@ -156,7 +156,7 @@ final class SchemaManagerImpl implements SchemaManager {
     try {
       parsedSchema =
           schemaProvider
-              .parseSchema(schema.getSchema(), schema.getReferences(), /* isNew= */ false)
+              .parseSchema(schema, /* isNew= */ false)
               .orElseThrow(
                   () ->
                       Errors.invalidSchemaException(
@@ -268,7 +268,7 @@ final class SchemaManagerImpl implements SchemaManager {
     try {
       schema =
           schemaProvider
-              .parseSchema(metadata.getSchema(), metadata.getReferences(), /* isNew= */ false)
+              .parseSchema(new Schema(null, metadata), /* isNew= */ false)
               .orElseThrow(
                   () ->
                       Errors.invalidSchemaException(

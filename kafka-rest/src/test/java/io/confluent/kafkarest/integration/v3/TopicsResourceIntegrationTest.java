@@ -275,14 +275,16 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setAuthorizedOperations(emptySet())
                 .build());
 
-    Response response =
-        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1)
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), response.getStatus());
-
-    GetTopicResponse actual = response.readEntity(GetTopicResponse.class);
-    assertEquals(expected, actual);
+    testWithRetry(
+        () -> {
+          Response response =
+              request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1)
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+          GetTopicResponse actual = response.readEntity(GetTopicResponse.class);
+          assertEquals(expected, actual);
+        });
   }
 
   @Test
@@ -678,15 +680,23 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             .build()))
                 .build());
 
-    Response existingGetTopicConfigResponse =
-        request("/v3/clusters/" + clusterId + "/topics/" + topicName + "/configs/cleanup.policy")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), existingGetTopicConfigResponse.getStatus());
+    testWithRetry(
+        () -> {
+          Response existingGetTopicConfigResponse =
+              request(
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + topicName
+                          + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), existingGetTopicConfigResponse.getStatus());
 
-    GetTopicConfigResponse actualGetTopicConfigResponse =
-        existingGetTopicConfigResponse.readEntity(GetTopicConfigResponse.class);
-    assertEquals(expectedExistingGetTopicConfigResponse, actualGetTopicConfigResponse);
+          GetTopicConfigResponse actualGetTopicConfigResponse =
+              existingGetTopicConfigResponse.readEntity(GetTopicConfigResponse.class);
+          assertEquals(expectedExistingGetTopicConfigResponse, actualGetTopicConfigResponse);
+        });
 
     Response deleteTopicResponse =
         request("/v3/clusters/" + clusterId + "/topics/" + topicName)

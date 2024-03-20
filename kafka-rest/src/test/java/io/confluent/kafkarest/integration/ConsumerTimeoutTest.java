@@ -12,6 +12,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.Versions;
@@ -52,7 +53,7 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
   public void testConsumerTimeout() throws InterruptedException {
     String instanceUri =
         startConsumeMessages(
-            groupName, topicName, EmbeddedFormat.BINARY, Versions.KAFKA_V2_JSON_BINARY);
+            groupName, topicName, EmbeddedFormat.BINARY, Versions.KAFKA_V2_JSON_BINARY, "earliest");
     // Even with identical timeouts, should be able to consume multiple times without the
     // instance timing out
     consumeForTimeout(

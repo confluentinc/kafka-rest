@@ -298,18 +298,6 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   public void testCreateSearchAndMultiDelete() {
     createAliceAndBobAcls();
 
-    DeleteAclsResponse expectedMultiDeleteResponse =
-        DeleteAclsResponse.create(
-            ImmutableList.of(
-                ALICE_ACL_DATA
-                    .setMetadata(Resource.Metadata.builder().setSelf(expectedAliceUrl).build())
-                    .setClusterId(clusterId)
-                    .build(),
-                BOB_ACL_DATA
-                    .setMetadata(Resource.Metadata.builder().setSelf(expectedBobUrl).build())
-                    .setClusterId(clusterId)
-                    .build()));
-
     Client webClient = getClient();
     restApp.configureBaseApplication(webClient);
 
@@ -323,6 +311,17 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
             .delete();
     assertEquals(Status.BAD_REQUEST.getStatusCode(), multiDeleteNoParamsResponse.getStatus());
 
+    DeleteAclsResponse expectedMultiDeleteResponse =
+        DeleteAclsResponse.create(
+            ImmutableList.of(
+                ALICE_ACL_DATA
+                    .setMetadata(Resource.Metadata.builder().setSelf(expectedAliceUrl).build())
+                    .setClusterId(clusterId)
+                    .build(),
+                BOB_ACL_DATA
+                    .setMetadata(Resource.Metadata.builder().setSelf(expectedBobUrl).build())
+                    .setClusterId(clusterId)
+                    .build()));
     // Then ensure that a DELETE request with the parameters needed to search for and match both
     // ACLs does delete both ACLs at once.
     Response multiDeleteResourceTypeAll =

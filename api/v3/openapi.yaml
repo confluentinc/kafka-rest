@@ -369,11 +369,11 @@ paths:
       - $ref: '#/components/parameters/ClusterId'
 
     get:
-      summary: 'List All Broker Configs'
+      summary: 'List Dynamic Broker Configs'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Return the list of configuration parameters for all the brokers in the given Kafka cluster.
+        Return the list of dynamic configuration parameters for all the brokers in the given Kafka cluster.
       tags:
         - Configs
       responses:
@@ -1271,10 +1271,12 @@ paths:
         Produce records to the given topic, returning delivery reports for each
                     record produced. This API can be used in streaming mode by setting "Transfer-Encoding:
                     chunked" header. For as long as the connection is kept open, the server will
-                    keep accepting records. For each record sent to the server, the server will
-                    asynchronously send back a delivery report, in the same order. Records are
-                    streamed to and from the server as Concatenated JSON. Errors are reported per
-                    record. The HTTP status code will be HTTP 200 OK as long as the connection is successfully established.
+                    keep accepting records. Records are streamed to and from the server as Concatenated 
+                    JSON. For each record sent to the server, the server will
+                    asynchronously send back a delivery report, in the same order, each with its own
+                    error_code. An error_code of 200 indicates success. The HTTP status code will be HTTP 
+                    200 OK as long as the connection is successfully established. To identify records
+                    that have encountered an error, check the error_code of each delivery report.
       tags:
         - Records
       requestBody:
@@ -2061,11 +2063,15 @@ components:
     ProduceResponse:
       type: object
       required:
+        - error_code
         - cluster_id
         - topic_name
         - partition_id
         - offset
       properties:
+        error_code:
+          type: integer
+          format: int32
         cluster_id:
           type: string
         topic_name:
@@ -3623,6 +3629,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProduceResponse'
           example:
+            error_code: 200
             cluster_id: 'cluster-1'
             topic_name: 'topic-1'
             partition_id: 1
