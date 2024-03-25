@@ -50,7 +50,7 @@
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
         <io.confluent.kafka-rest.version>7.8.0-0</io.confluent.kafka-rest.version>
         <!-- Allow enough heap space for integration tests with both Kraft and Zookeeper -->
-        <argLine>-Xmx4g -Xms2g</argLine>
+        <argLine>-Xmx7g -Xms4g</argLine>
     </properties>
 
     <repositories>
