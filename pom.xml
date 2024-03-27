@@ -49,6 +49,9 @@
         <checkstyle.config.location>checkstyle/checkstyle.xml</checkstyle.config.location>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
         <io.confluent.kafka-rest.version>7.7.0-478</io.confluent.kafka-rest.version>
+        <!-- force ZK 3.8.4 and jose4j 0.9.5, as we only bumped it in common 7.8.0-* but want to minimize the changes -->
+        <zookeeper.version>3.8.4</zookeeper.version>
+        <jose4j.version>0.9.5</jose4j.version>
         <!-- Allow enough heap space for integration tests with both Kraft and Zookeeper -->
         <argLine>-Xmx4g -Xms2g</argLine>
     </properties>
