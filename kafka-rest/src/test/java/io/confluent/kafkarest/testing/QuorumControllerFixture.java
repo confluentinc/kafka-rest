@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import kafka.server.KafkaConfig;
 import kafka.server.QuorumTestHarness;
 import org.apache.kafka.metadata.authorizer.StandardAuthorizer;
 import org.junit.jupiter.api.TestInfo;
@@ -54,7 +53,7 @@ public final class QuorumControllerFixture extends QuorumTestHarness
   @Override
   public Seq<Properties> kraftControllerConfigs() {
     Properties props = new Properties();
-    props.put(KafkaConfig.AuthorizerClassNameProp(), StandardAuthorizer.class.getName());
+    props.put("authorizer.class.name", StandardAuthorizer.class.getName());
     // this setting allows brokers to register to Kraft controller
     props.put(StandardAuthorizer.ALLOW_EVERYONE_IF_NO_ACL_IS_FOUND_CONFIG, true);
     return JavaConverters.asScalaBuffer(Collections.singletonList(props));

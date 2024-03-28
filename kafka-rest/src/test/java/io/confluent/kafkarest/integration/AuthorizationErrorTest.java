@@ -38,7 +38,6 @@ import java.util.Properties;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import kafka.security.authorizer.AclAuthorizer;
-import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.common.security.auth.KafkaPrincipal;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
@@ -115,7 +114,7 @@ public class AuthorizationErrorTest
             1,
             (short) 1,
             false);
-    brokerProps.put(KafkaConfig.BrokerIdProp(), Integer.toString(i));
+    brokerProps.put("broker.id", Integer.toString(i));
     brokerProps.put(ZOOKEEPER_CONNECT_CONFIG, zkConnect);
     brokerProps.setProperty("authorizer.class.name", AclAuthorizer.class.getName());
     brokerProps.setProperty("super.users", "User:admin");
