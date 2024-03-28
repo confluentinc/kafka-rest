@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG;
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
@@ -115,7 +116,7 @@ public class AuthorizationErrorTest
             (short) 1,
             false);
     brokerProps.put(KafkaConfig.BrokerIdProp(), Integer.toString(i));
-    brokerProps.put(KafkaConfig.ZkConnectProp(), zkConnect);
+    brokerProps.put(ZOOKEEPER_CONNECT_CONFIG, zkConnect);
     brokerProps.setProperty("authorizer.class.name", AclAuthorizer.class.getName());
     brokerProps.setProperty("super.users", "User:admin");
     brokerProps.setProperty(
