@@ -152,8 +152,14 @@ public final class ProduceAction {
         .from(requests)
         .compose(
             request ->
-                produce(clusterId, topicName, request, controller, producerMetricsProvider.get()))
+                produce(clusterId, topicName, request, controller, producerMetricsProvider.get()),
+            unused -> close())
         .resume(asyncResponse);
+  }
+
+  private Void close() {
+    //TODO make a new close method on the controller : produceControllerProvider.get().close();
+    return null;
   }
 
   private CompletableFuture<ProduceResponse> produce(

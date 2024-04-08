@@ -46,6 +46,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.ws.rs.WebApplicationException;
@@ -113,6 +114,8 @@ public abstract class StreamingResponse<T> {
   private final Instant streamStartTime;
   private final Clock clock;
 
+  Function<Void, Void> closer;
+
   volatile boolean closingStarted = false;
 
   StreamingResponse(
@@ -148,7 +151,9 @@ public abstract class StreamingResponse<T> {
   }
 
   public final <O> StreamingResponse<O> compose(
-      Function<? super T, ? extends CompletableFuture<O>> transform) {
+      Function<? super T, ? extends CompletableFuture<O>> transform,
+      Function<Void, Void> closer) {
+    this.closer = closer;
     return new ComposingStreamingResponse<>(
         this, transform, chunkedOutputFactory, maxDuration, gracePeriod);
   }
@@ -199,6 +204,7 @@ public abstract class StreamingResponse<T> {
     } finally {
       close();
       responseQueue.close();
+      closer.apply(null); //TODO probably need the 0 parameter equivalent of the java Function (can't remember what it's called
       if (executorService != null) {
         executorService.shutdown();
         try {
@@ -268,6 +274,22 @@ public abstract class StreamingResponse<T> {
         throw new BadRequestException(
             String.format("Error processing JSON: %s", jme.getMessage()), jme);
       } catch (RuntimeException re) {
+//        Throwable causedByOneLevelUp = re.getCause();
+//        Throwable causedByTwoLevelsUp =
+//            causedByOneLevelUp != null ? causedByOneLevelUp.getCause() : null;
+//        Throwable causedByThreeLevelsUp =
+//            causedByTwoLevelsUp != null ? causedByTwoLevelsUp.getCause() : null;
+//
+//        if (causedByOneLevelUp instanceof TimeoutException
+//            || causedByTwoLevelsUp instanceof TimeoutException
+//            || causedByThreeLevelsUp instanceof TimeoutException) {
+//          log.error("******* TimeoutException thrown ", re);
+//          // jetty's idle timeout closes the RequestContext, but doesn't then tidy up the
+//          // KafkaRestContext objects that are set on the request context, causing a produer
+//          // thread leak.  Force the stream close from this end to prompt tidy up
+//          close();
+//        }
+        // TODO do we still want to throw here to ensure everything tidies up
         throw new BadRequestException(
             String.format("Error processing message: %s", re.getMessage()), re);
       }
