@@ -7,13 +7,13 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>[7.8.0-0, 7.8.1-0)</version>
+        <version>7.8.0-178</version>
     </parent>
 
     <artifactId>kafka-rest-parent</artifactId>
     <packaging>pom</packaging>
     <name>kafka-rest-parent</name>
-    <version>7.8.0-0</version>
+    <version>7.8.0-341</version>
     <organization>
         <name>Confluent, Inc.</name>
         <url>http://confluent.io</url>
@@ -48,7 +48,7 @@
         <confluent.maven.repo>https://packages.confluent.io/maven/</confluent.maven.repo>
         <checkstyle.config.location>checkstyle/checkstyle.xml</checkstyle.config.location>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
-        <io.confluent.kafka-rest.version>7.8.0-0</io.confluent.kafka-rest.version>
+        <io.confluent.kafka-rest.version>7.8.0-341</io.confluent.kafka-rest.version>
         <!-- Allow enough heap space for integration tests with both Kraft and Zookeeper -->
         <argLine>-Xmx4g -Xms2g</argLine>
     </properties>
