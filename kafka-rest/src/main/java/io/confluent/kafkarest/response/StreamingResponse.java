@@ -255,7 +255,11 @@ public abstract class StreamingResponse<T> {
       try {
         inputStream.close();
       } catch (IOException e) {
-        log.error("Error when closing the request stream.", e);
+        log.error("Error when closing the request stream", e);
+      } catch (BadRequestException e) {
+        log.error("Error when closing the request stream", e.getCause() != null ? e.getCause() : e);
+      } catch (Throwable e) {
+        log.error("Unknown error when closing the request stream.", e);
       }
     }
 
