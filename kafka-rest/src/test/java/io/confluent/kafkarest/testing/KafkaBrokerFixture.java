@@ -57,9 +57,7 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
           .put("group.initial.rebalance.delay.ms", "0")
           .put("inter.broker.listener.name", "INTERNAL")
           .put("listeners", "INTERNAL://localhost:0,EXTERNAL://localhost:0")
-          .put(
-              "advertised.listeners",
-              "INTERNAL://localhost:0,EXTERNAL://localhost:0")
+          .put("advertised.listeners", "INTERNAL://localhost:0,EXTERNAL://localhost:0")
           .put("offsets.topic.num.partitions", "1")
           .put("offsets.topic.replication.factor", "1")
           .build();
@@ -160,12 +158,9 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
       properties.setProperty("sasl.enabled.mechanisms", "PLAIN");
       properties.setProperty("sasl.mechanism.inter.broker.protocol", "PLAIN");
       if (isKraftTest) {
-        properties.setProperty(
-            "authorizer.class.name",
-            "org.apache.kafka.metadata.authorizer.StandardAuthorizer");
+        properties.setProperty("authorizer.class.name", "org.apache.kafka.metadata.authorizer.StandardAuthorizer");
       } else {
-        properties.setProperty(
-            "authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
+        properties.setProperty("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
       }
     }
     properties.setProperty("super.users", getSuperUsers());
