@@ -51,18 +51,17 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
 
   private static final ImmutableMap<String, String> CONFIG_TEMPLATE =
       ImmutableMap.<String, String>builder()
-          .put(KafkaConfig.AutoCreateTopicsEnableProp(), "false")
-          .put(KafkaConfig.ControlledShutdownEnableProp(), "false")
-          .put(KafkaConfig.DefaultReplicationFactorProp(), "1")
-          .put(KafkaConfig.DeleteTopicEnableProp(), "true")
-          .put(KafkaConfig.GroupInitialRebalanceDelayMsProp(), "0")
-          .put(KafkaConfig.InterBrokerListenerNameProp(), "INTERNAL")
-          .put(KafkaConfig.ListenersProp(), "INTERNAL://localhost:0,EXTERNAL://localhost:0")
+          .put("auto.create.topics.enable", "false")
+          .put("controlled.shutdown.enable", "false")
+          .put("default.replication.factor", "1")
+          .put("group.initial.rebalance.delay.ms", "0")
+          .put("inter.broker.listener.name", "INTERNAL")
+          .put("listeners", "INTERNAL://localhost:0,EXTERNAL://localhost:0")
           .put(
-              KafkaConfig.AdvertisedListenersProp(),
+              "advertised.listeners",
               "INTERNAL://localhost:0,EXTERNAL://localhost:0")
-          .put(KafkaConfig.OffsetsTopicPartitionsProp(), "1")
-          .put(KafkaConfig.OffsetsTopicReplicationFactorProp(), "1")
+          .put("offsets.topic.num.partitions", "1")
+          .put("offsets.topic.replication.factor", "1")
           .build();
 
   private final int brokerId;
@@ -136,8 +135,8 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
             (short) 1,
             false);
     properties.putAll(CONFIG_TEMPLATE);
-    properties.setProperty(KafkaConfig.BrokerIdProp(), String.valueOf(brokerId));
-    properties.setProperty(KafkaConfig.LogDirProp(), logDir.toString());
+    properties.setProperty("broker.id", String.valueOf(brokerId));
+    properties.setProperty("log.dir", logDir.toString());
     properties.putAll(getBrokerSecurityConfigs(isKraftTest));
     properties.putAll(getBrokerSslConfigs());
     properties.putAll(configs);
@@ -151,7 +150,7 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
       listenerSecurityProtocolMapTempl += ",CONTROLLER:PLAINTEXT";
     }
     properties.setProperty(
-        KafkaConfig.ListenerSecurityProtocolMapProp(),
+        "listener.security.protocol.map",
         String.format(listenerSecurityProtocolMapTempl, securityProtocol, securityProtocol));
     if (isSaslSecurity()) {
       properties.setProperty(
@@ -162,11 +161,11 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
       properties.setProperty("sasl.mechanism.inter.broker.protocol", "PLAIN");
       if (isKraftTest) {
         properties.setProperty(
-            KafkaConfig.AuthorizerClassNameProp(),
+            "authorizer.class.name",
             "org.apache.kafka.metadata.authorizer.StandardAuthorizer");
       } else {
         properties.setProperty(
-            KafkaConfig.AuthorizerClassNameProp(), "kafka.security.authorizer.AclAuthorizer");
+            "authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
       }
     }
     properties.setProperty("super.users", getSuperUsers());
