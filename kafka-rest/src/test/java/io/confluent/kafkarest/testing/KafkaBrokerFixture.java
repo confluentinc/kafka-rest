@@ -158,7 +158,8 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
       properties.setProperty("sasl.enabled.mechanisms", "PLAIN");
       properties.setProperty("sasl.mechanism.inter.broker.protocol", "PLAIN");
       if (isKraftTest) {
-        properties.setProperty("authorizer.class.name", "org.apache.kafka.metadata.authorizer.StandardAuthorizer");
+        properties.setProperty(
+            "authorizer.class.name", "org.apache.kafka.metadata.authorizer.StandardAuthorizer");
       } else {
         properties.setProperty("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
       }
