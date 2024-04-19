@@ -228,7 +228,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       if (subscription.getTopics() != null) {
         consumer.subscribe(subscription.getTopics());
       } else if (subscription.getTopicPattern() != null) {
-        Pattern topicPattern = Pattern.compile(subscription.getTopicPattern());
+        Pattern topicPattern = Pattern.compile(Pattern.quote(subscription.getTopicPattern()));
         NoOpOnRebalance noOpOnRebalance = new NoOpOnRebalance();
         consumer.subscribe(topicPattern, noOpOnRebalance);
       }
