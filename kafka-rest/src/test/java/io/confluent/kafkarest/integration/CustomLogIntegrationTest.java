@@ -46,6 +46,7 @@ import javax.ws.rs.core.Response;
 import org.eclipse.jetty.server.RequestLog;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
@@ -58,6 +59,7 @@ import org.slf4j.LoggerFactory;
  * Integration tests to validate request-log has necessary custom-log when request is rate-limited.
  */
 @Tag("IntegrationTest")
+@Disabled("KNET-15428 This test is deadlocked and needs to be fixed.")
 public class CustomLogIntegrationTest extends ClusterTestHarness {
 
   private static final Logger log = LoggerFactory.getLogger(CustomLogIntegrationTest.class);
