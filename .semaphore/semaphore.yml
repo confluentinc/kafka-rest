@@ -40,6 +40,7 @@ blocks:
             - . sem-pint -c
             - ci-tools ci-update-version
             - sem-version java 11
+            - mvn -version
             - mvn -U -Dmaven.wagon.http.retryHandler.count=10 --batch-mode --no-transfer-progress clean verify install dependency:analyze validate
             - . cache-maven store
       epilogue:
