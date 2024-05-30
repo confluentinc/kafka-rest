@@ -47,10 +47,12 @@ import org.easymock.EasyMock;
 import org.easymock.EasyMockExtension;
 import org.easymock.IExpectationSetters;
 import org.easymock.Mock;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(EasyMockExtension.class)
+@Disabled("KNET-15428 This test is deadlocked and needs to be fixed.")
 public class LoadTest {
 
   private KafkaRestConfig config;

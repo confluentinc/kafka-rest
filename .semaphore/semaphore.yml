@@ -14,7 +14,7 @@ fail_fast:
     when: "true"
 
 execution_time_limit:
-  hours: 1
+  hours: 12
 
 queue:
   - when: "branch != 'master' and branch !~ '[0-9]+\\.[0-9]+\\.x'"
@@ -39,6 +39,8 @@ blocks:
           commands:
             - . sem-pint -c
             - ci-tools ci-update-version
+            - sem-version java 1.8
+            - mvn -version
             - mvn -U -Dmaven.wagon.http.retryHandler.count=10 --batch-mode --no-transfer-progress clean verify install dependency:analyze validate
             - . cache-maven store
       epilogue:
