@@ -57,33 +57,6 @@ public abstract class ClusterTestHarness {
 
   public static final int DEFAULT_NUM_BROKERS = 1;
 
-  /**
-   * Choose a number of random available ports
-   */
-  public static int[] choosePorts(int count) {
-    try {
-      ServerSocket[] sockets = new ServerSocket[count];
-      int[] ports = new int[count];
-      for (int i = 0; i < count; i++) {
-        sockets[i] = new ServerSocket(0);
-        ports[i] = sockets[i].getLocalPort();
-      }
-      for (int i = 0; i < count; i++)
-        sockets[i].close();
-      return ports;
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Choose an available port
-   */
-  public static int choosePort() {
-    return choosePorts(1)[0];
-  }
-
-
   private int numBrokers;
   private boolean withSchemaRegistry;
 
@@ -164,30 +137,26 @@ public abstract class ClusterTestHarness {
                                               SecurityProtocol.PLAINTEXT);
 
     if (withSchemaRegistry) {
-      int schemaRegPort = choosePort();
-      schemaRegProperties.put(SchemaRegistryConfig.PORT_CONFIG,
-                              ((Integer) schemaRegPort).toString());
+      schemaRegProperties.put(SchemaRegistryConfig.PORT_CONFIG, "0");
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG,
                               zkConnect);
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
                               SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
       schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG,
                               schemaRegCompatibility);
-      schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
 
       schemaRegApp =
           new SchemaRegistryRestApplication(new SchemaRegistryConfig(schemaRegProperties));
       schemaRegServer = schemaRegApp.createServer();
       schemaRegServer.start();
+      schemaRegConnect = String.format("http://localhost:%d", schemaRegApp.localPorts().get(0));
     }
 
-    int restPort = choosePort();
-    restProperties.put(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
+    restProperties.put(KafkaRestConfig.PORT_CONFIG, "0");
     restProperties.put(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkConnect);
     if (withSchemaRegistry) {
       restProperties.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegConnect);
     }
-    restConnect = String.format("http://localhost:%d", restPort);
 
     restConfig = new KafkaRestConfig(restProperties);
     restApp = new TestKafkaRestApplication(restConfig, getZkUtils(restConfig),
@@ -198,6 +167,7 @@ public abstract class ClusterTestHarness {
                                            getSimpleConsumerManager(restConfig));
     restServer = restApp.createServer();
     restServer.start();
+    restConnect = String.format("http://localhost:%d", restApp.localPorts().get(0));
   }
 
   protected ZkUtils getZkUtils(KafkaRestConfig appConfig) {
