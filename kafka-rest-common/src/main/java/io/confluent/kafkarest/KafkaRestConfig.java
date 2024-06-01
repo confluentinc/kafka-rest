@@ -57,7 +57,7 @@ public class KafkaRestConfig extends RestConfig {
   private static final String MAX_POLL_RECORDS_DOC =
           "The maximum number of records returned in a single call to poll().";
   // ensures poll is frequently needed and called
-  public static final String MAX_POLL_RECORDS_VALUE = "30";
+  public static final String MAX_POLL_RECORDS_DEFAULT = "30";
 
   public static final String HOST_NAME_CONFIG = "host.name";
   private static final String HOST_NAME_DOC =
@@ -370,6 +370,13 @@ public class KafkaRestConfig extends RestConfig {
         CONSUMER_MAX_THREADS_DEFAULT,
         Importance.MEDIUM,
         CONSUMER_MAX_THREADS_DOC
+    )
+    .define(
+        MAX_POLL_RECORDS_CONFIG,
+        Type.INT,
+        MAX_POLL_RECORDS_DEFAULT,
+        Importance.MEDIUM,
+        MAX_POLL_RECORDS_DOC
     )
     .define(
         ZOOKEEPER_CONNECT_CONFIG,
