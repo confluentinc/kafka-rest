@@ -26,6 +26,8 @@ import io.confluent.kafkarest.entities.v2.GetTopicResponse;
 import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.rest.annotations.PerformanceMetric;
+import io.confluent.rest.exceptions.RestException;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -80,7 +82,7 @@ public final class TopicsResource {
 
     CompletableFuture<Topic> topicFuture =
         topicManager.getLocalTopic(topicName)
-            .thenApply(topic -> topic.orElseThrow(Errors::topicNotFoundException));
+            .thenApply(topic -> topic.<RestException>orElseThrow(() -> Errors.topicNotFoundException()));
     CompletableFuture<GetTopicResponse> response =
         topicFuture.thenCompose(
             topic -> topicConfigManager.listTopicConfigs(topic.getClusterId(), topicName))

@@ -97,7 +97,7 @@ public final class ClustersResource {
     CompletableFuture<GetClusterResponse> response =
         clusterManager.get()
             .getCluster(clusterId)
-            .thenApply(cluster -> cluster.orElseThrow(NotFoundException::new))
+            .thenApply(cluster -> cluster.<NotFoundException>orElseThrow(() -> new NotFoundException()))
             .thenApply(cluster -> GetClusterResponse.create(toClusterData(cluster)));
 
     AsyncResponses.asyncResume(asyncResponse, response);

@@ -25,6 +25,8 @@ import io.confluent.kafkarest.entities.v2.TopicPartitionOffsetResponse;
 import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.rest.annotations.PerformanceMetric;
+import io.confluent.rest.exceptions.RestException;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -79,7 +81,7 @@ public final class PartitionsResource {
     CompletableFuture<GetPartitionResponse> response =
         partitionManager.get()
             .getLocalPartition(topic, partitionId)
-            .thenApply(partition -> partition.orElseThrow(Errors::partitionNotFoundException))
+            .thenApply(partition -> partition.<RestException>orElseThrow(() -> Errors.partitionNotFoundException()))
             .thenApply(GetPartitionResponse::fromPartition);
 
     AsyncResponses.asyncResume(asyncResponse, response);
@@ -103,7 +105,7 @@ public final class PartitionsResource {
     CompletableFuture<TopicPartitionOffsetResponse> response =
         partitionManager.get()
             .getLocalPartition(topic, partitionId)
-            .thenApply(partition -> partition.orElseThrow(Errors::partitionNotFoundException))
+            .thenApply(partition -> partition.<RestException>orElseThrow(() -> Errors.partitionNotFoundException()))
             .thenApply(
                 partition ->
                     new TopicPartitionOffsetResponse(

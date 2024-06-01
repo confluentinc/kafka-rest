@@ -121,7 +121,7 @@ public final class BrokerConfigsResource {
     CompletableFuture<GetBrokerConfigResponse> response =
         brokerConfigManager.get()
             .getBrokerConfig(clusterId, brokerId, name)
-            .thenApply(broker -> broker.orElseThrow(NotFoundException::new))
+            .thenApply(broker -> broker.<NotFoundException>orElseThrow(() -> new NotFoundException()))
             .thenApply(broker -> GetBrokerConfigResponse.create(toBrokerConfigData(broker)));
 
     AsyncResponses.asyncResume(asyncResponse, response);

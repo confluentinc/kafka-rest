@@ -124,7 +124,7 @@ public final class ConsumerAssignmentsResource {
     CompletableFuture<GetConsumerAssignmentResponse> response =
         consumerAssignmentManager.get()
             .getConsumerAssignment(clusterId, consumerGroupId, consumerId, topicName, partitionId)
-            .thenApply(assignment -> assignment.orElseThrow(NotFoundException::new))
+            .thenApply(assignment -> assignment.<NotFoundException>orElseThrow(() -> new NotFoundException()))
             .thenApply(
                 assignment ->
                     GetConsumerAssignmentResponse.create(toConsumerAssignmentData(assignment)));
