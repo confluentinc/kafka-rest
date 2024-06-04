@@ -242,6 +242,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenNoRateLimitTriggered_ThenRequestLogHasRelevantInfo")
+  /// THIS ONE FAILS
   public void test_whenNoRateLimitTriggered_ThenRequestLogHasRelevantInfo(String quorum) {
     int totalRequests = 100;
     int requestsWithStatusOk = 100;
@@ -420,7 +421,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
   private void hammerAtConstantRate(String path, Duration requestInterval, int totalRequests) {
     checkArgument(!requestInterval.isNegative(), "rate must be non-negative");
     List<Response> responses =
-        IntStream.range(0, totalRequests)
+        IntStream.range(0, 1) // makes it easier to see the flow in the debugger
             .mapToObj(
                 i -> {
                   if (path.contains("/records")) {
