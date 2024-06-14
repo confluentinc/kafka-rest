@@ -40,12 +40,12 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${kafka.scala.version}</artifactId>
-            <version>${kafka.version}</version>
+            <version>7.8.0-100122-ccs</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
+            <version>7.8.0-100122-ccs</version>
         </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
@@ -119,21 +119,21 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${kafka.scala.version}</artifactId>
-            <version>${kafka.version}</version>
+            <version>7.8.0-100122-ccs</version>
             <classifier>test</classifier>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
+            <version>7.8.0-100122-ccs</version>
             <classifier>test</classifier>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-server-common</artifactId>
-            <version>${kafka.version}</version>
+            <version>7.8.0-100122-ccs</version>
             <classifier>test</classifier>
             <scope>test</scope>
         </dependency>
