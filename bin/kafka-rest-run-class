@@ -39,6 +39,11 @@ if [ "x$KAFKAREST_LOG4J_OPTS" = "x" ]; then
   fi
 fi
 
+# Log directory to use
+if [ "x$LOG_DIR" = "x" ]; then
+  LOG_DIR="$base_dir/logs"
+fi
+
 if [[ -n $LOG_DIR ]]; then
     [[ -d $LOG_DIR ]] || mkdir -p "$LOG_DIR"
     KAFKAREST_LOG4J_OPTS="-Dkafka-rest.log.dir=$LOG_DIR ${KAFKAREST_LOG4J_OPTS}"
