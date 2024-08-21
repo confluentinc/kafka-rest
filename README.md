@@ -3,7 +3,7 @@
 The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes it easy to produce and consume data, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients. Examples of use cases include reporting data to Kafka from any front-end app built in any language, ingesting data into a stream processing framework that doesn't yet support Kafka, and scripting administrative actions.
 
 ## Installation
-
+ 
 You can download prebuilt versions of the Kafka REST Proxy as part of the [Confluent Platform](https://www.confluent.io/product/confluent-platform/). 
 
 You can read our full [installation instructions](http://docs.confluent.io/current/installation.html#installation) and the complete [documentation](http://docs.confluent.io/current/kafka-rest/docs/).
