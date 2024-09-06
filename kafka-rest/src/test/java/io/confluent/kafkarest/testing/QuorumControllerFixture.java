@@ -51,7 +51,7 @@ public final class QuorumControllerFixture extends QuorumTestHarness
   }
 
   @Override
-  public Seq<Properties> kraftControllerConfigs() {
+  public Seq<Properties> kraftControllerConfigs(TestInfo testInfo) {
     Properties props = new Properties();
     props.put("authorizer.class.name", StandardAuthorizer.class.getName());
     // this setting allows brokers to register to Kraft controller

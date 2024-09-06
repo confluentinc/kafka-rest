@@ -825,7 +825,7 @@ public abstract class ClusterTestHarness {
     }
 
     @Override
-    public Seq<Properties> kraftControllerConfigs() {
+    public Seq<Properties> kraftControllerConfigs(TestInfo testInfo) {
       // only one Kraft controller is supported in QuorumTestHarness
       return JavaConverters.asScalaBuffer(Collections.singletonList(kraftControllerConfig));
     }
