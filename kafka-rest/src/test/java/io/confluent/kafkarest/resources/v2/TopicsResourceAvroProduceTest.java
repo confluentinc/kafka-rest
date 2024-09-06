@@ -94,8 +94,8 @@ public class TopicsResourceAvroProduceTest
   private static final TopicPartition PARTITION = new TopicPartition(TOPIC_NAME, 0);
   private static final List<RecordMetadata> PRODUCE_RESULTS =
       Arrays.asList(
-          new RecordMetadata(PARTITION, 0L, 0L, 0L, 0L, 1, 1),
-          new RecordMetadata(PARTITION, 0L, 1L, 0L, 0L, 1, 1));
+          new RecordMetadata(PARTITION, 0L, 0, 0L, 1, 1),
+          new RecordMetadata(PARTITION, 0L, 1, 0L, 1, 1));
   private static final List<PartitionOffset> OFFSETS =
       Arrays.asList(new PartitionOffset(0, 0L, null, null), new PartitionOffset(0, 1L, null, null));
 
