@@ -33,6 +33,7 @@ import io.confluent.kafkarest.exceptions.RestConstraintViolationExceptionMapper;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
+import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
@@ -42,12 +43,16 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
@@ -112,6 +117,7 @@ public abstract class StreamingResponse<T> {
   private final Duration gracePeriod;
   private final Instant streamStartTime;
   private final Clock clock;
+  private final Map<Integer, Integer> errorCodeCounter;
 
   volatile boolean closingStarted = false;
 
@@ -125,6 +131,7 @@ public abstract class StreamingResponse<T> {
     this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
     this.maxDuration = maxDuration;
     this.gracePeriod = gracePeriod;
+    this.errorCodeCounter = new ConcurrentHashMap<>();
   }
 
   public static <T> StreamingResponse<T> from(
@@ -159,7 +166,7 @@ public abstract class StreamingResponse<T> {
    * <p>This method will block until all requests are read in. The responses are computed and
    * written to {@code asyncResponse} asynchronously.
    */
-  public final void resume(AsyncResponse asyncResponse) {
+  public final void resume(AsyncResponse asyncResponse, HttpServletRequest httpServletRequest) {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
@@ -199,6 +206,7 @@ public abstract class StreamingResponse<T> {
     } finally {
       close();
       responseQueue.close();
+      addProduceRecordErrorCountToLog(httpServletRequest);
       if (executorService != null) {
         executorService.shutdown();
         try {
@@ -212,6 +220,23 @@ public abstract class StreamingResponse<T> {
     }
   }
 
+  private void addProduceRecordErrorCountToLog(HttpServletRequest httpServletRequest) {
+    String errorCodeCounterString = "Codes=";
+    if (!errorCodeCounter.isEmpty()) {
+      errorCodeCounterString += errorCodeCounterString();
+    } else {
+      errorCodeCounterString += "None";
+    }
+    httpServletRequest.setAttribute(
+        CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, errorCodeCounterString);
+  }
+
+  private String errorCodeCounterString() {
+    return errorCodeCounter.entrySet().stream()
+        .map(entry -> entry.getKey() + ":" + entry.getValue())
+        .collect(Collectors.joining(","));
+  }
+
   private void closeAll(AsyncResponseQueue responseQueue) {
     closingStarted = true;
     close();
@@ -223,6 +248,8 @@ public abstract class StreamingResponse<T> {
       return ResultOrError.result(result);
     } else {
       log.debug("Error processing streaming operation.", error);
+      int errorCode = EXCEPTION_MAPPER.toErrorResponse(error.getCause()).getErrorCode();
+      errorCodeCounter.merge(errorCode, 1, Integer::sum);
       return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
     }
   }

@@ -281,7 +281,6 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
-    String clusterId = getClusterId();
     String url = "/v3/clusters/" + getClusterId() + "/topics/";
     hammerAtConstantRate(url, Duration.ofMillis(1), 100);
     verifyLog(
@@ -465,8 +464,8 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
                   }
                 })
             .collect(Collectors.toList());
-
     for (Response response : responses) {
+      System.out.println(response.getHeaders());
       assertTrue(
           !response.getHeaders().containsKey(CustomLogRequestAttributes.REST_ERROR_CODE),
           "Unexpected header in headers " + response.getHeaders());
@@ -492,12 +491,15 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     } catch (InterruptedException e) {
       assertTrue(false, "Unexpectedly failed to sleep.");
     }
-    String okStatusLogEntry = "200 -";
-    String rateLimitedLogEntry = "429 " + errorCodeInLog;
+
+    String okStatusLogEntry = "200 - -";
+    String rateLimitedLogEntry = "429 " + errorCodeInLog + " -";
+
     if (isProduce) {
       // When produce-api gets rate-limited by produce-rate-limiters, then http-response-code still
       // is 200. Though status-code at record receipt would be 429.
-      rateLimitedLogEntry = "200 " + errorCodeInLog;
+      okStatusLogEntry = "200 - Codes=None";
+      rateLimitedLogEntry = "200 " + errorCodeInLog + " Codes=429:1";
     }
     int rateLimitedRequests = 0;
     int totalRequests = 0;
