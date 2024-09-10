@@ -153,7 +153,7 @@ public final class ProduceAction {
         .compose(
             request ->
                 produce(clusterId, topicName, request, controller, producerMetricsProvider.get()))
-        .resume(asyncResponse);
+        .resume(asyncResponse, httpServletRequest);
   }
 
   private CompletableFuture<ProduceResponse> produce(
