@@ -38,17 +38,23 @@ import io.confluent.kafkarest.exceptions.StacklessCompletionException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
+import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
@@ -147,13 +153,30 @@ public final class ProduceAction {
       throw Errors.invalidPayloadException("Request body is empty. Data is required.");
     }
 
+    Map<Integer, Integer> errorCodeCounter = new ConcurrentHashMap<>();
+    List<CompletableFuture<?>> futureList = new ArrayList<>();
+
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
         .compose(
             request ->
-                produce(clusterId, topicName, request, controller, producerMetricsProvider.get()))
-        .resume(asyncResponse, httpServletRequest);
+                produce(
+                    clusterId,
+                    topicName,
+                    request,
+                    controller,
+                    producerMetricsProvider.get(),
+                    errorCodeCounter,
+                    futureList))
+        .resume(asyncResponse, errorCodeCounter);
+
+    CompletableFuture<Void> allFutures =
+        CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0]));
+    allFutures.join(); // wait for all future to complete
+    String errorCodeCounterString = "Codes=" + errorCodeCounterString(errorCodeCounter);
+    httpServletRequest.setAttribute(
+        CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, errorCodeCounterString);
   }
 
   private CompletableFuture<ProduceResponse> produce(
@@ -161,7 +184,9 @@ public final class ProduceAction {
       String topicName,
       ProduceRequest request,
       ProduceController controller,
-      ProducerMetrics metrics) {
+      ProducerMetrics metrics,
+      Map<Integer, Integer> errorCodeCounter,
+      List<CompletableFuture<?>> futureList) {
     final long requestStartNs = System.nanoTime();
 
     try {
@@ -213,27 +238,38 @@ public final class ProduceAction {
             serializedValue,
             request.getTimestamp().orElse(Instant.now()));
 
-    return produceResult
-        .handleAsync(
-            (result, error) -> {
-              if (error != null) {
-                long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
-                recordErrorMetrics(metrics, latency);
-                throw new StacklessCompletionException(error);
-              }
-              return result;
-            },
-            executorService)
-        .thenApplyAsync(
-            result -> {
-              ProduceResponse response =
-                  toProduceResponse(
-                      clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
-              long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
-              recordResponseMetrics(metrics, latency);
-              return response;
-            },
-            executorService);
+    CompletableFuture<ProduceResponse> future =
+        produceResult
+            .handleAsync(
+                (result, error) -> {
+                  if (error != null) {
+                    long latency =
+                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
+                    recordErrorMetrics(metrics, latency);
+                    throw new StacklessCompletionException(error);
+                  }
+                  return result;
+                },
+                executorService)
+            .thenApplyAsync(
+                result -> {
+                  ProduceResponse response =
+                      toProduceResponse(
+                          clusterId,
+                          topicName,
+                          keyFormat,
+                          keySchema,
+                          valueFormat,
+                          valueSchema,
+                          result);
+                  long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
+                  errorCodeCounter.merge(response.getErrorCode(), 1, Integer::sum);
+                  recordResponseMetrics(metrics, latency);
+                  return response;
+                },
+                executorService);
+    futureList.add(future);
+    return future;
   }
 
   private Optional<RegisteredSchema> getSchema(
@@ -334,5 +370,11 @@ public final class ProduceAction {
     metrics.recordRequest();
     // record request size
     metrics.recordRequestSize(size);
+  }
+
+  private String errorCodeCounterString(Map<Integer, Integer> errorCodeCounter) {
+    return errorCodeCounter.entrySet().stream()
+        .map(entry -> entry.getKey() + ":" + entry.getValue())
+        .collect(Collectors.joining(","));
   }
 }

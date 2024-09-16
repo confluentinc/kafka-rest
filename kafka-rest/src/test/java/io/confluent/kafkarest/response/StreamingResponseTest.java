@@ -34,7 +34,9 @@ import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.http.HttpServletRequest;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.http.HttpStatus;
@@ -68,6 +70,7 @@ public class StreamingResponseTest {
 
     MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
     HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
+    Map<Integer, Integer> errorCodeCounter = mock(ConcurrentHashMap.class);
     expect(requests.hasNext()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
     expect(requests.hasNext()).andReturn(false);
@@ -92,7 +95,7 @@ public class StreamingResponseTest {
     mockedChunkedOutput.write(resultOrError);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.close();
-    httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, "Codes=None");
+    httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, "Codes=200:1");
     expectLastCall();
     replay(mockedChunkedOutputFactory);
     replay(mockedChunkedOutput);
@@ -108,7 +111,7 @@ public class StreamingResponseTest {
     produceResponseFuture.complete(produceResponse);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponseFuture).resume(response, httpServletRequest);
+    streamingResponse.compose(result -> produceResponseFuture).resume(response, errorCodeCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -137,6 +140,7 @@ public class StreamingResponseTest {
             .build();
 
     MappingIterator<ProduceRequest> requestsMappingIterator = mock(MappingIterator.class);
+    Map<Integer, Integer> errorCodeCounter = mock(ConcurrentHashMap.class);
     HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
     expect(requestsMappingIterator.hasNext()).andReturn(true);
     expect(requestsMappingIterator.nextValue()).andReturn(request);
@@ -161,7 +165,7 @@ public class StreamingResponseTest {
     mockedChunkedOutput.write(resultOrError);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.close();
-    httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, "Codes=None");
+    httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, "Codes=200:1");
     expectLastCall();
     replay(mockedChunkedOutput, mockedChunkedOutputFactory, httpServletRequest);
 
@@ -175,7 +179,7 @@ public class StreamingResponseTest {
     produceResponseFuture.complete(produceResponse);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponseFuture).resume(response, httpServletRequest);
+    streamingResponse.compose(result -> produceResponseFuture).resume(response, errorCodeCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -196,6 +200,7 @@ public class StreamingResponseTest {
 
     ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
+    Map<Integer, Integer> errorCodeCounter = mock(ConcurrentHashMap.class);
 
     ResultOrError resultOrError =
         ResultOrError.error(
@@ -223,7 +228,7 @@ public class StreamingResponseTest {
 
     streamingResponse
         .compose(result -> new CompletableFuture<>())
-        .resume(response, httpServletRequest);
+        .resume(response, errorCodeCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -243,6 +248,7 @@ public class StreamingResponseTest {
 
     ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
+    Map<Integer, Integer> errorCodeCounter = mock(ConcurrentHashMap.class);
 
     ResultOrError resultOrError =
         ResultOrError.error(
@@ -270,7 +276,7 @@ public class StreamingResponseTest {
 
     streamingResponse
         .compose(result -> new CompletableFuture<>())
-        .resume(response, httpServletRequest);
+        .resume(response, errorCodeCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -301,6 +307,7 @@ public class StreamingResponseTest {
 
     MappingIterator<ProduceRequest> requestsMappingIterator = mock(MappingIterator.class);
     HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
+    Map<Integer, Integer> errorCodeCounter = mock(ConcurrentHashMap.class);
 
     long timeout = 10;
     Clock clock = mock(Clock.class);
@@ -357,7 +364,7 @@ public class StreamingResponseTest {
     mockedChunkedOutput.close();
     requestsMappingIterator.close(); // expect twice - one from the thread and one from the finally
     mockedChunkedOutput.close();
-    httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, "Codes=None");
+    httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, "Codes=200:1");
     expectLastCall();
 
     replay(
@@ -388,7 +395,7 @@ public class StreamingResponseTest {
             result -> {
               return produceResponseFuture;
             })
-        .resume(response, httpServletRequest);
+        .resume(response, errorCodeCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
