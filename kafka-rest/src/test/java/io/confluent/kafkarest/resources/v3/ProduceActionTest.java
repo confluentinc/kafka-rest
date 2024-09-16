@@ -345,87 +345,35 @@ public class ProduceActionTest {
         httpServletRequest);
   }
 
-  private void expectStreamingRequestsWithExceptionsResults(
-      ChunkedOutput<ResultOrError> mockedChunkedOutput) throws Exception {
-    // first result
-    ProduceResponse produceResponse1 = getProduceResponse(0);
-    ResultOrError resultOrErrorOKProd1 = ResultOrError.result(produceResponse1);
+  private void handleExpectResultRequest(
+      ChunkedOutput<ResultOrError> mockedChunkedOutput, Integer offset) throws Exception {
+    ProduceResponse produceResponse = getProduceResponse(offset);
+    ResultOrError resultOrErrorOKProd1 = ResultOrError.result(produceResponse);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorOKProd1);
-    // second result
-    ProduceResponse produceResponse2 = getProduceResponse(1);
-    ResultOrError resultOrErrorOKProd2 = ResultOrError.result(produceResponse2);
-    expect(mockedChunkedOutput.isClosed()).andReturn(false);
-    mockedChunkedOutput.write(resultOrErrorOKProd2);
-    // third result
-    ErrorResponse err1 =
-        ErrorResponse.create(
-            429,
-            "Request rate limit exceeded: "
-                + "The rate limit of requests per second has been exceeded.");
-    ResultOrError resultOrErrorOKProd3 = ResultOrError.error(err1);
-    expect(mockedChunkedOutput.isClosed()).andReturn(false);
-    mockedChunkedOutput.write(resultOrErrorOKProd3); // failing third produce
-    // forth result
-    ErrorResponse err2 =
-        ErrorResponse.create(
-            429,
-            "Request rate limit exceeded: "
-                + "The rate limit of requests per second has been exceeded.");
-    ResultOrError resultOrErrorFailProd4 = ResultOrError.error(err2);
-    expect(mockedChunkedOutput.isClosed()).andReturn(false);
-    mockedChunkedOutput.write(resultOrErrorFailProd4); // failing forth produce
-    // fifth result
-    ProduceResponse produceResponse5 = getProduceResponse(2);
-    ResultOrError resultOrErrorOKProd5 = ResultOrError.result(produceResponse5);
-    expect(mockedChunkedOutput.isClosed()).andReturn(false);
-    mockedChunkedOutput.write(resultOrErrorOKProd5);
-    // sixth result
-    ErrorResponse err3 =
-        ErrorResponse.create(
-            429,
-            "Request rate limit exceeded: "
-                + "The rate limit of requests per second has been exceeded.");
-    ResultOrError resultOrErrorOKProd6 = ResultOrError.error(err3);
-    expect(mockedChunkedOutput.isClosed()).andReturn(false);
-    mockedChunkedOutput.write(resultOrErrorOKProd6); // failing sixth produce
-    // seventh result
-    ErrorResponse err4 =
-        ErrorResponse.create(
-            429,
-            "Request rate limit exceeded: "
-                + "The rate limit of requests per second has been exceeded.");
-    ResultOrError resultOrErrorOKProd7 = ResultOrError.error(err4);
-    expect(mockedChunkedOutput.isClosed()).andReturn(false);
-    mockedChunkedOutput.write(resultOrErrorOKProd7); // failing seventh produce
-    // eighth result
-    ErrorResponse err5 =
-        ErrorResponse.create(
-            429,
-            "Request rate limit exceeded: "
-                + "The rate limit of requests per second has been exceeded.");
-    ResultOrError resultOrErrorOKProd8 = ResultOrError.error(err5);
-    expect(mockedChunkedOutput.isClosed()).andReturn(false);
-    mockedChunkedOutput.write(resultOrErrorOKProd8); // failing eighth produce
-    // ninth result
-    ErrorResponse err6 =
-        ErrorResponse.create(
-            429,
-            "Request rate limit exceeded: "
-                + "The rate limit of requests per second has been exceeded.");
-    ResultOrError resultOrErrorOKProd9 = ResultOrError.error(err6);
-    expect(mockedChunkedOutput.isClosed()).andReturn(false);
-    mockedChunkedOutput.write(resultOrErrorOKProd9); // failing ninth produce
-    // tenth result
-    ErrorResponse err7 =
-        ErrorResponse.create(
-            429,
-            "Request rate limit exceeded: "
-                + "The rate limit of requests per second has been exceeded.");
-    ResultOrError resultOrErrorOKProd10 = ResultOrError.error(err7);
-    expect(mockedChunkedOutput.isClosed()).andReturn(false);
-    mockedChunkedOutput.write(resultOrErrorOKProd10); // failing tenth produce
+  }
 
+  private void handleExpectErrorRequest(ChunkedOutput<ResultOrError> mockedChunkedOutput)
+      throws Exception {
+    ErrorResponse err =
+        ErrorResponse.create(
+            429,
+            "Request rate limit exceeded: "
+                + "The rate limit of requests per second has been exceeded.");
+    ResultOrError resultOrErrorOKProd3 = ResultOrError.error(err);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(resultOrErrorOKProd3);
+  }
+
+  private void expectStreamingRequestsWithExceptionsResults(
+      ChunkedOutput<ResultOrError> mockedChunkedOutput) throws Exception {
+    for (int i = 0; i < 10; i++) {
+      if (i % 2 == 0) {
+        handleExpectResultRequest(mockedChunkedOutput, i / 2);
+      } else {
+        handleExpectErrorRequest(mockedChunkedOutput);
+      }
+    }
     mockedChunkedOutput.close();
   }
 
@@ -456,6 +404,9 @@ public class ProduceActionTest {
     countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
+    EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
+    httpServletRequest.setAttribute(REST_ERROR_CODE, PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
+    expectLastCall();
     // third produce
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
@@ -463,9 +414,6 @@ public class ProduceActionTest {
     countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
-    EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
-    httpServletRequest.setAttribute(REST_ERROR_CODE, PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
-    expectLastCall();
     // forth produce
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
@@ -500,9 +448,6 @@ public class ProduceActionTest {
     countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
-    EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
-    httpServletRequest.setAttribute(REST_ERROR_CODE, PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
-    expectLastCall();
     // eighth produce
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
@@ -519,10 +464,7 @@ public class ProduceActionTest {
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
-    EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
-    httpServletRequest.setAttribute(
-        REST_ERROR_CODE, PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
-    expectLastCall();
+    rateLimiterForBytes.rateLimit(anyInt());
     // tenth produce
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
@@ -534,7 +476,7 @@ public class ProduceActionTest {
         REST_ERROR_CODE, PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
     expectLastCall();
 
-    httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, "Codes=200:3,429:7");
+    httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, "Codes=200:5,429:5");
     expectLastCall();
   }
 
