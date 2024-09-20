@@ -15,6 +15,9 @@
 
 package io.confluent.kafkarest.requestlog;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.RequestLog;
@@ -76,7 +79,15 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
       Object attrVal = request.getAttribute(attr);
       if (attrVal != null) {
         request.removeAttribute(attr);
-        response.setHeader(attr, attrVal.toString());
+        if (Objects.equals(
+            attr, CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS)) {
+          response.setHeader(
+              attr,
+              CustomLogRequestAttributes.PRODUCE_ERROR_CODE_LOG_PREFIX
+                  + errorCodeCounterString(((Map<Integer, Integer>) attrVal)));
+        } else {
+          response.setHeader(attr, attrVal.toString());
+        }
       }
     }
 
@@ -93,5 +104,11 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
         response.getHttpFields().remove(attr);
       }
     }
+  }
+
+  private String errorCodeCounterString(Map<Integer, Integer> errorCodeCounter) {
+    return errorCodeCounter.entrySet().stream()
+        .map(entry -> entry.getKey() + ":" + entry.getValue())
+        .collect(Collectors.joining(","));
   }
 }

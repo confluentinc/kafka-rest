@@ -174,9 +174,9 @@ public final class ProduceAction {
     CompletableFuture<Void> allFutures =
         CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0]));
     allFutures.join(); // wait for all future to complete
-    String errorCodeCounterString = "Codes=" + errorCodeCounterString(errorCodeCounter);
+    //    String errorCodeCounterString = "Codes=" + errorCodeCounterString(errorCodeCounter);
     httpServletRequest.setAttribute(
-        CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, errorCodeCounterString);
+        CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, errorCodeCounter);
   }
 
   private CompletableFuture<ProduceResponse> produce(
