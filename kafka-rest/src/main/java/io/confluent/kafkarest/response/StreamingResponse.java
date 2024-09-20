@@ -231,7 +231,6 @@ public abstract class StreamingResponse<T> {
 
   private ResultOrError handleNext(T result, @Nullable Throwable error) {
     if (error == null) {
-      //      errorCodeCounter.merge(200, 1, Integer::sum);
       return ResultOrError.result(result);
     } else {
       log.debug("Error processing streaming operation.", error);
