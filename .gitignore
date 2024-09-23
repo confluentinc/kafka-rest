@@ -9,3 +9,5 @@ docs/_build/
 .idea/
 *.ipr
 *.iws
+
+my.properties

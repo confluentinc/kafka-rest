@@ -33,6 +33,7 @@ import io.confluent.kafkarest.exceptions.RestConstraintViolationExceptionMapper;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
+import io.confluent.kafkarest.requestlog.CustomLog.ProduceCounter;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
@@ -42,13 +43,11 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.AsyncResponse;
@@ -114,7 +113,7 @@ public abstract class StreamingResponse<T> {
   private final Duration gracePeriod;
   private final Instant streamStartTime;
   private final Clock clock;
-  private Map<Integer, Integer> errorCodeCounter;
+  private ProduceCounter counter;
 
   volatile boolean closingStarted = false;
 
@@ -162,12 +161,12 @@ public abstract class StreamingResponse<T> {
    * <p>This method will block until all requests are read in. The responses are computed and
    * written to {@code asyncResponse} asynchronously.
    */
-  public final void resume(AsyncResponse asyncResponse, Map<Integer, Integer> errorCodeCounter) {
+  public final void resume(AsyncResponse asyncResponse, ProduceCounter counter) {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
     ScheduledExecutorService executorService = null;
-    this.errorCodeCounter = errorCodeCounter;
+    this.counter = counter;
 
     try {
       // hasNext() needs to be last here. It hangs if there is nothing on the mappingIterator
@@ -217,12 +216,6 @@ public abstract class StreamingResponse<T> {
     }
   }
 
-  private String errorCodeCounterString() {
-    return errorCodeCounter.entrySet().stream()
-        .map(entry -> entry.getKey() + ":" + entry.getValue())
-        .collect(Collectors.joining(","));
-  }
-
   private void closeAll(AsyncResponseQueue responseQueue) {
     closingStarted = true;
     close();
@@ -235,7 +228,7 @@ public abstract class StreamingResponse<T> {
     } else {
       log.debug("Error processing streaming operation.", error);
       int errorCode = EXCEPTION_MAPPER.toErrorResponse(error.getCause()).getErrorCode();
-      errorCodeCounter.merge(errorCode, 1, Integer::sum);
+      counter.getProduceCounter().merge(errorCode, 1, Integer::sum);
       return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
     }
   }
