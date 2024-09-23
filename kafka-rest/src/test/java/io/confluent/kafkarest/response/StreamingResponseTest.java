@@ -27,14 +27,13 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
+import io.confluent.kafkarest.requestlog.CustomLog.ProduceCounter;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.http.HttpStatus;
 import org.glassfish.jersey.server.ChunkedOutput;
@@ -66,7 +65,7 @@ public class StreamingResponseTest {
             .build();
 
     MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
-    Map<Integer, Integer> errorCodeCounter = mock(ConcurrentHashMap.class);
+    ProduceCounter errorCodeCounter = mock(ProduceCounter.class);
     expect(requests.hasNext()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
     expect(requests.hasNext()).andReturn(false);
@@ -133,7 +132,7 @@ public class StreamingResponseTest {
             .build();
 
     MappingIterator<ProduceRequest> requestsMappingIterator = mock(MappingIterator.class);
-    Map<Integer, Integer> errorCodeCounter = mock(ConcurrentHashMap.class);
+    ProduceCounter errorCodeCounter = mock(ProduceCounter.class);
     expect(requestsMappingIterator.hasNext()).andReturn(true);
     expect(requestsMappingIterator.nextValue()).andReturn(request);
     expect(requestsMappingIterator.hasNext()).andReturn(false);
@@ -189,7 +188,7 @@ public class StreamingResponseTest {
 
     ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
-    Map<Integer, Integer> errorCodeCounter = mock(ConcurrentHashMap.class);
+    ProduceCounter errorCodeCounter = mock(ProduceCounter.class);
 
     ResultOrError resultOrError =
         ResultOrError.error(
@@ -232,7 +231,7 @@ public class StreamingResponseTest {
 
     ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
-    Map<Integer, Integer> errorCodeCounter = mock(ConcurrentHashMap.class);
+    ProduceCounter errorCodeCounter = mock(ProduceCounter.class);
 
     ResultOrError resultOrError =
         ResultOrError.error(
@@ -286,7 +285,7 @@ public class StreamingResponseTest {
             .build();
 
     MappingIterator<ProduceRequest> requestsMappingIterator = mock(MappingIterator.class);
-    Map<Integer, Integer> errorCodeCounter = mock(ConcurrentHashMap.class);
+    ProduceCounter errorCodeCounter = mock(ProduceCounter.class);
 
     long timeout = 10;
     Clock clock = mock(Clock.class);
