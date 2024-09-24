@@ -33,7 +33,7 @@ import io.confluent.kafkarest.exceptions.RestConstraintViolationExceptionMapper;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
-import io.confluent.kafkarest.requestlog.CustomLog.ProduceCounter;
+import io.confluent.kafkarest.requestlog.CustomLog.ProduceRecordErrorCounter;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
@@ -113,7 +113,7 @@ public abstract class StreamingResponse<T> {
   private final Duration gracePeriod;
   private final Instant streamStartTime;
   private final Clock clock;
-  private ProduceCounter counter;
+  private ProduceRecordErrorCounter produceRecordErrorCounter;
 
   volatile boolean closingStarted = false;
 
@@ -161,12 +161,12 @@ public abstract class StreamingResponse<T> {
    * <p>This method will block until all requests are read in. The responses are computed and
    * written to {@code asyncResponse} asynchronously.
    */
-  public final void resume(AsyncResponse asyncResponse, ProduceCounter counter) {
+  public final void resume(AsyncResponse asyncResponse, ProduceRecordErrorCounter produceRecordErrorCounter) {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
     ScheduledExecutorService executorService = null;
-    this.counter = counter;
+    this.produceRecordErrorCounter = produceRecordErrorCounter;
 
     try {
       // hasNext() needs to be last here. It hangs if there is nothing on the mappingIterator
@@ -202,7 +202,6 @@ public abstract class StreamingResponse<T> {
     } finally {
       close();
       responseQueue.close();
-      //      addProduceRecordErrorCountToLog(httpServletRequest);
       if (executorService != null) {
         executorService.shutdown();
         try {
@@ -228,7 +227,7 @@ public abstract class StreamingResponse<T> {
     } else {
       log.debug("Error processing streaming operation.", error);
       int errorCode = EXCEPTION_MAPPER.toErrorResponse(error.getCause()).getErrorCode();
-      counter.getProduceCounter().merge(errorCode, 1, Integer::sum);
+      produceRecordErrorCounter.getProduceCounter().merge(errorCode, 1, Integer::sum);
       return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
     }
   }

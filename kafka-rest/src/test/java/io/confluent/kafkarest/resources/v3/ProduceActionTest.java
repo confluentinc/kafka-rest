@@ -52,7 +52,7 @@ import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
-import io.confluent.kafkarest.requestlog.CustomLog.ProduceCounter;
+import io.confluent.kafkarest.requestlog.CustomLog.ProduceRecordErrorCounter;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.JsonStream;
@@ -132,7 +132,7 @@ public class ProduceActionTest {
     rateLimiterForBytes.rateLimit(anyInt());
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
-    ProduceCounter counter = new ProduceCounter();
+    ProduceRecordErrorCounter counter = new ProduceRecordErrorCounter();
     counter.getProduceCounter().put(422, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter);
     expectLastCall();
@@ -250,7 +250,7 @@ public class ProduceActionTest {
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail);
     mockedChunkedOutput.close();
-    ProduceCounter counter = new ProduceCounter();
+    ProduceRecordErrorCounter counter = new ProduceRecordErrorCounter();
     counter.getProduceCounter().put(40402, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter);
     expectLastCall();
@@ -481,7 +481,7 @@ public class ProduceActionTest {
         REST_ERROR_CODE, PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
     expectLastCall();
 
-    ProduceCounter counter = new ProduceCounter();
+    ProduceRecordErrorCounter counter = new ProduceRecordErrorCounter();
     counter.getProduceCounter().put(200, 5);
     counter.getProduceCounter().put(429, 5);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter);
@@ -541,7 +541,7 @@ public class ProduceActionTest {
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
 
-    ProduceCounter counter = new ProduceCounter();
+    ProduceRecordErrorCounter counter = new ProduceRecordErrorCounter();
     counter.getProduceCounter().put(200, 4);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter);
     expectLastCall();
@@ -640,7 +640,7 @@ public class ProduceActionTest {
     rateLimiterForBytes.rateLimit(anyInt());
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
-    ProduceCounter counter1 = new ProduceCounter();
+    ProduceRecordErrorCounter counter1 = new ProduceRecordErrorCounter();
     counter1.getProduceCounter().put(200, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter1);
     expectLastCall();
@@ -654,7 +654,7 @@ public class ProduceActionTest {
     EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
     httpServletRequest.setAttribute(REST_ERROR_CODE, PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
     expectLastCall();
-    ProduceCounter counter2 = new ProduceCounter();
+    ProduceRecordErrorCounter counter2 = new ProduceRecordErrorCounter();
     counter2.getProduceCounter().put(429, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter2);
     expectLastCall();
@@ -759,7 +759,7 @@ public class ProduceActionTest {
     rateLimiterForBytes.rateLimit(anyInt());
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
-    ProduceCounter counter1 = new ProduceCounter();
+    ProduceRecordErrorCounter counter1 = new ProduceRecordErrorCounter();
     counter1.getProduceCounter().put(200, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter1);
     expectLastCall();
@@ -773,7 +773,7 @@ public class ProduceActionTest {
     httpServletRequest.setAttribute(
         REST_ERROR_CODE, PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
     expectLastCall();
-    ProduceCounter counter2 = new ProduceCounter();
+    ProduceRecordErrorCounter counter2 = new ProduceRecordErrorCounter();
     counter2.getProduceCounter().put(429, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter2);
 
@@ -898,7 +898,7 @@ public class ProduceActionTest {
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorOK1); // successful first produce
     mockedChunkedOutput.close();
-    ProduceCounter counter1 = new ProduceCounter();
+    ProduceRecordErrorCounter counter1 = new ProduceRecordErrorCounter();
     counter1.getProduceCounter().put(200, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter1);
     expectLastCall();
@@ -908,7 +908,7 @@ public class ProduceActionTest {
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorOK2); // successful second produce
     mockedChunkedOutput.close();
-    ProduceCounter counter2 = new ProduceCounter();
+    ProduceRecordErrorCounter counter2 = new ProduceRecordErrorCounter();
     counter2.getProduceCounter().put(200, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter2);
     expectLastCall();

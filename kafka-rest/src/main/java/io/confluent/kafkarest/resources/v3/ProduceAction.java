@@ -38,7 +38,7 @@ import io.confluent.kafkarest.exceptions.StacklessCompletionException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
-import io.confluent.kafkarest.requestlog.CustomLog.ProduceCounter;
+import io.confluent.kafkarest.requestlog.CustomLog.ProduceRecordErrorCounter;
 import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.JsonStream;
@@ -149,7 +149,7 @@ public final class ProduceAction {
       throw Errors.invalidPayloadException("Request body is empty. Data is required.");
     }
 
-    ProduceCounter produceCounter = new ProduceCounter();
+    ProduceRecordErrorCounter produceRecordErrorCounter = new ProduceRecordErrorCounter();
 
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
@@ -162,11 +162,11 @@ public final class ProduceAction {
                     request,
                     controller,
                     producerMetricsProvider.get(),
-                    produceCounter))
-        .resume(asyncResponse, produceCounter);
+                    produceRecordErrorCounter))
+        .resume(asyncResponse, produceRecordErrorCounter);
 
     httpServletRequest.setAttribute(
-        CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceCounter);
+        CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter);
   }
 
   private CompletableFuture<ProduceResponse> produce(
@@ -175,7 +175,7 @@ public final class ProduceAction {
       ProduceRequest request,
       ProduceController controller,
       ProducerMetrics metrics,
-      ProduceCounter produceCounter) {
+      ProduceRecordErrorCounter produceRecordErrorCounter) {
     final long requestStartNs = System.nanoTime();
 
     try {
@@ -245,7 +245,7 @@ public final class ProduceAction {
                       clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
               long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
               recordResponseMetrics(metrics, latency);
-              produceCounter.getProduceCounter().merge(response.getErrorCode(), 1, Integer::sum);
+              produceRecordErrorCounter.getProduceCounter().merge(response.getErrorCode(), 1, Integer::sum);
               return response;
             },
             executorService);
