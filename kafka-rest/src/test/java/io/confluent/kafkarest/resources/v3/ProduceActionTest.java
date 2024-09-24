@@ -133,7 +133,7 @@ public class ProduceActionTest {
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
     ProduceRecordErrorCounter counter = new ProduceRecordErrorCounter();
-    counter.getProduceCounter().put(422, 1);
+    counter.getProduceErrorCodeCountMap().put(422, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter);
     expectLastCall();
 
@@ -251,7 +251,7 @@ public class ProduceActionTest {
     mockedChunkedOutput.write(resultOrErrorFail);
     mockedChunkedOutput.close();
     ProduceRecordErrorCounter counter = new ProduceRecordErrorCounter();
-    counter.getProduceCounter().put(40402, 1);
+    counter.getProduceErrorCodeCountMap().put(40402, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter);
     expectLastCall();
 
@@ -482,8 +482,8 @@ public class ProduceActionTest {
     expectLastCall();
 
     ProduceRecordErrorCounter counter = new ProduceRecordErrorCounter();
-    counter.getProduceCounter().put(200, 5);
-    counter.getProduceCounter().put(429, 5);
+    counter.getProduceErrorCodeCountMap().put(200, 5);
+    counter.getProduceErrorCodeCountMap().put(429, 5);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter);
     expectLastCall();
   }
@@ -542,7 +542,7 @@ public class ProduceActionTest {
     countLimiterGlobal.rateLimit(anyInt());
 
     ProduceRecordErrorCounter counter = new ProduceRecordErrorCounter();
-    counter.getProduceCounter().put(200, 4);
+    counter.getProduceErrorCodeCountMap().put(200, 4);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter);
     expectLastCall();
 
@@ -641,7 +641,7 @@ public class ProduceActionTest {
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
     ProduceRecordErrorCounter counter1 = new ProduceRecordErrorCounter();
-    counter1.getProduceCounter().put(200, 1);
+    counter1.getProduceErrorCodeCountMap().put(200, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter1);
     expectLastCall();
 
@@ -655,7 +655,7 @@ public class ProduceActionTest {
     httpServletRequest.setAttribute(REST_ERROR_CODE, PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
     expectLastCall();
     ProduceRecordErrorCounter counter2 = new ProduceRecordErrorCounter();
-    counter2.getProduceCounter().put(429, 1);
+    counter2.getProduceErrorCodeCountMap().put(429, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter2);
     expectLastCall();
 
@@ -760,7 +760,7 @@ public class ProduceActionTest {
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
     ProduceRecordErrorCounter counter1 = new ProduceRecordErrorCounter();
-    counter1.getProduceCounter().put(200, 1);
+    counter1.getProduceErrorCodeCountMap().put(200, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter1);
     expectLastCall();
 
@@ -774,7 +774,7 @@ public class ProduceActionTest {
         REST_ERROR_CODE, PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
     expectLastCall();
     ProduceRecordErrorCounter counter2 = new ProduceRecordErrorCounter();
-    counter2.getProduceCounter().put(429, 1);
+    counter2.getProduceErrorCodeCountMap().put(429, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter2);
 
     replay(
@@ -899,7 +899,7 @@ public class ProduceActionTest {
     mockedChunkedOutput.write(resultOrErrorOK1); // successful first produce
     mockedChunkedOutput.close();
     ProduceRecordErrorCounter counter1 = new ProduceRecordErrorCounter();
-    counter1.getProduceCounter().put(200, 1);
+    counter1.getProduceErrorCodeCountMap().put(200, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter1);
     expectLastCall();
 
@@ -909,7 +909,7 @@ public class ProduceActionTest {
     mockedChunkedOutput.write(resultOrErrorOK2); // successful second produce
     mockedChunkedOutput.close();
     ProduceRecordErrorCounter counter2 = new ProduceRecordErrorCounter();
-    counter2.getProduceCounter().put(200, 1);
+    counter2.getProduceErrorCodeCountMap().put(200, 1);
     httpServletRequest.setAttribute(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, counter2);
     expectLastCall();
 

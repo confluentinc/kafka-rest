@@ -68,16 +68,16 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
   }
 
   public static class ProduceRecordErrorCounter {
-    SortedMap<Integer, Integer> produceCounter = new TreeMap<>();
+    SortedMap<Integer, Integer> produceErrorCodeCountMap = new TreeMap<>();
 
-    public SortedMap<Integer, Integer> getProduceCounter() {
-      return produceCounter;
+    public SortedMap<Integer, Integer> getProduceErrorCodeCountMap() {
+      return produceErrorCodeCountMap;
     }
 
     @Override
     public String toString() {
       return CustomLogRequestAttributes.PRODUCE_ERROR_CODE_LOG_PREFIX
-          + produceCounter.entrySet().stream()
+          + produceErrorCodeCountMap.entrySet().stream()
               .map(entry -> entry.getKey() + ":" + entry.getValue())
               .collect(Collectors.joining(","));
     }
@@ -91,12 +91,12 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
         return false;
       }
       ProduceRecordErrorCounter that = (ProduceRecordErrorCounter) other;
-      return Objects.equals(produceCounter, that.produceCounter);
+      return Objects.equals(produceErrorCodeCountMap, that.produceErrorCodeCountMap);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(produceCounter);
+      return Objects.hash(produceErrorCodeCountMap);
     }
   }
 
