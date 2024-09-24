@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.requestlog;
 
+import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -79,6 +80,18 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
           + produceCounter.entrySet().stream()
               .map(entry -> entry.getKey() + ":" + entry.getValue())
               .collect(Collectors.joining(","));
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      }
+      if (other == null || getClass() != other.getClass()) {
+        return false;
+      }
+      ProduceCounter that = (ProduceCounter) other;
+      return Objects.equals(produceCounter, that.produceCounter);
     }
   }
 
