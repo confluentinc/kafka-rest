@@ -166,7 +166,8 @@ public final class ProduceAction {
         .resume(asyncResponse, produceRecordErrorCounter);
 
     httpServletRequest.setAttribute(
-        CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter);
+        CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS,
+        produceRecordErrorCounter);
   }
 
   private CompletableFuture<ProduceResponse> produce(
@@ -245,7 +246,9 @@ public final class ProduceAction {
                       clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
               long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
               recordResponseMetrics(metrics, latency);
-              produceRecordErrorCounter.getProduceCounter().merge(response.getErrorCode(), 1, Integer::sum);
+              produceRecordErrorCounter
+                  .getProduceCounter()
+                  .merge(response.getErrorCode(), 1, Integer::sum);
               return response;
             },
             executorService);

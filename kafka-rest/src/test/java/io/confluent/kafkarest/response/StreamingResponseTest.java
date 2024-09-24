@@ -103,7 +103,9 @@ public class StreamingResponseTest {
     produceResponseFuture.complete(produceResponse);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponseFuture).resume(response, produceRecordErrorCounter);
+    streamingResponse
+        .compose(result -> produceResponseFuture)
+        .resume(response, produceRecordErrorCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -168,7 +170,9 @@ public class StreamingResponseTest {
     produceResponseFuture.complete(produceResponse);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponseFuture).resume(response, produceRecordErrorCounter);
+    streamingResponse
+        .compose(result -> produceResponseFuture)
+        .resume(response, produceRecordErrorCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
