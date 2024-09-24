@@ -67,7 +67,7 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
     }
   }
 
-  public static class ProduceCounter {
+  public static class ProduceRecordErrorCounter {
     SortedMap<Integer, Integer> produceCounter = new TreeMap<>();
 
     public SortedMap<Integer, Integer> getProduceCounter() {
@@ -90,8 +90,13 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
       if (other == null || getClass() != other.getClass()) {
         return false;
       }
-      ProduceCounter that = (ProduceCounter) other;
+      ProduceRecordErrorCounter that = (ProduceRecordErrorCounter) other;
       return Objects.equals(produceCounter, that.produceCounter);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(produceCounter);
     }
   }
 
