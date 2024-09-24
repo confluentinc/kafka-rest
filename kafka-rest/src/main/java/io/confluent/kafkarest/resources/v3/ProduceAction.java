@@ -45,8 +45,6 @@ import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -152,7 +150,6 @@ public final class ProduceAction {
     }
 
     ProduceCounter produceCounter = new ProduceCounter();
-    List<CompletableFuture<?>> futureList = new ArrayList<>();
 
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
@@ -165,13 +162,9 @@ public final class ProduceAction {
                     request,
                     controller,
                     producerMetricsProvider.get(),
-                    produceCounter,
-                    futureList))
+                    produceCounter))
         .resume(asyncResponse, produceCounter);
 
-    CompletableFuture<Void> allFutures =
-        CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0]));
-    allFutures.join(); // wait for all future to complete
     httpServletRequest.setAttribute(
         CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceCounter);
   }
@@ -182,8 +175,7 @@ public final class ProduceAction {
       ProduceRequest request,
       ProduceController controller,
       ProducerMetrics metrics,
-      ProduceCounter counter,
-      List<CompletableFuture<?>> futureList) {
+      ProduceCounter produceCounter) {
     final long requestStartNs = System.nanoTime();
 
     try {
@@ -235,38 +227,28 @@ public final class ProduceAction {
             serializedValue,
             request.getTimestamp().orElse(Instant.now()));
 
-    CompletableFuture<ProduceResponse> future =
-        produceResult
-            .handleAsync(
-                (result, error) -> {
-                  if (error != null) {
-                    long latency =
-                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
-                    recordErrorMetrics(metrics, latency);
-                    throw new StacklessCompletionException(error);
-                  }
-                  return result;
-                },
-                executorService)
-            .thenApplyAsync(
-                result -> {
-                  ProduceResponse response =
-                      toProduceResponse(
-                          clusterId,
-                          topicName,
-                          keyFormat,
-                          keySchema,
-                          valueFormat,
-                          valueSchema,
-                          result);
-                  long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
-                  counter.getProduceCounter().merge(response.getErrorCode(), 1, Integer::sum);
-                  recordResponseMetrics(metrics, latency);
-                  return response;
-                },
-                executorService);
-    //    futureList.add(future);
-    return future;
+    return produceResult
+        .handleAsync(
+            (result, error) -> {
+              if (error != null) {
+                long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
+                recordErrorMetrics(metrics, latency);
+                throw new StacklessCompletionException(error);
+              }
+              return result;
+            },
+            executorService)
+        .thenApplyAsync(
+            result -> {
+              ProduceResponse response =
+                  toProduceResponse(
+                      clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
+              long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
+              recordResponseMetrics(metrics, latency);
+              produceCounter.getProduceCounter().merge(response.getErrorCode(), 1, Integer::sum);
+              return response;
+            },
+            executorService);
   }
 
   private Optional<RegisteredSchema> getSchema(
