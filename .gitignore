@@ -1,0 +1,11 @@
+
+# Build products
+target/
+docs/_build/
+.DS_Store
+
+# IntelliJ data
+*.iml
+.idea/
+*.ipr
+*.iws
