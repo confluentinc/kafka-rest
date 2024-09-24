@@ -96,7 +96,7 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
 
     @Override
     public int hashCode() {
-        return Objects.hash(produceCounter);
+      return Objects.hash(produceCounter);
     }
   }
 

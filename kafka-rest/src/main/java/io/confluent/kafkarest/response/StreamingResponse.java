@@ -161,7 +161,8 @@ public abstract class StreamingResponse<T> {
    * <p>This method will block until all requests are read in. The responses are computed and
    * written to {@code asyncResponse} asynchronously.
    */
-  public final void resume(AsyncResponse asyncResponse, ProduceRecordErrorCounter produceRecordErrorCounter) {
+  public final void resume(
+      AsyncResponse asyncResponse, ProduceRecordErrorCounter produceRecordErrorCounter) {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
