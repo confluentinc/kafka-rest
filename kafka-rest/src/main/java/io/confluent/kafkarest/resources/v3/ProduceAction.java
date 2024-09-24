@@ -247,7 +247,7 @@ public final class ProduceAction {
               long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
               recordResponseMetrics(metrics, latency);
               produceRecordErrorCounter
-                  .getProduceCounter()
+                  .getProduceErrorCodeCountMap()
                   .merge(response.getErrorCode(), 1, Integer::sum);
               return response;
             },

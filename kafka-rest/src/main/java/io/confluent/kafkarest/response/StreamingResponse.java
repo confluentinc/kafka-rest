@@ -228,7 +228,7 @@ public abstract class StreamingResponse<T> {
     } else {
       log.debug("Error processing streaming operation.", error);
       int errorCode = EXCEPTION_MAPPER.toErrorResponse(error.getCause()).getErrorCode();
-      produceRecordErrorCounter.getProduceCounter().merge(errorCode, 1, Integer::sum);
+      produceRecordErrorCounter.getProduceErrorCodeCountMap().merge(errorCode, 1, Integer::sum);
       return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
     }
   }
