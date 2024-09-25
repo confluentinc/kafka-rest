@@ -156,13 +156,7 @@ public final class ProduceAction {
         .from(requests)
         .compose(
             request ->
-                produce(
-                    clusterId,
-                    topicName,
-                    request,
-                    controller,
-                    producerMetricsProvider.get(),
-                    produceRecordErrorCounter))
+                produce(clusterId, topicName, request, controller, producerMetricsProvider.get()))
         .resume(asyncResponse, produceRecordErrorCounter);
 
     httpServletRequest.setAttribute(
@@ -175,8 +169,7 @@ public final class ProduceAction {
       String topicName,
       ProduceRequest request,
       ProduceController controller,
-      ProducerMetrics metrics,
-      ProduceRecordErrorCounter produceRecordErrorCounter) {
+      ProducerMetrics metrics) {
     final long requestStartNs = System.nanoTime();
 
     try {
