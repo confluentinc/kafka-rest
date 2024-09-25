@@ -15,8 +15,8 @@
 
 package io.confluent.kafkarest.requestlog;
 
+import java.util.Map;
 import java.util.Objects;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import org.eclipse.jetty.server.CustomRequestLog;
@@ -43,6 +43,8 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
 
   private final String[] requestAttributesToLog;
 
+  public static final String PRODUCE_ERROR_CODE_LOG_PREFIX = "Codes=";
+
   public CustomLog(RequestLog.Writer writer, String formatString, String[] requestAttributesToLog) {
     for (String attr : requestAttributesToLog) {
       // Add format-specifier to log request-attributes as response-headers in Jetty's
@@ -67,16 +69,21 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
     }
   }
 
+  /**
+   * This class aggregates error-codes for produce-records within a single (http)produce-request.
+   * This implements toString() method which is used by CustomLog to get a message to log for the
+   * aggregated error counts.
+   */
   public static class ProduceRecordErrorCounter {
-    SortedMap<Integer, Integer> produceErrorCodeCountMap = new TreeMap<>();
+    private final Map<Integer, Integer> produceErrorCodeCountMap = new TreeMap<>();
 
-    public SortedMap<Integer, Integer> getProduceErrorCodeCountMap() {
-      return produceErrorCodeCountMap;
+    public synchronized void incrementErrorCount(int httpErrorCode) {
+      produceErrorCodeCountMap.merge(httpErrorCode, 1, Integer::sum);
     }
 
     @Override
     public String toString() {
-      return CustomLogRequestAttributes.PRODUCE_ERROR_CODE_LOG_PREFIX
+      return PRODUCE_ERROR_CODE_LOG_PREFIX
           + produceErrorCodeCountMap.entrySet().stream()
               .map(entry -> entry.getKey() + ":" + entry.getValue())
               .collect(Collectors.joining(","));
