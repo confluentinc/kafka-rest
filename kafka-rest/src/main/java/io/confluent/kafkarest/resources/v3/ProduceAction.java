@@ -246,9 +246,6 @@ public final class ProduceAction {
                       clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
               long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
               recordResponseMetrics(metrics, latency);
-              produceRecordErrorCounter
-                  .getProduceErrorCodeCountMap()
-                  .merge(response.getErrorCode(), 1, Integer::sum);
               return response;
             },
             executorService);

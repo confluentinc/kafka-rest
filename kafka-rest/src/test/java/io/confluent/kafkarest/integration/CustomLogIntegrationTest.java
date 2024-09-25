@@ -29,6 +29,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes;
+import io.confluent.kafkarest.requestlog.CustomLog;
 import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import java.time.Duration;
 import java.util.List;
@@ -576,22 +577,13 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     if (isProduce) {
       // When produce-api gets rate-limited by produce-rate-limiters, then http-response-code still
       // is 200. Though status-code at record receipt would be 429.
-      okStatusLogEntry =
-          "200 - " + CustomLogRequestAttributes.PRODUCE_ERROR_CODE_LOG_PREFIX + "200:1";
+      okStatusLogEntry = "200 - " + CustomLog.PRODUCE_ERROR_CODE_LOG_PREFIX + "200:1";
       rateLimitedLogEntry =
-          "200 "
-              + errorCodeInLog
-              + " "
-              + CustomLogRequestAttributes.PRODUCE_ERROR_CODE_LOG_PREFIX
-              + "429:1";
+          "200 " + errorCodeInLog + " " + CustomLog.PRODUCE_ERROR_CODE_LOG_PREFIX + "429:1";
     }
     if (isProduceRequestWithMultipleRecords) {
       rateLimitedLogEntry =
-          "200 "
-              + errorCodeInLog
-              + " "
-              + CustomLogRequestAttributes.PRODUCE_ERROR_CODE_LOG_PREFIX
-              + "200:5,429:5";
+          "200 " + errorCodeInLog + " " + CustomLog.PRODUCE_ERROR_CODE_LOG_PREFIX + "200:5,429:5";
     }
     int rateLimitedRequests = 0;
     int totalRequests = 0;

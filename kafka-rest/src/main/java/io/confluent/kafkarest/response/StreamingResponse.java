@@ -74,6 +74,7 @@ public abstract class StreamingResponse<T> {
 
   private static final Logger log = LoggerFactory.getLogger(StreamingResponse.class);
   private static final int ONE_SECOND_MS = 1000;
+  private static final int HTTP_SUCCESS_CODE = 200;
 
   private static final CompositeErrorMapper EXCEPTION_MAPPER =
       new CompositeErrorMapper.Builder()
@@ -113,7 +114,6 @@ public abstract class StreamingResponse<T> {
   private final Duration gracePeriod;
   private final Instant streamStartTime;
   private final Clock clock;
-  private ProduceRecordErrorCounter produceRecordErrorCounter;
 
   volatile boolean closingStarted = false;
 
@@ -167,7 +167,6 @@ public abstract class StreamingResponse<T> {
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
     ScheduledExecutorService executorService = null;
-    this.produceRecordErrorCounter = produceRecordErrorCounter;
 
     try {
       // hasNext() needs to be last here. It hangs if there is nothing on the mappingIterator
@@ -190,7 +189,11 @@ public abstract class StreamingResponse<T> {
                               "Streaming connection open for longer than allowed",
                               "Connection will be closed.")))));
         } else if (!closingStarted) {
-          responseQueue.push(next().handle(this::handleNext));
+          responseQueue.push(
+              next()
+                  .handle(
+                      (result, exception) ->
+                          handleNext(result, exception, produceRecordErrorCounter)));
         } else {
           break;
         }
@@ -222,13 +225,15 @@ public abstract class StreamingResponse<T> {
     responseQueue.close();
   }
 
-  private ResultOrError handleNext(T result, @Nullable Throwable error) {
+  private ResultOrError handleNext(
+      T result, @Nullable Throwable error, ProduceRecordErrorCounter produceRecordErrorCounter) {
     if (error == null) {
+      produceRecordErrorCounter.incrementErrorCount(HTTP_SUCCESS_CODE);
       return ResultOrError.result(result);
     } else {
       log.debug("Error processing streaming operation.", error);
       int errorCode = EXCEPTION_MAPPER.toErrorResponse(error.getCause()).getErrorCode();
-      produceRecordErrorCounter.getProduceErrorCodeCountMap().merge(errorCode, 1, Integer::sum);
+      produceRecordErrorCounter.incrementErrorCount(errorCode);
       return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
     }
   }
