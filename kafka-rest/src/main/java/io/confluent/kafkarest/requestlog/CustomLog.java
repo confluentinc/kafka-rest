@@ -15,6 +15,10 @@
 
 package io.confluent.kafkarest.requestlog;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.RequestLog;
@@ -39,6 +43,8 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
 
   private final String[] requestAttributesToLog;
 
+  public static final String PRODUCE_ERROR_CODE_LOG_PREFIX = "Codes=";
+
   public CustomLog(RequestLog.Writer writer, String formatString, String[] requestAttributesToLog) {
     for (String attr : requestAttributesToLog) {
       // Add format-specifier to log request-attributes as response-headers in Jetty's
@@ -60,6 +66,44 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
   protected void doStop() throws Exception {
     if (this.delegateJettyLog != null) {
       this.delegateJettyLog.stop();
+    }
+  }
+
+  /**
+   * This class aggregates error-codes for produce-records within a single (http)produce-request.
+   * This implements toString() method which is used by CustomLog to get a message to log for the
+   * aggregated error counts.
+   */
+  public static class ProduceRecordErrorCounter {
+    private final Map<Integer, Integer> produceErrorCodeCountMap = new TreeMap<>();
+
+    public synchronized void incrementErrorCount(int httpErrorCode) {
+      produceErrorCodeCountMap.merge(httpErrorCode, 1, Integer::sum);
+    }
+
+    @Override
+    public String toString() {
+      return PRODUCE_ERROR_CODE_LOG_PREFIX
+          + produceErrorCodeCountMap.entrySet().stream()
+              .map(entry -> entry.getKey() + ":" + entry.getValue())
+              .collect(Collectors.joining(","));
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      }
+      if (other == null || getClass() != other.getClass()) {
+        return false;
+      }
+      ProduceRecordErrorCounter that = (ProduceRecordErrorCounter) other;
+      return Objects.equals(produceErrorCodeCountMap, that.produceErrorCodeCountMap);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(produceErrorCodeCountMap);
     }
   }
 

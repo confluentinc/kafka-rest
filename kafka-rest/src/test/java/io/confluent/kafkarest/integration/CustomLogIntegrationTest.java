@@ -18,6 +18,7 @@ package io.confluent.kafkarest.integration;
 import static com.google.common.base.Preconditions.checkArgument;
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -28,6 +29,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes;
+import io.confluent.kafkarest.requestlog.CustomLog;
 import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import java.time.Duration;
 import java.util.List;
@@ -86,7 +88,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
 
     restConfigs.clear();
     // Adding custom KafkaRestConfigs for individual test-cases/test-methods below.
-    // Make the "other" rate-limit large to make sure they doesn't trigger.
+    // Make the "other" rate-limit large to make sure they don't trigger.
     restConfigs.put("dos.filter.delay.ms", -1);
     if (testInfo
         .getDisplayName()
@@ -193,6 +195,20 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
       restConfigs.put(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND, 99999);
       restConfigs.put(KafkaRestConfig.PRODUCE_MAX_BYTES_GLOBAL_PER_SECOND, 99999);
       restConfigs.put(KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND, 1);
+    } else if (testInfo
+        .getDisplayName()
+        .contains(
+            "test_WhenProduceRequestWithMultipleRecords_ThenRequestLogHasAggregatedErrorCodes")) {
+      restConfigs.put("dos.filter.enabled", "true");
+      restConfigs.put("dos.filter.max.requests.per.connection.per.sec", 99999);
+      restConfigs.put("dos.filter.max.requests.per.sec", 99999);
+      restConfigs.put(KafkaRestConfig.RATE_LIMIT_ENABLE_CONFIG, "true");
+      restConfigs.put(KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED, "true");
+      restConfigs.put(KafkaRestConfig.RATE_LIMIT_BACKEND_CONFIG, "resilience4j");
+      restConfigs.put(KafkaRestConfig.PRODUCE_MAX_REQUESTS_GLOBAL_PER_SECOND, 99999);
+      restConfigs.put(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND, 5);
+      restConfigs.put(KafkaRestConfig.PRODUCE_MAX_BYTES_GLOBAL_PER_SECOND, 99999);
+      restConfigs.put(KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND, 99999);
     } else {
       // Produce rate limit configs
       throw new Exception("Invalid test, doesn't have rest-configs defined in setup.");
@@ -232,7 +248,8 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         ErrorCodes.DOS_FILTER_MAX_REQUEST_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
         false,
-        true);
+        true,
+        false);
   }
 
   /*
@@ -253,6 +270,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         ErrorCodes.DOS_FILTER_MAX_REQUEST_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
         false,
+        false,
         false);
   }
 
@@ -270,6 +288,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         ErrorCodes.DOS_FILTER_MAX_REQUEST_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
         false,
+        false,
         false);
   }
 
@@ -281,13 +300,13 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
-    String clusterId = getClusterId();
     String url = "/v3/clusters/" + getClusterId() + "/topics/";
     hammerAtConstantRate(url, Duration.ofMillis(1), 100);
     verifyLog(
         totalRequests,
         ErrorCodes.DOS_FILTER_MAX_REQUEST_PER_CONNECTION_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
+        false,
         false,
         false);
   }
@@ -306,6 +325,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         totalRequests,
         ErrorCodes.PERMITS_MAX_GLOBAL_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
+        false,
         false,
         false);
   }
@@ -326,6 +346,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         ErrorCodes.PERMITS_MAX_PER_CLUSTER_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
         false,
+        false,
         false);
   }
 
@@ -344,6 +365,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         ErrorCodes.PRODUCE_MAX_REQUESTS_GLOBAL_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
         true,
+        false,
         false);
   }
 
@@ -362,6 +384,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         ErrorCodes.PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
         true,
+        false,
         false);
   }
 
@@ -380,6 +403,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         ErrorCodes.PRODUCE_MAX_BYTES_GLOBAL_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
         true,
+        false,
         false);
   }
 
@@ -398,7 +422,56 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
         ErrorCodes.PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
         true,
+        false,
         false);
+  }
+
+  // One single request with 10 records, the rate-limiter is set up to allow the first 5 records
+  // returning response code 200, the remaining 5 records returning 429 error code
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  @DisplayName("test_WhenProduceRequestWithMultipleRecords_ThenRequestLogHasAggregatedErrorCodes")
+  public void test_WhenProduceRequestWithMultipleRecords_ThenRequestLogHasAggregatedErrorCodes(
+      String quorum) {
+    int totalRequests = 10; // Number of records to be made within one produce request
+    // Since rate-limit is 5, so event first five requests will have enough data to get rate-limited
+    int requestsWithStatusOk = 5;
+    String url = "/v3/clusters/" + getClusterId() + "/topics/" + topicName + "/records/";
+    StringBuilder jsonString = new StringBuilder();
+    for (int i = 0; i < totalRequests; i++) {
+      jsonString.append("{\"value\":{\"type\":\"JSON\",\"data\":\"test\"}}");
+    }
+    try (Response response =
+        request(url)
+            .accept(MediaType.APPLICATION_JSON)
+            .post(Entity.entity(jsonString.toString(), MediaType.APPLICATION_JSON))) {
+      assertFalse(
+          response.getHeaders().containsKey(CustomLogRequestAttributes.REST_ERROR_CODE),
+          "Unexpected header in headers " + response.getHeaders());
+      assertFalse(
+          response
+              .getHeaders()
+              .containsKey(CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+          "Unexpected header in headers " + response.getHeaders());
+      int status = response.getStatus();
+      if (status != 200) {
+        fail(
+            String.format(
+                "Expected HTTP 200, but got HTTP %d instead: %s",
+                status, response.readEntity(String.class)));
+      }
+      // Validating the corresponding rest application log has 5 records that have response code 200
+      // and 5 records having error code 429
+      verifyLog(
+          totalRequests,
+          ErrorCodes.PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED,
+          totalRequests - requestsWithStatusOk,
+          true,
+          false,
+          true);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   class TestRequestLogWriter implements RequestLog.Writer {
@@ -465,10 +538,14 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
                   }
                 })
             .collect(Collectors.toList());
-
     for (Response response : responses) {
-      assertTrue(
-          !response.getHeaders().containsKey(CustomLogRequestAttributes.REST_ERROR_CODE),
+      assertFalse(
+          response.getHeaders().containsKey(CustomLogRequestAttributes.REST_ERROR_CODE),
+          "Unexpected header in headers " + response.getHeaders());
+      assertFalse(
+          response
+              .getHeaders()
+              .containsKey(CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
           "Unexpected header in headers " + response.getHeaders());
       int status = response.getStatus();
       if (status != 200 && status != 429) {
@@ -485,19 +562,28 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
       int errorCodeInLog,
       int expectedRateLimitLogs,
       boolean isProduce,
-      boolean isCustomLoggingDisabled) {
+      boolean isCustomLoggingDisabled,
+      boolean isProduceRequestWithMultipleRecords) {
     // Sleep so all request-logs are logged before reading and validating them here.
     try {
       TimeUnit.SECONDS.sleep(2);
     } catch (InterruptedException e) {
-      assertTrue(false, "Unexpectedly failed to sleep.");
+      fail("Unexpectedly failed to sleep.");
     }
-    String okStatusLogEntry = "200 -";
-    String rateLimitedLogEntry = "429 " + errorCodeInLog;
+
+    String okStatusLogEntry = "200 - -";
+    String rateLimitedLogEntry = "429 " + errorCodeInLog + " -";
+
     if (isProduce) {
       // When produce-api gets rate-limited by produce-rate-limiters, then http-response-code still
       // is 200. Though status-code at record receipt would be 429.
-      rateLimitedLogEntry = "200 " + errorCodeInLog;
+      okStatusLogEntry = "200 - " + CustomLog.PRODUCE_ERROR_CODE_LOG_PREFIX + "200:1";
+      rateLimitedLogEntry =
+          "200 " + errorCodeInLog + " " + CustomLog.PRODUCE_ERROR_CODE_LOG_PREFIX + "429:1";
+    }
+    if (isProduceRequestWithMultipleRecords) {
+      rateLimitedLogEntry =
+          "200 " + errorCodeInLog + " " + CustomLog.PRODUCE_ERROR_CODE_LOG_PREFIX + "200:5,429:5";
     }
     int rateLimitedRequests = 0;
     int totalRequests = 0;
@@ -529,10 +615,12 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     // This test will run on CI machines(like on Jenkins), which are shared & busy. Even
     // though all requests are expected to be done with-in 1 second, on such machines, they can
     // happen across 1 second. So less # of requests are rate-limited, keep 5% margin for that.
-    int minExpectedRateLimitLogs = (int) (0.95 * expectedRateLimitLogs);
-    assertTrue(
-        rateLimitedRequests >= minExpectedRateLimitLogs,
-        "Expected # of rate-limited requests to be >= " + minExpectedRateLimitLogs);
-    assertEquals(expectedNumOfEntries, totalRequests);
+    if (!isProduceRequestWithMultipleRecords) {
+      int minExpectedRateLimitLogs = (int) (0.95 * expectedRateLimitLogs);
+      assertTrue(
+          rateLimitedRequests >= minExpectedRateLimitLogs,
+          "Expected # of rate-limited requests to be >= " + minExpectedRateLimitLogs);
+      assertEquals(expectedNumOfEntries, totalRequests);
+    }
   }
 }
