@@ -23,6 +23,7 @@ import static io.confluent.kafkarest.KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes.PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED;
 import static io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes.PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED;
 import static io.confluent.kafkarest.requestlog.CustomLogRequestAttributes.REST_ERROR_CODE;
+import static io.confluent.kafkarest.requestlog.CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS;
 import static java.util.Collections.emptyMap;
 import static org.easymock.EasyMock.anyBoolean;
 import static org.easymock.EasyMock.anyInt;
@@ -51,6 +52,7 @@ import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
+import io.confluent.kafkarest.requestlog.CustomLog.ProduceRecordErrorCounter;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.JsonStream;
@@ -61,6 +63,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -74,6 +77,7 @@ import javax.management.ObjectName;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.kafka.common.metrics.Metrics;
 import org.easymock.EasyMock;
+import org.easymock.IArgumentMatcher;
 import org.eclipse.jetty.http.HttpStatus;
 import org.glassfish.jersey.server.ChunkedOutput;
 import org.junit.jupiter.api.AfterAll;
@@ -120,6 +124,7 @@ public class ProduceActionTest {
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
     RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
+    HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
@@ -129,6 +134,12 @@ public class ProduceActionTest {
     rateLimiterForBytes.rateLimit(anyInt());
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
+    ProduceRecordErrorCounter produceRecordErrorCounter = new ProduceRecordErrorCounter();
+    produceRecordErrorCounter.incrementErrorCount(422);
+    httpServletRequest.setAttribute(
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(produceRecordErrorCounter));
+    expectLastCall();
 
     replay(
         countLimitProvider,
@@ -138,7 +149,8 @@ public class ProduceActionTest {
         countLimiterGlobal,
         bytesLimiterGlobal,
         countLimiterGlobalProvider,
-        bytesLimiterGlobalProvider);
+        bytesLimiterGlobalProvider,
+        httpServletRequest);
 
     ProduceAction produceAction =
         getProduceAction(
@@ -149,7 +161,8 @@ public class ProduceActionTest {
             bytesLimitProvider,
             countLimiterGlobalProvider,
             bytesLimiterGlobalProvider,
-            true);
+            true,
+            httpServletRequest);
     MappingIterator<ProduceRequest> requests = getProduceRequestsMappingIteratorWithSchemaNeeded();
 
     // expected results
@@ -174,6 +187,7 @@ public class ProduceActionTest {
     // check results
     EasyMock.verify(requests);
     EasyMock.verify(mockedChunkedOutput);
+    EasyMock.verify(httpServletRequest);
   }
 
   @Test
@@ -199,6 +213,7 @@ public class ProduceActionTest {
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
     RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
+    HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
@@ -228,19 +243,25 @@ public class ProduceActionTest {
             bytesLimitProvider,
             countLimiterGlobalProvider,
             bytesLimiterGlobalProvider,
-            true);
+            true,
+            httpServletRequest);
     MappingIterator<ProduceRequest> requests =
         getProduceRequestsMappingIteratorWithNegativePartitionId();
 
     // expected results
-
     ErrorResponse err = ErrorResponse.create(40402, "Partition not found.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail);
     mockedChunkedOutput.close();
+    ProduceRecordErrorCounter produceRecordErrorCounter = new ProduceRecordErrorCounter();
+    produceRecordErrorCounter.incrementErrorCount(40402);
+    httpServletRequest.setAttribute(
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(produceRecordErrorCounter));
+    expectLastCall();
 
-    replay(mockedChunkedOutput, chunkedOutputFactory);
+    replay(mockedChunkedOutput, chunkedOutputFactory, httpServletRequest);
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
@@ -250,6 +271,237 @@ public class ProduceActionTest {
     // check results
     EasyMock.verify(requests);
     EasyMock.verify(mockedChunkedOutput);
+  }
+
+  @Test
+  public void streamingRequestsWithExceptions() throws Exception {
+    // config
+    final int totalNumberOfProduceCallsProd1 = 1;
+    final int totalNumberOfStreamingCalls = 10;
+    Properties properties = new Properties();
+    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(100));
+    // CHANGE HERE
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(30));
+    properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
+
+    // setup
+    ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
+    ChunkedOutput<ResultOrError> mockedChunkedOutput =
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCallsProd1);
+
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> countLimiterGlobalProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimiterGlobalProvider = mock(Provider.class);
+    RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
+    RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
+    RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
+    RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+    HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
+
+    expectSetupStreamingRequestsWithExceptionsResults(
+        countLimitProvider,
+        bytesLimitProvider,
+        countLimiterGlobalProvider,
+        bytesLimiterGlobalProvider,
+        countLimiterGlobal,
+        bytesLimiterGlobal,
+        rateLimiterForCount,
+        rateLimiterForBytes,
+        httpServletRequest);
+
+    replay(
+        countLimitProvider,
+        bytesLimitProvider,
+        rateLimiterForCount,
+        rateLimiterForBytes,
+        countLimiterGlobal,
+        bytesLimiterGlobal,
+        countLimiterGlobalProvider,
+        bytesLimiterGlobalProvider,
+        httpServletRequest);
+
+    ProduceAction produceAction1 =
+        getProduceAction(
+            properties,
+            chunkedOutputFactory,
+            totalNumberOfStreamingCalls,
+            countLimitProvider,
+            bytesLimitProvider,
+            countLimiterGlobalProvider,
+            bytesLimiterGlobalProvider,
+            false,
+            httpServletRequest);
+
+    MappingIterator<ProduceRequest> requests = getStreamingProduceRequestsMappingIterator(10);
+    expectStreamingRequestsWithExceptionsResults(mockedChunkedOutput);
+    replay(mockedChunkedOutput, chunkedOutputFactory);
+
+    // run test
+    FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
+    produceAction1.produce(
+        fakeAsyncResponse1, "clusterId", "topicName", new JsonStream<>(() -> requests));
+
+    // check results
+    verify(
+        requests,
+        mockedChunkedOutput,
+        countLimitProvider,
+        bytesLimitProvider,
+        rateLimiterForCount,
+        rateLimiterForBytes,
+        countLimiterGlobal,
+        bytesLimiterGlobal,
+        httpServletRequest);
+  }
+
+  private void handleExpectResultRequest(
+      ChunkedOutput<ResultOrError> mockedChunkedOutput, Integer offset) throws Exception {
+    ProduceResponse produceResponse = getProduceResponse(offset);
+    ResultOrError resultOrErrorOKProd1 = ResultOrError.result(produceResponse);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(resultOrErrorOKProd1);
+  }
+
+  private void handleExpectErrorRequest(ChunkedOutput<ResultOrError> mockedChunkedOutput)
+      throws Exception {
+    ErrorResponse err =
+        ErrorResponse.create(
+            429,
+            "Request rate limit exceeded: "
+                + "The rate limit of requests per second has been exceeded.");
+    ResultOrError resultOrErrorOKProd3 = ResultOrError.error(err);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(resultOrErrorOKProd3);
+  }
+
+  private void expectStreamingRequestsWithExceptionsResults(
+      ChunkedOutput<ResultOrError> mockedChunkedOutput) throws Exception {
+    for (int i = 0; i < 10; i++) {
+      if (i % 2 == 0) {
+        handleExpectResultRequest(mockedChunkedOutput, i / 2);
+      } else {
+        handleExpectErrorRequest(mockedChunkedOutput);
+      }
+    }
+    mockedChunkedOutput.close();
+  }
+
+  private void expectSetupStreamingRequestsWithExceptionsResults(
+      Provider<RequestRateLimiter> countLimitProvider,
+      Provider<RequestRateLimiter> bytesLimitProvider,
+      Provider<RequestRateLimiter> countLimiterGlobalProvider,
+      Provider<RequestRateLimiter> bytesLimiterGlobalProvider,
+      RequestRateLimiter rateLimiterForCount,
+      RequestRateLimiter rateLimiterForBytes,
+      RequestRateLimiter countLimiterGlobal,
+      RequestRateLimiter bytesLimiterGlobal,
+      HttpServletRequest httpServletRequest) {
+
+    ProduceRecordErrorCounter produceRecordErrorCounter = new ProduceRecordErrorCounter();
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+    // first produce
+    produceRecordErrorCounter.incrementErrorCount(200);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    // second produce
+    produceRecordErrorCounter.incrementErrorCount(429);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
+    httpServletRequest.setAttribute(REST_ERROR_CODE, PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
+    expectLastCall();
+    // third produce
+    produceRecordErrorCounter.incrementErrorCount(200);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    // forth produce
+    produceRecordErrorCounter.incrementErrorCount(429);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
+    httpServletRequest.setAttribute(
+        REST_ERROR_CODE, PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
+    expectLastCall();
+    // fifth produce
+    produceRecordErrorCounter.incrementErrorCount(200);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    // sixth produce
+    produceRecordErrorCounter.incrementErrorCount(429);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
+    httpServletRequest.setAttribute(REST_ERROR_CODE, PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
+    expectLastCall();
+    // seventh produce
+    produceRecordErrorCounter.incrementErrorCount(200);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    // eighth produce
+    produceRecordErrorCounter.incrementErrorCount(429);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
+    httpServletRequest.setAttribute(REST_ERROR_CODE, PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
+    expectLastCall();
+    // ninth produce
+    produceRecordErrorCounter.incrementErrorCount(200);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    // tenth produce
+    produceRecordErrorCounter.incrementErrorCount(429);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
+    httpServletRequest.setAttribute(
+        REST_ERROR_CODE, PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
+    expectLastCall();
+
+    httpServletRequest.setAttribute(
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(produceRecordErrorCounter));
+    expectLastCall();
   }
 
   @Test
@@ -276,9 +528,12 @@ public class ProduceActionTest {
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+    HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
+    ProduceRecordErrorCounter produceRecordErrorCounter = new ProduceRecordErrorCounter();
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+    produceRecordErrorCounter.incrementErrorCount(200);
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     rateLimiterForCount.rateLimit(anyInt());
@@ -287,22 +542,30 @@ public class ProduceActionTest {
     countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
+    produceRecordErrorCounter.incrementErrorCount(200);
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
+    produceRecordErrorCounter.incrementErrorCount(200);
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
+    produceRecordErrorCounter.incrementErrorCount(200);
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
+
+    httpServletRequest.setAttribute(
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(produceRecordErrorCounter));
+    expectLastCall();
 
     replay(
         countLimitProvider,
@@ -312,7 +575,8 @@ public class ProduceActionTest {
         countLimiterGlobal,
         bytesLimiterGlobal,
         countLimiterGlobalProvider,
-        bytesLimiterGlobalProvider);
+        bytesLimiterGlobalProvider,
+        httpServletRequest);
 
     ProduceAction produceAction1 =
         getProduceAction(
@@ -322,7 +586,9 @@ public class ProduceActionTest {
             countLimitProvider,
             bytesLimitProvider,
             countLimiterGlobalProvider,
-            bytesLimiterGlobalProvider);
+            bytesLimiterGlobalProvider,
+            false,
+            httpServletRequest);
     MappingIterator<ProduceRequest> requests = getStreamingProduceRequestsMappingIterator(4);
 
     // expected results
@@ -357,6 +623,7 @@ public class ProduceActionTest {
     // check results
     EasyMock.verify(requests);
     EasyMock.verify(mockedChunkedOutput);
+    EasyMock.verify(httpServletRequest);
   }
 
   @Test
@@ -387,12 +654,20 @@ public class ProduceActionTest {
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
+    ProduceRecordErrorCounter produceRecordErrorCounter1 = new ProduceRecordErrorCounter();
+    produceRecordErrorCounter1.incrementErrorCount(200);
+    httpServletRequest.setAttribute(
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter1));
+    expectLastCall();
 
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
@@ -402,6 +677,13 @@ public class ProduceActionTest {
     rateLimiterForBytes.rateLimit(anyInt());
     EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
     httpServletRequest.setAttribute(REST_ERROR_CODE, PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
+    expectLastCall();
+    ProduceRecordErrorCounter produceRecordErrorCounter2 = new ProduceRecordErrorCounter();
+    produceRecordErrorCounter2.incrementErrorCount(429);
+    httpServletRequest.setAttribute(
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter2));
     expectLastCall();
 
     replay(
@@ -504,6 +786,13 @@ public class ProduceActionTest {
     rateLimiterForBytes.rateLimit(anyInt());
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
+    ProduceRecordErrorCounter produceRecordErrorCounter1 = new ProduceRecordErrorCounter();
+    produceRecordErrorCounter1.incrementErrorCount(200);
+    httpServletRequest.setAttribute(
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter1));
+    expectLastCall();
 
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
@@ -513,6 +802,13 @@ public class ProduceActionTest {
     EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
     httpServletRequest.setAttribute(
         REST_ERROR_CODE, PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
+    expectLastCall();
+    ProduceRecordErrorCounter produceRecordErrorCounter2 = new ProduceRecordErrorCounter();
+    produceRecordErrorCounter2.incrementErrorCount(429);
+    httpServletRequest.setAttribute(
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter2));
     expectLastCall();
 
     replay(
@@ -604,6 +900,7 @@ public class ProduceActionTest {
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+    HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
 
     replay(
         countLimitProvider,
@@ -623,7 +920,9 @@ public class ProduceActionTest {
             countLimitProvider,
             bytesLimitProvider,
             countLimiterGlobalProvider,
-            bytesLimiterGlobalProvider);
+            bytesLimiterGlobalProvider,
+            false,
+            httpServletRequest);
     MappingIterator<ProduceRequest> requests =
         getProduceRequestsMappingIterator(totalNumberOfProduceCalls);
 
@@ -633,15 +932,28 @@ public class ProduceActionTest {
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorOK1); // successful first produce
     mockedChunkedOutput.close();
+    ProduceRecordErrorCounter produceRecordErrorCounter1 = new ProduceRecordErrorCounter();
+    produceRecordErrorCounter1.incrementErrorCount(200);
+    httpServletRequest.setAttribute(
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter1));
+    expectLastCall();
 
     ProduceResponse produceResponse2 = getProduceResponse(1);
     ResultOrError resultOrErrorOK2 = ResultOrError.result(produceResponse2);
-
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorOK2); // successful second produce
     mockedChunkedOutput.close();
+    ProduceRecordErrorCounter produceRecordErrorCounter2 = new ProduceRecordErrorCounter();
+    produceRecordErrorCounter2.incrementErrorCount(200);
+    httpServletRequest.setAttribute(
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter2));
+    expectLastCall();
 
-    replay(mockedChunkedOutput, chunkedOutputFactory);
+    replay(mockedChunkedOutput, chunkedOutputFactory, httpServletRequest);
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
@@ -660,7 +972,8 @@ public class ProduceActionTest {
         rateLimiterForCount,
         rateLimiterForBytes,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        httpServletRequest);
   }
 
   @Test
@@ -997,5 +1310,33 @@ public class ProduceActionTest {
             httpServletRequest);
     produceRateLimiters.clear();
     return produceAction;
+  }
+
+  private static class ProduceErrorCodeCounterMatcher implements IArgumentMatcher {
+    ProduceRecordErrorCounter toMatch;
+
+    private ProduceErrorCodeCounterMatcher(ProduceRecordErrorCounter produceRecordErrorCounter) {
+      this.toMatch = produceRecordErrorCounter;
+    }
+
+    public static ProduceRecordErrorCounter produceErrorCodeCounterIsMatched(
+        ProduceRecordErrorCounter produceRecordErrorCounter) {
+      EasyMock.reportMatcher(new ProduceErrorCodeCounterMatcher(produceRecordErrorCounter));
+      return null;
+    }
+
+    @Override
+    public boolean matches(Object argument) {
+      if (argument instanceof ProduceRecordErrorCounter) {
+        ProduceRecordErrorCounter produceRecordErrorCounter = (ProduceRecordErrorCounter) argument;
+        return Objects.equals(produceRecordErrorCounter.toString(), toMatch.toString());
+      }
+      return false;
+    }
+
+    @Override
+    public void appendTo(StringBuffer buffer) {
+      buffer.append("produceRecordErrorCounter have the expected error code counts");
+    }
   }
 }
