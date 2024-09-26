@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.requestlog;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import org.eclipse.jetty.server.CustomRequestLog;
@@ -82,28 +81,11 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
       return PRODUCE_ERROR_CODE_LOG_PREFIX
           + produceErrorCodeCountMap.entrySet().stream()
               .map(entry -> entry.getKey() + ":" + entry.getValue())
               .collect(Collectors.joining(","));
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      if (this == other) {
-        return true;
-      }
-      if (other == null || getClass() != other.getClass()) {
-        return false;
-      }
-      ProduceRecordErrorCounter that = (ProduceRecordErrorCounter) other;
-      return Objects.equals(produceErrorCodeCountMap, that.produceErrorCodeCountMap);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(produceErrorCodeCountMap);
     }
   }
 
