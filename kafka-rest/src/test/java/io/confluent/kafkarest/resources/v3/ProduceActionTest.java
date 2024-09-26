@@ -63,6 +63,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -76,6 +77,7 @@ import javax.management.ObjectName;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.kafka.common.metrics.Metrics;
 import org.easymock.EasyMock;
+import org.easymock.IArgumentMatcher;
 import org.eclipse.jetty.http.HttpStatus;
 import org.glassfish.jersey.server.ChunkedOutput;
 import org.junit.jupiter.api.AfterAll;
@@ -135,7 +137,8 @@ public class ProduceActionTest {
     ProduceRecordErrorCounter produceRecordErrorCounter = new ProduceRecordErrorCounter();
     produceRecordErrorCounter.incrementErrorCount(422);
     httpServletRequest.setAttribute(
-        REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter);
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(produceRecordErrorCounter));
     expectLastCall();
 
     replay(
@@ -254,7 +257,8 @@ public class ProduceActionTest {
     ProduceRecordErrorCounter produceRecordErrorCounter = new ProduceRecordErrorCounter();
     produceRecordErrorCounter.incrementErrorCount(40402);
     httpServletRequest.setAttribute(
-        REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter);
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(produceRecordErrorCounter));
     expectLastCall();
 
     replay(mockedChunkedOutput, chunkedOutputFactory, httpServletRequest);
@@ -495,7 +499,8 @@ public class ProduceActionTest {
     expectLastCall();
 
     httpServletRequest.setAttribute(
-        REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter);
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(produceRecordErrorCounter));
     expectLastCall();
   }
 
@@ -558,7 +563,8 @@ public class ProduceActionTest {
     countLimiterGlobal.rateLimit(anyInt());
 
     httpServletRequest.setAttribute(
-        REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter);
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(produceRecordErrorCounter));
     expectLastCall();
 
     replay(
@@ -658,7 +664,9 @@ public class ProduceActionTest {
     ProduceRecordErrorCounter produceRecordErrorCounter1 = new ProduceRecordErrorCounter();
     produceRecordErrorCounter1.incrementErrorCount(200);
     httpServletRequest.setAttribute(
-        REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter1);
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter1));
     expectLastCall();
 
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
@@ -673,7 +681,9 @@ public class ProduceActionTest {
     ProduceRecordErrorCounter produceRecordErrorCounter2 = new ProduceRecordErrorCounter();
     produceRecordErrorCounter2.incrementErrorCount(429);
     httpServletRequest.setAttribute(
-        REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter2);
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter2));
     expectLastCall();
 
     replay(
@@ -779,7 +789,9 @@ public class ProduceActionTest {
     ProduceRecordErrorCounter produceRecordErrorCounter1 = new ProduceRecordErrorCounter();
     produceRecordErrorCounter1.incrementErrorCount(200);
     httpServletRequest.setAttribute(
-        REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter1);
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter1));
     expectLastCall();
 
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
@@ -794,7 +806,10 @@ public class ProduceActionTest {
     ProduceRecordErrorCounter produceRecordErrorCounter2 = new ProduceRecordErrorCounter();
     produceRecordErrorCounter2.incrementErrorCount(429);
     httpServletRequest.setAttribute(
-        REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter2);
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter2));
+    expectLastCall();
 
     replay(
         countLimitProvider,
@@ -920,7 +935,9 @@ public class ProduceActionTest {
     ProduceRecordErrorCounter produceRecordErrorCounter1 = new ProduceRecordErrorCounter();
     produceRecordErrorCounter1.incrementErrorCount(200);
     httpServletRequest.setAttribute(
-        REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter1);
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter1));
     expectLastCall();
 
     ProduceResponse produceResponse2 = getProduceResponse(1);
@@ -931,7 +948,9 @@ public class ProduceActionTest {
     ProduceRecordErrorCounter produceRecordErrorCounter2 = new ProduceRecordErrorCounter();
     produceRecordErrorCounter2.incrementErrorCount(200);
     httpServletRequest.setAttribute(
-        REST_PRODUCE_RECORD_ERROR_CODE_COUNTS, produceRecordErrorCounter2);
+        EasyMock.eq(REST_PRODUCE_RECORD_ERROR_CODE_COUNTS),
+        ProduceErrorCodeCounterMatcher.produceErrorCodeCounterIsMatched(
+            produceRecordErrorCounter2));
     expectLastCall();
 
     replay(mockedChunkedOutput, chunkedOutputFactory, httpServletRequest);
@@ -1291,5 +1310,33 @@ public class ProduceActionTest {
             httpServletRequest);
     produceRateLimiters.clear();
     return produceAction;
+  }
+
+  private static class ProduceErrorCodeCounterMatcher implements IArgumentMatcher {
+    ProduceRecordErrorCounter toMatch;
+
+    private ProduceErrorCodeCounterMatcher(ProduceRecordErrorCounter produceRecordErrorCounter) {
+      this.toMatch = produceRecordErrorCounter;
+    }
+
+    public static ProduceRecordErrorCounter produceErrorCodeCounterIsMatched(
+        ProduceRecordErrorCounter produceRecordErrorCounter) {
+      EasyMock.reportMatcher(new ProduceErrorCodeCounterMatcher(produceRecordErrorCounter));
+      return null;
+    }
+
+    @Override
+    public boolean matches(Object argument) {
+      if (argument instanceof ProduceRecordErrorCounter) {
+        ProduceRecordErrorCounter produceRecordErrorCounter = (ProduceRecordErrorCounter) argument;
+        return Objects.equals(produceRecordErrorCounter.toString(), toMatch.toString());
+      }
+      return false;
+    }
+
+    @Override
+    public void appendTo(StringBuffer buffer) {
+      buffer.append("produceRecordErrorCounter have the expected error code counts");
+    }
   }
 }
