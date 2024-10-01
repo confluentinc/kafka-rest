@@ -470,7 +470,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
           false,
           true);
     } catch (Exception e) {
-      e.printStackTrace();
+      log.error("Failed to make produce request with multiple records", e);
     }
   }
 
@@ -583,7 +583,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     }
     if (isProduceRequestWithMultipleRecords) {
       rateLimitedLogEntry =
-          "200 " + errorCodeInLog + " " + CustomLog.PRODUCE_ERROR_CODE_LOG_PREFIX + "200:5,429:5";
+          "200 " + errorCodeInLog + " " + CustomLog.PRODUCE_ERROR_CODE_LOG_PREFIX + "429:5";
     }
     int rateLimitedRequests = 0;
     int totalRequests = 0;
