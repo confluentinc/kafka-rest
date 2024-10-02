@@ -577,7 +577,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     if (isProduce) {
       // When produce-api gets rate-limited by produce-rate-limiters, then http-response-code still
       // is 200. Though status-code at record receipt would be 429.
-      okStatusLogEntry = "200 - " + CustomLog.PRODUCE_ERROR_CODE_LOG_PREFIX + "200:1";
+      okStatusLogEntry = "200 - " + CustomLog.PRODUCE_ERROR_CODE_LOG_PREFIX;
       rateLimitedLogEntry =
           "200 " + errorCodeInLog + " " + CustomLog.PRODUCE_ERROR_CODE_LOG_PREFIX + "429:1";
     }
