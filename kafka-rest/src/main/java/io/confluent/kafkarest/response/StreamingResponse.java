@@ -74,7 +74,6 @@ public abstract class StreamingResponse<T> {
 
   private static final Logger log = LoggerFactory.getLogger(StreamingResponse.class);
   private static final int ONE_SECOND_MS = 1000;
-  private static final int HTTP_SUCCESS_CODE = 200;
 
   private static final CompositeErrorMapper EXCEPTION_MAPPER =
       new CompositeErrorMapper.Builder()
@@ -228,10 +227,12 @@ public abstract class StreamingResponse<T> {
   private ResultOrError handleNext(
       T result, @Nullable Throwable error, ProduceRecordErrorCounter produceRecordErrorCounter) {
     if (error == null) {
-      produceRecordErrorCounter.incrementErrorCount(HTTP_SUCCESS_CODE);
       return ResultOrError.result(result);
     } else {
       log.debug("Error processing streaming operation.", error);
+      if (error.getCause() == null) {
+        throw new IllegalArgumentException("Error cause is null", error);
+      }
       int errorCode = EXCEPTION_MAPPER.toErrorResponse(error.getCause()).getErrorCode();
       produceRecordErrorCounter.incrementErrorCount(errorCode);
       return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
