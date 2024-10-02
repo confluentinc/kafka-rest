@@ -33,6 +33,7 @@ import io.confluent.kafkarest.exceptions.RestConstraintViolationExceptionMapper;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
+import io.confluent.kafkarest.requestlog.CustomLog.ProduceRecordErrorCounter;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
@@ -159,7 +160,8 @@ public abstract class StreamingResponse<T> {
    * <p>This method will block until all requests are read in. The responses are computed and
    * written to {@code asyncResponse} asynchronously.
    */
-  public final void resume(AsyncResponse asyncResponse) {
+  public final void resume(
+      AsyncResponse asyncResponse, ProduceRecordErrorCounter produceRecordErrorCounter) {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
@@ -186,7 +188,11 @@ public abstract class StreamingResponse<T> {
                               "Streaming connection open for longer than allowed",
                               "Connection will be closed.")))));
         } else if (!closingStarted) {
-          responseQueue.push(next().handle(this::handleNext));
+          responseQueue.push(
+              next()
+                  .handle(
+                      (result, exception) ->
+                          handleNext(result, exception, produceRecordErrorCounter)));
         } else {
           break;
         }
@@ -218,11 +224,17 @@ public abstract class StreamingResponse<T> {
     responseQueue.close();
   }
 
-  private ResultOrError handleNext(T result, @Nullable Throwable error) {
+  private ResultOrError handleNext(
+      T result, @Nullable Throwable error, ProduceRecordErrorCounter produceRecordErrorCounter) {
     if (error == null) {
       return ResultOrError.result(result);
     } else {
       log.debug("Error processing streaming operation.", error);
+      if (error.getCause() == null) {
+        throw new IllegalArgumentException("Error cause is null", error);
+      }
+      int errorCode = EXCEPTION_MAPPER.toErrorResponse(error.getCause()).getErrorCode();
+      produceRecordErrorCounter.incrementErrorCount(errorCode);
       return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
     }
   }
