@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -269,7 +270,8 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     if (consumer != null) {
       for (io.confluent.kafkarest.entities.v2.TopicPartition t : request.getPartitions()) {
         TopicPartition partition = new TopicPartition(t.getTopic(), t.getPartition());
-        OffsetAndMetadata offsetMetadata = consumer.committed(partition);
+        OffsetAndMetadata offsetMetadata =
+            consumer.committed(Collections.singleton(partition)).get(partition);
         if (offsetMetadata != null) {
           offsets.add(
               new TopicPartitionOffsetMetadata(
@@ -381,7 +383,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * be invoked with the lock held, i.e. after startRead().
    */
   private synchronized void getOrCreateConsumerRecords() {
-    ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(0);
+    ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(Duration.ofSeconds(0L));
     // drain the iterator and buffer to list
     for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : polledRecords) {
       consumerRecords.add(consumerRecord);
