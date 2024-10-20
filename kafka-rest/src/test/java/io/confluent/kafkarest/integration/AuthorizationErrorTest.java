@@ -39,7 +39,13 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import kafka.security.authorizer.AclAuthorizer;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.common.security.auth.KafkaPrincipal;
+import org.apache.kafka.common.acl.AccessControlEntry;
+import org.apache.kafka.common.acl.AclBinding;
+import org.apache.kafka.common.acl.AclOperation;
+import org.apache.kafka.common.acl.AclPermissionType;
+import org.apache.kafka.common.resource.PatternType;
+import org.apache.kafka.common.resource.ResourcePattern;
+import org.apache.kafka.common.resource.ResourceType;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.AfterEach;
@@ -151,8 +157,26 @@ public class AuthorizationErrorTest
     // test without acls
     verifySubscribeToTopic(true);
     // add acls
-    SecureTestUtils.setConsumerAcls(zkConnect, TOPIC_NAME, USERNAME, CONSUMER_GROUP);
+    setConsumerAcls();
     verifySubscribeToTopic(false);
+  }
+
+  private void setConsumerAcls() {
+    AclBinding topicAcl =
+        new AclBinding(
+            new ResourcePattern(ResourceType.TOPIC, TOPIC_NAME, PatternType.LITERAL),
+            new AccessControlEntry(
+                "User:" + USERNAME, "*", AclOperation.READ, AclPermissionType.ALLOW));
+    AclBinding groupAcl =
+        new AclBinding(
+            new ResourcePattern(ResourceType.GROUP, CONSUMER_GROUP, PatternType.LITERAL),
+            new AccessControlEntry(
+                "User:" + USERNAME, "*", AclOperation.READ, AclPermissionType.ALLOW));
+    try {
+      createAcls(Arrays.asList(topicAcl, groupAcl), adminProperties());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
@@ -162,7 +186,7 @@ public class AuthorizationErrorTest
     // test without any acls
     testProduceToAuthorizationError(TOPIC_NAME, request);
     // add acls
-    SecureTestUtils.setProduceAcls(zkConnect, TOPIC_NAME, USERNAME);
+    setProduceAcls();
     testProduceToTopic(
         TOPIC_NAME,
         request,
@@ -171,6 +195,19 @@ public class AuthorizationErrorTest
         produceOffsets,
         false,
         request.toProduceRequest().getRecords());
+  }
+
+  private void setProduceAcls() {
+    AclBinding topicAcl =
+        new AclBinding(
+            new ResourcePattern(ResourceType.TOPIC, TOPIC_NAME, PatternType.LITERAL),
+            new AccessControlEntry(
+                "User:" + USERNAME, "*", AclOperation.WRITE, AclPermissionType.ALLOW));
+    try {
+      createAcls(Arrays.asList(topicAcl), adminProperties());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void verifySubscribeToTopic(boolean expectFailure) {
@@ -224,7 +261,30 @@ public class AuthorizationErrorTest
   @Override
   protected void setupAcls() {
     // to allow plaintext consumer
-    SecureTestUtils.setConsumerAcls(zkConnect, TOPIC_NAME, KafkaPrincipal.ANONYMOUS.getName(), "*");
+    AclBinding topicAcl =
+        new AclBinding(
+            new ResourcePattern(ResourceType.TOPIC, TOPIC_NAME, PatternType.LITERAL),
+            new AccessControlEntry(
+                "User:ANONYMOUS", "*", AclOperation.READ, AclPermissionType.ALLOW));
+    AclBinding groupAcl =
+        new AclBinding(
+            new ResourcePattern(ResourceType.GROUP, "*", PatternType.LITERAL),
+            new AccessControlEntry(
+                "User:ANONYMOUS", "*", AclOperation.READ, AclPermissionType.ALLOW));
+    try {
+      createAcls(Arrays.asList(topicAcl, groupAcl), adminProperties());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private Properties adminProperties() {
+    Properties adminProperties = new Properties();
+    adminProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    adminProperties.put("security.protocol", "SASL_PLAINTEXT");
+    adminProperties.setProperty("sasl.mechanism", "PLAIN");
+    adminProperties.put("sasl.jaas.config", createPlainLoginModule("admin", "admin-secret"));
+    return adminProperties;
   }
 
   @AfterEach
