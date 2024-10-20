@@ -39,6 +39,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,6 +51,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -77,6 +79,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.acl.AclBinding;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -619,6 +622,13 @@ public abstract class ClusterTestHarness {
             JavaConverters.asScalaBuffer(servers).toSeq(),
             topicConfig);
       }
+    }
+  }
+
+  protected final void createAcls(Collection<AclBinding> acls, Properties adminProperties)
+      throws Exception {
+    try (AdminClient admin = AdminClient.create(adminProperties)) {
+      admin.createAcls(acls).all().get(60, TimeUnit.SECONDS);
     }
   }
 
