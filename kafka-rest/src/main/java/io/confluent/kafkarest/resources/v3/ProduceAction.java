@@ -38,6 +38,8 @@ import io.confluent.kafkarest.exceptions.StacklessCompletionException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
+import io.confluent.kafkarest.requestlog.CustomLog.ProduceRecordErrorCounter;
+import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
@@ -147,13 +149,19 @@ public final class ProduceAction {
       throw Errors.invalidPayloadException("Request body is empty. Data is required.");
     }
 
+    ProduceRecordErrorCounter produceRecordErrorCounter = new ProduceRecordErrorCounter();
+
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
         .compose(
             request ->
                 produce(clusterId, topicName, request, controller, producerMetricsProvider.get()))
-        .resume(asyncResponse);
+        .resume(asyncResponse, produceRecordErrorCounter);
+
+    httpServletRequest.setAttribute(
+        CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS,
+        produceRecordErrorCounter);
   }
 
   private CompletableFuture<ProduceResponse> produce(

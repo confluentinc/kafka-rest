@@ -27,6 +27,7 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
+import io.confluent.kafkarest.requestlog.CustomLog.ProduceRecordErrorCounter;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import java.io.IOException;
 import java.time.Clock;
@@ -64,6 +65,7 @@ public class StreamingResponseTest {
             .build();
 
     MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
+    ProduceRecordErrorCounter produceRecordErrorCounter = mock(ProduceRecordErrorCounter.class);
     expect(requests.hasNext()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
     expect(requests.hasNext()).andReturn(false);
@@ -101,7 +103,9 @@ public class StreamingResponseTest {
     produceResponseFuture.complete(produceResponse);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponseFuture).resume(response);
+    streamingResponse
+        .compose(result -> produceResponseFuture)
+        .resume(response, produceRecordErrorCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -130,6 +134,7 @@ public class StreamingResponseTest {
             .build();
 
     MappingIterator<ProduceRequest> requestsMappingIterator = mock(MappingIterator.class);
+    ProduceRecordErrorCounter produceRecordErrorCounter = mock(ProduceRecordErrorCounter.class);
     expect(requestsMappingIterator.hasNext()).andReturn(true);
     expect(requestsMappingIterator.nextValue()).andReturn(request);
     expect(requestsMappingIterator.hasNext()).andReturn(false);
@@ -165,7 +170,9 @@ public class StreamingResponseTest {
     produceResponseFuture.complete(produceResponse);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponseFuture).resume(response);
+    streamingResponse
+        .compose(result -> produceResponseFuture)
+        .resume(response, produceRecordErrorCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -185,6 +192,7 @@ public class StreamingResponseTest {
 
     ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
+    ProduceRecordErrorCounter produceRecordErrorCounter = mock(ProduceRecordErrorCounter.class);
 
     ResultOrError resultOrError =
         ResultOrError.error(
@@ -207,7 +215,9 @@ public class StreamingResponseTest {
 
     FakeAsyncResponse response = new FakeAsyncResponse();
 
-    streamingResponse.compose(result -> new CompletableFuture<>()).resume(response);
+    streamingResponse
+        .compose(result -> new CompletableFuture<>())
+        .resume(response, produceRecordErrorCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -225,6 +235,7 @@ public class StreamingResponseTest {
 
     ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
+    ProduceRecordErrorCounter produceRecordErrorCounter = mock(ProduceRecordErrorCounter.class);
 
     ResultOrError resultOrError =
         ResultOrError.error(
@@ -247,7 +258,9 @@ public class StreamingResponseTest {
 
     FakeAsyncResponse response = new FakeAsyncResponse();
 
-    streamingResponse.compose(result -> new CompletableFuture<>()).resume(response);
+    streamingResponse
+        .compose(result -> new CompletableFuture<>())
+        .resume(response, produceRecordErrorCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -276,6 +289,7 @@ public class StreamingResponseTest {
             .build();
 
     MappingIterator<ProduceRequest> requestsMappingIterator = mock(MappingIterator.class);
+    ProduceRecordErrorCounter produceRecordErrorCounter = mock(ProduceRecordErrorCounter.class);
 
     long timeout = 10;
     Clock clock = mock(Clock.class);
@@ -356,7 +370,7 @@ public class StreamingResponseTest {
             result -> {
               return produceResponseFuture;
             })
-        .resume(response);
+        .resume(response, produceRecordErrorCounter);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
