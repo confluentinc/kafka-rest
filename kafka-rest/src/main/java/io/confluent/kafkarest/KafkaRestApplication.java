@@ -130,7 +130,10 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       return new CustomLog(
           requestLogWriter,
           requestLogFormat,
-          new String[] {CustomLogRequestAttributes.REST_ERROR_CODE});
+          new String[] {
+            CustomLogRequestAttributes.REST_ERROR_CODE,
+            CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS
+          });
     }
     // Return null, as Application's ctor would set-up a default request-logger.
     return null;
