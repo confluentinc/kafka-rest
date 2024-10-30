@@ -54,9 +54,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import scala.Option;
 
-// Until we fix KNET-16472, this test should be disabled.
-
-@Disabled
+@Disabled("Until we fix KNET-16472, this test should be disabled")
 public class AuthorizationErrorTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
@@ -122,7 +120,6 @@ public class AuthorizationErrorTest
             (short) 1,
             false);
     brokerProps.put("broker.id", Integer.toString(i));
-    //    brokerProps.setProperty("authorizer.class.name", AclAuthorizer.class.getName());
     brokerProps.setProperty("super.users", "User:admin");
     brokerProps.setProperty(
         "listener.name.sasl_plaintext.plain.sasl.jaas.config",
