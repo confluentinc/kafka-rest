@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Properties;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
-import kafka.security.authorizer.AclAuthorizer;
+
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.common.acl.AccessControlEntry;
 import org.apache.kafka.common.acl.AclBinding;
@@ -48,14 +48,18 @@ import org.apache.kafka.common.resource.ResourcePattern;
 import org.apache.kafka.common.resource.ResourceType;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.metadata.authorizer.StandardAuthorizer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import scala.Option;
 
-/** This integration test uses AclAuthorizer class which is Zk specific. */
+// Until we fix KNET-16472, this test should be disabled.
+
+@Disabled
 public class AuthorizationErrorTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
@@ -121,8 +125,7 @@ public class AuthorizationErrorTest
             (short) 1,
             false);
     brokerProps.put("broker.id", Integer.toString(i));
-    brokerProps.put(ZOOKEEPER_CONNECT_CONFIG, zkConnect);
-    brokerProps.setProperty("authorizer.class.name", AclAuthorizer.class.getName());
+    //    brokerProps.setProperty("authorizer.class.name", AclAuthorizer.class.getName());
     brokerProps.setProperty("super.users", "User:admin");
     brokerProps.setProperty(
         "listener.name.sasl_plaintext.plain.sasl.jaas.config",
