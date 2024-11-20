@@ -118,8 +118,9 @@ public abstract class ClusterTestHarness {
     return choosePorts(1)[0];
   }
 
-  private int numBrokers;
-  private boolean withSchemaRegistry;
+  private final boolean startRest;
+  private final int numBrokers;
+  private final boolean withSchemaRegistry;
   // ZK Config
   protected String zkConnect;
   protected EmbeddedZookeeper zookeeper;
@@ -153,8 +154,13 @@ public abstract class ClusterTestHarness {
   }
 
   public ClusterTestHarness(int numBrokers, boolean withSchemaRegistry) {
+    this(numBrokers, withSchemaRegistry, true);
+  }
+
+  public ClusterTestHarness(int numBrokers, boolean withSchemaRegistry, boolean startRest) {
     this.numBrokers = numBrokers;
     this.withSchemaRegistry = withSchemaRegistry;
+    this.startRest = startRest;
 
     schemaRegProperties = new Properties();
     restProperties = new Properties();
@@ -185,30 +191,40 @@ public abstract class ClusterTestHarness {
 
     setupAcls();
     if (withSchemaRegistry) {
-      int schemaRegPort = choosePort();
-      schemaRegProperties.put(
-          SchemaRegistryConfig.PORT_CONFIG, ((Integer) schemaRegPort).toString());
-      schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG, zkConnect);
-      schemaRegProperties.put(
-          SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
-          SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
-      schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG, schemaRegCompatibility);
-      String broker =
-          SecurityProtocol.PLAINTEXT.name
-              + "://"
-              + TestUtils.getBrokerListStrFromServers(
-                  JavaConverters.asScalaBuffer(servers), SecurityProtocol.PLAINTEXT);
-      schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, broker);
-      schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
-
-      schemaRegProperties = overrideSchemaRegistryProps(schemaRegProperties);
-
-      schemaRegApp =
-          new SchemaRegistryRestApplication(new SchemaRegistryConfig(schemaRegProperties));
-      schemaRegServer = schemaRegApp.createServer();
-      schemaRegServer.start();
+      doStartSchemaRegistry();
     }
+    if (startRest) {
+      doStartRest(brokerList);
+    }
+    log.info("Completed setup of {}", getClass().getSimpleName());
+  }
 
+  private void doStartSchemaRegistry() throws Exception {
+    int schemaRegPort = choosePort();
+    schemaRegProperties.put(
+        SchemaRegistryConfig.PORT_CONFIG, ((Integer) schemaRegPort).toString());
+    schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG, zkConnect);
+    schemaRegProperties.put(
+        SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
+        SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
+    schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG, schemaRegCompatibility);
+    String broker =
+        SecurityProtocol.PLAINTEXT.name
+            + "://"
+            + TestUtils.getBrokerListStrFromServers(
+                JavaConverters.asScalaBuffer(servers), SecurityProtocol.PLAINTEXT);
+    schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, broker);
+    schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
+
+    schemaRegProperties = overrideSchemaRegistryProps(schemaRegProperties);
+
+    schemaRegApp =
+        new SchemaRegistryRestApplication(new SchemaRegistryConfig(schemaRegProperties));
+    schemaRegServer = schemaRegApp.createServer();
+    schemaRegServer.start();
+  }
+
+  protected void doStartRest(String brokerList) throws Exception {
     int restPort = choosePort();
     restProperties.put(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
     restProperties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
@@ -238,7 +254,15 @@ public abstract class ClusterTestHarness {
         throw e2;
       }
     }
-    log.info("Completed setup of {}", getClass().getSimpleName());
+  }
+
+  /**
+   * Get the broker list from the given security protocol, this can be used for bootstrap servers of Kafka Rest
+   * @param securityProtocol security protocol
+   * @return broker list
+   */
+  public String getBrokerListForSecurityProtocol(SecurityProtocol securityProtocol) {
+    return TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers), securityProtocol);
   }
 
   private void startRest() throws Exception {
