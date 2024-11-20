@@ -260,6 +260,7 @@ public abstract class ClusterTestHarness {
 
   /**
    * Return the bootstrap servers string for the given security protocol.
+   *
    * @param securityProtocol security protocol
    * @return bootstrap servers string
    */
@@ -270,12 +271,12 @@ public abstract class ClusterTestHarness {
 
   /**
    * Return the bootstrap servers string for the given listener name.
+   *
    * @param listenerName listener name
    * @return bootstrap servers string
    */
   public String getBootstrapServers(ListenerName listenerName) {
-    return TestUtils.bootstrapServers(
-        JavaConverters.asScalaBuffer(servers), listenerName);
+    return TestUtils.bootstrapServers(JavaConverters.asScalaBuffer(servers), listenerName);
   }
 
   private void doStartRest() throws Exception {
