@@ -225,6 +225,10 @@ public abstract class ClusterTestHarness {
   }
 
   protected void startRest(String bootstrapServers) throws Exception {
+    if (restServer != null && restServer.isRunning()) {
+      log.warn("Rest server already started, skipping start");
+      return;
+    }
     restProperties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     overrideKafkaRestConfigs(restProperties);
     if (withSchemaRegistry && schemaRegConnect != null) {
