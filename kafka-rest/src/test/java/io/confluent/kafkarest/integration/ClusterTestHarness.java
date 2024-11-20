@@ -21,7 +21,7 @@ import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.common.utils.IntegrationTest;
-import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import io.confluent.kafka.schemaregistry.CompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
@@ -72,6 +72,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigResource;
+import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.eclipse.jetty.server.Server;
@@ -136,7 +137,7 @@ public abstract class ClusterTestHarness {
   protected String plaintextBrokerList = null;
 
   // Schema registry config
-  protected String schemaRegCompatibility = AvroCompatibilityLevel.NONE.name;
+  protected String schemaRegCompatibility = CompatibilityLevel.NONE.name;
   protected Properties schemaRegProperties = null;
   protected String schemaRegConnect = null;
   protected SchemaRegistryRestApplication schemaRegApp = null;
@@ -254,15 +255,23 @@ public abstract class ClusterTestHarness {
   }
 
   /**
-   * Get the broker list from the given security protocol, this can be used for bootstrap servers of
-   * Kafka Rest
-   *
+   * Return the bootstrap servers string for the given security protocol.
    * @param securityProtocol security protocol
-   * @return broker list
+   * @return bootstrap servers string
    */
-  public String getBrokerListForSecurityProtocol(SecurityProtocol securityProtocol) {
+  public String getBootstrapServers(SecurityProtocol securityProtocol) {
     return TestUtils.getBrokerListStrFromServers(
         JavaConverters.asScalaBuffer(servers), securityProtocol);
+  }
+
+  /**
+   * Return the bootstrap servers string for the given listener name.
+   * @param listenerName listener name
+   * @return bootstrap servers string
+   */
+  public String getBootstrapServers(ListenerName listenerName) {
+    return TestUtils.bootstrapServers(
+        JavaConverters.asScalaBuffer(servers), listenerName);
   }
 
   private void doStartRest() throws Exception {
