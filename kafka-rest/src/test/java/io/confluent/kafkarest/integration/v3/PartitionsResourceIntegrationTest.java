@@ -16,7 +16,7 @@
 package io.confluent.kafkarest.integration.v3;
 
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.entities.v3.GetPartitionResponse;
 import io.confluent.kafkarest.entities.v3.ListPartitionsResponse;
@@ -28,8 +28,8 @@ import io.confluent.kafkarest.integration.ClusterTestHarness;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -39,7 +39,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();

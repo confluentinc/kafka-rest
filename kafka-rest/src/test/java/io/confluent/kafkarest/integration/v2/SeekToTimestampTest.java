@@ -8,8 +8,8 @@ import java.util.Arrays;
 import java.util.List;
 import javax.ws.rs.core.GenericType;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SeekToTimestampTest extends AbstractConsumerTest {
 
@@ -31,7 +31,7 @@ public class SeekToTimestampTest extends AbstractConsumerTest {
   private static final GenericType<List<BinaryConsumerRecord>> BINARY_CONSUMER_RECORD_TYPE =
       new GenericType<List<BinaryConsumerRecord>>() {};
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();

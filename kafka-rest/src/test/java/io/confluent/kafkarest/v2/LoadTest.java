@@ -14,10 +14,10 @@
  */
 package io.confluent.kafkarest.v2;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.ConsumerReadCallback;
@@ -43,16 +43,17 @@ import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.easymock.EasyMockRunner;
+import org.easymock.EasyMockExtension;
 import org.easymock.IExpectationSetters;
 import org.easymock.Mock;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(EasyMockRunner.class)
+@ExtendWith(EasyMockExtension.class)
 public class LoadTest {
 
   private KafkaRestConfig config;
+
   @Mock private KafkaConsumerManager.KafkaConsumerFactory consumerFactory;
 
   private KafkaConsumerManager consumerManager;
@@ -134,10 +135,10 @@ public class LoadTest {
     }
 
     void verifyRead() {
-      assertTrue("Callback failed to fire", sawCallback);
-      assertNull("There shouldn't be an exception in callback", actualException);
+      assertTrue(sawCallback, "Callback failed to fire");
+      assertNull(actualException, "There shouldn't be an exception in callback");
       List<ConsumerRecord<ByteString, ByteString>> expectedRecords = referenceRecords();
-      assertEquals("Records returned not as expected", expectedRecords, actualRecords);
+      assertEquals(expectedRecords, actualRecords, "Records returned not as expected");
 
       lock.lock();
       try {

@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
@@ -30,28 +30,32 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-@RunWith(JUnit4.class)
+@Tag("IntegrationTest")
 public class SchemaRegistrySaslInheritTest {
   private static final String TOPIC_NAME = "topic-1";
 
-  private final JvmPropertyFileLoginModuleFixture jaasConfig =
+  @Order(1)
+  @RegisterExtension
+  public final JvmPropertyFileLoginModuleFixture jaasConfig =
       JvmPropertyFileLoginModuleFixture.builder()
           .setName("SchemaRegistryServer")
           .addUser("kafka-rest", "kafka-rest-pass", "user")
           .addUser("schema-registry", "schema-registry-pass", "user")
           .build();
 
-  private final ZookeeperFixture zookeeper = ZookeeperFixture.create();
+  @Order(2)
+  @RegisterExtension
+  public final ZookeeperFixture zookeeper = ZookeeperFixture.create();
 
-  private final KafkaClusterFixture kafkaCluster =
+  @Order(3)
+  @RegisterExtension
+  public final KafkaClusterFixture kafkaCluster =
       KafkaClusterFixture.builder()
           .addUser("kafka-rest", "kafka-rest-pass")
           .addUser("schema-registry", "schema-registry-pass")
@@ -62,7 +66,9 @@ public class SchemaRegistrySaslInheritTest {
           .setZookeeper(zookeeper)
           .build();
 
-  private final SchemaRegistryFixture schemaRegistry =
+  @Order(4)
+  @RegisterExtension
+  public final SchemaRegistryFixture schemaRegistry =
       SchemaRegistryFixture.builder()
           .setClientConfig("basic.auth.credentials.source", "USER_INFO")
           .setClientConfig("basic.auth.user.info", "schema-registry:schema-registry-pass")
@@ -73,7 +79,9 @@ public class SchemaRegistrySaslInheritTest {
           .setKafkaUser("schema-registry", "schema-registry-pass")
           .build();
 
-  private final KafkaRestFixture kafkaRest =
+  @Order(5)
+  @RegisterExtension
+  public final KafkaRestFixture kafkaRest =
       KafkaRestFixture.builder()
           .setConfig("producer.max.block.ms", "5000")
           .setConfig("schema.registry.basic.auth.credentials.source", "SASL_INHERIT")
@@ -82,15 +90,7 @@ public class SchemaRegistrySaslInheritTest {
           .setSchemaRegistry(schemaRegistry)
           .build();
 
-  @Rule
-  public final TestRule rules =
-      RuleChain.outerRule(jaasConfig)
-          .around(zookeeper)
-          .around(kafkaCluster)
-          .around(schemaRegistry)
-          .around(kafkaRest);
-
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     kafkaCluster.createTopic(TOPIC_NAME, 3, (short) 1);
   }
@@ -114,6 +114,7 @@ public class SchemaRegistrySaslInheritTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =

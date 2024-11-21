@@ -17,6 +17,10 @@
        broken out. -->
   <suppress checks="ClassDataAbstractionCoupling" files="KafkaRestApplication.java" />
 
+  <!-- Setting up the metrics involves a lot of intermediate collaborators. Possibly solvable by
+       moving some of the logic to ProducerMetricsFactory. -->
+  <suppress checks="ClassDataAbstractionCoupling" files="ProducerMetrics.java" />
+
   <!-- KafkaRestConfig#baseKafkaRestConfigDef contains the definition of all Kafka REST configs.
        Maybe it can be split in multiple methods. -->
   <suppress checks="MethodLength" files="KafkaRestConfig.java" />

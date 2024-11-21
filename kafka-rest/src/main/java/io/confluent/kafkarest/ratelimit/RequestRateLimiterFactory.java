@@ -17,22 +17,16 @@ package io.confluent.kafkarest.ratelimit;
 
 import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.config.ConfigModule;
 import java.time.Duration;
-import javax.inject.Inject;
 import org.glassfish.hk2.api.Factory;
 
 /** A {@link Factory} for {@link RequestRateLimiter}. */
-final class RequestRateLimiterFactory implements Factory<RequestRateLimiter> {
+abstract class RequestRateLimiterFactory implements Factory<RequestRateLimiter> {
   private final RateLimitBackend backend;
   private final int permitsPerSecond;
   private final Duration timeout;
 
-  @Inject
-  RequestRateLimiterFactory(
-      RateLimitBackend backend,
-      @ConfigModule.RateLimitPermitsPerSecConfig Integer permitsPerSecond,
-      @ConfigModule.RateLimitTimeoutConfig Duration timeout) {
+  RequestRateLimiterFactory(RateLimitBackend backend, Integer permitsPerSecond, Duration timeout) {
     this.backend = requireNonNull(backend);
     this.permitsPerSecond = permitsPerSecond;
     this.timeout = requireNonNull(timeout);

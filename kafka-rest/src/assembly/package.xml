@@ -47,6 +47,7 @@
             <excludes>
                 <exclude>io.confluent:rest-utils</exclude>
                 <exclude>org.slf4j:slf4j-log4j12</exclude>
+                <exclude>org.slf4j:slf4j-reload4j</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
@@ -54,7 +55,7 @@
             <useProjectArtifact>false</useProjectArtifact>
             <useTransitiveFiltering>true</useTransitiveFiltering>
             <includes>
-                <include>org.slf4j:slf4j-log4j12</include>
+                <include>org.slf4j:slf4j-reload4j</include>
             </includes>
         </dependencySet>
     </dependencySets>

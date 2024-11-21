@@ -19,14 +19,14 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.fail;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.OpenConfigEntry;
 import io.confluent.kafkarest.common.KafkaFutures;
@@ -49,15 +49,13 @@ import org.apache.kafka.clients.admin.DescribeConfigsOptions;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class BrokerConfigManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -121,8 +119,6 @@ public class BrokerConfigManagerImplTest {
                   CONFIG_3.isSensitive(),
                   CONFIG_3.isReadOnly())));
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private Admin adminClient;
 
   @Mock private ClusterManager clusterManager;
@@ -133,7 +129,7 @@ public class BrokerConfigManagerImplTest {
 
   private BrokerConfigManagerImpl brokerConfigManager;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     brokerConfigManager = new BrokerConfigManagerImpl(adminClient, clusterManager);
   }

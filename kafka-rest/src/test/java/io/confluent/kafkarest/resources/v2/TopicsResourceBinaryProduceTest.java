@@ -22,8 +22,8 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -62,11 +62,12 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.RetriableException;
 import org.apache.kafka.common.errors.SaslAuthenticationException;
 import org.apache.kafka.common.errors.TopicAuthorizationException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(EasyMockExtension.class)
 public class TopicsResourceBinaryProduceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
@@ -141,8 +142,6 @@ public class TopicsResourceBinaryProduceTest
               null,
               Errors.KAFKA_AUTHORIZATION_ERROR_CODE,
               new TopicAuthorizationException(TOPIC_NAME).getMessage()));
-
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
   @Mock private SchemaManager schemaManager;
 

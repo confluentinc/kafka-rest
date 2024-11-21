@@ -31,10 +31,12 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import org.eclipse.jetty.server.Server;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
-/** An {@link ExternalResource} that runs a Kafka REST server. */
-public final class KafkaRestFixture extends ExternalResource {
+/** An extension that runs a Kafka REST server. */
+public final class KafkaRestFixture implements BeforeEachCallback, AfterEachCallback {
 
   @Nullable private final SslFixture certificates;
   private final HashMap<String, String> configs;
@@ -68,7 +70,7 @@ public final class KafkaRestFixture extends ExternalResource {
   }
 
   @Override
-  public void before() throws Exception {
+  public void beforeEach(ExtensionContext extensionContext) throws Exception {
     checkState(server == null);
     application = new KafkaRestApplication(createConfigs());
     server = application.createServer();
@@ -126,7 +128,7 @@ public final class KafkaRestFixture extends ExternalResource {
   }
 
   @Override
-  public void after() {
+  public void afterEach(ExtensionContext extensionContext) {
     if (server != null) {
       try {
         server.stop();

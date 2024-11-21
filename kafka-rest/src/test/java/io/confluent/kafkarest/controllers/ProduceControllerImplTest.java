@@ -39,12 +39,9 @@ import org.apache.kafka.common.Node;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-@RunWith(JUnit4.class)
 public class ProduceControllerImplTest {
   private static final Cluster CLUSTER =
       new Cluster(
@@ -87,7 +84,7 @@ public class ProduceControllerImplTest {
   private MockProducer<byte[], byte[]> producer;
   private ProduceController produceController;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     producer =
         new MockProducer<>(

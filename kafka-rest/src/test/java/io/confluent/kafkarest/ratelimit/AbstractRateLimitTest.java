@@ -16,7 +16,7 @@
 package io.confluent.kafkarest.ratelimit;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.config.ConfigModule;
@@ -46,8 +46,8 @@ import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.spi.TestContainerException;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 abstract class AbstractRateLimitTest extends JerseyTest {
   private ScheduledExecutorService executor;
@@ -66,14 +66,14 @@ abstract class AbstractRateLimitTest extends JerseyTest {
     return resourceConfig;
   }
 
-  @Before
+  @BeforeEach
   @Override
   public final void setUp() throws Exception {
     super.setUp();
     executor = Executors.newScheduledThreadPool(4);
   }
 
-  @After
+  @AfterEach
   @Override
   public final void tearDown() throws Exception {
     super.tearDown();

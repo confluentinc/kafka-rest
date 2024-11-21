@@ -21,7 +21,7 @@ import static java.util.Collections.emptySet;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import io.confluent.kafkarest.controllers.TopicConfigManager;
 import io.confluent.kafkarest.controllers.TopicManager;
@@ -43,15 +43,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class ListAllTopicsConfigsActionTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -91,15 +89,13 @@ public class ListAllTopicsConfigsActionTest {
           ConfigSource.DYNAMIC_TOPIC_CONFIG,
           /* synonyms= */ emptyList());
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private TopicConfigManager topicConfigManager;
 
   @Mock private TopicManager topicManager;
 
   private ListAllTopicsConfigsAction allTopicConfigsResource;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     allTopicConfigsResource =
         new ListAllTopicsConfigsAction(

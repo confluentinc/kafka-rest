@@ -19,7 +19,7 @@ import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static java.util.Collections.singletonList;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.controllers.ClusterManager;
 import io.confluent.kafkarest.entities.Broker;
@@ -38,15 +38,13 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.common.errors.TimeoutException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class ClustersResourceTest {
 
   private static final Broker BROKER_1 = Broker.create("cluster-1", 1, "broker-1", 9091, "rack-1");
@@ -55,13 +53,11 @@ public class ClustersResourceTest {
   private static final Cluster CLUSTER_1 =
       Cluster.create("cluster-1", BROKER_1, Arrays.asList(BROKER_1, BROKER_2, BROKER_3));
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private ClusterManager clusterManager;
 
   private ClustersResource clustersResource;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     clustersResource =
         new ClustersResource(

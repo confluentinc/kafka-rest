@@ -16,14 +16,11 @@
 package io.confluent.kafkarest.ratelimit;
 
 import java.time.Duration;
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Disabled;
 
 // TODO ddimitrov This continues being way too flaky.
 //  Until we fix it (KREST-3850), we should ignore it, as it might be hiding even worse errors.
-@Ignore
-@RunWith(JUnit4.class)
+@Disabled
 public final class Resilience4jRateLimitTest extends AbstractRateLimitEnabledTest {
 
   @Override

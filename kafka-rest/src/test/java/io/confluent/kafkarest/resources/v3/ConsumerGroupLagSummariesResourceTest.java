@@ -18,7 +18,7 @@ package io.confluent.kafkarest.resources.v3;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.controllers.ConsumerGroupLagSummaryManager;
 import io.confluent.kafkarest.entities.ConsumerGroupLagSummary;
@@ -31,15 +31,13 @@ import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class ConsumerGroupLagSummariesResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -59,13 +57,11 @@ public class ConsumerGroupLagSummariesResourceTest {
           .setMaxLagPartitionId(1)
           .build();
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private ConsumerGroupLagSummaryManager consumerGroupLagSummaryManager;
 
   private ConsumerGroupLagSummariesResource consumerGroupLagSummariesResource;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     consumerGroupLagSummariesResource =
         new ConsumerGroupLagSummariesResource(
