@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.entities.v3.ListAllReassignmentsResponse;
@@ -30,7 +31,9 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarness {
 
@@ -41,14 +44,15 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
   }
 
   @BeforeEach
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     Map<Integer, List<Integer>> replicaAssignments = createAssignment(Arrays.asList(0, 1, 2), 100);
     createTopic(TOPIC_NAME, replicaAssignments);
   }
 
-  @Test
-  public void listAllReassignments_returnsReassignments() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listAllReassignments_returnsReassignments(String quorum) {
     String clusterId = getClusterId();
 
     Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap =
@@ -74,8 +78,10 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
     }
   }
 
-  @Test
-  public void listAllReassignments_nonExistingCluster_returnsNotFound() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listAllReassignments_nonExistingCluster_returnsNotFound(String quorum)
+      throws Exception {
 
     Response response =
         request("/v3/clusters/foobar/topics/-/partitions/-/reassignment")

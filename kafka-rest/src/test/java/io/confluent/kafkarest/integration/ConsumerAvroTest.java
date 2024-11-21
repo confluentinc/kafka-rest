@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
+
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
@@ -26,7 +28,9 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ConsumerAvroTest extends AbstractConsumerTest {
 
@@ -63,13 +67,7 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
 
   private static final GenericType<List<SchemaConsumerRecord>> avroConsumerRecordType =
       new GenericType<List<SchemaConsumerRecord>>() {};
-  private static final Converter converter =
-      new Converter() {
-        @Override
-        public Object convert(Object obj) {
-          return new AvroConverter().toJson(obj).getJson();
-        }
-      };
+  private static final Converter converter = obj -> new AvroConverter().toJson(obj).getJson();
 
   public ConsumerAvroTest() {
     super(1, true);
@@ -77,15 +75,16 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     final int numPartitions = 3;
     final int replicationFactor = 1;
     createTopic(topicName, numPartitions, (short) replicationFactor);
   }
 
-  @Test
-  public void testConsumeOnlyValues() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testConsumeOnlyValues(String quorum) {
     String instanceUri =
         startConsumeMessages(
             groupName, topicName, EmbeddedFormat.AVRO, Versions.KAFKA_V2_JSON_AVRO, "earliest");
@@ -101,8 +100,9 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
     commitOffsets(instanceUri);
   }
 
-  @Test
-  public void testConsumeWithKeys() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testConsumeWithKeys(String quorum) {
     String instanceUri =
         startConsumeMessages(
             groupName, topicName, EmbeddedFormat.AVRO, Versions.KAFKA_V2_JSON_AVRO, "earliest");
@@ -118,8 +118,9 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
     commitOffsets(instanceUri);
   }
 
-  @Test
-  public void testConsumeTimeout() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testConsumeTimeout(String quorum) {
     String instanceUri =
         startConsumeMessages(
             groupName, topicName, EmbeddedFormat.AVRO, Versions.KAFKA_V2_JSON_AVRO, "earliest");
@@ -139,8 +140,9 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
         avroConsumerRecordType);
   }
 
-  @Test
-  public void testDeleteConsumer() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testDeleteConsumer(String quorum) {
     String instanceUri =
         startConsumeMessages(
             groupName, topicName, EmbeddedFormat.AVRO, Versions.KAFKA_V2_JSON_AVRO, "earliest");

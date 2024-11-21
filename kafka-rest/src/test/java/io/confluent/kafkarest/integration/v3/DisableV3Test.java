@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -23,7 +24,8 @@ import java.util.Properties;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class DisableV3Test extends ClusterTestHarness {
 
@@ -36,8 +38,9 @@ public class DisableV3Test extends ClusterTestHarness {
     restProperties.put(KafkaRestConfig.API_V3_ENABLE_CONFIG, false);
   }
 
-  @Test
-  public void v3ApiIsDisabled() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void v3ApiIsDisabled(String quorum) {
     Response response = request("/v3/clusters").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

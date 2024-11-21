@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.kafkarest.Versions;
@@ -34,7 +35,9 @@ import javax.ws.rs.core.GenericType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,15 +89,16 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     final int numPartitions = 3;
     final int replicationFactor = 1;
     createTopic(topicName, numPartitions, (short) replicationFactor);
   }
 
-  @Test
-  public void testConsumeWithKeys() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testConsumeWithKeys(String quorum) {
     String instanceUri =
         startConsumeMessages(
             groupName, topicName, EmbeddedFormat.JSON, Versions.KAFKA_V2_JSON_JSON, "earliest");
@@ -110,8 +114,9 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
     commitOffsets(instanceUri);
   }
 
-  @Test
-  public void testConsumeOnlyValues() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testConsumeOnlyValues(String quorum) {
     String instanceUri =
         startConsumeMessages(
             groupName, topicName, EmbeddedFormat.JSON, Versions.KAFKA_V2_JSON_JSON, "earliest");
@@ -127,9 +132,10 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
     commitOffsets(instanceUri);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @Disabled("This test doesn't verify produce records and is flaky, to be fixed in KREST-10370")
-  public void testConsumeWithMultipleParallelConsumers() throws InterruptedException {
+  public void testConsumeWithMultipleParallelConsumers(String quorum) throws InterruptedException {
     class ConsumerTask implements Callable<Void> {
 
       private int index = 0;
