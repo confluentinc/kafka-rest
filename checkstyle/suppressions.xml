@@ -10,19 +10,57 @@
 
   <!-- This class is a legacy from the V2 API. It currently has too many responsibilities, and needs
        to be broken down. -->
-  <suppress checks="ClassDataAbstractionCoupling" files="KafkaConsumerManager.java" />
+  <suppress checks="ClassDataAbstractionCoupling" files="KafkaConsumerManager" />
 
   <!-- This class is the main point of configuration for the Kafka REST application. It needs to
        reference multiple parts of the codebase by nature. Maybe some of the configuration can be
        broken out. -->
-  <suppress checks="ClassDataAbstractionCoupling" files="KafkaRestApplication.java" />
+  <suppress checks="ClassDataAbstractionCoupling" files="KafkaRestApplication" />
 
   <!-- Setting up the metrics involves a lot of intermediate collaborators. Possibly solvable by
        moving some of the logic to ProducerMetricsFactory. -->
-  <suppress checks="ClassDataAbstractionCoupling" files="ProducerMetrics.java" />
+  <suppress checks="ClassDataAbstractionCoupling" files="ProducerMetrics" />
 
   <!-- KafkaRestConfig#baseKafkaRestConfigDef contains the definition of all Kafka REST configs.
        Maybe it can be split in multiple methods. -->
-  <suppress checks="MethodLength" files="KafkaRestConfig.java" />
+  <suppress checks="MethodLength" files="KafkaRestConfig" />
+
+  <!-- With KREST-4067, ImportControl checks will be applied to both the main sources and the test
+       sources, which requires also applying Checkstyle to the test sources. To maintain the
+       pre-existing behavior without additional changes, all other (non-ImportControl) checks
+       should be explicitly suppressed. -->
+
+  <!-- That check is not great for test files - e.g. in many cases the declared variable takes the
+       result of an action, to be asserted against later. We'll ignore it for all tests. -->
+  <suppress checks="VariableDeclarationUsageDistance" files="[A-Za-z]*Test" />
+
+  <!-- That check flags names that are better kept as-is - e.g. mBeanServer. -->
+  <suppress checks="LocalVariableName" files="TestUtils|ProducerMetricsTest|ProduceActionTest" />
+
+  <!-- That check is not great - it complains about RecordType as a type parameter name. -->
+  <suppress checks="MethodTypeParameterName" files="AbstractConsumerTest" />
+
+  <!-- The tests below are fairly big and complex, so they go over the NCSS threshold. -->
+  <suppress checks="JavaNCSS" files="ProtobufConverterTest|ProduceActionTest" />
+
+  <!-- TestUtils#encodeComparable contains a complex, switch-like if-else structure. -->
+  <suppress checks="CyclomaticComplexity" files="TestUtils" />
+
+  <suppress
+    checks="ClassDataAbstractionCoupling"
+    files="ClusterTestHarness|LoadTest|SchemaRegistryFixture|RecordSerializerFacadeTest|SchemaManagerImplTest|Produce[A-Za-z]*Test" />
+
+  <!-- The tests below contain methods that use builders to create fairly complex result objects -->
+  <suppress
+    checks="MethodLength"
+    files="ConsumerAssignmentsResourceIntegrationTest|TopicsResourceIntegrationTest|[A-Za-z]*ConfigsResourceIntegrationTest" />
+
+  <!-- The tests below contain lines for which there's no good way of splitting in two. -->
+  <suppress
+    checks="LineLength"
+    files="UrlFactoryImplTest|PartitionsResourceTest|ConsumerGroupsResourceTest" />
+
+  <!-- AutoValue-generated classes can contain various violations which should be ignored. -->
+  <suppress checks="[A-za-z]*" files="AutoValue[A-Za-z_]*" />
 
 </suppressions>

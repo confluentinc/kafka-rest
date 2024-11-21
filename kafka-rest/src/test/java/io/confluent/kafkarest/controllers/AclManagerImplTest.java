@@ -27,7 +27,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Cluster;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;

@@ -161,6 +161,14 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new RateLimitTimeoutConfigImpl())
         .to(Duration.class);
 
+    bind(config.getStreamingConnectionMaxDuration())
+        .qualifiedBy(new StreamingConnectionMaxDurationConfigImpl())
+        .to(Duration.class);
+
+    bind(config.getStreamingConnectionMaxDurationGracePeriod())
+        .qualifiedBy(new StreamingConnectionMaxDurationGracePeriodImpl())
+        .to(Duration.class);
+
     bind(config.getSchemaRegistryConfigs())
         .qualifiedBy(new SchemaRegistryConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() {});
@@ -415,5 +423,23 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class SchemaRegistryUrlsConfigImpl
       extends AnnotationLiteral<SchemaRegistryUrlsConfig> implements SchemaRegistryUrlsConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface StreamingMaxConnectionDurationConfig {}
+
+  private static final class StreamingConnectionMaxDurationConfigImpl
+      extends AnnotationLiteral<StreamingMaxConnectionDurationConfig>
+      implements StreamingMaxConnectionDurationConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface StreamingMaxConnectionGracePeriod {}
+
+  private static final class StreamingConnectionMaxDurationGracePeriodImpl
+      extends AnnotationLiteral<StreamingMaxConnectionGracePeriod>
+      implements StreamingMaxConnectionGracePeriod {}
 }
 // CHECKSTYLE:ON:ClassDataAbstractionCoupling

@@ -17,7 +17,6 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
-import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
@@ -39,13 +38,14 @@ import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
+import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
@@ -59,15 +59,12 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.errors.SerializationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.eclipse.jetty.http.HttpStatus;
 
 @DoNotRateLimit
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/records")
 @ResourceName("api.v3.produce.*")
 public final class ProduceAction {
-
-  private static final Logger log = LoggerFactory.getLogger(ProduceAction.class);
 
   private static final Collector<
           ProduceRequestHeader,
@@ -83,7 +80,7 @@ public final class ProduceAction {
   private final Provider<SchemaManager> schemaManagerProvider;
   private final Provider<RecordSerializer> recordSerializerProvider;
   private final Provider<ProduceController> produceControllerProvider;
-  private final Provider<ProducerMetrics> producerMetrics;
+  private final Provider<ProducerMetrics> producerMetricsProvider;
   private final StreamingResponseFactory streamingResponseFactory;
   private final ProduceRateLimiters produceRateLimiters;
   private final ExecutorService executorService;
@@ -100,7 +97,7 @@ public final class ProduceAction {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
-    this.producerMetrics = requireNonNull(producerMetrics);
+    this.producerMetricsProvider = requireNonNull(producerMetrics);
     this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
     this.produceRateLimiters = requireNonNull(produceRateLimiters);
     this.executorService = requireNonNull(executorService);
@@ -115,7 +112,7 @@ public final class ProduceAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      MappingIterator<ProduceRequest> requests)
+      JsonStream<ProduceRequest> requests)
       throws Exception {
 
     if (requests == null) {
@@ -125,21 +122,32 @@ public final class ProduceAction {
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
-        .compose(request -> produce(clusterId, topicName, request, controller))
+        .compose(
+            request ->
+                produce(clusterId, topicName, request, controller, producerMetricsProvider.get()))
         .resume(asyncResponse);
   }
 
   private CompletableFuture<ProduceResponse> produce(
-      String clusterId, String topicName, ProduceRequest request, ProduceController controller) {
+      String clusterId,
+      String topicName,
+      ProduceRequest request,
+      ProduceController controller,
+      ProducerMetrics metrics) {
+    long requestStartNs = System.nanoTime();
 
     try {
       produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
     } catch (RateLimitExceededException e) {
+      recordRateLimitedMetrics(metrics);
       // KREST-4356 Use our own CompletionException that will avoid the costly stack trace fill.
       throw new StacklessCompletionException(e);
     }
 
-    Instant requestInstant = Instant.now();
+    // Request metrics are recorded before we check the validity of the message body, but after
+    // rate limiting, as these metrics are used for billing.
+    recordRequestMetrics(metrics, request.getOriginalSize());
+
     Optional<RegisteredSchema> keySchema =
         request.getKey().flatMap(key -> getSchema(topicName, /* isKey= */ true, key));
     Optional<EmbeddedFormat> keyFormat =
@@ -158,8 +166,6 @@ public final class ProduceAction {
     Optional<ByteString> serializedValue =
         serialize(topicName, valueFormat, valueSchema, request.getValue(), /* isKey= */ false);
 
-    recordRequestMetrics(request.getOriginalSize());
-
     CompletableFuture<ProduceResult> produceResult =
         controller.produce(
             clusterId,
@@ -174,8 +180,8 @@ public final class ProduceAction {
         .handleAsync(
             (result, error) -> {
               if (error != null) {
-                long latency = Duration.between(requestInstant, Instant.now()).toMillis();
-                recordErrorMetrics(latency);
+                long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
+                recordErrorMetrics(metrics, latency);
                 throw new StacklessCompletionException(error);
               }
               return result;
@@ -186,9 +192,8 @@ public final class ProduceAction {
               ProduceResponse response =
                   toProduceResponse(
                       clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
-              long latency =
-                  Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
-              recordResponseMetrics(latency);
+              long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
+              recordResponseMetrics(metrics, latency);
               return response;
             },
             executorService);
@@ -270,22 +275,27 @@ public final class ProduceAction {
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
                         .build()))
+        .setErrorCode(HttpStatus.OK_200)
         .build();
   }
 
-  private void recordResponseMetrics(long latency) {
-    producerMetrics.get().recordResponse();
-    producerMetrics.get().recordRequestLatency(latency);
+  private void recordResponseMetrics(ProducerMetrics metrics, long latencyMs) {
+    metrics.recordResponse();
+    metrics.recordRequestLatency(latencyMs);
   }
 
-  private void recordErrorMetrics(long latency) {
-    producerMetrics.get().recordError();
-    producerMetrics.get().recordRequestLatency(latency);
+  private void recordErrorMetrics(ProducerMetrics metrics, long latencyMs) {
+    metrics.recordError();
+    metrics.recordRequestLatency(latencyMs);
   }
 
-  private void recordRequestMetrics(long size) {
-    producerMetrics.get().recordRequest();
+  private void recordRateLimitedMetrics(ProducerMetrics metrics) {
+    metrics.recordRateLimited();
+  }
+
+  private void recordRequestMetrics(ProducerMetrics metrics, long size) {
+    metrics.recordRequest();
     // record request size
-    producerMetrics.get().recordRequestSize(size);
+    metrics.recordRequestSize(size);
   }
 }

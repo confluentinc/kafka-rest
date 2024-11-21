@@ -138,8 +138,8 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final ProduceResponse produceResponse =
         TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
-    for (PartitionOffset pOffset : produceResponse.getOffsets()) {
-      assertNotNull(pOffset.getError());
+    for (PartitionOffset partitionOffset : produceResponse.getOffsets()) {
+      assertNotNull(partitionOffset.getError());
     }
   }
 
@@ -163,8 +163,8 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
     assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
     final ProduceResponse produceResponse =
         TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
-    for (PartitionOffset pOffset : produceResponse.getOffsets()) {
-      assertEquals(Errors.KAFKA_AUTHORIZATION_ERROR_CODE, (int) pOffset.getErrorCode());
+    for (PartitionOffset partitionOffset : produceResponse.getOffsets()) {
+      assertEquals(Errors.KAFKA_AUTHORIZATION_ERROR_CODE, (int) partitionOffset.getErrorCode());
     }
   }
 

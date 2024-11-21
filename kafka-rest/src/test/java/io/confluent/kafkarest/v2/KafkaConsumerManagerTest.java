@@ -12,6 +12,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
 package io.confluent.kafkarest.v2;
 
 import static java.util.Collections.singletonMap;
@@ -642,14 +643,6 @@ public class KafkaConsumerManagerTest {
 
   private List<ConsumerRecord<ByteString, ByteString>> bootstrapConsumer(
       final MockConsumer<byte[], byte[]> consumer, boolean toExpectCreate) {
-    List<ConsumerRecord<ByteString, ByteString>> referenceRecords =
-        Arrays.asList(
-            ConsumerRecord.create(
-                topicName, ByteString.copyFromUtf8("k1"), ByteString.copyFromUtf8("v1"), 0, 0),
-            ConsumerRecord.create(
-                topicName, ByteString.copyFromUtf8("k2"), ByteString.copyFromUtf8("v2"), 0, 1),
-            ConsumerRecord.create(
-                topicName, ByteString.copyFromUtf8("k3"), ByteString.copyFromUtf8("v3"), 0, 2));
 
     if (toExpectCreate) {
       expectCreate(consumer);
@@ -666,6 +659,16 @@ public class KafkaConsumerManagerTest {
         new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
     consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
     consumer.updateBeginningOffsets(singletonMap(new TopicPartition(topicName, 0), 0L));
+
+    List<ConsumerRecord<ByteString, ByteString>> referenceRecords =
+        Arrays.asList(
+            ConsumerRecord.create(
+                topicName, ByteString.copyFromUtf8("k1"), ByteString.copyFromUtf8("v1"), 0, 0),
+            ConsumerRecord.create(
+                topicName, ByteString.copyFromUtf8("k2"), ByteString.copyFromUtf8("v2"), 0, 1),
+            ConsumerRecord.create(
+                topicName, ByteString.copyFromUtf8("k3"), ByteString.copyFromUtf8("v3"), 0, 2));
+
     for (ConsumerRecord<ByteString, ByteString> record : referenceRecords) {
       consumer.addRecord(
           new org.apache.kafka.clients.consumer.ConsumerRecord<>(

@@ -82,8 +82,10 @@ public final class SchemaRegistryFixture implements BeforeEachCallback, AfterEac
   @Override
   public void beforeEach(ExtensionContext extensionContext) throws Exception {
     checkState(server == null);
-    server = new SchemaRegistryRestApplication(createConfigs()).createServer();
+    SchemaRegistryRestApplication schemaRegApp = new SchemaRegistryRestApplication(createConfigs());
+    server = schemaRegApp.createServer();
     server.start();
+    schemaRegApp.postServerStart();
     baseUri = server.getURI();
     client =
         new CachedSchemaRegistryClient(

@@ -107,7 +107,8 @@ public class AuthorizationErrorTest
             1,
             false,
             1,
-            (short) 1);
+            (short) 1,
+            false);
     brokerProps.put(KafkaConfig.BrokerIdProp(), Integer.toString(i));
     brokerProps.put(KafkaConfig.ZkConnectProp(), zkConnect);
     brokerProps.setProperty("authorizer.class.name", AclAuthorizer.class.getName());

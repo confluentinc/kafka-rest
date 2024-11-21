@@ -35,8 +35,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
- * ProducerPool, AdminClientWrapper and KafkaConsumerManager instances are initialized lazily if
- * required.
+ * Admin, ConsumerManager and Producer instances are initialized lazily if required.
  */
 public class DefaultKafkaRestContext implements KafkaRestContext {
 
@@ -47,15 +46,6 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
 
   private SchemaRegistryClient schemaRegistryClient;
 
-  /** @deprecated Use {@link #DefaultKafkaRestContext(KafkaRestConfig)} instead. */
-  @Deprecated
-  public DefaultKafkaRestContext(
-      KafkaRestConfig config,
-      ProducerPool producerPool,
-      KafkaConsumerManager kafkaConsumerManager) {
-    this(config);
-  }
-
   public DefaultKafkaRestContext(KafkaRestConfig config) {
     log.debug("Creating context with config: {}", config);
     this.config = requireNonNull(config);
@@ -64,11 +54,6 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   @Override
   public KafkaRestConfig getConfig() {
     return config;
-  }
-
-  @Override
-  public ProducerPool getProducerPool() {
-    return new ProducerPool(getProducer());
   }
 
   @Override
