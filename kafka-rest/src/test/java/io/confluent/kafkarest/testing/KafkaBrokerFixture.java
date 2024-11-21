@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
-import kafka.utils.MockTime;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.network.ListenerName;
@@ -41,6 +40,7 @@ import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import scala.Option;
 
 /** An extension that runs a Kafka broker. */
 public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCallback {
@@ -57,9 +57,6 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
           .put(KafkaConfig.OffsetsTopicPartitionsProp(), "1")
           .put(KafkaConfig.OffsetsTopicReplicationFactorProp(), "1")
           .build();
-
-  private static final MockTime MOCK_TIME =
-      new MockTime(System.currentTimeMillis(), System.nanoTime());
 
   private final int brokerId;
   @Nullable private final SslFixture certificates;
@@ -97,7 +94,7 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
   @Override
   public void beforeEach(ExtensionContext extensionContext) throws Exception {
     logDir = Files.createTempDirectory(String.format("kafka-%d-", brokerId));
-    broker = TestUtils.createServer(KafkaConfig.fromProps(getBrokerConfigs()), MOCK_TIME);
+    broker = TestUtils.createServer(KafkaConfig.fromProps(getBrokerConfigs()), Option.empty());
   }
 
   private Properties getBrokerConfigs() {

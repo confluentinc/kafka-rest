@@ -289,6 +289,15 @@ public class ClusterConfigManagerImplTest {
   public void resetClusterConfig_existingConfig_resetsConfig() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.BROKER, ""))),
+                anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all())
+        .andReturn(
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.BROKER, ""), CONFIG)));
+    expect(
             adminClient.incrementalAlterConfigs(
                 singletonMap(
                     new ConfigResource(ConfigResource.Type.BROKER, ""),
@@ -302,7 +311,7 @@ public class ClusterConfigManagerImplTest {
             singletonMap(
                 new ConfigResource(ConfigResource.Type.BROKER, ""),
                 KafkaFuture.completedFuture(null)));
-    replay(clusterManager, adminClient, alterConfigsResult);
+    replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
     clusterConfigManager
         .deleteClusterConfig(CLUSTER_ID, ClusterConfig.Type.BROKER, CONFIG_1.getName())
@@ -313,6 +322,32 @@ public class ClusterConfigManagerImplTest {
 
   @Test
   public void resetClusterConfig_nonExistingCluster_throwsNotFound() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.BROKER, ""))),
+                anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all())
+        .andReturn(
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.BROKER, ""), CONFIG)));
+    replay(clusterManager, adminClient, describeConfigsResult);
+
+    try {
+      clusterConfigManager
+          .deleteClusterConfig(CLUSTER_ID, ClusterConfig.Type.BROKER, "foobar")
+          .get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void resetClusterConfig_nonExistingConfig_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
     replay(clusterManager);
 

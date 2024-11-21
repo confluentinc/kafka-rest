@@ -28,6 +28,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.MessageBodyReader;
 
 /** A {@link MessageBodyReader} for {@link JsonStream}. */
@@ -41,7 +42,9 @@ public final class JsonStreamMessageBodyReader implements MessageBodyReader<Json
   @Override
   public boolean isReadable(
       Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-    return JsonStream.class.equals(type) && MediaType.APPLICATION_JSON_TYPE.equals(mediaType);
+    return JsonStream.class.equals(type)
+        && MediaType.APPLICATION_JSON_TYPE.getType().equalsIgnoreCase(mediaType.getType())
+        && MediaType.APPLICATION_JSON_TYPE.getSubtype().equalsIgnoreCase(mediaType.getSubtype());
   }
 
   @Override
@@ -53,6 +56,19 @@ public final class JsonStreamMessageBodyReader implements MessageBodyReader<Json
       MultivaluedMap<String, String> httpHeaders,
       InputStream entityStream)
       throws WebApplicationException {
+
+    // We know that the media type is 'application/json' but there might be an optional charset too
+    if (mediaType.getParameters() != null) {
+      String charset = mediaType.getParameters().get(MediaType.CHARSET_PARAMETER);
+      if (charset != null) {
+        if (!charset.equalsIgnoreCase("UTF-8") && !charset.equalsIgnoreCase("ISO-8859-1")) {
+          throw new WebApplicationException(
+              "Unsupported charset in Content-Type header. Supports \"UTF-8\" and \"ISO-8859-1\".",
+              Status.BAD_REQUEST);
+        }
+      }
+    }
+
     JavaType wrappedType = objectMapper.constructType(genericType).containedType(0);
     return new JsonStream<>(
         () -> {

@@ -52,6 +52,9 @@ final class NoSchemaRecordSerializer {
       case JSON:
         return Optional.of(serializeJson(data));
 
+      case STRING:
+        return Optional.of(serializeString(data));
+
       default:
         throw new AssertionError(String.format("Unexpected enum constant: %s", format));
     }
@@ -84,5 +87,12 @@ final class NoSchemaRecordSerializer {
     private byte[] serialize(JsonNode data) {
       return serialize(/* topic= */ "", data);
     }
+  }
+
+  private static ByteString serializeString(JsonNode data) {
+    if (!data.isTextual()) {
+      throw new BadRequestException(String.format("data=%s is not a string.", data));
+    }
+    return ByteString.copyFromUtf8(data.asText());
   }
 }

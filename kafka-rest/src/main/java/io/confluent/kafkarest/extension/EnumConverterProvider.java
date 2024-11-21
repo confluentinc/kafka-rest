@@ -28,6 +28,8 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ParamConverter;
 import javax.ws.rs.ext.ParamConverterProvider;
 
@@ -106,8 +108,12 @@ public final class EnumConverterProvider implements ParamConverterProvider {
 
       T cached = (T) enumMapper.get(enumClass, value.toUpperCase());
       if (cached == null) {
-        throw new RuntimeException(
-            String.format("No constant in %s matched %s", enumClass.getName(), value));
+        // The message from a WebApplicationException is preserved by the exception handling
+        // leading to an understandable HTTP response
+        throw new WebApplicationException(
+            String.format(
+                "The valid values for %s do not include '%s'", enumClass.getSimpleName(), value),
+            Response.Status.NOT_FOUND.getStatusCode());
       }
       return cached;
     }

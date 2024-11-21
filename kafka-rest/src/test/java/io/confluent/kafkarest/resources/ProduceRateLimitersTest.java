@@ -23,6 +23,7 @@ import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -39,8 +40,7 @@ public class ProduceRateLimitersTest {
 
   @Test
   @Inject
-  public void rateLimitingDisabledNoWaitTimeGiven() {
-
+  public void test_thatRateLimitingCanBeDisabled() {
     Properties properties = new Properties();
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "false");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
@@ -71,7 +71,8 @@ public class ProduceRateLimitersTest {
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
-    produceRateLimiters.rateLimit("clusterId", 10L);
+
+    assertDoesNotThrow(() -> produceRateLimiters.rateLimit("clusterId", 10L));
 
     verify(
         countLimitProvider,
@@ -84,8 +85,7 @@ public class ProduceRateLimitersTest {
 
   @Test
   @Inject
-  public void waitTimesReturnedForMultipleClusters() {
-
+  public void test_whenBelowThreshold_CallsArentRateLimited() {
     Properties properties = new Properties();
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
@@ -158,7 +158,7 @@ public class ProduceRateLimitersTest {
 
   @Test
   @Inject
-  public void rateLimitedOnCountExceptionThrown() {
+  public void test_whenLocalCountRateLimiterBreached_thenExceptionThrown() {
 
     Properties properties = new Properties();
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
@@ -229,7 +229,7 @@ public class ProduceRateLimitersTest {
 
   @Test
   @Inject
-  public void rateLimitedOnBytesExceptionThrown() {
+  public void test_whenLocalBytesRateLimiterBreached_thenExceptionThrown() {
 
     Properties properties = new Properties();
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
@@ -300,7 +300,7 @@ public class ProduceRateLimitersTest {
   }
 
   @Test
-  public void cacheExpiresforeRateLimit() throws InterruptedException {
+  public void test_thatCacheForRateLimitersExpires() throws InterruptedException {
 
     Properties properties = new Properties();
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
@@ -358,6 +358,7 @@ public class ProduceRateLimitersTest {
     produceRateLimiters.rateLimit("clusterId", 10L);
 
     Thread.sleep(50);
+    // Cache should have expired, and count reset back to 10L.
     produceRateLimiters.rateLimit("clusterId", 10L);
 
     verify(
@@ -371,7 +372,7 @@ public class ProduceRateLimitersTest {
 
   @Test
   @Inject
-  public void globalCountLimitHit() {
+  public void test_whenGlobalCountLimitHit_thenExceptionThrown() {
 
     Properties properties = new Properties();
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
@@ -428,7 +429,7 @@ public class ProduceRateLimitersTest {
 
   @Test
   @Inject
-  public void globalBytesLimitHit() {
+  public void test_whenGlobalBytesLimitHit_thenExceptionThrown() {
 
     Properties properties = new Properties();
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");

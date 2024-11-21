@@ -92,22 +92,6 @@ public class ListAllBrokersConfigsActionIntegrationTest extends ClusterTestHarne
             baseUrl,
             clusterId,
             1,
-            "num.network.threads",
-            "3",
-            true,
-            false,
-            ConfigSource.DEFAULT_CONFIG,
-            singletonList(
-                ConfigSynonymData.builder()
-                    .setName("num.network.threads")
-                    .setValue("3")
-                    .setSource(ConfigSource.DEFAULT_CONFIG)
-                    .build()));
-    BrokerConfigData expectedBroker2Config2 =
-        createBrokerConfigData(
-            baseUrl,
-            clusterId,
-            1,
             "default.replication.factor",
             "1",
             false,
@@ -124,7 +108,7 @@ public class ListAllBrokersConfigsActionIntegrationTest extends ClusterTestHarne
                     .setValue("1")
                     .setSource(ConfigSource.DEFAULT_CONFIG)
                     .build()));
-    BrokerConfigData expectedBroker2Config3 =
+    BrokerConfigData expectedBroker2Config2 =
         createBrokerConfigData(
             baseUrl,
             clusterId,
@@ -167,9 +151,6 @@ public class ListAllBrokersConfigsActionIntegrationTest extends ClusterTestHarne
     assertTrue(
         responseBody.getValue().getData().contains(expectedBroker2Config2),
         String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker2Config2));
-    assertTrue(
-        responseBody.getValue().getData().contains(expectedBroker2Config3),
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedBroker2Config3));
   }
 
   @Test

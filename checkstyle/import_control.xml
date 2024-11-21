@@ -142,7 +142,6 @@
   <allow class="kafka.server.KafkaConfig" />
   <allow class="kafka.server.KafkaServer" />
   <allow class="kafka.utils.CoreUtils" />
-  <allow class="kafka.utils.MockTime" />
   <allow class="kafka.utils.TestUtils" />
   <allow class="kafka.zk.EmbeddedZookeeper" />
 

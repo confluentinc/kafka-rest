@@ -64,9 +64,10 @@ public interface TopicManager {
   CompletableFuture<Optional<Topic>> getLocalTopic(String topicName);
 
   /**
-   * Creates a new Kafka {@link Topic} with either partitions count and replication factor or
-   * explicitly specified partition-to-replicas assignments.
+   * The original method to create a new Kafka {@link Topic} which was not able to pass back a
+   * result. Now superseded by {@code createTopic2}.
    */
+  @Deprecated
   CompletableFuture<Void> createTopic(
       String clusterId,
       String topicName,
@@ -78,13 +79,9 @@ public interface TopicManager {
   /**
    * Creates a new Kafka {@link Topic} with either partitions count and replication factor or
    * explicitly specified partition-to-replicas assignments. If the {@code validateOnly} flag is
-   * set, the operation is only dry-ran (a topic does not get created as a result).
+   * set, the operation is only dry-run (a topic does not get created as a result).
    */
-  // KREST-8518 A separate overload is provided instead of changing the pre-existing createTopic
-  // method in order to minimize any risks related to external usage of that method (as TopicManager
-  // can be injected in projects inheriting from kafka-rest) and to minimize the amount of necessary
-  // changes (e.g. by avoiding the need to heavily refactor tests).
-  CompletableFuture<Void> createTopic(
+  CompletableFuture<Topic> createTopic2(
       String clusterId,
       String topicName,
       Optional<Integer> partitionsCount,

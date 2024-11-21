@@ -41,6 +41,13 @@ public interface PartitionManager {
       String clusterId, String topicName, int partitionId);
 
   /**
+   * Returns the Kafka {@link Partition} with the given {@code partitionId}. Returns an empty
+   * optional if any of the entities are missing.
+   */
+  CompletableFuture<Optional<Partition>> getPartitionAllowMissing(
+      String clusterId, String topicName, int partitionId);
+
+  /**
    * Returns the Kafka {@link Partition} with the given {@code partitionId}, belonging to the {@link
    * io.confluent.kafkarest.entities.Cluster} that this application is connected to.
    */

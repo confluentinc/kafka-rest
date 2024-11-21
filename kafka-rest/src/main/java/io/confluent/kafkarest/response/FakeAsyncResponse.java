@@ -45,6 +45,15 @@ public final class FakeAsyncResponse implements AsyncResponse {
   @Nullable
   private Throwable exception;
 
+  public int getStatus() {
+    if (isSuspended()) {
+      throw new IllegalStateException();
+    }
+    return value instanceof Response
+        ? ((Response) value).getStatus()
+        : Response.Status.OK.getStatusCode();
+  }
+
   @Nullable
   public Object getValue() {
     if (isSuspended()) {

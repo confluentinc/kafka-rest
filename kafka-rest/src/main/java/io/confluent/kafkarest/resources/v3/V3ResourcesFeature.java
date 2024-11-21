@@ -42,6 +42,7 @@ public final class V3ResourcesFeature implements Feature {
     configurable.register(SearchReassignmentsByTopicAction.class);
     configurable.register(PartitionsResource.class);
     configurable.register(ProduceAction.class);
+    configurable.register(ProduceBatchAction.class);
     configurable.register(ReplicasResource.class);
     configurable.register(SearchReplicasByBrokerAction.class);
     configurable.register(TopicConfigsResource.class);

@@ -88,16 +88,16 @@ public final class AclsResource {
       @QueryParam("operation") @DefaultValue("any") Operation operation,
       @QueryParam("permission") @DefaultValue("any") Permission permission) {
     if (resourceType == Acl.ResourceType.UNKNOWN) {
-      throw new BadRequestException("resource_type cannot be ANY");
+      throw new BadRequestException("resource_type cannot be UNKNOWN");
     }
     if (patternType == Acl.PatternType.UNKNOWN) {
       throw new BadRequestException("pattern_type cannot be UNKNOWN");
     }
     if (operation == Acl.Operation.UNKNOWN) {
-      throw new BadRequestException("operation cannot be ANY");
+      throw new BadRequestException("operation cannot be UNKNOWN");
     }
     if (permission == Acl.Permission.UNKNOWN) {
-      throw new BadRequestException("permission cannot be ANY");
+      throw new BadRequestException("permission cannot be UNKNOWN");
     }
 
     CompletableFuture<SearchAclsResponse> response =

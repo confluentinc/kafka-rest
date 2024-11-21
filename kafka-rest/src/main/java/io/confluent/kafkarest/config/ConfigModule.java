@@ -131,6 +131,10 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ProduceResponseThreadPoolSizeImpl())
         .to(Integer.class);
 
+    bind(config.getInt(KafkaRestConfig.PRODUCE_BATCH_MAXIMUM_ENTRIES))
+        .qualifiedBy(new ProduceBatchMaximumEntriesImpl())
+        .to(Integer.class);
+
     bind(config.getProducerConfigs())
         .qualifiedBy(new ProducerConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() {});
@@ -349,6 +353,15 @@ public final class ConfigModule extends AbstractBinder {
   private static final class ProduceResponseThreadPoolSizeImpl
       extends AnnotationLiteral<ProduceResponseThreadPoolSizeConfig>
       implements ProduceResponseThreadPoolSizeConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceBatchMaximumEntriesConfig {}
+
+  private static final class ProduceBatchMaximumEntriesImpl
+      extends AnnotationLiteral<ProduceBatchMaximumEntriesConfig>
+      implements ProduceBatchMaximumEntriesConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)

@@ -434,6 +434,126 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
+  public void serializeStringKey_returnsSerialized() {
+    ByteString serialized =
+        recordSerializer
+            .serialize(
+                EmbeddedFormat.STRING,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ true)
+            .get();
+
+    assertEquals("foobar", serialized.toStringUtf8());
+  }
+
+  @Test
+  public void serializeStringValue_returnsSerialized() {
+    ByteString serialized =
+        recordSerializer
+            .serialize(
+                EmbeddedFormat.STRING,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ false)
+            .get();
+
+    assertEquals("foobar", serialized.toStringUtf8());
+  }
+
+  @Test
+  public void serializeNullStringKey_returnsEmpty() {
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.STRING,
+            TOPIC_NAME,
+            /* schema= */ Optional.empty(),
+            NullNode.getInstance(),
+            /* isKey= */ true);
+
+    assertFalse(serialized.isPresent());
+  }
+
+  @Test
+  public void serializeNullStringValue_returnsEmpty() {
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.STRING,
+            TOPIC_NAME,
+            /* schema= */ Optional.empty(),
+            NullNode.getInstance(),
+            /* isKey= */ false);
+
+    assertFalse(serialized.isPresent());
+  }
+
+  @Test
+  public void serializeEscapedStringKey_returnsSerialized() {
+    ByteString serialized =
+        recordSerializer
+            .serialize(
+                EmbeddedFormat.STRING,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                TextNode.valueOf("\\U0001f9b4"),
+                /* isKey= */ true)
+            .get();
+
+    assertEquals("\\U0001f9b4", serialized.toStringUtf8());
+  }
+
+  @Test
+  public void serializeEscapedStringValue_returnsSerialized() {
+    ByteString serialized =
+        recordSerializer
+            .serialize(
+                EmbeddedFormat.STRING,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                TextNode.valueOf("\\U0001f9b4"),
+                /* isKey= */ false)
+            .get();
+
+    assertEquals("\\U0001f9b4", serialized.toStringUtf8());
+  }
+
+  @Test
+  public void serializeInvalidStringKey_throwsBadRequestException() {
+    ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
+    node.put("foo", 1);
+    node.put("bar", false);
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.STRING,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                node,
+                /* isKey= */ true));
+  }
+
+  @Test
+  public void serializeInvalidStringValue_throwsBadRequestException() {
+    ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
+    node.put("foo", 1);
+    node.put("bar", false);
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.STRING,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                node,
+                /* isKey= */ false));
+  }
+
+  @Test
   public void serializeStringAvroKey_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"string\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);

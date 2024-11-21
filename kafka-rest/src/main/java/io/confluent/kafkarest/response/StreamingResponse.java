@@ -226,6 +226,10 @@ public abstract class StreamingResponse<T> {
     }
   }
 
+  public static ErrorResponse toErrorResponse(Throwable t) {
+    return EXCEPTION_MAPPER.toErrorResponse(t);
+  }
+
   abstract boolean hasNext();
 
   abstract void close();

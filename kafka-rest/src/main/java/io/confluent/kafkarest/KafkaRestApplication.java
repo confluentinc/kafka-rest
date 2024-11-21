@@ -88,7 +88,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
         && StringUtil.isBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
       throw new RuntimeException(
-          "Atleast one of "
+          "At least one of "
               + KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG
               + " "
               + "or "

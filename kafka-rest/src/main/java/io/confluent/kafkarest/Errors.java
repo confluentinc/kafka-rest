@@ -185,6 +185,21 @@ public class Errors {
         SERIALIZATION_EXCEPTION_ERROR_CODE);
   }
 
+  public static final String PRODUCE_BATCH_EXCEPTION_NULL_MESSAGE =
+      "Request body is empty. Data is required.";
+  public static final String PRODUCE_BATCH_EXCEPTION_IDS_NOT_DISTINCT_MESSAGE =
+      "Batch entry IDs are not distinct.";
+  public static final String PRODUCE_BATCH_EXCEPTION_EMPTY_BATCH_MESSAGE = "Empty batch.";
+  public static final String PRODUCE_BATCH_EXCEPTION_TOO_MANY_ENTRIES_MESSAGE =
+      "Too many entries in batch.";
+  public static final String PRODUCE_BATCH_EXCEPTION_IDENTIFIER_NOT_VALID_MESSAGE =
+      "Batch entry identifier is not a valid string.";
+  public static final int PRODUCE_BATCH_EXCEPTION_ERROR_CODE = 42208;
+
+  public static RestConstraintViolationException produceBatchException(String cause) {
+    return new RestConstraintViolationException(cause, PRODUCE_BATCH_EXCEPTION_ERROR_CODE);
+  }
+
   public static final String ZOOKEEPER_ERROR_MESSAGE = "Zookeeper error: ";
   public static final int ZOOKEEPER_ERROR_ERROR_CODE = 50001;
 

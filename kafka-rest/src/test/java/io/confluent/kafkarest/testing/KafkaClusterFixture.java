@@ -25,7 +25,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.confluent.kafkarest.common.CompletableFutures;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +40,7 @@ import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
@@ -157,6 +161,35 @@ public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachC
     ConsumerRecord<K, V> record = records.iterator().next();
     consumer.close();
     return record;
+  }
+
+  public <K, V> ConsumerRecords<K, V> getRecords(
+      String topic,
+      Deserializer<K> keyDeserializer,
+      Deserializer<V> valueDeserializer,
+      int recordCount) {
+
+    List<ConsumerRecord<K, V>> accumulator = new ArrayList<>(recordCount);
+    int numRecords = 0;
+
+    KafkaConsumer<K, V> consumer = getConsumer(keyDeserializer, valueDeserializer);
+    TopicPartition tp = new TopicPartition(topic, 0);
+    consumer.assign(Collections.singleton(tp));
+    consumer.seekToBeginning(Collections.singleton(tp));
+
+    ConsumerRecords<K, V> records;
+    while (numRecords < recordCount) {
+      records = consumer.poll(Duration.ofSeconds(60));
+      Iterator<ConsumerRecord<K, V>> it = records.iterator();
+      while (it.hasNext() && (numRecords < recordCount)) {
+        ConsumerRecord<K, V> rec = it.next();
+        accumulator.add(rec);
+        numRecords++;
+      }
+    }
+    consumer.close();
+
+    return new ConsumerRecords<>(Collections.singletonMap(tp, accumulator));
   }
 
   public void createTopic(String topicName, int numPartitions, short replicationFactor)

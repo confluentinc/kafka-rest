@@ -338,6 +338,45 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
+  public void testMultiDeleteBadQueryParameter() {
+    createAliceAndBobAcls();
+
+    Client webClient = getClient();
+    restApp.configureBaseApplication(webClient);
+
+    Response multiDeleteBadQueryParameterResponse =
+        webClient
+            .target(restConnect + baseAclUrl)
+            .queryParam("resource_type", "teapot")
+            .request()
+            .accept(MediaType.APPLICATION_JSON)
+            .delete();
+    assertEquals(
+        Status.NOT_FOUND.getStatusCode(), multiDeleteBadQueryParameterResponse.getStatus());
+
+    DeleteAclsResponse expectedMultiDeleteResponse =
+        DeleteAclsResponse.create(
+            ImmutableList.of(
+                ALICE_ACL_DATA
+                    .setMetadata(Resource.Metadata.builder().setSelf(expectedAliceUrl).build())
+                    .setClusterId(clusterId)
+                    .build(),
+                BOB_ACL_DATA
+                    .setMetadata(Resource.Metadata.builder().setSelf(expectedBobUrl).build())
+                    .setClusterId(clusterId)
+                    .build()));
+
+    // Then ensure that a DELETE request with the parameters needed to search for and match both
+    // ACLs does delete both ACLs at once.
+    Response multiDeleteResourceTypeAll =
+        webClient.target(expectedSearchUrl).request().accept(MediaType.APPLICATION_JSON).delete();
+    assertEquals(Status.OK.getStatusCode(), multiDeleteResourceTypeAll.getStatus());
+    assertEquals(
+        expectedMultiDeleteResponse,
+        multiDeleteResourceTypeAll.readEntity(DeleteAclsResponse.class));
+  }
+
+  @Test
   public void testBatchAclCreate() {
 
     SearchAclsResponse expectedPreCreateSearchResponse =
