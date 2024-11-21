@@ -22,15 +22,19 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitCacheExpiryConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitEnabledConfig;
+import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
+import io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterBytes;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterBytesGlobal;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterCount;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterCountGlobal;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiterCacheLoader;
+import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import java.time.Duration;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 
 public class ProduceRateLimiters {
 
@@ -62,18 +66,50 @@ public class ProduceRateLimiters {
             .build(new RequestRateLimiterCacheLoader(bytesLimiterProvider));
   }
 
-  public void rateLimit(String clusterId, long requestSize) {
+  public void rateLimit(String clusterId, long requestSize, HttpServletRequest httpServletRequest) {
     if (!rateLimitingEnabled) {
       return;
     }
-    // Global rate limit first to reduce CPU usage under load
-    // https://confluentinc.atlassian.net/browse/KREST-4979
-    countLimiterGlobal.get().rateLimit(1);
-    bytesLimiterGlobal.get().rateLimit(toIntExact(requestSize));
+
+    // Apply global rate-limits
+    try {
+      // Global rate limit first to reduce CPU usage under load
+      // https://confluentinc.atlassian.net/browse/KREST-4979
+      countLimiterGlobal.get().rateLimit(1);
+    } catch (RateLimitExceededException ex) {
+      httpServletRequest.setAttribute(
+          CustomLogRequestAttributes.REST_ERROR_CODE,
+          ErrorCodes.PRODUCE_MAX_REQUESTS_GLOBAL_LIMIT_EXCEEDED);
+      throw ex;
+    }
+    try {
+      bytesLimiterGlobal.get().rateLimit(toIntExact(requestSize));
+    } catch (RateLimitExceededException ex) {
+      httpServletRequest.setAttribute(
+          CustomLogRequestAttributes.REST_ERROR_CODE,
+          ErrorCodes.PRODUCE_MAX_BYTES_GLOBAL_LIMIT_EXCEEDED);
+      throw ex;
+    }
+
+    // Apply tenant specific rate-limits
     RequestRateLimiter countRateLimiter = countCache.getUnchecked(clusterId);
     RequestRateLimiter byteRateLimiter = bytesCache.getUnchecked(clusterId);
-    countRateLimiter.rateLimit(1);
-    byteRateLimiter.rateLimit(toIntExact(requestSize));
+    try {
+      countRateLimiter.rateLimit(1);
+    } catch (RateLimitExceededException ex) {
+      httpServletRequest.setAttribute(
+          CustomLogRequestAttributes.REST_ERROR_CODE,
+          ErrorCodes.PRODUCE_MAX_REQUESTS_PER_TENANT_LIMIT_EXCEEDED);
+      throw ex;
+    }
+    try {
+      byteRateLimiter.rateLimit(toIntExact(requestSize));
+    } catch (RateLimitExceededException ex) {
+      httpServletRequest.setAttribute(
+          CustomLogRequestAttributes.REST_ERROR_CODE,
+          ErrorCodes.PRODUCE_MAX_BYTES_PER_TENANT_LIMIT_EXCEEDED);
+      throw ex;
+    }
   }
 
   public void clear() {

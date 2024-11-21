@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.MapDifference.ValueDifference;
 import com.google.common.collect.Maps;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig;
 import io.confluent.kafka.serializers.KafkaJsonSerializerConfig;
@@ -44,20 +45,24 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.MediaType;
+import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
 import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.kafka.common.config.types.Password;
 import org.apache.kafka.common.metrics.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -228,6 +233,20 @@ public class KafkaRestConfig extends RestConfig {
   public static final String PRODUCE_BATCH_MAXIMUM_ENTRIES_DEFAULT = "10";
   public static final ConfigDef.Range PRODUCE_BATCH_MAXIMUM_ENTRIES_VALIDATOR =
       ConfigDef.Range.between(1, 50);
+
+  public static final String PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_CONFIG =
+      "api.v3.produce.request.size.limit.max.bytes";
+  private static final String PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_DOC =
+      "Specify this number to limit produce request size. Once that limit is reached then "
+          + "the produce request will be rejected with a 400 is returned to the client. "
+          + "In addition, the connection will be dropped to prevent further produce requests. "
+          + "Due to the produce request size counting algorithm's limitation, it is recommended "
+          + "to add 8192 (8KiB) buffer to the intended number that you want to set for the limit "
+          + "to avoid rejecting legitimate produce requests."
+          + "If this limit is set to a non-positive number, no limit is applied. Default is 0.";
+  public static final String PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_DEFAULT = "0";
+  public static final ConfigDef.Range PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_VALIDATOR =
+      ConfigDef.Range.atLeast(0);
 
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
   private static final String CONSUMER_ITERATOR_TIMEOUT_MS_DOC =
@@ -494,6 +513,12 @@ public class KafkaRestConfig extends RestConfig {
           + "requests will be processed for before the connection is closed.";
   private static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT = "500";
 
+  public static final String USE_CUSTOM_REQUEST_LOGGING_CONFIG = "use.custom.request.logging";
+  private static final String USE_CUSTOM_REQUEST_LOGGING_DOC =
+      "Whether to use custom-request-logging i.e. CustomLog.java. Instead of using"
+          + "Jetty's request-logging.";
+  private static final boolean USE_CUSTOM_REQUEST_LOGGING_DEFAULT = true;
+
   private static final ConfigDef config;
   private volatile Metrics metrics;
 
@@ -607,6 +632,13 @@ public class KafkaRestConfig extends RestConfig {
             PRODUCE_BATCH_MAXIMUM_ENTRIES_VALIDATOR,
             Importance.LOW,
             PRODUCE_BATCH_MAXIMUM_ENTRIES_DOC)
+        .define(
+            PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_CONFIG,
+            Type.LONG,
+            PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_DEFAULT,
+            PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_VALIDATOR,
+            Importance.LOW,
+            PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_DOC)
         .define(
             CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG,
             Type.INT,
@@ -891,7 +923,13 @@ public class KafkaRestConfig extends RestConfig {
             Type.LONG,
             STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT,
             Importance.LOW,
-            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC);
+            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC)
+        .define(
+            USE_CUSTOM_REQUEST_LOGGING_CONFIG,
+            Type.BOOLEAN,
+            USE_CUSTOM_REQUEST_LOGGING_DEFAULT,
+            Importance.LOW,
+            USE_CUSTOM_REQUEST_LOGGING_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {
@@ -932,12 +970,20 @@ public class KafkaRestConfig extends RestConfig {
     this(configDef, props);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Properties getOriginalProperties() {
-    Properties properties = new Properties();
+    Properties properties = new PropertiesWithSafeToString(this);
     properties.putAll(originals());
     return properties;
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Map<String, Object> getSchemaRegistryConfigs() {
     ImmutableSet<String> mask =
         ImmutableSet.<String>builder()
@@ -991,14 +1037,24 @@ public class KafkaRestConfig extends RestConfig {
     }
     configs.put(USE_LATEST_VERSION, false);
 
-    return configs;
+    return new ConfigsWithSafeToString(configs, this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public final Map<String, Object> getJsonSerializerConfigs() {
     Set<String> mask = singleton(KafkaJsonSerializerConfig.JSON_INDENT_OUTPUT);
-    return new ConfigsBuilder(mask).addConfigs("client.").addConfigs("producer.").build();
+    Map<String, Object> configs =
+        new ConfigsBuilder(mask).addConfigs("client.").addConfigs("producer.").build();
+    return new ConfigsWithSafeToString(configs, this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public final Map<String, Object> getAvroSerializerConfigs() {
     Set<String> mask = new HashSet<>();
     mask.addAll(AbstractKafkaSchemaSerDeConfig.baseConfigDef().names());
@@ -1012,9 +1068,13 @@ public class KafkaRestConfig extends RestConfig {
         new HashMap<>(
             new ConfigsBuilder(mask).addConfigs("client.").addConfigs("producer.").build());
     configs.putAll(getSchemaRegistryConfigs());
-    return configs;
+    return new ConfigsWithSafeToString(configs, this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public final Map<String, Object> getJsonschemaSerializerConfigs() {
     Set<String> mask =
         ImmutableSet.of(
@@ -1026,9 +1086,13 @@ public class KafkaRestConfig extends RestConfig {
         new HashMap<>(
             new ConfigsBuilder(mask).addConfigs("client.").addConfigs("producer.").build());
     configs.putAll(getSchemaRegistryConfigs());
-    return configs;
+    return new ConfigsWithSafeToString(configs, this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public final Map<String, Object> getProtobufSerializerConfigs() {
     Set<String> mask =
         singleton(KafkaProtobufSerializerConfig.REFERENCE_SUBJECT_NAME_STRATEGY_CONFIG);
@@ -1036,9 +1100,13 @@ public class KafkaRestConfig extends RestConfig {
         new HashMap<>(
             new ConfigsBuilder(mask).addConfigs("client.").addConfigs("producer.").build());
     configs.putAll(getSchemaRegistryConfigs());
-    return configs;
+    return new ConfigsWithSafeToString(configs, this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Properties getProducerProperties() {
     Map<String, Object> producerConfigs =
         new ConfigsBuilder()
@@ -1048,7 +1116,7 @@ public class KafkaRestConfig extends RestConfig {
             .addConfigs("schema.registry.", false)
             .build();
 
-    Properties producerProperties = new Properties();
+    Properties producerProperties = new PropertiesWithSafeToString(this);
     producerProperties.putAll(producerConfigs);
 
     // KREST-4606: Disable idempotency until at the very least KAFKA-13668 is fixed, but maybe
@@ -1064,13 +1132,23 @@ public class KafkaRestConfig extends RestConfig {
     return producerProperties;
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Map<String, Object> getProducerConfigs() {
-    return getProducerProperties().entrySet().stream()
-        .collect(Collectors.toMap(entry -> entry.getKey().toString(), Entry::getValue));
+    return new ConfigsWithSafeToString(
+        getProducerProperties().entrySet().stream()
+            .collect(Collectors.toMap(entry -> entry.getKey().toString(), Entry::getValue)),
+        this);
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Properties getConsumerProperties() {
-    Properties consumerProps = new Properties();
+    Properties consumerProps = new PropertiesWithSafeToString(this);
 
     consumerProps.setProperty(BOOTSTRAP_SERVERS_CONFIG, getString(BOOTSTRAP_SERVERS_CONFIG));
     consumerProps.setProperty(MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS_VALUE);
@@ -1083,8 +1161,12 @@ public class KafkaRestConfig extends RestConfig {
     return consumerProps;
   }
 
+  /**
+   * Callers of this function are advised to use the return value as a configuration object as it
+   * can hide sensitive information in logging.
+   */
   public Properties getAdminProperties() {
-    Properties adminProps = new Properties();
+    Properties adminProps = new PropertiesWithSafeToString(this);
 
     adminProps.setProperty(BOOTSTRAP_SERVERS_CONFIG, getString(BOOTSTRAP_SERVERS_CONFIG));
 
@@ -1141,6 +1223,10 @@ public class KafkaRestConfig extends RestConfig {
 
   public final int getRateLimitDefaultCost() {
     return getInt(RATE_LIMIT_DEFAULT_COST_CONFIG);
+  }
+
+  public final long getProduceRequestSizeLimitMaxBytesConfig() {
+    return getLong(PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_CONFIG);
   }
 
   public final ImmutableMap<String, Integer> getRateLimitCosts() {
@@ -1257,6 +1343,150 @@ public class KafkaRestConfig extends RestConfig {
 
     private static ConfigValue create(String origin, Object value) {
       return new AutoValue_KafkaRestConfig_ConfigValue(origin, value);
+    }
+  }
+
+  // this set contains configs that are a password type but not listed in AbstractConfig
+  private static final Set<String> passwordTypeConfigs =
+      ImmutableSet.of(
+          SaslConfigs.SASL_JAAS_CONFIG,
+          SchemaRegistryClientConfig.SCHEMA_REGISTRY_USER_INFO_CONFIG,
+          SchemaRegistryClientConfig.USER_INFO_CONFIG,
+          SchemaRegistryClientConfig.BEARER_AUTH_TOKEN_CONFIG,
+          SchemaRegistryClientConfig.BEARER_AUTH_CLIENT_SECRET);
+
+  /**
+   * This function relies on {@link AbstractConfig} object to detect whether a config is a {@link
+   * Password}. Therefore, it is important for the implementation to make sure that a config is
+   * registered correctly to not accidentally leaking sensitive information. If there is a config
+   * that is sensitive but not registered correctly in its corresponding {@link AbstractConfig}
+   * object, please add that config to {@link KafkaRestConfig#passwordTypeConfigs} field above.
+   */
+  static <K, V> String mapToStringHideSensitiveConfigs(Map<K, V> map, AbstractConfig config) {
+    StringBuilder sb = new StringBuilder();
+    Set<Entry<K, V>> entries = map.entrySet();
+    sb.append('{');
+    Iterator<Entry<K, V>> it = entries.iterator();
+    while (it.hasNext()) {
+      Entry<K, V> entry = it.next();
+      K key = entry.getKey();
+      V value = entry.getValue();
+      if (key instanceof String) {
+        if (passwordTypeConfigs.contains(key)) {
+          toStringKeyAndValue(sb, key, Password.HIDDEN, it.hasNext());
+        } else {
+          Type type = config.typeOf((String) key);
+          if (type == Type.PASSWORD) {
+            toStringKeyAndValue(sb, key, config.getPassword((String) key), it.hasNext());
+          } else {
+            toStringKeyAndValue(sb, key, value, it.hasNext());
+          }
+        }
+      }
+    }
+    return sb.append('}').toString();
+  }
+
+  private static void toStringKeyAndValue(
+      StringBuilder sb, Object key, Object value, boolean appendDelimiter) {
+    sb.append(key);
+    sb.append("=");
+    sb.append(value);
+    if (appendDelimiter) {
+      sb.append(", ");
+    }
+  }
+
+  /** {@link Properties} class with toString function that hide sensitive configs */
+  public static class PropertiesWithSafeToString extends Properties {
+
+    private final AbstractConfig config;
+
+    public PropertiesWithSafeToString(AbstractConfig config) {
+      super();
+      this.config = config;
+    }
+
+    @Override
+    public synchronized String toString() {
+      return mapToStringHideSensitiveConfigs(this, config);
+    }
+  }
+
+  /** {@link Map} configs class with toString function that hide sensitive configs */
+  public static class ConfigsWithSafeToString implements Map<String, Object> {
+
+    private final Map<String, Object> delegate;
+    private final AbstractConfig config;
+
+    public ConfigsWithSafeToString(Map<String, Object> delegate, AbstractConfig config) {
+      this.delegate = delegate;
+      this.config = config;
+    }
+
+    @Override
+    public String toString() {
+      return mapToStringHideSensitiveConfigs(this, config);
+    }
+
+    @Override
+    public int size() {
+      return delegate.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return delegate.isEmpty();
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+      return delegate.containsKey(key);
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+      return delegate.containsValue(value);
+    }
+
+    @Override
+    public Object get(Object key) {
+      return delegate.get(key);
+    }
+
+    @Override
+    public Object put(String key, Object value) {
+      return delegate.put(key, value);
+    }
+
+    @Override
+    public Object remove(Object key) {
+      return delegate.remove(key);
+    }
+
+    @Override
+    public void putAll(Map<? extends String, ?> m) {
+      delegate.putAll(m);
+    }
+
+    @Override
+    public void clear() {
+      delegate.clear();
+    }
+
+    @Override
+    public Set<String> keySet() {
+      return delegate.keySet();
+    }
+
+    @Override
+    public Collection<Object> values() {
+      return delegate.values();
+    }
+
+    @Override
+    public Set<Entry<String, Object>> entrySet() {
+      return delegate.entrySet();
     }
   }
 }

@@ -21,14 +21,24 @@ import static io.confluent.kafkarest.KafkaRestMetricsContext.RESOURCE_LABEL_CLUS
 import static io.confluent.kafkarest.KafkaRestMetricsContext.RESOURCE_LABEL_COMMIT_ID;
 import static io.confluent.kafkarest.KafkaRestMetricsContext.RESOURCE_LABEL_VERSION;
 import static java.util.Collections.singletonMap;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.mock;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafka.serializers.subject.DefaultReferenceSubjectNameStrategy;
 import io.confluent.rest.metrics.RestMetricsContext;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Properties;
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.common.config.AbstractConfig;
+import org.apache.kafka.common.config.ConfigDef.Type;
+import org.apache.kafka.common.config.types.Password;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.junit.jupiter.api.Test;
 
@@ -307,6 +317,238 @@ public class KafkaRestConfigTest {
             "reference.subject.name.strategy",
             DefaultReferenceSubjectNameStrategy.class),
         config.getProtobufSerializerConfigs());
+  }
+
+  @Test
+  public void testMapToStringHideSensitiveConfigs() {
+    AbstractConfig mockAbstractConfig = mock(AbstractConfig.class);
+    Map<String, Object> configs =
+        ImmutableMap.of(
+            // this config belongs to passwordTypeConfigs field
+            "sasl.jaas.config", "secret config",
+            // this config is defined as "PASSWORD" type
+            "ssl.truststore.password", "secret password",
+            // this config is defined as "LONG" type
+            "max.request.size", "100");
+
+    expect(mockAbstractConfig.typeOf("ssl.truststore.password")).andReturn(Type.PASSWORD);
+    expect(mockAbstractConfig.getPassword("ssl.truststore.password"))
+        .andReturn(new Password("secret password"));
+    expect(mockAbstractConfig.typeOf("max.request.size")).andReturn(Type.LONG);
+    replay(mockAbstractConfig);
+
+    String ret = KafkaRestConfig.mapToStringHideSensitiveConfigs(configs, mockAbstractConfig);
+
+    verify(mockAbstractConfig);
+    assertThat(ret, containsString("sasl.jaas.config=" + Password.HIDDEN));
+    assertThat(ret, containsString("ssl.truststore.password=" + Password.HIDDEN));
+    assertThat(ret, containsString("max.request.size=100"));
+  }
+
+  @Test
+  public void testGetAdminProperties_HideSensitiveInfo() {
+    Properties properties = new Properties();
+    // below configs will be stripped down prefix "client" or "admin"
+    properties.put("admin.sasl.jaas.config", "super secret sasl.jaas.config");
+    properties.put("client.ssl.truststore.password", "super secret");
+    properties.put("client.sasl.kerberos.kinit.cmd", "/usr/bin/kinit");
+
+    KafkaRestConfig config = new KafkaRestConfig(properties);
+    Properties adminProperties = config.getAdminProperties();
+
+    // check that the config values can be retrieved as normal
+    assertEquals("super secret sasl.jaas.config", adminProperties.get("sasl.jaas.config"));
+    assertEquals("super secret", adminProperties.get("ssl.truststore.password"));
+    assertEquals("/usr/bin/kinit", adminProperties.get("sasl.kerberos.kinit.cmd"));
+
+    // check that toString function can hide sensitive configs
+    String loggedToString = adminProperties.toString();
+    assertThat(loggedToString, containsString("sasl.jaas.config=" + Password.HIDDEN));
+    assertThat(loggedToString, containsString("ssl.truststore.password=" + Password.HIDDEN));
+    assertThat(loggedToString, containsString("sasl.kerberos.kinit.cmd=/usr/bin/kinit"));
+  }
+
+  @Test
+  public void testGetProducerProperties_HideSensitiveInfo() {
+    Properties properties = new Properties();
+    // below configs will be stripped down prefix "client" or "producer"
+    properties.put("producer.sasl.jaas.config", "super secret sasl.jaas.config");
+    properties.put("producer.max.request.size", "1024");
+    properties.put("client.ssl.truststore.password", "super secret");
+
+    KafkaRestConfig config = new KafkaRestConfig(properties);
+    Properties producerProperties = config.getProducerProperties();
+
+    // check that the config values can be retrieved as normal
+    assertEquals("super secret sasl.jaas.config", producerProperties.get("sasl.jaas.config"));
+    assertEquals("super secret", producerProperties.get("ssl.truststore.password"));
+    assertEquals("1024", producerProperties.get("max.request.size"));
+
+    // check that toString function can hide sensitive configs
+    String loggedToString = producerProperties.toString();
+    assertThat(loggedToString, containsString("sasl.jaas.config=" + Password.HIDDEN));
+    assertThat(loggedToString, containsString("max.request.size=1024"));
+    assertThat(loggedToString, containsString("ssl.truststore.password=" + Password.HIDDEN));
+  }
+
+  @Test
+  public void testGetProducerConfigs_HideSensitiveInfo() {
+    Properties properties = new Properties();
+    // below configs will be stripped down prefix "client" or "producer"
+    properties.put("producer.sasl.jaas.config", "super secret sasl.jaas.config");
+    properties.put("producer.max.request.size", "1024");
+    properties.put("client.ssl.truststore.password", "super secret");
+
+    KafkaRestConfig config = new KafkaRestConfig(properties);
+    Map<String, Object> producerConfigs = config.getProducerConfigs();
+
+    // check that the config values can be retrieved as normal
+    assertEquals("super secret sasl.jaas.config", producerConfigs.get("sasl.jaas.config"));
+    assertEquals("super secret", producerConfigs.get("ssl.truststore.password"));
+    assertEquals("1024", producerConfigs.get("max.request.size"));
+
+    // check that toString function can hide sensitive configs
+    String loggedToString = producerConfigs.toString();
+    assertThat(loggedToString, containsString("sasl.jaas.config=" + Password.HIDDEN));
+    assertThat(loggedToString, containsString("max.request.size=1024"));
+    assertThat(loggedToString, containsString("ssl.truststore.password=" + Password.HIDDEN));
+  }
+
+  @Test
+  public void testGetConsumerProperties_HideSensitiveInfo() {
+    Properties properties = new Properties();
+    // below configs will be stripped down prefix "client" or "consumer"
+    properties.put("consumer.sasl.jaas.config", "super secret sasl.jaas.config");
+    properties.put("consumer.max.poll.records", "500");
+    properties.put("client.ssl.truststore.password", "super secret");
+
+    KafkaRestConfig config = new KafkaRestConfig(properties);
+    Properties consumerProperties = config.getConsumerProperties();
+
+    // check that the config values can be retrieved as normal
+    assertEquals("super secret sasl.jaas.config", consumerProperties.get("sasl.jaas.config"));
+    assertEquals("super secret", consumerProperties.get("ssl.truststore.password"));
+    assertEquals("500", consumerProperties.get("max.poll.records"));
+
+    // check that toString function can hide sensitive configs
+    String loggedToString = consumerProperties.toString();
+    assertThat(loggedToString, containsString("sasl.jaas.config=" + Password.HIDDEN));
+    assertThat(loggedToString, containsString("max.poll.records=500"));
+    assertThat(loggedToString, containsString("ssl.truststore.password=" + Password.HIDDEN));
+  }
+
+  @Test
+  public void testGetSchemaRegistryConfigs_HideSensitiveInfo() {
+    Properties properties = new Properties();
+    properties.put("schema.registry.url", "http://localhost:8081");
+    properties.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
+    properties.put("schema.registry.basic.auth.user.info", "base64 encoded secret");
+
+    KafkaRestConfig config = new KafkaRestConfig(properties);
+    Map<String, Object> schemaRegistryConfigs = config.getSchemaRegistryConfigs();
+
+    // check that the config values can be retrieved as normal
+    assertEquals("http://localhost:8081", schemaRegistryConfigs.get("schema.registry.url"));
+    assertEquals("USER_INFO", schemaRegistryConfigs.get("basic.auth.credentials.source"));
+    assertEquals("base64 encoded secret", schemaRegistryConfigs.get("basic.auth.user.info"));
+
+    // check that toString function can hide sensitive configs
+    String loggedToString = schemaRegistryConfigs.toString();
+    assertThat(loggedToString, containsString("schema.registry.url=http://localhost:8081"));
+    assertThat(loggedToString, containsString("basic.auth.user.info=" + Password.HIDDEN));
+    assertThat(loggedToString, containsString("basic.auth.credentials.source=USER_INFO"));
+  }
+
+  @Test
+  public void testGetAvroSerializerConfigs_HideSensitiveInfo() {
+    Properties properties = new Properties();
+    properties.put("schema.registry.url", "http://localhost:8081");
+    properties.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
+    properties.put("schema.registry.basic.auth.user.info", "base64 encoded secret");
+    properties.put("schema.registry.max.schemas.per.subject", "1000");
+    properties.put("producer.sasl.jaas.config", "super secret sasl.jaas.config");
+
+    KafkaRestConfig config = new KafkaRestConfig(properties);
+    Map<String, Object> serializerConfigs = config.getAvroSerializerConfigs();
+
+    // check that the config values can be retrieved as normal
+    assertEquals("http://localhost:8081", serializerConfigs.get("schema.registry.url"));
+    assertEquals("USER_INFO", serializerConfigs.get("basic.auth.credentials.source"));
+    assertEquals("base64 encoded secret", serializerConfigs.get("basic.auth.user.info"));
+    assertEquals("1000", serializerConfigs.get("max.schemas.per.subject"));
+    assertEquals("super secret sasl.jaas.config", serializerConfigs.get("sasl.jaas.config"));
+
+    // check that toString function can hide sensitive configs
+    String loggedToString = serializerConfigs.toString();
+    assertThat(loggedToString, containsString("schema.registry.url=http://localhost:8081"));
+    assertThat(loggedToString, containsString("basic.auth.user.info=" + Password.HIDDEN));
+    assertThat(loggedToString, containsString("basic.auth.credentials.source=USER_INFO"));
+    assertThat(loggedToString, containsString("max.schemas.per.subject=1000"));
+    assertThat(loggedToString, containsString("sasl.jaas.config=" + Password.HIDDEN));
+  }
+
+  @Test
+  public void testGetJsonschemaSerializerConfigs_HideSensitiveInfo() {
+    Properties properties = new Properties();
+    properties.put("schema.registry.url", "http://localhost:8081");
+    properties.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
+    properties.put("schema.registry.basic.auth.user.info", "base64 encoded secret");
+    properties.put("producer.json.oneof.for.nullables", "true");
+    properties.put("producer.sasl.jaas.config", "super secret sasl.jaas.config");
+
+    KafkaRestConfig config = new KafkaRestConfig(properties);
+    Map<String, Object> serializerConfigs = config.getJsonschemaSerializerConfigs();
+
+    // check that the config values can be retrieved as normal
+    assertEquals("http://localhost:8081", serializerConfigs.get("schema.registry.url"));
+    assertEquals("USER_INFO", serializerConfigs.get("basic.auth.credentials.source"));
+    assertEquals("base64 encoded secret", serializerConfigs.get("basic.auth.user.info"));
+    assertEquals("true", serializerConfigs.get("json.oneof.for.nullables"));
+    assertEquals("super secret sasl.jaas.config", serializerConfigs.get("sasl.jaas.config"));
+
+    // check that toString function can hide sensitive configs
+    String loggedToString = serializerConfigs.toString();
+    assertThat(loggedToString, containsString("schema.registry.url=http://localhost:8081"));
+    assertThat(loggedToString, containsString("basic.auth.user.info=" + Password.HIDDEN));
+    assertThat(loggedToString, containsString("basic.auth.credentials.source=USER_INFO"));
+    assertThat(loggedToString, containsString("json.oneof.for.nullables=true"));
+    assertThat(loggedToString, containsString("sasl.jaas.config=" + Password.HIDDEN));
+  }
+
+  @Test
+  public void testGetProtobufSerializerConfigs_HideSensitiveInfo() {
+    Properties properties = new Properties();
+    properties.put("schema.registry.url", "http://localhost:8081");
+    properties.put("schema.registry.basic.auth.credentials.source", "USER_INFO");
+    properties.put("schema.registry.basic.auth.user.info", "base64 encoded secret");
+    properties.put(
+        "producer.reference.subject.name.strategy",
+        "io.confluent.kafka.serializers.subject.QualifiedReferenceSubjectNameStrategy");
+    properties.put("producer.sasl.jaas.config", "super secret sasl.jaas.config");
+
+    KafkaRestConfig config = new KafkaRestConfig(properties);
+    Map<String, Object> serializerConfigs = config.getProtobufSerializerConfigs();
+
+    // check that the config values can be retrieved as normal
+    assertEquals("http://localhost:8081", serializerConfigs.get("schema.registry.url"));
+    assertEquals("USER_INFO", serializerConfigs.get("basic.auth.credentials.source"));
+    assertEquals("base64 encoded secret", serializerConfigs.get("basic.auth.user.info"));
+    assertEquals(
+        "io.confluent.kafka.serializers.subject.QualifiedReferenceSubjectNameStrategy",
+        serializerConfigs.get("reference.subject.name.strategy"));
+    assertEquals("super secret sasl.jaas.config", serializerConfigs.get("sasl.jaas.config"));
+
+    // check that toString function can hide sensitive configs
+    String loggedToString = serializerConfigs.toString();
+    assertThat(loggedToString, containsString("schema.registry.url=http://localhost:8081"));
+    assertThat(loggedToString, containsString("basic.auth.user.info=" + Password.HIDDEN));
+    assertThat(loggedToString, containsString("basic.auth.credentials.source=USER_INFO"));
+    assertThat(
+        loggedToString,
+        containsString(
+            "reference.subject.name.strategy="
+                + "io.confluent.kafka.serializers.subject.QualifiedReferenceSubjectNameStrategy"));
+    assertThat(loggedToString, containsString("sasl.jaas.config=" + Password.HIDDEN));
   }
 
   private String context_config(String suffix) {

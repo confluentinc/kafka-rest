@@ -51,7 +51,7 @@ public final class AvroConverter implements SchemaConverter {
       throw new ConversionException("Failed to convert Avro to JSON: " + e.getMessage());
     } catch (RuntimeException e) {
       // Catch-all since it's possible for, e.g., Avro to throw many different RuntimeExceptions
-      log.error("Unexpected exception convertion Avro to JSON: ", e);
+      log.error("Unexpected exception converting Avro to JSON: ", e);
       throw new ConversionException("Failed to convert Avro to JSON: " + e.getMessage());
     }
   }
