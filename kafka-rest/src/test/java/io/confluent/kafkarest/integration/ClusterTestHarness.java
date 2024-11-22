@@ -311,7 +311,7 @@ public abstract class ClusterTestHarness {
     restServer.start();
   }
 
-  private void stopRest() throws Exception {
+  protected void stopRest() throws Exception {
     log.info("Stopping REST.");
     restProperties.clear();
     if (restApp != null) {
