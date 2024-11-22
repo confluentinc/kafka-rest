@@ -20,6 +20,8 @@ import static java.util.Objects.requireNonNull;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.response.JsonStream.SizeLimitEntityStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -34,9 +36,11 @@ import javax.ws.rs.ext.MessageBodyReader;
 /** A {@link MessageBodyReader} for {@link JsonStream}. */
 public final class JsonStreamMessageBodyReader implements MessageBodyReader<JsonStream<?>> {
   private final ObjectMapper objectMapper;
+  private final KafkaRestConfig config;
 
-  public JsonStreamMessageBodyReader(ObjectMapper objectMapper) {
+  public JsonStreamMessageBodyReader(ObjectMapper objectMapper, KafkaRestConfig config) {
     this.objectMapper = requireNonNull(objectMapper);
+    this.config = requireNonNull(config);
   }
 
   @Override
@@ -70,6 +74,11 @@ public final class JsonStreamMessageBodyReader implements MessageBodyReader<Json
     }
 
     JavaType wrappedType = objectMapper.constructType(genericType).containedType(0);
+    SizeLimitEntityStream wrappedInputStream =
+        (config.getProduceRequestSizeLimitMaxBytesConfig() > 0)
+            ? new SizeLimitEntityStream(
+                entityStream, config.getProduceRequestSizeLimitMaxBytesConfig())
+            : null;
     return new JsonStream<>(
         () -> {
           try {
@@ -77,11 +86,14 @@ public final class JsonStreamMessageBodyReader implements MessageBodyReader<Json
             // from the entityStream. If this initial bootstrapping doesn't work, and this is not
             // done lazily, it can create problems with releasing request scoped resources. See
             // KREST-5830 for context.
-            JsonParser parser = objectMapper.createParser(entityStream);
+            JsonParser parser =
+                objectMapper.createParser(
+                    wrappedInputStream == null ? entityStream : wrappedInputStream);
             return objectMapper.readValues(parser, wrappedType);
           } catch (IOException e) {
             throw new BadRequestException("Unexpected error while starting JSON stream: ", e);
           }
-        });
+        },
+        wrappedInputStream);
   }
 }
