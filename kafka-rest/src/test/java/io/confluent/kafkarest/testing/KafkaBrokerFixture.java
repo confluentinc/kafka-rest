@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.confluent.kafkarest.testing.QuorumControllerFixture.DefaultTestInfo;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,12 +32,15 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import kafka.server.KafkaBroker;
 import kafka.server.KafkaConfig;
-import kafka.server.KafkaServer;
+import kafka.utils.TestInfoUtils;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.utils.Time;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -54,6 +58,9 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
           .put(KafkaConfig.GroupInitialRebalanceDelayMsProp(), "0")
           .put(KafkaConfig.InterBrokerListenerNameProp(), "INTERNAL")
           .put(KafkaConfig.ListenersProp(), "INTERNAL://localhost:0,EXTERNAL://localhost:0")
+          .put(
+              KafkaConfig.AdvertisedListenersProp(),
+              "INTERNAL://localhost:0,EXTERNAL://localhost:0")
           .put(KafkaConfig.OffsetsTopicPartitionsProp(), "1")
           .put(KafkaConfig.OffsetsTopicReplicationFactorProp(), "1")
           .build();
@@ -65,9 +72,9 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
   private final SecurityProtocol securityProtocol;
   private final ImmutableMap<String, String> users;
   private final ImmutableSet<String> superUsers;
-  private final ZookeeperFixture zookeeper;
+  private final QuorumControllerFixture quorumController;
 
-  @Nullable private KafkaServer broker;
+  @Nullable private KafkaBroker broker;
   @Nullable private Path logDir;
 
   public KafkaBrokerFixture(
@@ -78,7 +85,7 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
       SecurityProtocol securityProtocol,
       Map<String, String> users,
       Set<String> superUsers,
-      ZookeeperFixture zookeeper) {
+      QuorumControllerFixture quorumController) {
     checkArgument(certificates != null ^ keyName == null);
     this.brokerId = brokerId;
     this.certificates = certificates;
@@ -87,34 +94,65 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
     this.securityProtocol = requireNonNull(securityProtocol);
     this.users = ImmutableMap.copyOf(users);
     this.superUsers = ImmutableSet.copyOf(superUsers);
-    this.zookeeper = requireNonNull(zookeeper);
+    this.quorumController = requireNonNull(quorumController);
     checkArgument(!isSslSecurity() || certificates != null);
   }
 
   @Override
   public void beforeEach(ExtensionContext extensionContext) throws Exception {
+    TestInfo testInfo = new DefaultTestInfo(extensionContext);
     logDir = Files.createTempDirectory(String.format("kafka-%d-", brokerId));
-    broker = TestUtils.createServer(KafkaConfig.fromProps(getBrokerConfigs()), Option.empty());
+    broker =
+        quorumController.createBroker(
+            KafkaConfig.fromProps(getBrokerConfigs(TestInfoUtils.isKRaft(testInfo))),
+            Time.SYSTEM,
+            true,
+            Option.empty());
   }
 
-  private Properties getBrokerConfigs() {
+  private Properties getBrokerConfigs(boolean isKraftTest) {
     checkState(logDir != null);
-    Properties properties = new Properties();
+    Properties properties =
+        TestUtils.createBrokerConfig(
+            brokerId,
+            quorumController.zkConnectOrNull(),
+            false,
+            false,
+            TestUtils.RandomPort(),
+            Option.apply(null),
+            Option.apply(null),
+            Option.empty(),
+            true,
+            false,
+            TestUtils.RandomPort(),
+            false,
+            TestUtils.RandomPort(),
+            false,
+            TestUtils.RandomPort(),
+            Option.empty(),
+            1,
+            false,
+            1,
+            (short) 1,
+            false);
     properties.putAll(CONFIG_TEMPLATE);
     properties.setProperty(KafkaConfig.BrokerIdProp(), String.valueOf(brokerId));
     properties.setProperty(KafkaConfig.LogDirProp(), logDir.toString());
-    properties.setProperty(KafkaConfig.ZkConnectProp(), zookeeper.getZookeeperConnect());
-    properties.putAll(getBrokerSecurityConfigs());
+    properties.putAll(getBrokerSecurityConfigs(isKraftTest));
     properties.putAll(getBrokerSslConfigs());
     properties.putAll(configs);
     return properties;
   }
 
-  private Properties getBrokerSecurityConfigs() {
+  private Properties getBrokerSecurityConfigs(boolean isKraftTest) {
     Properties properties = new Properties();
+    String listenerSecurityProtocolMapTempl = "EXTERNAL:%s,INTERNAL:%s";
+    if (isKraftTest) {
+      listenerSecurityProtocolMapTempl += ",CONTROLLER:PLAINTEXT";
+    }
     properties.setProperty(
         KafkaConfig.ListenerSecurityProtocolMapProp(),
-        String.format("EXTERNAL:%s,INTERNAL:%s", securityProtocol, securityProtocol));
+        String.format(listenerSecurityProtocolMapTempl, securityProtocol, securityProtocol));
     if (isSaslSecurity()) {
       properties.setProperty(
           "listener.name.external.plain.sasl.jaas.config", getBrokerPlainSaslJaasConfig());
@@ -122,7 +160,14 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
           "listener.name.internal.plain.sasl.jaas.config", getBrokerPlainSaslJaasConfig());
       properties.setProperty("sasl.enabled.mechanisms", "PLAIN");
       properties.setProperty("sasl.mechanism.inter.broker.protocol", "PLAIN");
-      properties.setProperty("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
+      if (isKraftTest) {
+        properties.setProperty(
+            KafkaConfig.AuthorizerClassNameProp(),
+            "org.apache.kafka.metadata.authorizer.StandardAuthorizer");
+      } else {
+        properties.setProperty(
+            KafkaConfig.AuthorizerClassNameProp(), "kafka.security.authorizer.AclAuthorizer");
+      }
     }
     properties.setProperty("super.users", getSuperUsers());
     return properties;
@@ -231,7 +276,7 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
     private SecurityProtocol securityProtocol = SecurityProtocol.PLAINTEXT;
     private final ImmutableMap.Builder<String, String> users = ImmutableMap.builder();
     private final ImmutableSet.Builder<String> superUsers = ImmutableSet.builder();
-    private ZookeeperFixture zookeeper = null;
+    private QuorumControllerFixture quorumController = null;
 
     private Builder() {}
 
@@ -301,14 +346,14 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
       return this;
     }
 
-    public Builder setZookeeper(ZookeeperFixture zookeeper) {
-      this.zookeeper = requireNonNull(zookeeper);
+    public Builder setQuorumController(QuorumControllerFixture quorumController) {
+      this.quorumController = requireNonNull(quorumController);
       return this;
     }
 
     public KafkaBrokerFixture build() {
       checkState(brokerId >= 0);
-      checkState(zookeeper != null);
+      checkState(quorumController != null);
       return new KafkaBrokerFixture(
           brokerId,
           certificates,
@@ -317,7 +362,7 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
           securityProtocol,
           users.build(),
           superUsers.build(),
-          zookeeper);
+          quorumController);
     }
   }
 }

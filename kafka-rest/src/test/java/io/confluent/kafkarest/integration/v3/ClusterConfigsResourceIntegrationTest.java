@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,7 +34,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -41,15 +43,17 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
     super(/* numClusters= */ 3, /* withSchemaRegistry= */ false);
   }
 
-  @Test
-  public void listClusterConfigs_nonExistingCluster_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listClusterConfigs_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/broker-configs").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getClusterConfig_nonExistingConfig_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getClusterConfig_nonExistingConfig_throwsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -59,8 +63,9 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getClusterConfig_nonExistingCluster_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getClusterConfig_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/broker-configs/max.connections")
             .accept(MediaType.APPLICATION_JSON)
@@ -68,8 +73,9 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void updateAndReset_existingConfig_returnsDefaultUpdatedAndDefaultAgain() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void updateAndReset_existingConfig_returnsDefaultUpdatedAndDefaultAgain(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     int brokerId = getBrokers().get(0).id();
@@ -296,8 +302,9 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
         });
   }
 
-  @Test
-  public void updateClusterConfig_nonExistingCluster_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void updateClusterConfig_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/broker-configs/compression.type")
             .accept(MediaType.APPLICATION_JSON)
@@ -305,8 +312,9 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void resetClusterConfig_nonExistingCluster_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void resetClusterConfig_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/broker-configs/compression.type")
             .accept(MediaType.APPLICATION_JSON)
@@ -314,8 +322,9 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void alterConfigBatch_withExistingConfig() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void alterConfigBatch_withExistingConfig(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     int brokerId = getBrokers().get(0).id();
