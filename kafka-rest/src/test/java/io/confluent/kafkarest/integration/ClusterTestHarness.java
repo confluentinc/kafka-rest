@@ -119,7 +119,7 @@ public abstract class ClusterTestHarness {
     return choosePorts(1)[0];
   }
 
-  private final boolean startRest;
+  private final boolean manageRest;
   private final int numBrokers;
   private final boolean withSchemaRegistry;
   // ZK Config
@@ -158,10 +158,11 @@ public abstract class ClusterTestHarness {
     this(numBrokers, withSchemaRegistry, true);
   }
 
-  public ClusterTestHarness(int numBrokers, boolean withSchemaRegistry, boolean startRest) {
+  /** @param manageRest If false, child-class is expected to create and start/stop REST-app. */
+  public ClusterTestHarness(int numBrokers, boolean withSchemaRegistry, boolean manageRest) {
+    this.manageRest = manageRest;
     this.numBrokers = numBrokers;
     this.withSchemaRegistry = withSchemaRegistry;
-    this.startRest = startRest;
 
     schemaRegProperties = new Properties();
     restProperties = new Properties();
@@ -194,7 +195,7 @@ public abstract class ClusterTestHarness {
     if (withSchemaRegistry) {
       doStartSchemaRegistry();
     }
-    if (startRest) {
+    if (manageRest) {
       startRest(brokerList);
     }
     log.info("Completed setup of {}", getClass().getSimpleName());
@@ -228,6 +229,7 @@ public abstract class ClusterTestHarness {
       log.warn("Rest server already started, skipping start");
       return;
     }
+    log.info("Setting up REST.");
     restProperties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     overrideKafkaRestConfigs(restProperties);
     if (withSchemaRegistry && schemaRegConnect != null) {
@@ -285,6 +287,7 @@ public abstract class ClusterTestHarness {
   }
 
   private void stopRest() throws Exception {
+    log.info("Stopping REST.");
     if (restApp != null) {
       restApp.stop();
       restApp.getMetrics().close();
@@ -369,8 +372,9 @@ public abstract class ClusterTestHarness {
   @AfterEach
   public void tearDown() throws Exception {
     log.info("Starting teardown of {}", getClass().getSimpleName());
-    stopRest();
-
+    if (manageRest) {
+      stopRest();
+    }
     if (schemaRegServer != null) {
       schemaRegServer.stop();
       schemaRegServer.join();
