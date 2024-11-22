@@ -222,7 +222,10 @@ public class ProduceActionIntegrationTest {
     ErrorResponse actual = response.readEntity(ErrorResponse.class);
     assertEquals(400, actual.getErrorCode());
     assertEquals(
-        "Unrecognized field \"records\" (class io.confluent.kafkarest.entities.v3.AutoValue_ProduceRequest$Builder), not marked as ignorable (6 known properties: \"value\", \"originalSize\", \"partitionId\", \"headers\", \"key\", \"timestamp\"])",
+        "Unrecognized field \"records\" "
+            + "(class io.confluent.kafkarest.entities.v3.AutoValue_ProduceRequest$Builder), "
+            + "not marked as ignorable (6 known properties: \"value\", \"originalSize\", "
+            + "\"partitionId\", \"headers\", \"key\", \"timestamp\"])",
         actual.getMessage());
   }
 

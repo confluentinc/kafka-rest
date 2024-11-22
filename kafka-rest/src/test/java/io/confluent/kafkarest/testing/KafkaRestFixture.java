@@ -141,14 +141,15 @@ public final class KafkaRestFixture implements BeforeEachCallback, AfterEachCall
     baseUri = null;
   }
 
-  public URI getBaseUri() {
-    checkState(baseUri != null);
-    return baseUri;
-  }
-
   public ObjectMapper getObjectMapper() {
     checkState(application != null);
     return application.getJsonMapper();
+  }
+
+  private WebTarget target(Client client) {
+    checkState(application != null);
+    application.configureBaseApplication(client);
+    return client.target(baseUri);
   }
 
   public WebTarget target() {
@@ -165,12 +166,6 @@ public final class KafkaRestFixture implements BeforeEachCallback, AfterEachCall
     checkState(certificates != null);
     return target(
         ClientBuilder.newBuilder().sslContext(certificates.getSslContext(keyName)).build());
-  }
-
-  private WebTarget target(Client client) {
-    checkState(application != null);
-    application.configureBaseApplication(client);
-    return client.target(baseUri);
   }
 
   public static Builder builder() {

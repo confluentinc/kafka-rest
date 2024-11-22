@@ -12,6 +12,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
 package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
@@ -68,7 +69,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     // so we can test that both will result in binary consumers. We also us varying accept
     // parameters to test that we default to Binary for various values.
     String instanceUri =
-        startConsumeMessages(groupName, topicName, null, Versions.KAFKA_V2_JSON_BINARY);
+        startConsumeMessages(groupName, topicName, null, Versions.KAFKA_V2_JSON_BINARY, "earliest");
     produceBinaryMessages(recordsOnlyValues);
     consumeMessages(
         instanceUri,
@@ -85,7 +86,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   public void testConsumeWithKeys() {
     String instanceUri =
         startConsumeMessages(
-            groupName, topicName, EmbeddedFormat.BINARY, Versions.KAFKA_V2_JSON_BINARY);
+            groupName, topicName, EmbeddedFormat.BINARY, Versions.KAFKA_V2_JSON_BINARY, "earliest");
     produceBinaryMessages(recordsWithKeys);
     consumeMessages(
         instanceUri,
@@ -103,7 +104,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     // This test ensures that Accept: */* defaults to binary
     String instanceUri =
         startConsumeMessages(
-            groupName, topicName, EmbeddedFormat.BINARY, Versions.KAFKA_V2_JSON_BINARY);
+            groupName, topicName, EmbeddedFormat.BINARY, Versions.KAFKA_V2_JSON_BINARY, "earliest");
     produceBinaryMessages(recordsWithKeys);
     consumeMessages(
         instanceUri,
@@ -120,7 +121,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   public void testConsumeTimeout() {
     String instanceUri =
         startConsumeMessages(
-            groupName, topicName, EmbeddedFormat.BINARY, Versions.KAFKA_V2_JSON_BINARY);
+            groupName, topicName, EmbeddedFormat.BINARY, Versions.KAFKA_V2_JSON_BINARY, "earliest");
     produceBinaryMessages(recordsWithKeys);
     consumeMessages(
         instanceUri,
@@ -140,7 +141,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   @Test
   public void testDeleteConsumer() {
     String instanceUri =
-        startConsumeMessages(groupName, topicName, null, Versions.KAFKA_V2_JSON_BINARY);
+        startConsumeMessages(groupName, topicName, null, Versions.KAFKA_V2_JSON_BINARY, "earliest");
     produceBinaryMessages(recordsWithKeys);
     consumeMessages(
         instanceUri,
@@ -179,12 +180,12 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   @Test
   public void testDuplicateConsumerID() {
     String instanceUrl =
-        startConsumeMessages(groupName, topicName, null, Versions.KAFKA_V2_JSON_BINARY);
+        startConsumeMessages(groupName, topicName, null, Versions.KAFKA_V2_JSON_BINARY, "earliest");
     produceBinaryMessages(recordsWithKeys);
 
     // Duplicate the same instance, which should cause a conflict
     String name = consumerNameFromInstanceUrl(instanceUrl);
-    Response createResponse = createConsumerInstance(groupName, null, name, null);
+    Response createResponse = createConsumerInstance(groupName, null, name, null, "earliest");
     assertErrorResponse(
         Response.Status.CONFLICT,
         createResponse,
