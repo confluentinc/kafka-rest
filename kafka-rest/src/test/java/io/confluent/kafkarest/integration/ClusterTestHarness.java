@@ -172,7 +172,7 @@ public abstract class ClusterTestHarness {
     this(numBrokers, withSchemaRegistry, true);
   }
 
-  /** @param manageRest If false, child-class is expected to create, start/stop REST-app. */
+  /** @param manageRest If false, child-class is expected to create and start/stop REST-app. */
   public ClusterTestHarness(int numBrokers, boolean withSchemaRegistry, boolean manageRest) {
     this.manageRest = manageRest;
     this.numBrokers = numBrokers;
