@@ -2147,7 +2147,7 @@ components:
               $ref: '#/components/schemas/ConsumerGroupState'
             coordinator:
               $ref: '#/components/schemas/Relationship'
-            consumer:
+            consumers:
               $ref: '#/components/schemas/Relationship'
             lag_summary:
               $ref: '#/components/schemas/Relationship'
