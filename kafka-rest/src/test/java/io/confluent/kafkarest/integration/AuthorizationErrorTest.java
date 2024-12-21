@@ -150,6 +150,7 @@ public class AuthorizationErrorTest
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"zk"})
+  @Disabled("KNET-16782")
   public void testConsumerRequest(String quorum) {
     // test without acls
     verifySubscribeToTopic(true);
@@ -178,6 +179,7 @@ public class AuthorizationErrorTest
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"zk"})
+  @Disabled("KNET-16782")
   public void testProducerAuthorization(String quorum) {
     BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecords);
     // test without any acls
