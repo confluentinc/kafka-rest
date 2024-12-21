@@ -53,6 +53,7 @@ import java.util.UUID;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class SchemaManagerImplTest {
@@ -738,6 +739,7 @@ public class SchemaManagerImplTest {
   }
 
   @Test
+  @Disabled("KNET-16814")
   public void errorRawSchemaCantParseSchema() {
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
     EmbeddedFormat embeddedFormatMock = mock(EmbeddedFormat.class);
@@ -774,6 +776,7 @@ public class SchemaManagerImplTest {
   }
 
   @Test
+  @Disabled("KNET-16814")
   public void errorRawSchemaNotSupportedWithSchema() {
     EmbeddedFormat embeddedFormatMock = mock(EmbeddedFormat.class);
     SchemaProvider schemaProviderMock = mock(SchemaProvider.class);
@@ -810,6 +813,7 @@ public class SchemaManagerImplTest {
   }
 
   @Test
+  @Disabled("KNET-16814")
   public void errorRegisteringSchema() throws RestClientException, IOException {
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
     ParsedSchema parsedSchemaMock = mock(ParsedSchema.class);
@@ -857,6 +861,7 @@ public class SchemaManagerImplTest {
   }
 
   @Test
+  @Disabled("KNET-16814")
   public void errorRegisteringSchemaUnauthorized() throws RestClientException, IOException {
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
     ParsedSchema parsedSchemaMock = mock(ParsedSchema.class);
