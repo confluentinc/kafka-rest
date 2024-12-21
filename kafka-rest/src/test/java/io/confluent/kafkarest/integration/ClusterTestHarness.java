@@ -211,7 +211,6 @@ public abstract class ClusterTestHarness {
         new DefaultQuorumTestHarness(
             overrideKraftControllerSecurityProtocol(), overrideKraftControllerConfig());
     quorumTestHarness.setUp(testInfo);
-    // zkConnect = quorumTestHarness.zkConnectOrNull();
 
     // start brokers concurrently
     startBrokersConcurrently(numBrokers);
