@@ -29,6 +29,7 @@ import io.confluent.kafkarest.integration.ClusterTestHarness;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -41,6 +42,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
   /** Only applicable for Zk because getControllerID() is non-deterministic in Kraft */
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"zk"})
+  @Disabled("KNET-16782")
   public void listClusters_returnsArrayWithOwnCluster(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -101,6 +103,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
   /** Only applicable for Zk because getControllerID() is non-deterministic in Kraft */
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"zk"})
+  @Disabled("KNET-16782")
   public void getCluster_ownCluster_returnsOwnCluster(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();

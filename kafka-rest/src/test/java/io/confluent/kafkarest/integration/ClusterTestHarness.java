@@ -63,7 +63,6 @@ import javax.ws.rs.client.WebTarget;
 import kafka.server.KafkaBroker;
 import kafka.server.KafkaConfig;
 import kafka.server.QuorumTestHarness;
-import kafka.utils.TestInfoUtils;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -122,7 +121,6 @@ public abstract class ClusterTestHarness {
   // Quorum controller
   private TestInfo testInfo;
   private QuorumTestHarness quorumTestHarness;
-  protected String zkConnect;
 
   // Kafka Config
   protected List<KafkaConfig> configs = null;
@@ -213,7 +211,7 @@ public abstract class ClusterTestHarness {
         new DefaultQuorumTestHarness(
             overrideKraftControllerSecurityProtocol(), overrideKraftControllerConfig());
     quorumTestHarness.setUp(testInfo);
-    zkConnect = quorumTestHarness.zkConnectOrNull();
+    // zkConnect = quorumTestHarness.zkConnectOrNull();
 
     // start brokers concurrently
     startBrokersConcurrently(numBrokers);
@@ -395,18 +393,13 @@ public abstract class ClusterTestHarness {
     return SecurityProtocol.PLAINTEXT;
   }
 
-  public boolean isKraftTest() {
-    checkState(testInfo != null);
-    return TestInfoUtils.isKRaft(testInfo);
-  }
-
   protected void overrideKafkaRestConfigs(Properties restProperties) {}
 
   protected Properties getBrokerProperties(int i) {
     Properties props =
         TestUtils.createBrokerConfig(
             i,
-            zkConnect,
+            null,
             false,
             false,
             TestUtils.RandomPort(),
@@ -426,10 +419,8 @@ public abstract class ClusterTestHarness {
             1,
             (short) 1,
             false);
-    if (quorumTestHarness.isKRaftTest()) {
-      // Make sure that broker only role is "broker"
-      props.setProperty("process.roles", "broker");
-    }
+    // Make sure that broker only role is "broker"
+    props.setProperty("process.roles", "broker");
     props.setProperty("auto.create.topics.enable", "false");
     props.setProperty("message.max.bytes", String.valueOf(MAX_MESSAGE_SIZE));
     return props;
@@ -625,40 +616,19 @@ public abstract class ClusterTestHarness {
       Optional<Map<Integer, List<Integer>>> replicasAssignments,
       Properties adminProperties,
       Properties topicConfig) {
-    if (quorumTestHarness.isKRaftTest()) {
-      adminProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
-      try (AdminClient admin = AdminClient.create(adminProperties)) {
-        TestUtils.createTopicWithAdmin(
-            admin,
-            topicName,
-            JavaConverters.asScalaBuffer(servers).toSeq(),
-            quorumTestHarness.controllerServers(),
-            numPartitions.orElse(1),
-            replicationFactor.orElse((short) 1),
-            JavaConverters.mapAsScalaMapConverter(
-                    convertReplicasAssignmentToScalaCompatibleType(replicasAssignments))
-                .asScala(),
-            topicConfig);
-      }
-    } else {
-      if (replicasAssignments.isPresent()) {
-        TestUtils.createTopic(
-            quorumTestHarness.zkClient(),
-            topicName,
-            JavaConverters.mapAsScalaMapConverter(
-                    convertReplicasAssignmentToScalaCompatibleType(replicasAssignments))
-                .asScala(),
-            JavaConverters.asScalaBuffer(servers).toSeq(),
-            topicConfig);
-      } else {
-        TestUtils.createTopic(
-            quorumTestHarness.zkClient(),
-            topicName,
-            numPartitions.orElse(1),
-            replicationFactor.orElse((short) 1),
-            JavaConverters.asScalaBuffer(servers).toSeq(),
-            topicConfig);
-      }
+    adminProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    try (AdminClient admin = AdminClient.create(adminProperties)) {
+      TestUtils.createTopicWithAdmin(
+          admin,
+          topicName,
+          JavaConverters.asScalaBuffer(servers).toSeq(),
+          quorumTestHarness.controllerServers(),
+          numPartitions.orElse(1),
+          replicationFactor.orElse((short) 1),
+          JavaConverters.mapAsScalaMapConverter(
+                  convertReplicasAssignmentToScalaCompatibleType(replicasAssignments))
+              .asScala(),
+          topicConfig);
     }
   }
 
