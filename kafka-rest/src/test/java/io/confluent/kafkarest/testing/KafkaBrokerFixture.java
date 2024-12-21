@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import kafka.server.KafkaBroker;
 import kafka.server.KafkaConfig;
-import kafka.utils.TestInfoUtils;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.network.ListenerName;
@@ -101,18 +100,15 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
     logDir = Files.createTempDirectory(String.format("kafka-%d-", brokerId));
     broker =
         quorumController.createBroker(
-            KafkaConfig.fromProps(getBrokerConfigs(TestInfoUtils.isKRaft(testInfo))),
-            Time.SYSTEM,
-            true,
-            Option.empty());
+            KafkaConfig.fromProps(getBrokerConfigs()), Time.SYSTEM, true, Option.empty());
   }
 
-  private Properties getBrokerConfigs(boolean isKraftTest) {
+  private Properties getBrokerConfigs() {
     checkState(logDir != null);
     Properties properties =
         TestUtils.createBrokerConfig(
             brokerId,
-            quorumController.zkConnectOrNull(),
+            null,
             false,
             false,
             TestUtils.RandomPort(),
@@ -135,18 +131,15 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
     properties.putAll(CONFIG_TEMPLATE);
     properties.setProperty("broker.id", String.valueOf(brokerId));
     properties.setProperty("log.dir", logDir.toString());
-    properties.putAll(getBrokerSecurityConfigs(isKraftTest));
+    properties.putAll(getBrokerSecurityConfigs());
     properties.putAll(getBrokerSslConfigs());
     properties.putAll(configs);
     return properties;
   }
 
-  private Properties getBrokerSecurityConfigs(boolean isKraftTest) {
+  private Properties getBrokerSecurityConfigs() {
     Properties properties = new Properties();
-    String listenerSecurityProtocolMapTempl = "EXTERNAL:%s,INTERNAL:%s";
-    if (isKraftTest) {
-      listenerSecurityProtocolMapTempl += ",CONTROLLER:PLAINTEXT";
-    }
+    String listenerSecurityProtocolMapTempl = "EXTERNAL:%s,INTERNAL:%s,CONTROLLER:PLAINTEXT";
     properties.setProperty(
         "listener.security.protocol.map",
         String.format(listenerSecurityProtocolMapTempl, securityProtocol, securityProtocol));
@@ -157,12 +150,8 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
           "listener.name.internal.plain.sasl.jaas.config", getBrokerPlainSaslJaasConfig());
       properties.setProperty("sasl.enabled.mechanisms", "PLAIN");
       properties.setProperty("sasl.mechanism.inter.broker.protocol", "PLAIN");
-      if (isKraftTest) {
-        properties.setProperty(
-            "authorizer.class.name", "org.apache.kafka.metadata.authorizer.StandardAuthorizer");
-      } else {
-        properties.setProperty("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
-      }
+      properties.setProperty(
+          "authorizer.class.name", "org.apache.kafka.metadata.authorizer.StandardAuthorizer");
     }
     properties.setProperty("super.users", getSuperUsers());
     return properties;

@@ -16,10 +16,8 @@
 package io.confluent.kafkarest.requestlog;
 
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes;
+import io.confluent.rest.jetty.DoSFilter;
 import javax.servlet.http.HttpServletRequest;
-import org.eclipse.jetty.servlets.DoSFilter;
-import org.eclipse.jetty.servlets.DoSFilter.Action;
-import org.eclipse.jetty.servlets.DoSFilter.OverLimit;
 
 /**
  * This class is a Jetty DosFilter.Listener, for the global-dos filter. This on 429s will populate
@@ -28,12 +26,12 @@ import org.eclipse.jetty.servlets.DoSFilter.OverLimit;
 public class GlobalDosFilterListener extends DoSFilter.Listener {
 
   @Override
-  public Action onRequestOverLimit(
-      HttpServletRequest request, OverLimit overlimit, DoSFilter dosFilter) {
+  public DoSFilter.Action onRequestOverLimit(
+      HttpServletRequest request, DoSFilter.OverLimit overlimit, DoSFilter dosFilter) {
     // KREST-10418: we don't use super function to get action object because
     // it will log a WARN line, in order to reduce verbosity
-    Action action = Action.fromDelay(dosFilter.getDelayMs());
-    if (action.equals(Action.REJECT)) {
+    DoSFilter.Action action = DoSFilter.Action.fromDelay(dosFilter.getDelayMs());
+    if (action.equals(DoSFilter.Action.REJECT)) {
       request.setAttribute(
           CustomLogRequestAttributes.REST_ERROR_CODE,
           ErrorCodes.DOS_FILTER_MAX_REQUEST_LIMIT_EXCEEDED);
