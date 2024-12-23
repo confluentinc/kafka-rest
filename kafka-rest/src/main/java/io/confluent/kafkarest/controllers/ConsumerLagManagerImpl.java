@@ -54,9 +54,11 @@ final class ConsumerLagManagerImpl extends AbstractConsumerLagManager
     return consumerGroupManager
         .getConsumerGroup(clusterId, consumerGroupId)
         .thenApply(
-            consumerGroup ->
-                checkEntityExists(
-                    consumerGroup, "Consumer Group %s could not be found.", consumerGroupId))
+            consumerGroup -> {
+              log.warn("described consumerGroup: {}", consumerGroup);
+              return checkEntityExists(
+                  consumerGroup, "Consumer Group %s could not be found.", consumerGroupId);
+            })
         .thenCompose(
             consumerGroup ->
                 getCurrentOffsets(consumerGroupId)
