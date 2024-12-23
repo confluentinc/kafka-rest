@@ -51,7 +51,7 @@ final class ConsumerLagManagerImpl extends AbstractConsumerLagManager
   @Override
   public CompletableFuture<List<ConsumerLag>> listConsumerLags(
       String clusterId, String consumerGroupId) {
-      log.warn("listing ConsumerLags: clusterId={}, consumerGroupId={}", clusterId, consumerGroupId);
+    log.warn("listing ConsumerLags: clusterId={}, consumerGroupId={}", clusterId, consumerGroupId);
     return consumerGroupManager
         .getConsumerGroup(clusterId, consumerGroupId)
         .thenApply(
