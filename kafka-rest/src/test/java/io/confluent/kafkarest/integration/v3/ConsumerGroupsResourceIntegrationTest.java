@@ -180,6 +180,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     consumer2.poll(Duration.ofSeconds(1));
     consumer3.poll(Duration.ofSeconds(1));
 
+    // small change
     Response response =
         request("/v3/clusters/" + clusterId + "/consumer-groups/foobar")
             .accept(MediaType.APPLICATION_JSON)
