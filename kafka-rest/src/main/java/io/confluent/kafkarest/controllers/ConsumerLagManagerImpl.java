@@ -51,12 +51,15 @@ final class ConsumerLagManagerImpl extends AbstractConsumerLagManager
   @Override
   public CompletableFuture<List<ConsumerLag>> listConsumerLags(
       String clusterId, String consumerGroupId) {
+      log.warn("listing ConsumerLags: clusterId={}, consumerGroupId={}", clusterId, consumerGroupId);
     return consumerGroupManager
         .getConsumerGroup(clusterId, consumerGroupId)
         .thenApply(
-            consumerGroup ->
-                checkEntityExists(
-                    consumerGroup, "Consumer Group %s could not be found.", consumerGroupId))
+            consumerGroup -> {
+              log.warn("described consumerGroup: {}", consumerGroup);
+              return checkEntityExists(
+                  consumerGroup, "Consumer Group %s could not be found.", consumerGroupId);
+            })
         .thenCompose(
             consumerGroup ->
                 getCurrentOffsets(consumerGroupId)
