@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.common.GroupState;
 
 @AutoValue
 public abstract class ConsumerGroup {
@@ -67,7 +68,7 @@ public abstract class ConsumerGroup {
         .setPartitionAssignor(description.partitionAssignor())
         // I have only been able to see state=PREPARING_REBALANCE on all my tests.
         // TODO: Investigate how to get actual state of consumer group.
-        .setState(State.fromConsumerGroupState(description.state()))
+        .setState(State.fromConsumerGroupState(description.groupState()))
         .setCoordinator(Broker.fromNode(clusterId, description.coordinator()))
         .setConsumers(
             description.members().stream()
@@ -113,8 +114,9 @@ public abstract class ConsumerGroup {
 
     EMPTY;
 
-    public static State fromConsumerGroupState(ConsumerGroupState state) {
+    public static State fromConsumerGroupState(GroupState state) {
       try {
+        System.out.println("State: " + state.name());
         return State.valueOf(state.name());
       } catch (IllegalArgumentException e) {
         return UNKNOWN;

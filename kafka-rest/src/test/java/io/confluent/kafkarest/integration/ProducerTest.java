@@ -115,7 +115,7 @@ public class ProducerTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToTopicWithKeys(String quorum) {
     BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecordsWithKeys);
     testProduceToTopic(
@@ -129,7 +129,7 @@ public class ProducerTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToTopicWithPartitions(String quorum) {
     BinaryTopicProduceRequest request =
         BinaryTopicProduceRequest.create(topicRecordsWithPartitions);
@@ -144,7 +144,7 @@ public class ProducerTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToTopicWithPartitionsAndKeys(String quorum) {
     BinaryTopicProduceRequest request =
         BinaryTopicProduceRequest.create(topicRecordsWithPartitionsAndKeys);
@@ -159,7 +159,7 @@ public class ProducerTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToTopicWithNullValues(String quorum) {
     BinaryTopicProduceRequest request =
         BinaryTopicProduceRequest.create(topicRecordsWithNullValues);
@@ -174,7 +174,7 @@ public class ProducerTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToInvalidTopic(String quorum) {
     BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecordsWithKeys);
     // This test turns auto-create off, so this should generate an error. Ideally it would
@@ -197,25 +197,25 @@ public class ProducerTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToPartitionOnlyValues(String quorum) {
     testProduceToPartition(partitionRecordsOnlyValues, produceOffsets);
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToPartitionWithKeys(String quorum) {
     testProduceToPartition(partitionRecordsWithKeys, produceOffsets);
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToPartitionWithNullValues(String quorum) {
     testProduceToPartition(partitionRecordsWithNullValues, produceOffsets);
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testNullPayload(String quorum) {
 
     List<String> versions =
