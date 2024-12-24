@@ -113,8 +113,8 @@ public final class ConsumerGroupsResource {
             .thenApply(
                 consumerGroup -> {
                   if (consumerGroup.isPresent()) {
-                    //                    throw new IllegalStateException(
-                    log.warn(
+                    throw new IllegalStateException(
+                        //                    log.warn(
                         "ConsumerGroupsResource - state: "
                             + consumerGroup.get().getState()
                             + ", "

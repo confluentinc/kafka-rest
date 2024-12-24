@@ -134,7 +134,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1")
             .accept(MediaType.APPLICATION_JSON)
             .get();
-    //    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
     assertThat(
         response.readEntity(GetConsumerGroupResponse.class),
         anyOf(is(expectedStable), is(expectedRebalance)));

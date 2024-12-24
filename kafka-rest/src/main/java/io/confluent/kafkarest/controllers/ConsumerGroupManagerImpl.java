@@ -123,20 +123,20 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
                 assignorsAfter.add(group.getPartitionAssignor());
               }
 
-              //            if (statesAfter.contains(ConsumerGroup.State.UNKNOWN)
-              //                || assignorsAfter.contains("")) {
-              //              throw new IllegalStateException(
+              if (statesAfter.contains(ConsumerGroup.State.UNKNOWN)
+                  || assignorsAfter.contains("")) {
+                throw new IllegalStateException(
+                    "after getConsumerGroups - States: "
+                        + statesAfter
+                        + ", Assignors: "
+                        + assignorsAfter);
+              }
+
+              //              log.warn(
               //                  "after getConsumerGroups - States: "
               //                      + statesAfter
               //                      + ", Assignors: "
               //                      + assignorsAfter);
-              //            }
-
-              log.warn(
-                  "after getConsumerGroups - States: "
-                      + statesAfter
-                      + ", Assignors: "
-                      + assignorsAfter);
               return consumerGroups;
             });
   }
