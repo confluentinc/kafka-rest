@@ -116,7 +116,6 @@ public abstract class ConsumerGroup {
 
     public static State fromConsumerGroupState(GroupState state) {
       try {
-        System.out.println("State: " + state.name());
         return State.valueOf(state.name());
       } catch (IllegalArgumentException e) {
         return UNKNOWN;
