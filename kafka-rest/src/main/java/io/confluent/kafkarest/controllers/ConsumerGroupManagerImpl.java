@@ -74,18 +74,31 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
     return KafkaFutures.toCompletableFuture(
             adminClient.describeConsumerGroups(consumerGroupIds).all())
         .thenApply(
-            descriptions ->
-                descriptions.values().stream()
-                    .filter(
-                        // When describing a consumer-group that does not exist, AdminClient returns
-                        // a dummy consumer-group with simple=true and state=DEAD.
-                        // TODO: Investigate a better way of detecting non-existent consumer-group.
-                        description ->
-                            !description.isSimpleConsumerGroup()
-                                || description.state() != ConsumerGroupState.DEAD)
-                    .map(
-                        description ->
-                            ConsumerGroup.fromConsumerGroupDescription(clusterId, description))
-                    .collect(Collectors.toList()));
+            descriptions -> {
+              if (descriptions != null) {
+                throw new IllegalStateException(
+                    "Description values: "
+                        + descriptions.values()
+                        + ", "
+                        + "Description state: "
+                        + descriptions.values().stream().map(description -> description.state())
+                        + ", "
+                        + "Description assignor: "
+                        + descriptions.values().stream()
+                            .map(description -> description.partitionAssignor()));
+              }
+              return descriptions.values().stream()
+                  .filter(
+                      // When describing a consumer-group that does not exist, AdminClient returns
+                      // a dummy consumer-group with simple=true and state=DEAD.
+                      // TODO: Investigate a better way of detecting non-existent consumer-group.
+                      description ->
+                          !description.isSimpleConsumerGroup()
+                              || description.state() != ConsumerGroupState.DEAD)
+                  .map(
+                      description ->
+                          ConsumerGroup.fromConsumerGroupDescription(clusterId, description))
+                  .collect(Collectors.toList());
+            });
   }
 }
