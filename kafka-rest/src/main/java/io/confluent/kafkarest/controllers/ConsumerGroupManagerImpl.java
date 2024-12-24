@@ -75,7 +75,9 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
             adminClient.describeConsumerGroups(consumerGroupIds).all())
         .thenApply(
             descriptions -> {
-              throw new IllegalStateException("Description: " + descriptions);
+              if (descriptions != null) {
+                throw new IllegalStateException("Description: " + descriptions);
+              }
               return descriptions.values().stream()
                   .filter(
                       // When describing a consumer-group that does not exist, AdminClient returns
