@@ -58,24 +58,53 @@ public abstract class ConsumerGroup {
 
   public static ConsumerGroup fromConsumerGroupDescription(
       String clusterId, ConsumerGroupDescription description) {
-    return builder()
-        .setClusterId(clusterId)
-        .setConsumerGroupId(description.groupId())
-        .setSimple(description.isSimpleConsumerGroup())
-        // I have only seen partitionAssignor="" in all my tests, no matter what I do.
-        // TODO: Investigate how to actually get partition assignor.
-        .setPartitionAssignor(description.partitionAssignor())
-        // I have only been able to see state=PREPARING_REBALANCE on all my tests.
-        // TODO: Investigate how to get actual state of consumer group.
-        .setState(State.fromConsumerGroupState(description.state()))
-        .setCoordinator(Broker.fromNode(clusterId, description.coordinator()))
-        .setConsumers(
-            description.members().stream()
-                .map(
-                    consumer ->
-                        Consumer.fromMemberDescription(clusterId, description.groupId(), consumer))
-                .collect(Collectors.toList()))
-        .build();
+
+    //    if (description.state() == ConsumerGroupState.UNKNOWN) {
+    //      throw new IllegalStateException(
+    //          "before fromConsumerGroupDescription - State: " + description.state());
+    //    }
+    //
+    //    if (description.partitionAssignor() == null || description.partitionAssignor().equals(""))
+    // {
+    //      throw new IllegalStateException(
+    //          "before fromConsumerGroupDescription - Assignor: " +
+    // description.partitionAssignor());
+    //    }
+
+    ConsumerGroup consumerGroup =
+        builder()
+            .setClusterId(clusterId)
+            .setConsumerGroupId(description.groupId())
+            .setSimple(description.isSimpleConsumerGroup())
+            // I have only seen partitionAssignor="" in all my tests, no matter what I do.
+            // TODO: Investigate how to actually get partition assignor.
+            .setPartitionAssignor(description.partitionAssignor())
+            // I have only been able to see state=PREPARING_REBALANCE on all my tests.
+            // TODO: Investigate how to get actual state of consumer group.
+            .setState(State.fromConsumerGroupState(description.state()))
+            .setCoordinator(Broker.fromNode(clusterId, description.coordinator()))
+            .setConsumers(
+                description.members().stream()
+                    .map(
+                        consumer ->
+                            Consumer.fromMemberDescription(
+                                clusterId, description.groupId(), consumer))
+                    .collect(Collectors.toList()))
+            .build();
+
+    //    if (consumerGroup.getState().name().equals(ConsumerGroupState.UNKNOWN.name())) {
+    //      throw new IllegalStateException(
+    //          "after fromConsumerGroupDescription - State: " + consumerGroup.getState());
+    //    }
+    //
+    //    if (consumerGroup.getPartitionAssignor() == null
+    //        || consumerGroup.getPartitionAssignor().equals("")) {
+    //      throw new IllegalStateException(
+    //          "after fromConsumerGroupDescription - Assignor: " +
+    // consumerGroup.getPartitionAssignor());
+    //    }
+
+    return consumerGroup;
   }
 
   @AutoValue.Builder
