@@ -107,7 +107,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"kraft", "zk"})
-  public void getConsumerGroup_returnsConsumerGroup(String quorum) {
+  public void getConsumerGroup_returnsConsumerGroup(String quorum) throws InterruptedException {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -123,6 +123,11 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     consumer1.poll(Duration.ofSeconds(1));
     consumer2.poll(Duration.ofSeconds(1));
     consumer3.poll(Duration.ofSeconds(1));
+    // After polling once, only one of the consumers will be member of the group, so we poll again
+    // to force the other 2 consumers to join the group.
+    consumer1.poll(Duration.ofSeconds(1));
+    consumer2.poll(Duration.ofSeconds(1));
+    consumer3.poll(Duration.ofSeconds(1));
 
     GetConsumerGroupResponse expectedStable =
         getExpectedGroupResponse(baseUrl, clusterId, "range", State.STABLE);
@@ -134,6 +139,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1")
             .accept(MediaType.APPLICATION_JSON)
             .get();
+    Thread.sleep(15000);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
     assertThat(
         response.readEntity(GetConsumerGroupResponse.class),
