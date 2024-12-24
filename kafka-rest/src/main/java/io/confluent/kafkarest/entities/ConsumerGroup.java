@@ -59,15 +59,17 @@ public abstract class ConsumerGroup {
   public static ConsumerGroup fromConsumerGroupDescription(
       String clusterId, ConsumerGroupDescription description) {
 
-    if (description.state() == ConsumerGroupState.UNKNOWN) {
-      throw new IllegalStateException(
-          "before fromConsumerGroupDescription - State: " + description.state());
-    }
-
-    if (description.partitionAssignor() == null || description.partitionAssignor().equals("")) {
-      throw new IllegalStateException(
-          "before fromConsumerGroupDescription - Assignor: " + description.partitionAssignor());
-    }
+    //    if (description.state() == ConsumerGroupState.UNKNOWN) {
+    //      throw new IllegalStateException(
+    //          "before fromConsumerGroupDescription - State: " + description.state());
+    //    }
+    //
+    //    if (description.partitionAssignor() == null || description.partitionAssignor().equals(""))
+    // {
+    //      throw new IllegalStateException(
+    //          "before fromConsumerGroupDescription - Assignor: " +
+    // description.partitionAssignor());
+    //    }
 
     ConsumerGroup consumerGroup =
         builder()
@@ -90,16 +92,17 @@ public abstract class ConsumerGroup {
                     .collect(Collectors.toList()))
             .build();
 
-    if (consumerGroup.getState().name().equals(ConsumerGroupState.UNKNOWN.name())) {
-      throw new IllegalStateException(
-          "after fromConsumerGroupDescription - State: " + consumerGroup.getState());
-    }
-
-    if (consumerGroup.getPartitionAssignor() == null
-        || consumerGroup.getPartitionAssignor().equals("")) {
-      throw new IllegalStateException(
-          "after fromConsumerGroupDescription - Assignor: " + consumerGroup.getPartitionAssignor());
-    }
+    //    if (consumerGroup.getState().name().equals(ConsumerGroupState.UNKNOWN.name())) {
+    //      throw new IllegalStateException(
+    //          "after fromConsumerGroupDescription - State: " + consumerGroup.getState());
+    //    }
+    //
+    //    if (consumerGroup.getPartitionAssignor() == null
+    //        || consumerGroup.getPartitionAssignor().equals("")) {
+    //      throw new IllegalStateException(
+    //          "after fromConsumerGroupDescription - Assignor: " +
+    // consumerGroup.getPartitionAssignor());
+    //    }
 
     return consumerGroup;
   }

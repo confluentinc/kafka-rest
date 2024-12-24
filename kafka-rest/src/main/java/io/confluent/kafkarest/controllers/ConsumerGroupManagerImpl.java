@@ -30,11 +30,15 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
 import org.apache.kafka.common.ConsumerGroupState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
 
   private final Admin adminClient;
   private final ClusterManager clusterManager;
+
+  private static final Logger log = LoggerFactory.getLogger(ConsumerGroupManagerImpl.class);
 
   @Inject
   ConsumerGroupManagerImpl(Admin adminClient, ClusterManager clusterManager) {
@@ -119,23 +123,20 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
                 assignorsAfter.add(group.getPartitionAssignor());
               }
 
-              //              if (statesAfter.contains(ConsumerGroup.State.UNKNOWN)
-              //                  || assignorsAfter.contains("")) {
-              //                throw new IllegalStateException(
-              //                    "after getConsumerGroups - States: "
-              //                        + statesAfter
-              //                        + ", Assignors: "
-              //                        + assignorsAfter);
-              //              }
+              //            if (statesAfter.contains(ConsumerGroup.State.UNKNOWN)
+              //                || assignorsAfter.contains("")) {
+              //              throw new IllegalStateException(
+              //                  "after getConsumerGroups - States: "
+              //                      + statesAfter
+              //                      + ", Assignors: "
+              //                      + assignorsAfter);
+              //            }
 
-              if (!statesAfter.isEmpty()) {
-                throw new IllegalStateException(
-                    "after getConsumerGroups - States: "
-                        + statesAfter
-                        + ", Assignors: "
-                        + assignorsAfter);
-              }
-
+              log.warn(
+                  "after getConsumerGroups - States: "
+                      + statesAfter
+                      + ", Assignors: "
+                      + assignorsAfter);
               return consumerGroups;
             });
   }

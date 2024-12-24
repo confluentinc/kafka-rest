@@ -43,6 +43,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/v3/clusters/{clusterId}/consumer-groups")
 @ResourceName("api.v3.consumer-groups.*")
@@ -51,6 +53,8 @@ public final class ConsumerGroupsResource {
   private final Provider<ConsumerGroupManager> consumerGroupManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
+
+  private static final Logger log = LoggerFactory.getLogger(ConsumerGroupsResource.class);
 
   @Inject
   public ConsumerGroupsResource(
@@ -109,7 +113,8 @@ public final class ConsumerGroupsResource {
             .thenApply(
                 consumerGroup -> {
                   if (consumerGroup.isPresent()) {
-                    throw new IllegalStateException(
+                    //                    throw new IllegalStateException(
+                    log.warn(
                         "ConsumerGroupsResource - state: "
                             + consumerGroup.get().getState()
                             + ", "

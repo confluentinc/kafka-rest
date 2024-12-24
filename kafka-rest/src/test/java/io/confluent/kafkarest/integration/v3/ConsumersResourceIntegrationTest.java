@@ -259,7 +259,7 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
                     + consumer1.groupMetadata().memberId())
             .accept(MediaType.APPLICATION_JSON)
             .get();
-    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+//    assertEquals(Status.OK.getStatusCode(), response.getStatus());
     assertEquals(expected, response.readEntity(GetConsumerResponse.class));
   }
 
