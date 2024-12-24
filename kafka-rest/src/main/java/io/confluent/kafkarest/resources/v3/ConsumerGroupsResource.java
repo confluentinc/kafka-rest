@@ -106,7 +106,18 @@ public final class ConsumerGroupsResource {
         consumerGroupManager
             .get()
             .getConsumerGroup(clusterId, consumerGroupId)
-            .thenApply(consumerGroup -> consumerGroup.orElseThrow(NotFoundException::new))
+            .thenApply(
+                consumerGroup -> {
+                  if (consumerGroup.isPresent()) {
+                    throw new IllegalStateException(
+                        "ConsumerGroupsResource - state: "
+                            + consumerGroup.getState()
+                            + ", "
+                            + "assignor: "
+                            + consumerGroup.getPartitionAssignor());
+                  }
+                  return consumerGroup.orElseThrow(NotFoundException::new);
+                })
             .thenApply(
                 consumerGroup ->
                     GetConsumerGroupResponse.create(toConsumerGroupData(clusterId, consumerGroup)));
