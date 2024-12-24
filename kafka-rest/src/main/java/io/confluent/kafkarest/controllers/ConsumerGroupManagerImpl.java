@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.ConsumerGroup;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -75,33 +76,58 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
             adminClient.describeConsumerGroups(consumerGroupIds).all())
         .thenApply(
             descriptions -> {
-              if (descriptions != null) {
-                throw new IllegalStateException(
-                    "Description values: "
-                        + descriptions.values()
-                        + ", "
-                        + "Description state: "
-                        + descriptions.values().stream()
-                            .map(description -> description.state())
-                            .collect(Collectors.toList())
-                        + ", "
-                        + "Description assignor: "
-                        + descriptions.values().stream()
-                            .map(description -> description.partitionAssignor())
-                            .collect(Collectors.toList()));
+              List<ConsumerGroupState> states =
+                  descriptions.values().stream()
+                      .map(description -> description.state())
+                      .collect(Collectors.toList());
+              List<String> assignors =
+                  descriptions.values().stream()
+                      .map(description -> description.partitionAssignor())
+                      .collect(Collectors.toList());
+              for (ConsumerGroupState state : states) {
+                if (state == ConsumerGroupState.UNKNOWN) {
+                  throw new IllegalStateException("before getConsumerGroups - States: " + states);
+                }
               }
-              return descriptions.values().stream()
-                  .filter(
-                      // When describing a consumer-group that does not exist, AdminClient returns
-                      // a dummy consumer-group with simple=true and state=DEAD.
-                      // TODO: Investigate a better way of detecting non-existent consumer-group.
-                      description ->
-                          !description.isSimpleConsumerGroup()
-                              || description.state() != ConsumerGroupState.DEAD)
-                  .map(
-                      description ->
-                          ConsumerGroup.fromConsumerGroupDescription(clusterId, description))
-                  .collect(Collectors.toList());
+              for (String assignor : assignors) {
+                if (assignor == null || assignor.equals("")) {
+                  throw new IllegalStateException(
+                      "before getConsumerGroups - Assignors: " + assignors);
+                }
+              }
+
+              List<ConsumerGroup> consumerGroups =
+                  descriptions.values().stream()
+                      .filter(
+                          // When describing a consumer-group that does not exist, AdminClient
+                          // returns
+                          // a dummy consumer-group with simple=true and state=DEAD.
+                          // TODO: Investigate a better way of detecting non-existent
+                          // consumer-group.
+                          description ->
+                              !description.isSimpleConsumerGroup()
+                                  || description.state() != ConsumerGroupState.DEAD)
+                      .map(
+                          description ->
+                              ConsumerGroup.fromConsumerGroupDescription(clusterId, description))
+                      .collect(Collectors.toList());
+
+              List<ConsumerGroup.State> statesAfter = new ArrayList<ConsumerGroup.State>();
+              List<String> assignorsAfter = new ArrayList<String>();
+              for (ConsumerGroup group : consumerGroups) {
+                statesAfter.add(group.getState());
+                assignorsAfter.add(group.getPartitionAssignor());
+              }
+              if (statesAfter.contains(ConsumerGroup.State.UNKNOWN)
+                  || assignorsAfter.contains("")) {
+                throw new IllegalStateException(
+                    "after getConsumerGroups - States: "
+                        + statesAfter
+                        + ", Assignors: "
+                        + assignorsAfter);
+              }
+
+              return consumerGroups;
             });
   }
 }
