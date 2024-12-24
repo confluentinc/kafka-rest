@@ -76,9 +76,16 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
         .thenApply(
             descriptions -> {
               if (descriptions != null) {
-                throw new IllegalStateException("Description values: " + descriptions.values() + ", "
-                 + "Description state: " + descriptions.values().stream().map(description -> description.state()) + ", "
-                 + "Description assignor: " + descriptions.values().stream().map(description -> description.partitionAssignor()));
+                throw new IllegalStateException(
+                    "Description values: "
+                        + descriptions.values()
+                        + ", "
+                        + "Description state: "
+                        + descriptions.values().stream().map(description -> description.state())
+                        + ", "
+                        + "Description assignor: "
+                        + descriptions.values().stream()
+                            .map(description -> description.partitionAssignor()));
               }
               return descriptions.values().stream()
                   .filter(
