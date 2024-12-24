@@ -119,8 +119,16 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
                 assignorsAfter.add(group.getPartitionAssignor());
               }
 
-              if (statesAfter.contains(ConsumerGroup.State.UNKNOWN)
-                  || assignorsAfter.contains("")) {
+              //              if (statesAfter.contains(ConsumerGroup.State.UNKNOWN)
+              //                  || assignorsAfter.contains("")) {
+              //                throw new IllegalStateException(
+              //                    "after getConsumerGroups - States: "
+              //                        + statesAfter
+              //                        + ", Assignors: "
+              //                        + assignorsAfter);
+              //              }
+
+              if (!statesAfter.isEmpty()) {
                 throw new IllegalStateException(
                     "after getConsumerGroups - States: "
                         + statesAfter
