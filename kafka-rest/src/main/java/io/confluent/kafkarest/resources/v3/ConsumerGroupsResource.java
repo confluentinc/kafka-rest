@@ -111,10 +111,10 @@ public final class ConsumerGroupsResource {
                   if (consumerGroup.isPresent()) {
                     throw new IllegalStateException(
                         "ConsumerGroupsResource - state: "
-                            + consumerGroup.getState()
+                            + consumerGroup.get().getState()
                             + ", "
                             + "assignor: "
-                            + consumerGroup.getPartitionAssignor());
+                            + consumerGroup.get().getPartitionAssignor());
                   }
                   return consumerGroup.orElseThrow(NotFoundException::new);
                 })
