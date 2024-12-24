@@ -423,6 +423,15 @@ public abstract class ClusterTestHarness {
     props.setProperty("auto.create.topics.enable", "false");
     props.setProperty("message.max.bytes", String.valueOf(MAX_MESSAGE_SIZE));
     props.setProperty("group.coordinator.new.enable", "true");
+
+    // Configure logging to stdout
+    props.setProperty("log4j.rootLogger", "INFO, stdout");
+    props.setProperty("log4j.appender.stdout", "org.apache.log4j.ConsoleAppender");
+    props.setProperty("log4j.appender.stdout.layout", "org.apache.log4j.PatternLayout");
+    props.setProperty(
+        "log4j.appender.stdout.layout.ConversionPattern", "%d{ISO8601} [%t] %-5p %c %x - %m%n");
+    props.setProperty(
+        "log4j.logger.org.apache.kafka.coordinator.group.GroupMetadataManager", "DEBUG");
     return props;
   }
 
