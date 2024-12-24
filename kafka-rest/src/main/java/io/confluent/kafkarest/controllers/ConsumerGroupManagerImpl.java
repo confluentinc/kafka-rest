@@ -76,7 +76,7 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
         .thenApply(
             descriptions -> {
               throw new IllegalStateException("Description: " + descriptions);
-              descriptions.values().stream()
+              return descriptions.values().stream()
                   .filter(
                       // When describing a consumer-group that does not exist, AdminClient returns
                       // a dummy consumer-group with simple=true and state=DEAD.
