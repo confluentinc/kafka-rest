@@ -101,24 +101,28 @@ public abstract class ConsumerGroup {
   }
 
   public enum State {
-    UNKNOWN,
+    UNKNOWN("Unknown"),
+    PREPARING_REBALANCE("PreparingRebalance"),
+    COMPLETING_REBALANCE("CompletingRebalance"),
+    STABLE("Stable"),
+    DEAD("Dead"),
+    EMPTY("Empty"),
+    ASSIGNING("Assigning"),
+    RECONCILING("Reconciling");
 
-    PREPARING_REBALANCE,
+    private final String stateName;
 
-    COMPLETING_REBALANCE,
-
-    STABLE,
-
-    DEAD,
-
-    EMPTY;
+    State(String stateName) {
+      this.stateName = stateName;
+    }
 
     public static State fromConsumerGroupState(ConsumerGroupState state) {
-      try {
-        return State.valueOf(state.name());
-      } catch (IllegalArgumentException e) {
-        return UNKNOWN;
+      for (State s : values()) {
+        if (s.stateName.equals(state.name())) {
+          return s;
+        }
       }
+      return UNKNOWN;
     }
 
     public ConsumerGroupState toConsumerGroupState() {
