@@ -18,10 +18,13 @@ package io.confluent.kafkarest.entities;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
-import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.GroupState;
 
 @AutoValue
@@ -102,32 +105,51 @@ public abstract class ConsumerGroup {
   }
 
   public enum State {
-    UNKNOWN,
+    UNKNOWN("Unknown"),
+    PREPARING_REBALANCE("PreparingRebalance"),
+    COMPLETING_REBALANCE("CompletingRebalance"),
+    STABLE("Stable"),
+    DEAD("Dead"),
+    EMPTY("Empty"),
+    ASSIGNING("Assigning"),
+    RECONCILING("Reconciling");
 
-    PREPARING_REBALANCE,
+    private static final Map<String, State> NAME_TO_ENUM =
+        Arrays.stream(values())
+            .collect(
+                Collectors.toMap(
+                    state -> state.name.toUpperCase(Locale.ROOT), Function.identity()));
 
-    COMPLETING_REBALANCE,
+    private final String name;
 
-    STABLE,
+    State(String name) {
+      this.name = name;
+    }
 
-    DEAD,
-
-    EMPTY;
+    public static State parse(String name) {
+      State state = NAME_TO_ENUM.get(name.toUpperCase(Locale.ROOT));
+      return state == null ? UNKNOWN : state;
+    }
 
     public static State fromConsumerGroupState(GroupState state) {
       try {
-        return State.valueOf(state.name());
+        return State.parse(state.toString());
       } catch (IllegalArgumentException e) {
         return UNKNOWN;
       }
     }
 
-    public ConsumerGroupState toConsumerGroupState() {
+    public GroupState toConsumerGroupState() {
       try {
-        return ConsumerGroupState.valueOf(name());
+        return GroupState.parse(name);
       } catch (IllegalArgumentException e) {
-        return ConsumerGroupState.UNKNOWN;
+        return GroupState.UNKNOWN;
       }
+    }
+
+    @Override
+    public String toString() {
+      return name;
     }
   }
 }
