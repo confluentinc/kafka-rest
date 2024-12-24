@@ -422,7 +422,7 @@ public abstract class ClusterTestHarness {
     props.setProperty("process.roles", "broker");
     props.setProperty("auto.create.topics.enable", "false");
     props.setProperty("message.max.bytes", String.valueOf(MAX_MESSAGE_SIZE));
-    props.setProperty("group.coordinator.new.enable", "false");
+    props.setProperty("group.coordinator.new.enable", "true");
     return props;
   }
 
