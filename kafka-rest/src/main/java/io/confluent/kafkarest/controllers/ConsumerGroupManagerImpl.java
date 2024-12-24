@@ -81,11 +81,11 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
                         + descriptions.values()
                         + ", "
                         + "Description state: "
-                        + descriptions.values().stream().map(description -> description.state())
+                        + descriptions.values().stream().map(description -> description.state()).collect(Collectors.toList())
                         + ", "
                         + "Description assignor: "
                         + descriptions.values().stream()
-                            .map(description -> description.partitionAssignor()));
+                            .map(description -> description.partitionAssignor()).collect(Collectors.toList()));
               }
               return descriptions.values().stream()
                   .filter(
