@@ -87,7 +87,7 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
                   .map(
                       description ->
                           ConsumerGroup.fromConsumerGroupDescription(clusterId, description))
-                  .collect(Collectors.toList())
+                  .collect(Collectors.toList());
             });
   }
 }
