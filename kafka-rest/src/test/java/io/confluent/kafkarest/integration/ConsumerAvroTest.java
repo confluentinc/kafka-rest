@@ -83,7 +83,7 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testConsumeOnlyValues(String quorum) {
     String instanceUri =
         startConsumeMessages(
@@ -101,7 +101,7 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testConsumeWithKeys(String quorum) {
     String instanceUri =
         startConsumeMessages(
@@ -119,7 +119,7 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testConsumeTimeout(String quorum) {
     String instanceUri =
         startConsumeMessages(
@@ -141,7 +141,7 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testDeleteConsumer(String quorum) {
     String instanceUri =
         startConsumeMessages(

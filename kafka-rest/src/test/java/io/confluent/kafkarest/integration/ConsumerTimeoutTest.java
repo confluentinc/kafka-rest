@@ -54,7 +54,7 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testConsumerTimeout(String quorum) throws InterruptedException {
     String instanceUri =
         startConsumeMessages(
