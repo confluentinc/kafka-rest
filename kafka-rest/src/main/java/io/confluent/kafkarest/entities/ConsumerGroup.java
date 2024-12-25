@@ -18,11 +18,8 @@ package io.confluent.kafkarest.entities;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.common.GroupState;
@@ -105,51 +102,45 @@ public abstract class ConsumerGroup {
   }
 
   public enum State {
-    UNKNOWN("Unknown"),
-    PREPARING_REBALANCE("PreparingRebalance"),
-    COMPLETING_REBALANCE("CompletingRebalance"),
-    STABLE("Stable"),
-    DEAD("Dead"),
-    EMPTY("Empty"),
-    ASSIGNING("Assigning"),
-    RECONCILING("Reconciling");
+    UNKNOWN,
 
-    private static final Map<String, State> NAME_TO_ENUM =
-        Arrays.stream(values())
-            .collect(
-                Collectors.toMap(
-                    state -> state.name.toUpperCase(Locale.ROOT), Function.identity()));
+    PREPARING_REBALANCE,
 
-    private final String name;
+    COMPLETING_REBALANCE,
 
-    State(String name) {
-      this.name = name;
-    }
+    STABLE,
 
-    public static State parse(String name) {
-      State state = NAME_TO_ENUM.get(name.toUpperCase(Locale.ROOT));
-      return state == null ? UNKNOWN : state;
-    }
+    DEAD,
+
+    EMPTY,
+
+    ASSIGNING,
+
+    RECONCILING;
+
+    private static final Map<State, GroupState> STATE_TO_GROUP_STATE =
+        ImmutableMap.<State, GroupState>builder()
+            .put(UNKNOWN, GroupState.UNKNOWN)
+            .put(PREPARING_REBALANCE, GroupState.PREPARING_REBALANCE)
+            .put(COMPLETING_REBALANCE, GroupState.COMPLETING_REBALANCE)
+            .put(STABLE, GroupState.STABLE)
+            .put(DEAD, GroupState.DEAD)
+            .put(EMPTY, GroupState.EMPTY)
+            .put(ASSIGNING, GroupState.ASSIGNING)
+            .put(RECONCILING, GroupState.RECONCILING)
+            .build();
 
     public static State fromConsumerGroupState(GroupState state) {
       try {
-        return State.parse(state.toString());
+        return State.valueOf(state.name());
       } catch (IllegalArgumentException e) {
         return UNKNOWN;
       }
     }
 
     public GroupState toConsumerGroupState() {
-      try {
-        return GroupState.parse(name);
-      } catch (IllegalArgumentException e) {
-        return GroupState.UNKNOWN;
-      }
-    }
-
-    @Override
-    public String toString() {
-      return name;
+      GroupState groupState = STATE_TO_GROUP_STATE.get(this);
+      return groupState == null ? GroupState.UNKNOWN : groupState;
     }
   }
 }
