@@ -19,9 +19,9 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
-import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.GroupState;
 
 @AutoValue
@@ -112,7 +112,23 @@ public abstract class ConsumerGroup {
 
     DEAD,
 
-    EMPTY;
+    EMPTY,
+
+    ASSIGNING,
+
+    RECONCILING;
+
+    private static final Map<State, GroupState> STATE_TO_GROUP_STATE =
+        ImmutableMap.<State, GroupState>builder()
+            .put(UNKNOWN, GroupState.UNKNOWN)
+            .put(PREPARING_REBALANCE, GroupState.PREPARING_REBALANCE)
+            .put(COMPLETING_REBALANCE, GroupState.COMPLETING_REBALANCE)
+            .put(STABLE, GroupState.STABLE)
+            .put(DEAD, GroupState.DEAD)
+            .put(EMPTY, GroupState.EMPTY)
+            .put(ASSIGNING, GroupState.ASSIGNING)
+            .put(RECONCILING, GroupState.RECONCILING)
+            .build();
 
     public static State fromConsumerGroupState(GroupState state) {
       try {
@@ -122,12 +138,9 @@ public abstract class ConsumerGroup {
       }
     }
 
-    public ConsumerGroupState toConsumerGroupState() {
-      try {
-        return ConsumerGroupState.valueOf(name());
-      } catch (IllegalArgumentException e) {
-        return ConsumerGroupState.UNKNOWN;
-      }
+    public GroupState toConsumerGroupState() {
+      GroupState groupState = STATE_TO_GROUP_STATE.get(this);
+      return groupState == null ? GroupState.UNKNOWN : groupState;
     }
   }
 }
