@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
+import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.GroupState;
 
 @AutoValue
@@ -111,11 +112,7 @@ public abstract class ConsumerGroup {
 
     DEAD,
 
-    EMPTY,
-
-    ASSIGNING,
-
-    RECONCILING;
+    EMPTY;
 
     public static State fromConsumerGroupState(GroupState state) {
       try {
@@ -125,11 +122,11 @@ public abstract class ConsumerGroup {
       }
     }
 
-    public GroupState toConsumerGroupState() {
+    public ConsumerGroupState toConsumerGroupState() {
       try {
-        return GroupState.valueOf(name());
+        return ConsumerGroupState.valueOf(name());
       } catch (IllegalArgumentException e) {
-        return GroupState.UNKNOWN;
+        return ConsumerGroupState.UNKNOWN;
       }
     }
   }
