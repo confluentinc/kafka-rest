@@ -119,8 +119,8 @@ public abstract class ClusterTestHarness {
   private final boolean manageRest;
 
   // Quorum controller
-  private TestInfo testInfo;
-  private QuorumTestHarness quorumTestHarness;
+  protected TestInfo testInfo;
+  protected QuorumTestHarness quorumTestHarness;
 
   // Kafka Config
   protected List<KafkaConfig> configs = null;
