@@ -119,8 +119,8 @@ public abstract class ClusterTestHarness {
   private final boolean manageRest;
 
   // Quorum controller
-  protected TestInfo testInfo;
-  protected QuorumTestHarness quorumTestHarness;
+  private TestInfo testInfo;
+  private QuorumTestHarness quorumTestHarness;
 
   // Kafka Config
   protected List<KafkaConfig> configs = null;
@@ -823,6 +823,14 @@ public abstract class ClusterTestHarness {
           new TopicPartition(topicName, i), Optional.of(new NewPartitionReassignment(replicaIds)));
     }
     return reassignmentMap;
+  }
+
+  protected TestInfo getTestInfo() {
+    return testInfo;
+  }
+
+  protected QuorumTestHarness getQuorumTestHarness() {
+    return quorumTestHarness;
   }
 
   /** A concrete class of QuorumTestHarness so that we can customize for testing purposes */
