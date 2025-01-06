@@ -825,6 +825,14 @@ public abstract class ClusterTestHarness {
     return reassignmentMap;
   }
 
+  protected TestInfo getTestInfo() {
+    return testInfo;
+  }
+
+  protected QuorumTestHarness getQuorumTestHarness() {
+    return quorumTestHarness;
+  }
+
   /** A concrete class of QuorumTestHarness so that we can customize for testing purposes */
   static class DefaultQuorumTestHarness extends QuorumTestHarness {
     private final Properties kraftControllerConfig;
