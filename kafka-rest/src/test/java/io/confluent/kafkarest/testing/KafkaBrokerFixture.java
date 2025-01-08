@@ -108,7 +108,6 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
     Properties properties =
         TestUtils.createBrokerConfig(
             brokerId,
-            null,
             false,
             false,
             TestUtils.RandomPort(),
