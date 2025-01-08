@@ -99,7 +99,6 @@ public class AuthorizationErrorTest
     Properties brokerProps =
         kafka.utils.TestUtils.createBrokerConfig(
             0,
-            "",
             false,
             false,
             kafka.utils.TestUtils.RandomPort(),

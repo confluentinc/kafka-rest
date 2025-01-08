@@ -398,7 +398,6 @@ public abstract class ClusterTestHarness {
     Properties props =
         TestUtils.createBrokerConfig(
             i,
-            null,
             false,
             false,
             TestUtils.RandomPort(),
