@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.confluent.kafkarest.integration.ClusterTestHarness;
 import io.confluent.kafkarest.testing.QuorumControllerFixture.DefaultTestInfo;
 import java.io.File;
 import java.io.IOException;
@@ -106,7 +107,7 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
   private Properties getBrokerConfigs() {
     checkState(logDir != null);
     Properties properties =
-        TestUtils.createBrokerConfig(
+        ClusterTestHarness.createBrokerConfig(
             brokerId,
             false,
             false,
