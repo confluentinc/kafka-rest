@@ -97,7 +97,7 @@ public class AuthorizationErrorTest
     saslProps.setProperty("sasl.mechanism.inter.broker.protocol", "PLAIN");
     Option<Properties> saslProperties = Option.apply(saslProps);
     Properties brokerProps =
-        kafka.utils.TestUtils.createBrokerConfig(
+        createBrokerConfig(
             0,
             false,
             false,
