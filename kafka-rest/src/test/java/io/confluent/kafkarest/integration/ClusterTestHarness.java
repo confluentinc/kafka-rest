@@ -578,7 +578,9 @@ public abstract class ClusterTestHarness {
     }
 
     props.put(ServerLogConfigs.NUM_PARTITIONS_CONFIG, String.valueOf(numPartitions));
-    props.put(ReplicationConfigs.DEFAULT_REPLICATION_FACTOR_CONFIG, String.valueOf(defaultReplicationFactor));
+    props.put(
+        ReplicationConfigs.DEFAULT_REPLICATION_FACTOR_CONFIG,
+        String.valueOf(defaultReplicationFactor));
 
     if (enableFetchFromFollower) {
       props.put(ServerConfigs.BROKER_RACK_CONFIG, String.valueOf(nodeId));
