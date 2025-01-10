@@ -492,8 +492,8 @@ public abstract class ClusterTestHarness {
     props.setProperty(
         KRaftConfigs.SERVER_MAX_STARTUP_TIME_MS_CONFIG,
         String.valueOf(TimeUnit.MINUTES.toMillis(10)));
-    props.put(KRaftConfigs.NODE_ID_CONFIG, nodeId);
-    props.put(ServerConfigs.BROKER_ID_CONFIG, nodeId);
+    props.put(KRaftConfigs.NODE_ID_CONFIG, String.valueOf(nodeId));
+    props.put(ServerConfigs.BROKER_ID_CONFIG, String.valueOf(nodeId));
     props.put(SocketServerConfigs.ADVERTISED_LISTENERS_CONFIG, listeners);
     props.put(SocketServerConfigs.LISTENERS_CONFIG, listeners);
     props.put(KRaftConfigs.CONTROLLER_LISTENER_NAMES_CONFIG, "CONTROLLER");
@@ -577,11 +577,11 @@ public abstract class ClusterTestHarness {
       props.put(DelegationTokenManagerConfigs.DELEGATION_TOKEN_SECRET_KEY_CONFIG, "secretkey");
     }
 
-    props.put(ServerLogConfigs.NUM_PARTITIONS_CONFIG, numPartitions);
-    props.put(ReplicationConfigs.DEFAULT_REPLICATION_FACTOR_CONFIG, defaultReplicationFactor);
+    props.put(ServerLogConfigs.NUM_PARTITIONS_CONFIG, String.valueOf(numPartitions));
+    props.put(ReplicationConfigs.DEFAULT_REPLICATION_FACTOR_CONFIG, String.valueOf(defaultReplicationFactor));
 
     if (enableFetchFromFollower) {
-      props.put(ServerConfigs.BROKER_RACK_CONFIG, nodeId);
+      props.put(ServerConfigs.BROKER_RACK_CONFIG, String.valueOf(nodeId));
       props.put(
           ReplicationConfigs.REPLICA_SELECTOR_CLASS_CONFIG,
           "org.apache.kafka.common.replica.RackAwareReplicaSelector");
