@@ -134,14 +134,25 @@
   <!-- b. Non-public Apache Kafka APIs -->
   <allow class="org.apache.kafka.clients.CommonClientConfigs" />
   <allow class="org.apache.kafka.common.config.types.Password" />
+  <allow class="org.apache.kafka.common.network.ConnectionMode" />
   <allow class="org.apache.kafka.common.network.ListenerName" />
   <allow class="org.apache.kafka.common.protocol.Errors" />
   <allow class="org.apache.kafka.common.security.JaasUtils" />
+  <allow class="org.apache.kafka.coordinator.group.GroupCoordinatorConfig" />
   <allow class="org.apache.kafka.metadata.authorizer.StandardAuthorizer" />
+  <allow class="org.apache.kafka.network.SocketServerConfigs" />
+  <allow class="org.apache.kafka.raft.QuorumConfig" />
+  <allow class="org.apache.kafka.server.config.DelegationTokenManagerConfigs" />
+  <allow class="org.apache.kafka.server.config.KRaftConfigs" />
+  <allow class="org.apache.kafka.server.config.ReplicationConfigs" />
+  <allow class="org.apache.kafka.server.config.ServerConfigs" />
+  <allow class="org.apache.kafka.server.config.ServerLogConfigs" />
+  <allow class="org.apache.kafka.storage.internals.log.CleanerConfig" />
   <allow class="org.apache.kafka.test.TestSslUtils" />
   <!-- c. Non-public Confluent Community Kafka APIs -->
   <allow class="kafka.admin.AclCommand" />
   <allow class="kafka.security.authorizer.AclAuthorizer" />
+  <allow class="kafka.security.JaasTestUtils" />
   <allow class="kafka.server.KafkaConfig" />
   <allow class="kafka.server.KafkaServer" />
   <allow class="kafka.server.KafkaBroker" />
