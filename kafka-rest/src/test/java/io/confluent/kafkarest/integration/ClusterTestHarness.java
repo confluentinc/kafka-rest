@@ -113,7 +113,6 @@ import org.slf4j.LoggerFactory;
 import scala.Option;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
-import scala.jdk.javaapi.OptionConverters;
 
 /**
  * Test harness to run against a real, local Kafka cluster and REST proxy. This is essentially
@@ -556,7 +555,7 @@ public abstract class ClusterTestHarness {
             JaasTestUtils.sslConfigs(
                 ConnectionMode.SERVER,
                 false,
-                OptionConverters.toJava(trustStoreFile),
+                trustStoreFile.isEmpty() ? Optional.empty() : Optional.of(trustStoreFile.get()),
                 String.format("server%d", nodeId)));
       } catch (Exception e) {
         fail("Failed to create SSL configs", e);
