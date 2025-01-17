@@ -21,7 +21,6 @@ import org.eclipse.jetty.servlets.DoSFilter;
 import org.eclipse.jetty.servlets.DoSFilter.Action;
 import org.eclipse.jetty.servlets.DoSFilter.OverLimit;
 
-
 /**
  * This class is a Jetty DosFilter.Listener, for the per-connection-dos(aka per IP, or non-global)
  * filter. This on 429s will populate relevant metadata as attributed on the request, that later-on
