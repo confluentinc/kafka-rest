@@ -25,14 +25,14 @@ public abstract class ListPartitionOffsetsResponse {
     ListPartitionOffsetsResponse() {}
 
     @JsonValue
-    public abstract PartitionDataList getValue();
+    public abstract PartitionWithOffsetsData getValue();
 
-    public static ListPartitionOffsetsResponse create(PartitionDataList value) {
+    public static ListPartitionOffsetsResponse create(PartitionWithOffsetsData value) {
         return new AutoValue_ListPartitionOffsetsResponse(value);
     }
 
     @JsonCreator
-    static ListPartitionOffsetsResponse fromJson(PartitionDataList value) {
+    static ListPartitionOffsetsResponse fromJson(PartitionWithOffsetsData value) {
         return create(value);
     }
 }

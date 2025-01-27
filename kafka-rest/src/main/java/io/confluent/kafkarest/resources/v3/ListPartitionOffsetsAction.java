@@ -1,28 +1,23 @@
 package io.confluent.kafkarest.resources.v3;
 
 import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.controllers.PartitionManager;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.v3.*;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 
+import io.confluent.kafkarest.response.CrnFactory;
+import io.confluent.kafkarest.response.UrlFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
-import org.apache.kafka.clients.admin.ListOffsetsResult;
-import org.apache.kafka.clients.admin.OffsetSpec;
-import org.apache.kafka.common.TopicPartition;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
-import static io.confluent.kafkarest.controllers.PartitionManagerImpl.toTopicPartition;
 import static java.util.Objects.requireNonNull;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions/{partitionId}/offset")
@@ -31,10 +26,17 @@ public class ListPartitionOffsetsAction {
 
     private final Provider<PartitionManager> partitionManager;
 
+    private final CrnFactory crnFactory;
+    private final UrlFactory urlFactory;
+
 
     @Inject
-    public ListPartitionOffsetsAction(Provider<PartitionManager> partitionManager) {
+    public ListPartitionOffsetsAction(Provider<PartitionManager> partitionManager,
+                                      CrnFactory crnFactory,
+                                      UrlFactory urlFactory) {
         this.partitionManager = requireNonNull(partitionManager);
+        this.crnFactory = requireNonNull(crnFactory);
+        this.urlFactory = requireNonNull(urlFactory);
     }
 
     @GET
@@ -44,41 +46,41 @@ public class ListPartitionOffsetsAction {
             @Suspended AsyncResponse asyncResponse,
             @PathParam("clusterId") String clusterId,
             @PathParam("topicName") String topicName,
-            @PathParam("partitionId") Integer partitionId,
-            @QueryParam("offset") @DefaultValue("earliest") String offsetType) {
+            @PathParam("partitionId") Integer partitionId) {
 
-
-        CompletableFuture<Partition> partitionFuture =
+        CompletableFuture<ListPartitionOffsetsResponse> response =
                 partitionManager
                         .get()
                         .getPartition(clusterId, topicName, partitionId)
-                        .thenApply(partition -> partition.orElseThrow(Errors::partitionNotFoundException));
-
-        CompletableFuture<ListOffsetsResult> listOffsetsFuture = partitionFuture
-                .thenApply(partition -> partitionManager.get()
-                .listOffsets(Arrays.asList(partition),getOffsetSpecBasedOnType(offsetType)));
-
-        CompletableFuture<ListPartitionOffsetsResponse> response = listOffsetsFuture
-                .thenApply(result -> {
-                    try {
-                        return result.partitionResult(partitionFuture.get().toTopicPartition());
-                    } catch (InterruptedException | ExecutionException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .thenApply(listOffsetsResultsInfo -> ListPartitionOffsetsResponse.create(listOffsetsResultsInfo)); //TODO(Apurva): Build response with this.
+                        .thenApply(partition -> partition.orElseThrow(Errors::partitionNotFoundException))
+                        .thenApply(partition -> ListPartitionOffsetsResponse.create(toPartitionWithOffsetsData(partition)));
 
         AsyncResponses.asyncResume(asyncResponse, response);
     }
 
-    private OffsetSpec getOffsetSpecBasedOnType(String offsetType){
-        if ("earliest".equalsIgnoreCase(offsetType)) {
-            return OffsetSpec.earliest();
-        }
-        else if ("latest".equalsIgnoreCase(offsetType))
-            return OffsetSpec.latest();
-        else {
-            throw new IllegalArgumentException("Invalid offset type: " + offsetType);
-        }
+    private PartitionWithOffsetsData toPartitionWithOffsetsData(Partition partition) {
+        return toPartitionWithOffsetsData(crnFactory, urlFactory, partition);
+    }
+
+    static PartitionWithOffsetsData toPartitionWithOffsetsData(
+            CrnFactory crnFactory, UrlFactory urlFactory, Partition partition) {
+        PartitionWithOffsetsData.Builder partitionWithOffsetsData =
+                PartitionWithOffsetsData.fromPartition(partition)
+                .setMetadata(
+                        Resource.Metadata.builder()
+                                .setSelf(
+                                        urlFactory.create(
+                                                "v3",
+                                                "clusters",
+                                                partition.getClusterId(),
+                                                "topics",
+                                                partition.getTopicName(),
+                                                "partitions",
+                                                Integer.toString(partition.getPartitionId()),
+                                                "offset"
+                                        ))
+                                .build());
+        return partitionWithOffsetsData.build();
     }
 }
+
