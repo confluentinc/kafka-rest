@@ -169,7 +169,7 @@ final class PartitionManagerImpl implements PartitionManager {
     return CompletableFutures.allAsList(partitionsWithOffsets);
   }
 
-  private ListOffsetsResult listOffsets(List<Partition> partitions, OffsetSpec offsetSpec) {
+  public ListOffsetsResult listOffsets(List<Partition> partitions, OffsetSpec offsetSpec) {
     HashMap<TopicPartition, OffsetSpec> request = new HashMap<>();
     for (Partition partition : partitions) {
       request.put(toTopicPartition(partition), offsetSpec);
