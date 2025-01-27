@@ -22,17 +22,17 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class ListPartitionOffsetsResponse {
 
-    ListPartitionOffsetsResponse() {}
+  ListPartitionOffsetsResponse() {}
 
-    @JsonValue
-    public abstract PartitionWithOffsetsData getValue();
+  @JsonValue
+  public abstract PartitionWithOffsetsData getValue();
 
-    public static ListPartitionOffsetsResponse create(PartitionWithOffsetsData value) {
-        return new AutoValue_ListPartitionOffsetsResponse(value);
-    }
+  public static ListPartitionOffsetsResponse create(PartitionWithOffsetsData value) {
+    return new AutoValue_ListPartitionOffsetsResponse(value);
+  }
 
-    @JsonCreator
-    static ListPartitionOffsetsResponse fromJson(PartitionWithOffsetsData value) {
-        return create(value);
-    }
+  @JsonCreator
+  static ListPartitionOffsetsResponse fromJson(PartitionWithOffsetsData value) {
+    return create(value);
+  }
 }
