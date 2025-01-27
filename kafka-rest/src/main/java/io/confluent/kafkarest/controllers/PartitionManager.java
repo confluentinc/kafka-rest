@@ -16,12 +16,11 @@
 package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.Partition;
-import org.apache.kafka.clients.admin.ListOffsetsResult;
-import org.apache.kafka.clients.admin.OffsetSpec;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import org.apache.kafka.clients.admin.ListOffsetsResult;
+import org.apache.kafka.clients.admin.OffsetSpec;
 
 /** A service to manage Kafka {@link Partition Partitions}. */
 public interface PartitionManager {

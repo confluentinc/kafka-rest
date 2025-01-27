@@ -19,77 +19,75 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.entities.Partition;
-import java.util.Optional;
-import javax.annotation.Nullable;
 
 @AutoValue
 public abstract class PartitionWithOffsetsData extends Resource {
 
-    PartitionWithOffsetsData() {}
+  PartitionWithOffsetsData() {}
 
-    @JsonProperty("cluster_id")
-    public abstract String getClusterId();
+  @JsonProperty("cluster_id")
+  public abstract String getClusterId();
 
-    @JsonProperty("topic_name")
-    public abstract String getTopicName();
+  @JsonProperty("topic_name")
+  public abstract String getTopicName();
 
-    @JsonProperty("partition_id")
-    public abstract int getPartitionId();
+  @JsonProperty("partition_id")
+  public abstract int getPartitionId();
 
-    @JsonProperty("earliest_offset")
-    public abstract long getEarliestOffset();
+  @JsonProperty("earliest_offset")
+  public abstract long getEarliestOffset();
 
-    @JsonProperty("latest_offset")
-    public abstract long getLatestOffset();
+  @JsonProperty("latest_offset")
+  public abstract long getLatestOffset();
 
-    public static Builder builder() {
-        return new AutoValue_PartitionWithOffsetsData.Builder().setKind("KafkaPartitionWithOffsets");
-    }
+  public static Builder builder() {
+    return new AutoValue_PartitionWithOffsetsData.Builder().setKind("KafkaPartitionWithOffsets");
+  }
 
-    public static Builder fromPartition(Partition partition) {
-        return builder()
-                .setClusterId(partition.getClusterId())
-                .setTopicName(partition.getTopicName())
-                .setPartitionId(partition.getPartitionId())
-                .setEarliestOffset(partition.getEarliestOffset())
-                .setLatestOffset(partition.getLatestOffset());
-    }
+  public static Builder fromPartition(Partition partition) {
+    return builder()
+        .setClusterId(partition.getClusterId())
+        .setTopicName(partition.getTopicName())
+        .setPartitionId(partition.getPartitionId())
+        .setEarliestOffset(partition.getEarliestOffset())
+        .setLatestOffset(partition.getLatestOffset());
+  }
 
-    @JsonCreator
-    static PartitionWithOffsetsData fromJson(
-            @JsonProperty("kind") String kind,
-            @JsonProperty("metadata") Metadata metadata,
-            @JsonProperty("cluster_id") String clusterId,
-            @JsonProperty("topic_name") String topicName,
-            @JsonProperty("partition_id") int partitionId,
-            @JsonProperty("earliest_offset") long earliestOffset,
-            @JsonProperty("latest_offset") long latestOffset) {
-        return builder()
-                .setKind(kind)
-                .setMetadata(metadata)
-                .setClusterId(clusterId)
-                .setTopicName(topicName)
-                .setPartitionId(partitionId)
-                .setEarliestOffset(earliestOffset)
-                .setLatestOffset(latestOffset)
-                .build();
-    }
+  @JsonCreator
+  static PartitionWithOffsetsData fromJson(
+      @JsonProperty("kind") String kind,
+      @JsonProperty("metadata") Metadata metadata,
+      @JsonProperty("cluster_id") String clusterId,
+      @JsonProperty("topic_name") String topicName,
+      @JsonProperty("partition_id") int partitionId,
+      @JsonProperty("earliest_offset") long earliestOffset,
+      @JsonProperty("latest_offset") long latestOffset) {
+    return builder()
+        .setKind(kind)
+        .setMetadata(metadata)
+        .setClusterId(clusterId)
+        .setTopicName(topicName)
+        .setPartitionId(partitionId)
+        .setEarliestOffset(earliestOffset)
+        .setLatestOffset(latestOffset)
+        .build();
+  }
 
-    @AutoValue.Builder
-    public abstract static class Builder extends Resource.Builder<Builder> {
+  @AutoValue.Builder
+  public abstract static class Builder extends Resource.Builder<Builder> {
 
-        Builder() {}
+    Builder() {}
 
-        public abstract Builder setClusterId(String clusterId);
+    public abstract Builder setClusterId(String clusterId);
 
-        public abstract Builder setTopicName(String topicName);
+    public abstract Builder setTopicName(String topicName);
 
-        public abstract Builder setPartitionId(int partitionId);
+    public abstract Builder setPartitionId(int partitionId);
 
-        public abstract Builder setEarliestOffset(long earliestOffset);
+    public abstract Builder setEarliestOffset(long earliestOffset);
 
-        public abstract Builder setLatestOffset(long latestOffset);
+    public abstract Builder setLatestOffset(long latestOffset);
 
-        public abstract PartitionWithOffsetsData build();
-    }
+    public abstract PartitionWithOffsetsData build();
+  }
 }
