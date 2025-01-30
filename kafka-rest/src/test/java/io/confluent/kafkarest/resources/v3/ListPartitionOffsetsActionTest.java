@@ -16,8 +16,9 @@
 package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Collections.emptySet;
-import static org.easymock.EasyMock.*;
 import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.controllers.PartitionManager;
@@ -199,6 +200,7 @@ public class ListPartitionOffsetsActionTest {
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/0/offset")
+                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1/partition=0/offset")
                         .build())
                 .setClusterId(CLUSTER_ID)
                 .setTopicName(TOPIC_NAME)
