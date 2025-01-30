@@ -19,8 +19,6 @@ import io.confluent.kafkarest.entities.Partition;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import org.apache.kafka.clients.admin.ListOffsetsResult;
-import org.apache.kafka.clients.admin.OffsetSpec;
 
 /** A service to manage Kafka {@link Partition Partitions}. */
 public interface PartitionManager {
@@ -54,6 +52,4 @@ public interface PartitionManager {
    * io.confluent.kafkarest.entities.Cluster} that this application is connected to.
    */
   CompletableFuture<Optional<Partition>> getLocalPartition(String topicName, int partitionId);
-
-  ListOffsetsResult listOffsets(List<Partition> partitions, OffsetSpec offsetSpec);
 }
