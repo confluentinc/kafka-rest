@@ -35,10 +35,10 @@ public abstract class PartitionWithOffsetsData extends Resource {
   public abstract int getPartitionId();
 
   @JsonProperty("earliest_offset")
-  public abstract long getEarliestOffset();
+  public abstract Long getEarliestOffset();
 
   @JsonProperty("latest_offset")
-  public abstract long getLatestOffset();
+  public abstract Long getLatestOffset();
 
   public static Builder builder() {
     return new AutoValue_PartitionWithOffsetsData.Builder().setKind("KafkaPartitionWithOffsets");
@@ -60,8 +60,8 @@ public abstract class PartitionWithOffsetsData extends Resource {
       @JsonProperty("cluster_id") String clusterId,
       @JsonProperty("topic_name") String topicName,
       @JsonProperty("partition_id") int partitionId,
-      @JsonProperty("earliest_offset") long earliestOffset,
-      @JsonProperty("latest_offset") long latestOffset) {
+      @JsonProperty("earliest_offset") Long earliestOffset,
+      @JsonProperty("latest_offset") Long latestOffset) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -84,9 +84,9 @@ public abstract class PartitionWithOffsetsData extends Resource {
 
     public abstract Builder setPartitionId(int partitionId);
 
-    public abstract Builder setEarliestOffset(long earliestOffset);
+    public abstract Builder setEarliestOffset(Long earliestOffset);
 
-    public abstract Builder setLatestOffset(long latestOffset);
+    public abstract Builder setLatestOffset(Long latestOffset);
 
     public abstract PartitionWithOffsetsData build();
   }

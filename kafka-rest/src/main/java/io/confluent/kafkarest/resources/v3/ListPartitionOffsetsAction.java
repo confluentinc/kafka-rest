@@ -29,13 +29,16 @@ import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions/{partitionId}/offset")
 @ResourceName("api.v3.partition-offsets.*")
@@ -55,13 +58,15 @@ public class ListPartitionOffsetsAction {
   }
 
   @GET
+  @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.partitions.list.offsets")
   @ResourceName("api.v3.partitions.list.offsets")
-  public void listPartitions(
+  public void listPartitionOffsets(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      @PathParam("partitionId") Integer partitionId) {
+      @PathParam("partitionId") Integer partitionId)
+  {
 
     CompletableFuture<ListPartitionOffsetsResponse> response =
         partitionManager
@@ -95,6 +100,15 @@ public class ListPartitionOffsetsAction {
                             "partitions",
                             Integer.toString(partition.getPartitionId()),
                             "offset"))
+                    .setResourceName(
+                          crnFactory.create(
+                                  "kafka",
+                                  partition.getClusterId(),
+                                  "topic",
+                                  partition.getTopicName(),
+                                  "partition",
+                                  Integer.toString(partition.getPartitionId()),
+                                  "offset"))
                     .build());
     return partitionWithOffsetsData.build();
   }
