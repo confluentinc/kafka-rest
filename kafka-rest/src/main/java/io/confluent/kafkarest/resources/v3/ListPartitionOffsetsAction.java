@@ -29,7 +29,6 @@ import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.GET;
@@ -65,8 +64,7 @@ public class ListPartitionOffsetsAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      @PathParam("partitionId") Integer partitionId)
-  {
+      @PathParam("partitionId") Integer partitionId) {
 
     CompletableFuture<ListPartitionOffsetsResponse> response =
         partitionManager
@@ -101,14 +99,14 @@ public class ListPartitionOffsetsAction {
                             Integer.toString(partition.getPartitionId()),
                             "offset"))
                     .setResourceName(
-                          crnFactory.create(
-                                  "kafka",
-                                  partition.getClusterId(),
-                                  "topic",
-                                  partition.getTopicName(),
-                                  "partition",
-                                  Integer.toString(partition.getPartitionId()),
-                                  "offset"))
+                        crnFactory.create(
+                            "kafka",
+                            partition.getClusterId(),
+                            "topic",
+                            partition.getTopicName(),
+                            "partition",
+                            Integer.toString(partition.getPartitionId()),
+                            "offset"))
                     .build());
     return partitionWithOffsetsData.build();
   }
