@@ -34,10 +34,8 @@ import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
-import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
 import org.easymock.EasyMockExtension;
@@ -137,13 +135,13 @@ public class ListPartitionOffsetsActionTest {
                   /* isInSync= */ false)));
 
   private static final Topic TOPIC =
-          Topic.create(
-                  CLUSTER_ID,
-                  TOPIC_NAME,
-                  Arrays.asList(PARTITION_1, PARTITION_2, PARTITION_3),
-                  /* replicationFactor= */ (short) 3,
-                  /* isInternal= */ false,
-                  /* authorizedOperations= */ emptySet());
+      Topic.create(
+          CLUSTER_ID,
+          TOPIC_NAME,
+          Arrays.asList(PARTITION_1, PARTITION_2, PARTITION_3),
+          /* replicationFactor= */ (short) 3,
+          /* isInternal= */ false,
+          /* authorizedOperations= */ emptySet());
   @Mock private Admin adminClient;
   @Mock private TopicManager topicManager;
   @Mock private PartitionManager partitionManager;
@@ -170,29 +168,29 @@ public class ListPartitionOffsetsActionTest {
   @Test
   public void listPartitionOffsets_existingPartitionWithOffsets_returnsPartitionWithOffsets() {
     expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
-            .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
+        .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(earliestResult);
     expect(earliestResult.partitionResult(toTopicPartition(PARTITION_1)))
-            .andReturn(KafkaFuture.completedFuture(earliestResultInfo1));
+        .andReturn(KafkaFuture.completedFuture(earliestResultInfo1));
     expect(earliestResultInfo1.offset()).andReturn(PARTITION_1.getEarliestOffset());
     expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(latestResult);
     expect(latestResult.partitionResult(toTopicPartition(PARTITION_1)))
-            .andReturn(KafkaFuture.completedFuture(latestResultInfo1));
+        .andReturn(KafkaFuture.completedFuture(latestResultInfo1));
     expect(latestResultInfo1.offset()).andReturn(PARTITION_1.getLatestOffset());
 
     expect(partitionManager.getPartition(CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId()))
-            .andReturn(CompletableFuture.completedFuture(Optional.of(PARTITION_1)));
+        .andReturn(CompletableFuture.completedFuture(Optional.of(PARTITION_1)));
     replay(
-            adminClient,
-            earliestResult,
-            earliestResultInfo1,
-            latestResult,
-            latestResultInfo1,
-            topicManager,
-            partitionManager);
+        adminClient,
+        earliestResult,
+        earliestResultInfo1,
+        latestResult,
+        latestResultInfo1,
+        topicManager,
+        partitionManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    listPartitionOffsetsAction.listPartitions(
+    listPartitionOffsetsAction.listPartitionOffsets(
         response, CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId());
 
     ListPartitionOffsetsResponse expected =
@@ -207,51 +205,6 @@ public class ListPartitionOffsetsActionTest {
                 .setPartitionId(PARTITION_1.getPartitionId())
                 .setEarliestOffset(PARTITION_1.getEarliestOffset())
                 .setLatestOffset(PARTITION_1.getLatestOffset())
-                .build());
-
-    assertEquals(expected, response.getValue());
-  }
-
-  @Test
-  public void listPartitionOffsets_existingPartitionWithoutOffsets_returnsPartitionWithOffsets() {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
-            .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
-    expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(earliestResult);
-    expect(earliestResult.partitionResult(toTopicPartition(PARTITION_2)))
-            .andReturn(KafkaFuture.completedFuture(earliestResultInfo1));
-    expect(earliestResultInfo1.offset()).andReturn(PARTITION_2.getEarliestOffset());
-    expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(latestResult);
-    expect(latestResult.partitionResult(toTopicPartition(PARTITION_2)))
-            .andReturn(KafkaFuture.completedFuture(latestResultInfo1));
-    expect(latestResultInfo1.offset()).andReturn(PARTITION_2.getLatestOffset());
-
-    expect(partitionManager.getPartition(CLUSTER_ID, TOPIC_NAME, PARTITION_2.getPartitionId()))
-            .andReturn(CompletableFuture.completedFuture(Optional.of(PARTITION_2)));
-    replay(
-            adminClient,
-            earliestResult,
-            earliestResultInfo1,
-            latestResult,
-            latestResultInfo1,
-            topicManager,
-            partitionManager);
-
-    FakeAsyncResponse response = new FakeAsyncResponse();
-    listPartitionOffsetsAction.listPartitions(
-            response, CLUSTER_ID, TOPIC_NAME, PARTITION_2.getPartitionId());
-
-    ListPartitionOffsetsResponse expected =
-        ListPartitionOffsetsResponse.create(
-            PartitionWithOffsetsData.builder()
-                .setMetadata(
-                    Resource.Metadata.builder()
-                        .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/0/offset")
-                        .build())
-                .setClusterId(CLUSTER_ID)
-                .setTopicName(TOPIC_NAME)
-                .setPartitionId(PARTITION_2.getPartitionId())
-                .setEarliestOffset(PARTITION_2.getEarliestOffset())
-                .setLatestOffset(PARTITION_2.getLatestOffset())
                 .build());
 
     assertEquals(expected, response.getValue());
