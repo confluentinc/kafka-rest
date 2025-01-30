@@ -106,7 +106,8 @@ public class ListPartitionOffsetsAction {
                             partition.getTopicName(),
                             "partition",
                             Integer.toString(partition.getPartitionId()),
-                            "offset"))
+                            "offset",
+                            null))
                     .build());
     return partitionWithOffsetsData.build();
   }

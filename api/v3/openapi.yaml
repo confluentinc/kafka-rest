@@ -3908,6 +3908,7 @@ components:
             kind: 'KafkaPartitionWithOffsets'
             metadata:
               self: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/topics/topic-1/partitions/1/offset'
+              resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/offset'
             cluster_id: 'cluster-1'
             topic_name: 'topic-1'
             partition_id: 1
