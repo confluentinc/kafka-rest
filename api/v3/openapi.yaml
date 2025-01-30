@@ -1160,6 +1160,37 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/offset:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+      - $ref: '#/components/parameters/PartitionId'
+
+    get:
+      summary: 'List Partition Offsets'
+      operationId: listKafkaPartitionOffsets
+      description: |-
+        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+
+        Return the offsets of a partition with the given `partition_id`.
+      tags:
+        - Partition (v3)
+      responses:
+        '200':
+          $ref: '#/components/responses/ListPartitionOffsetsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
+
   /clusters/{cluster_id}/topics/{topic_name}/partitions:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -3866,6 +3897,23 @@ components:
                 client_id: 'client-2'
                 assignments:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-2/assignments'
+
+    ListPartitionOffsetsResponse:
+      description: 'The offsets of a partition'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PartitionWithOffsetsData'
+          example:
+            kind: 'KafkaPartitionWithOffsets'
+            metadata:
+              self: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/topics/topic-1/partitions/1/offset'
+              resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/offset'
+            cluster_id: 'cluster-1'
+            topic_name: 'topic-1'
+            partition_id: 1
+            earliest_offset: 10L
+            latest_offset: 100L
 
     ListPartitionsResponse:
       description: 'The list of partitions.'
