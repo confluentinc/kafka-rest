@@ -54,6 +54,4 @@ public interface PartitionManager {
    * io.confluent.kafkarest.entities.Cluster} that this application is connected to.
    */
   CompletableFuture<Optional<Partition>> getLocalPartition(String topicName, int partitionId);
-
-  ListOffsetsResult listOffsets(List<Partition> partitions, OffsetSpec offsetSpec);
 }
