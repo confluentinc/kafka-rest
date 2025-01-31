@@ -16,10 +16,10 @@
 package io.confluent.kafkarest.requestlog;
 
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes;
+import io.confluent.rest.jetty.DoSFilter;
+import io.confluent.rest.jetty.DoSFilter.Action;
+import io.confluent.rest.jetty.DoSFilter.OverLimit;
 import javax.servlet.http.HttpServletRequest;
-import org.eclipse.jetty.servlets.DoSFilter;
-import org.eclipse.jetty.servlets.DoSFilter.Action;
-import org.eclipse.jetty.servlets.DoSFilter.OverLimit;
 
 /**
  * This class is a Jetty DosFilter.Listener, for the global-dos filter. This on 429s will populate
