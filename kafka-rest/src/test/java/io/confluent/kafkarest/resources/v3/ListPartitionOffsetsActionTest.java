@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2025 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static java.util.Collections.emptySet;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
@@ -32,9 +33,11 @@ import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
+import io.confluent.rest.exceptions.RestNotFoundException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.common.KafkaFuture;
@@ -210,6 +213,32 @@ public class ListPartitionOffsetsActionTest {
                 .build());
 
     assertEquals(expected, response.getValue());
+  }
+
+  @Test
+  public void listPartitionOffsets_nonExistingPartition_throwsPartitionNotFound() {
+    expect(partitionManager.getPartition(CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId()))
+        .andReturn(CompletableFuture.completedFuture(Optional.empty()));
+    replay(partitionManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    listPartitionOffsetsAction.listPartitionOffsets(
+        response, CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId());
+
+    assertEquals(RestNotFoundException.class, response.getException().getClass());
+  }
+
+  @Test
+  public void listPartitionOffsets_nonExistingTopicOrCluster_throwsNotFound() {
+    expect(partitionManager.getPartition(CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId()))
+        .andReturn(failedFuture(new NotFoundException()));
+    replay(partitionManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    listPartitionOffsetsAction.listPartitionOffsets(
+        response, CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId());
+
+    assertEquals(NotFoundException.class, response.getException().getClass());
   }
 
   private static TopicPartition toTopicPartition(Partition partition) {

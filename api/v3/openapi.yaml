@@ -1172,7 +1172,7 @@ paths:
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Return the offsets of a partition with the given `partition_id`.
+        Return the earliest and latest offsets of a partition with the given `partition_id`.
       tags:
         - Partition (v3)
       responses:
@@ -2347,6 +2347,29 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/PartitionData'
+
+
+    PartitionWithOffsetsData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - topic_name
+            - partition_id
+            - earliest_offset
+            - latest_offset
+          properties:
+            cluster_id:
+              type: string
+            topic_name:
+              type: string
+            partition_id:
+              type: integer
+            earliest_offset:
+              type: int64
+            latest_offset:
+              type: int64
 
     ProduceBatchResponse:
       description: Response for producing a batch of records.
@@ -3899,7 +3922,7 @@ components:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-2/assignments'
 
     ListPartitionOffsetsResponse:
-      description: 'The offsets of a partition'
+      description: 'The earliest and latest offsets of a partition'
       content:
         application/json:
           schema:
