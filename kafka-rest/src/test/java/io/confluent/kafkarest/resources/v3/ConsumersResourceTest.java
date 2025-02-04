@@ -25,7 +25,6 @@ import io.confluent.kafkarest.controllers.ConsumerManager;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
-import io.confluent.kafkarest.entities.ConsumerGroup.State;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.v3.ConsumerData;
 import io.confluent.kafkarest.entities.v3.ConsumerDataList;
@@ -40,6 +39,7 @@ import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
+import org.apache.kafka.common.GroupState;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.junit.jupiter.api.BeforeEach;
@@ -139,7 +139,7 @@ public class ConsumersResourceTest {
           .setConsumerGroupId("consumer-group-1")
           .setSimple(true)
           .setPartitionAssignor("org.apache.kafka.clients.consumer.RangeAssignor")
-          .setState(State.STABLE)
+          .setState(GroupState.STABLE)
           .setCoordinator(BROKER_1)
           .setConsumers(Arrays.asList(CONSUMERS))
           .build();

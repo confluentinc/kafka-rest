@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.entities.ConsumerGroup;
-import io.confluent.kafkarest.entities.ConsumerGroup.State;
+import org.apache.kafka.common.GroupState;
 
 @AutoValue
 public abstract class ConsumerGroupData extends Resource {
@@ -39,7 +39,7 @@ public abstract class ConsumerGroupData extends Resource {
   public abstract String getPartitionAssignor();
 
   @JsonProperty("state")
-  public abstract State getState();
+  public abstract GroupState getState();
 
   @JsonProperty("coordinator")
   public abstract Relationship getCoordinator();
@@ -71,7 +71,7 @@ public abstract class ConsumerGroupData extends Resource {
       @JsonProperty("consumer_group_id") String consumerGroupId,
       @JsonProperty("is_simple") boolean isSimple,
       @JsonProperty("partition_assignor") String partitionAssignor,
-      @JsonProperty("state") State state,
+      @JsonProperty("state") GroupState state,
       @JsonProperty("coordinator") Relationship coordinator,
       @JsonProperty("consumers") Relationship consumers,
       @JsonProperty("lag_summary") Relationship lagSummary) {
@@ -102,7 +102,7 @@ public abstract class ConsumerGroupData extends Resource {
 
     public abstract Builder setPartitionAssignor(String partitionAssignor);
 
-    public abstract Builder setState(State state);
+    public abstract Builder setState(GroupState state);
 
     public abstract Builder setCoordinator(Relationship coordinator);
 

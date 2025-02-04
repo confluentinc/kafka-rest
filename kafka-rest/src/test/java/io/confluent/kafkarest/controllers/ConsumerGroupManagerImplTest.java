@@ -31,7 +31,6 @@ import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
-import io.confluent.kafkarest.entities.ConsumerGroup.State;
 import io.confluent.kafkarest.entities.Partition;
 import java.util.Arrays;
 import java.util.List;
@@ -47,6 +46,7 @@ import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
 import org.apache.kafka.clients.admin.MemberAssignment;
 import org.apache.kafka.clients.admin.MemberDescription;
+import org.apache.kafka.common.GroupState;
 import org.apache.kafka.common.KafkaFuture;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
@@ -232,7 +232,7 @@ public class ConsumerGroupManagerImplTest {
         .setConsumerGroupId("consumer-group-1")
         .setSimple(true)
         .setPartitionAssignor("org.apache.kafka.clients.consumer.RangeAssignor")
-        .setState(State.STABLE)
+        .setState(GroupState.STABLE)
         .setCoordinator(BROKER_1)
         .setConsumers(Arrays.asList(CONSUMERS[0]))
         .build(),
@@ -241,7 +241,7 @@ public class ConsumerGroupManagerImplTest {
         .setConsumerGroupId("consumer-group-2")
         .setSimple(false)
         .setPartitionAssignor("org.apache.kafka.clients.consumer.RoundRobinAssignor")
-        .setState(State.COMPLETING_REBALANCE)
+        .setState(GroupState.COMPLETING_REBALANCE)
         .setCoordinator(BROKER_2)
         .setConsumers(Arrays.asList(CONSUMERS[1]))
         .build()
@@ -337,8 +337,8 @@ public class ConsumerGroupManagerImplTest {
           .andStubReturn(CONSUMER_GROUPS[i].isSimple());
       expect(consumerGroupDescriptions[i].partitionAssignor())
           .andStubReturn(CONSUMER_GROUPS[i].getPartitionAssignor());
-      expect(consumerGroupDescriptions[i].state())
-          .andStubReturn(CONSUMER_GROUPS[i].getState().toConsumerGroupState());
+      expect(consumerGroupDescriptions[i].groupState())
+          .andStubReturn(CONSUMER_GROUPS[i].getState());
       expect(consumerGroupDescriptions[i].coordinator())
           .andStubReturn(CONSUMER_GROUPS[i].getCoordinator().toNode());
       expect(consumerGroupDescriptions[i].members())
@@ -400,8 +400,7 @@ public class ConsumerGroupManagerImplTest {
         .andStubReturn(CONSUMER_GROUPS[0].isSimple());
     expect(consumerGroupDescriptions[0].partitionAssignor())
         .andStubReturn(CONSUMER_GROUPS[0].getPartitionAssignor());
-    expect(consumerGroupDescriptions[0].state())
-        .andStubReturn(CONSUMER_GROUPS[0].getState().toConsumerGroupState());
+    expect(consumerGroupDescriptions[0].groupState()).andStubReturn(CONSUMER_GROUPS[0].getState());
     expect(consumerGroupDescriptions[0].coordinator())
         .andStubReturn(CONSUMER_GROUPS[0].getCoordinator().toNode());
     expect(consumerGroupDescriptions[0].members())
