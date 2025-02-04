@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
-import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.common.GroupState;
 
 @AutoValue
 public abstract class ConsumerGroup {
@@ -36,7 +36,7 @@ public abstract class ConsumerGroup {
 
   public abstract String getPartitionAssignor();
 
-  public abstract State getState();
+  public abstract GroupState getState();
 
   public abstract Broker getCoordinator();
 
@@ -67,7 +67,7 @@ public abstract class ConsumerGroup {
         .setPartitionAssignor(description.partitionAssignor())
         // I have only been able to see state=PREPARING_REBALANCE on all my tests.
         // TODO: Investigate how to get actual state of consumer group.
-        .setState(State.fromConsumerGroupState(description.state()))
+        .setState(description.groupState())
         .setCoordinator(Broker.fromNode(clusterId, description.coordinator()))
         .setConsumers(
             description.members().stream()
@@ -91,42 +91,12 @@ public abstract class ConsumerGroup {
 
     public abstract Builder setPartitionAssignor(String partitionAssignor);
 
-    public abstract Builder setState(State state);
+    public abstract Builder setState(GroupState state);
 
     public abstract Builder setCoordinator(Broker coordinator);
 
     public abstract Builder setConsumers(List<Consumer> consumers);
 
     public abstract ConsumerGroup build();
-  }
-
-  public enum State {
-    UNKNOWN,
-
-    PREPARING_REBALANCE,
-
-    COMPLETING_REBALANCE,
-
-    STABLE,
-
-    DEAD,
-
-    EMPTY;
-
-    public static State fromConsumerGroupState(ConsumerGroupState state) {
-      try {
-        return State.valueOf(state.name());
-      } catch (IllegalArgumentException e) {
-        return UNKNOWN;
-      }
-    }
-
-    public ConsumerGroupState toConsumerGroupState() {
-      try {
-        return ConsumerGroupState.valueOf(name());
-      } catch (IllegalArgumentException e) {
-        return ConsumerGroupState.UNKNOWN;
-      }
-    }
   }
 }

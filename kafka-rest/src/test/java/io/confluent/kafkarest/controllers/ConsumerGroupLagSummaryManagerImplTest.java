@@ -29,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
-import io.confluent.kafkarest.entities.ConsumerGroup.State;
 import io.confluent.kafkarest.entities.ConsumerGroupLagSummary;
 import io.confluent.kafkarest.entities.Partition;
 import java.util.Arrays;
@@ -47,6 +46,7 @@ import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.GroupState;
 import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
@@ -113,7 +113,7 @@ public class ConsumerGroupLagSummaryManagerImplTest {
           .setConsumerGroupId(CONSUMER_GROUP_ID)
           .setSimple(true)
           .setPartitionAssignor("org.apache.kafka.clients.consumer.RangeAssignor")
-          .setState(State.STABLE)
+          .setState(GroupState.STABLE)
           .setCoordinator(BROKER_1)
           .setConsumers(Arrays.asList(CONSUMER_1, CONSUMER_2))
           .build();

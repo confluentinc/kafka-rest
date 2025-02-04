@@ -22,7 +22,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.AnyOf.anyOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.confluent.kafkarest.entities.ConsumerGroup.State;
 import io.confluent.kafkarest.entities.v3.ConsumerGroupData;
 import io.confluent.kafkarest.entities.v3.ConsumerGroupDataList;
 import io.confluent.kafkarest.entities.v3.GetConsumerGroupResponse;
@@ -39,8 +38,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.GroupState;
 import org.apache.kafka.common.serialization.BytesDeserializer;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -50,7 +49,6 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
   }
 
-  @Disabled("KNET-17421 to fix this")
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"kraft"})
   public void listConsumerGroups_returnsConsumerGroups(String quorum) {
@@ -71,10 +69,10 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     consumer3.poll(Duration.ofSeconds(1));
 
     ListConsumerGroupsResponse expectedPreparingRebalance =
-        getExpectedListResponse(baseUrl, clusterId, "", State.PREPARING_REBALANCE);
+        getExpectedListResponse(baseUrl, clusterId, "", GroupState.PREPARING_REBALANCE);
 
     ListConsumerGroupsResponse expectedStable =
-        getExpectedListResponse(baseUrl, clusterId, "range", State.STABLE);
+        getExpectedListResponse(baseUrl, clusterId, "range", GroupState.STABLE);
 
     Response response =
         request("/v3/clusters/" + clusterId + "/consumer-groups")
@@ -107,7 +105,6 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Disabled("KNET-17421 to fix this")
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"kraft"})
   public void getConsumerGroup_returnsConsumerGroup(String quorum) {
@@ -128,10 +125,10 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     consumer3.poll(Duration.ofSeconds(1));
 
     GetConsumerGroupResponse expectedStable =
-        getExpectedGroupResponse(baseUrl, clusterId, "range", State.STABLE);
+        getExpectedGroupResponse(baseUrl, clusterId, "range", GroupState.STABLE);
 
     GetConsumerGroupResponse expectedRebalance =
-        getExpectedGroupResponse(baseUrl, clusterId, "", State.PREPARING_REBALANCE);
+        getExpectedGroupResponse(baseUrl, clusterId, "", GroupState.PREPARING_REBALANCE);
 
     Response response =
         request("/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1")
@@ -199,7 +196,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   private ListConsumerGroupsResponse getExpectedListResponse(
-      String baseUrl, String clusterId, String partitionAssignor, State state) {
+      String baseUrl, String clusterId, String partitionAssignor, GroupState state) {
     return ListConsumerGroupsResponse.create(
         ConsumerGroupDataList.builder()
             .setMetadata(
@@ -246,7 +243,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   private GetConsumerGroupResponse getExpectedGroupResponse(
-      String baseUrl, String clusterId, String partitionAssignor, State state) {
+      String baseUrl, String clusterId, String partitionAssignor, GroupState state) {
     return GetConsumerGroupResponse.create(
         ConsumerGroupData.builder()
             .setMetadata(
