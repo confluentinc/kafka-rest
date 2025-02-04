@@ -25,7 +25,6 @@ import io.confluent.kafkarest.controllers.ConsumerGroupManager;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
-import io.confluent.kafkarest.entities.ConsumerGroup.State;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.v3.ConsumerGroupData;
 import io.confluent.kafkarest.entities.v3.ConsumerGroupDataList;
@@ -40,6 +39,8 @@ import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
+
+import org.apache.kafka.common.GroupState;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.junit.jupiter.api.BeforeEach;
@@ -221,7 +222,7 @@ public class ConsumerGroupsResourceTest {
         .setConsumerGroupId("consumer-group-1")
         .setSimple(true)
         .setPartitionAssignor("org.apache.kafka.clients.consumer.RangeAssignor")
-        .setState(State.STABLE)
+        .setState(GroupState.STABLE)
         .setCoordinator(BROKER_1)
         .setConsumers(Arrays.asList(CONSUMERS[0]))
         .build(),
@@ -230,7 +231,7 @@ public class ConsumerGroupsResourceTest {
         .setConsumerGroupId("consumer-group-2")
         .setSimple(false)
         .setPartitionAssignor("org.apache.kafka.clients.consumer.RoundRobinAssignor")
-        .setState(State.COMPLETING_REBALANCE)
+        .setState(GroupState.COMPLETING_REBALANCE)
         .setCoordinator(BROKER_2)
         .setConsumers(Arrays.asList(CONSUMERS[1]))
         .build()
