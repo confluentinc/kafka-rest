@@ -400,8 +400,7 @@ public class ConsumerGroupManagerImplTest {
         .andStubReturn(CONSUMER_GROUPS[0].isSimple());
     expect(consumerGroupDescriptions[0].partitionAssignor())
         .andStubReturn(CONSUMER_GROUPS[0].getPartitionAssignor());
-    expect(consumerGroupDescriptions[0].groupState())
-        .andStubReturn(CONSUMER_GROUPS[0].getState());
+    expect(consumerGroupDescriptions[0].groupState()).andStubReturn(CONSUMER_GROUPS[0].getState());
     expect(consumerGroupDescriptions[0].coordinator())
         .andStubReturn(CONSUMER_GROUPS[0].getCoordinator().toNode());
     expect(consumerGroupDescriptions[0].members())

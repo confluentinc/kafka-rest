@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
-
 import org.apache.kafka.common.GroupState;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;

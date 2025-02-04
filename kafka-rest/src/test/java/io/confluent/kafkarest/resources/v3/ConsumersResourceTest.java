@@ -39,7 +39,6 @@ import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
-
 import org.apache.kafka.common.GroupState;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
