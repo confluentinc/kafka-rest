@@ -337,8 +337,8 @@ public class ConsumerGroupManagerImplTest {
           .andStubReturn(CONSUMER_GROUPS[i].isSimple());
       expect(consumerGroupDescriptions[i].partitionAssignor())
           .andStubReturn(CONSUMER_GROUPS[i].getPartitionAssignor());
-      expect(consumerGroupDescriptions[i].state())
-          .andStubReturn(CONSUMER_GROUPS[i].getState().toConsumerGroupState());
+      expect(consumerGroupDescriptions[i].groupState())
+          .andStubReturn(CONSUMER_GROUPS[i].getState().toGroupState());
       expect(consumerGroupDescriptions[i].coordinator())
           .andStubReturn(CONSUMER_GROUPS[i].getCoordinator().toNode());
       expect(consumerGroupDescriptions[i].members())
@@ -400,8 +400,8 @@ public class ConsumerGroupManagerImplTest {
         .andStubReturn(CONSUMER_GROUPS[0].isSimple());
     expect(consumerGroupDescriptions[0].partitionAssignor())
         .andStubReturn(CONSUMER_GROUPS[0].getPartitionAssignor());
-    expect(consumerGroupDescriptions[0].state())
-        .andStubReturn(CONSUMER_GROUPS[0].getState().toConsumerGroupState());
+    expect(consumerGroupDescriptions[0].groupState())
+        .andStubReturn(CONSUMER_GROUPS[0].getState().toGroupState());
     expect(consumerGroupDescriptions[0].coordinator())
         .andStubReturn(CONSUMER_GROUPS[0].getCoordinator().toNode());
     expect(consumerGroupDescriptions[0].members())
