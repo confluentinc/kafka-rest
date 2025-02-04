@@ -445,6 +445,11 @@ public abstract class ClusterTestHarness {
     return false;
   }
 
+  /**
+   * Taken from the same function name in kafka.utils.TestUtils of AK
+   * https://github.com/confluentinc/kafka/blob/0ce5fb0dbb87661e794cdfc40badbe3b91d8d825/core/src/test/scala
+   * /unit/kafka/utils/TestUtils.scala#L228
+   */
   public static Properties createBrokerConfig(
       int nodeId,
       boolean enableControlledShutdown,
