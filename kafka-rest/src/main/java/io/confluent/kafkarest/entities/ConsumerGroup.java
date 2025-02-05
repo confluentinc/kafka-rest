@@ -107,7 +107,7 @@ public abstract class ConsumerGroup {
   }
 
   /**
-   * Encapsulates the GroupState enum to provide a JSON serde format that: serialize to
+   * Encapsulates the GroupState enum to provide a JSON string format that: serialize to
    * SCREAMING_SNAKE_CASE of state name and deserialize from SCREAMING_SNAKE_CASE of state name
    */
   public static class State {
