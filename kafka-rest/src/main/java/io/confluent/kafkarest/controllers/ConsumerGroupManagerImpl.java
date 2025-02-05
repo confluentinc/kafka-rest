@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
-import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.common.GroupState;
 import org.apache.kafka.common.errors.GroupIdNotFoundException;
 
 final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
@@ -92,7 +92,7 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
                         // TODO: Investigate a better way of detecting non-existent consumer-group.
                         description ->
                             !description.isSimpleConsumerGroup()
-                                || description.state() != ConsumerGroupState.DEAD)
+                                || description.groupState() != GroupState.DEAD)
                     .map(
                         description ->
                             ConsumerGroup.fromConsumerGroupDescription(clusterId, description))
