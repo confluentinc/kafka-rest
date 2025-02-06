@@ -1165,6 +1165,7 @@ paths:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
       - $ref: '#/components/parameters/PartitionId'
+      - $ref: '#/components/parameters/OffsetType'
 
     get:
       summary: 'List Partition Offsets'
@@ -1660,6 +1661,14 @@ components:
       required: false
       schema:
         type: boolean
+
+    OffsetType:
+      name: 'offset_type'
+      description: 'Specify the offset type to be fetched for a given partition'
+      in: query
+      required: false
+      schema:
+        type: string
 
     PartitionId:
       name: 'partition_id'
