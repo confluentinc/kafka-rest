@@ -63,4 +63,7 @@
   <!-- AutoValue-generated classes can contain various violations which should be ignored. -->
   <suppress checks="[A-za-z]*" files="AutoValue[A-Za-z_]*" />
 
+  <!-- ClusterTestHarness contains many boiler plate code for setting up Kafka cluster with Kafka Rest -->
+  <suppress checks="CyclomaticComplexity|JavaNCSS|NPathComplexity|ParameterNumber" files="ClusterTestHarness" />
+
 </suppressions>
