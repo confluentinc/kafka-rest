@@ -21,6 +21,7 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.confluent.kafkarest.controllers.PartitionManager;
 import io.confluent.kafkarest.controllers.TopicManager;
@@ -37,6 +38,7 @@ import io.confluent.rest.exceptions.RestNotFoundException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
@@ -170,7 +172,7 @@ public class ListPartitionOffsetsActionTest {
   }
 
   @Test
-  public void listPartitionOffsets_existingPartitionWithOffsets_returnsPartitionWithOffsets() {
+  public void listPartitionOffsets_existingPartitionWithOffsets_returnsEarliestAndLatestOffsets() {
     expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(earliestResult);
@@ -195,7 +197,7 @@ public class ListPartitionOffsetsActionTest {
 
     FakeAsyncResponse response = new FakeAsyncResponse();
     listPartitionOffsetsAction.listPartitionOffsets(
-        response, CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId());
+        response, CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId(), "earliest_and_latest");
 
     ListPartitionOffsetsResponse expected =
         ListPartitionOffsetsResponse.create(
@@ -203,7 +205,9 @@ public class ListPartitionOffsetsActionTest {
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/0/offset")
-                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1/partition=0/offset")
+                        .setResourceName(
+                            "crn:///kafka=cluster-1/topic=topic-1/partition=0/"
+                                + "offset_type=earliest_and_latest")
                         .build())
                 .setClusterId(CLUSTER_ID)
                 .setTopicName(TOPIC_NAME)
@@ -216,6 +220,19 @@ public class ListPartitionOffsetsActionTest {
   }
 
   @Test
+  public void listPartitionOffsets_invalidOffsetType_throwsBadRequestException() {
+    expect(partitionManager.getPartition(CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId()))
+        .andReturn(CompletableFuture.completedFuture(Optional.of(PARTITION_1)));
+    FakeAsyncResponse response = new FakeAsyncResponse();
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            listPartitionOffsetsAction.listPartitionOffsets(
+                response, CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId(), "foobar"));
+  }
+
+  @Test
   public void listPartitionOffsets_nonExistingPartition_throwsPartitionNotFound() {
     expect(partitionManager.getPartition(CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId()))
         .andReturn(CompletableFuture.completedFuture(Optional.empty()));
@@ -223,7 +240,7 @@ public class ListPartitionOffsetsActionTest {
 
     FakeAsyncResponse response = new FakeAsyncResponse();
     listPartitionOffsetsAction.listPartitionOffsets(
-        response, CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId());
+        response, CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId(), "earliest_and_latest");
 
     assertEquals(RestNotFoundException.class, response.getException().getClass());
   }
@@ -236,7 +253,7 @@ public class ListPartitionOffsetsActionTest {
 
     FakeAsyncResponse response = new FakeAsyncResponse();
     listPartitionOffsetsAction.listPartitionOffsets(
-        response, CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId());
+        response, CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId(), "earliest_and_latest");
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

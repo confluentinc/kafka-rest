@@ -31,10 +31,13 @@ import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
@@ -64,26 +67,33 @@ public class ListPartitionOffsetsAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      @PathParam("partitionId") Integer partitionId) {
+      @PathParam("partitionId") Integer partitionId,
+      @QueryParam("offset_type") @DefaultValue("earliest_and_latest") String offsetType) {
 
-    CompletableFuture<ListPartitionOffsetsResponse> response =
-        partitionManager
-            .get()
-            .getPartition(clusterId, topicName, partitionId)
-            .thenApply(partition -> partition.orElseThrow(Errors::partitionNotFoundException))
-            .thenApply(
-                partition ->
-                    ListPartitionOffsetsResponse.create(toPartitionWithOffsetsData(partition)));
+    if (offsetType.equals("earliest_and_latest")) {
+      CompletableFuture<ListPartitionOffsetsResponse> response =
+          partitionManager
+              .get()
+              .getPartition(clusterId, topicName, partitionId)
+              .thenApply(partition -> partition.orElseThrow(Errors::partitionNotFoundException))
+              .thenApply(
+                  partition ->
+                      ListPartitionOffsetsResponse.create(
+                          toPartitionWithOffsetsData(partition, offsetType)));
 
-    AsyncResponses.asyncResume(asyncResponse, response);
+      AsyncResponses.asyncResume(asyncResponse, response);
+    } else {
+      throw new BadRequestException("offset_type is invalid");
+    }
   }
 
-  private PartitionWithOffsetsData toPartitionWithOffsetsData(Partition partition) {
-    return toPartitionWithOffsetsData(crnFactory, urlFactory, partition);
+  private PartitionWithOffsetsData toPartitionWithOffsetsData(
+      Partition partition, String offsetType) {
+    return toPartitionWithOffsetsData(crnFactory, urlFactory, partition, offsetType);
   }
 
   static PartitionWithOffsetsData toPartitionWithOffsetsData(
-      CrnFactory crnFactory, UrlFactory urlFactory, Partition partition) {
+      CrnFactory crnFactory, UrlFactory urlFactory, Partition partition, String offsetType) {
     PartitionWithOffsetsData.Builder partitionWithOffsetsData =
         PartitionWithOffsetsData.fromPartition(partition)
             .setMetadata(
@@ -106,8 +116,8 @@ public class ListPartitionOffsetsAction {
                             partition.getTopicName(),
                             "partition",
                             Integer.toString(partition.getPartitionId()),
-                            "offset",
-                            null))
+                            "offset_type",
+                            offsetType))
                     .build());
     return partitionWithOffsetsData.build();
   }
