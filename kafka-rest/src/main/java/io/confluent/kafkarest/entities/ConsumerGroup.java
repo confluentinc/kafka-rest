@@ -15,13 +15,19 @@
 
 package io.confluent.kafkarest.entities;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
-import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.common.GroupState;
 
 @AutoValue
 public abstract class ConsumerGroup {
@@ -67,7 +73,7 @@ public abstract class ConsumerGroup {
         .setPartitionAssignor(description.partitionAssignor())
         // I have only been able to see state=PREPARING_REBALANCE on all my tests.
         // TODO: Investigate how to get actual state of consumer group.
-        .setState(State.fromConsumerGroupState(description.state()))
+        .setState(new State(description.groupState()))
         .setCoordinator(Broker.fromNode(clusterId, description.coordinator()))
         .setConsumers(
             description.members().stream()
@@ -100,33 +106,57 @@ public abstract class ConsumerGroup {
     public abstract ConsumerGroup build();
   }
 
-  public enum State {
-    UNKNOWN,
+  /**
+   * Encapsulates the GroupState enum to provide a JSON string format that: serialize to
+   * SCREAMING_SNAKE_CASE of state name and deserialize from SCREAMING_SNAKE_CASE of state name
+   */
+  public static class State {
+    public static final State UNKNOWN = new State(GroupState.UNKNOWN);
+    public static final State PREPARING_REBALANCE = new State(GroupState.PREPARING_REBALANCE);
+    public static final State COMPLETING_REBALANCE = new State(GroupState.COMPLETING_REBALANCE);
+    public static final State STABLE = new State(GroupState.STABLE);
+    public static final State DEAD = new State(GroupState.DEAD);
+    public static final State EMPTY = new State(GroupState.EMPTY);
 
-    PREPARING_REBALANCE,
+    // map of name (in SCREAMING_SNAKE_CASE) to enum GroupState
+    private static final Map<String, GroupState> NAME_TO_ENUM =
+        Arrays.stream(GroupState.values())
+            .collect(
+                Collectors.toMap(
+                    state -> state.name().toUpperCase(Locale.ROOT), Function.identity()));
 
-    COMPLETING_REBALANCE,
+    private final GroupState state;
 
-    STABLE,
-
-    DEAD,
-
-    EMPTY;
-
-    public static State fromConsumerGroupState(ConsumerGroupState state) {
-      try {
-        return State.valueOf(state.name());
-      } catch (IllegalArgumentException e) {
-        return UNKNOWN;
-      }
+    State(GroupState state) {
+      this.state = state;
     }
 
-    public ConsumerGroupState toConsumerGroupState() {
-      try {
-        return ConsumerGroupState.valueOf(name());
-      } catch (IllegalArgumentException e) {
-        return ConsumerGroupState.UNKNOWN;
+    public GroupState toGroupState() {
+      return state;
+    }
+
+    @JsonValue
+    @Override
+    public String toString() {
+      return state.name().toUpperCase(Locale.ROOT);
+    }
+
+    @JsonCreator
+    public static State fromString(String state) {
+      return new State(
+          NAME_TO_ENUM.getOrDefault(state.toUpperCase(Locale.ROOT), GroupState.UNKNOWN));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
       }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      State that = (State) obj;
+      return state == that.state;
     }
   }
 }
