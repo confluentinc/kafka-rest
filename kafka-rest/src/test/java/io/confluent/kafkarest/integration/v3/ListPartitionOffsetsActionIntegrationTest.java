@@ -18,6 +18,7 @@ package io.confluent.kafkarest.integration.v3;
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.entities.v3.ListPartitionOffsetsResponse;
 import io.confluent.kafkarest.entities.v3.PartitionWithOffsetsData;
 import io.confluent.kafkarest.entities.v3.Resource;
@@ -36,6 +37,10 @@ public class ListPartitionOffsetsActionIntegrationTest extends ClusterTestHarnes
 
   private static final int PARTITION_ID = 0;
 
+  private static final String OFFSET_TYPE = "earliest_and_latest";
+
+  private String expectedOffsetsUrl;
+
   public ListPartitionOffsetsActionIntegrationTest() {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
   }
@@ -44,8 +49,15 @@ public class ListPartitionOffsetsActionIntegrationTest extends ClusterTestHarnes
   @Override
   public void setUp(TestInfo testInfo) throws Exception {
     super.setUp(testInfo);
-
     createTopic(TOPIC_NAME, 1, (short) 1);
+    expectedOffsetsUrl =
+        "/v3/clusters/"
+            + getClusterId()
+            + "/topics/"
+            + TOPIC_NAME
+            + "/partitions/"
+            + PARTITION_ID
+            + "/offset";
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
@@ -67,7 +79,7 @@ public class ListPartitionOffsetsActionIntegrationTest extends ClusterTestHarnes
                                 + "/topics/"
                                 + TOPIC_NAME
                                 + "/partitions/"
-                                + String.valueOf(PARTITION_ID)
+                                + PARTITION_ID
                                 + "/offset")
                         .setResourceName(
                             "crn:///kafka="
@@ -76,7 +88,8 @@ public class ListPartitionOffsetsActionIntegrationTest extends ClusterTestHarnes
                                 + TOPIC_NAME
                                 + "/partition="
                                 + String.valueOf(PARTITION_ID)
-                                + "/offset")
+                                + "/offset_type="
+                                + OFFSET_TYPE)
                         .build())
                 .setClusterId(clusterId)
                 .setTopicName(TOPIC_NAME)
@@ -86,14 +99,7 @@ public class ListPartitionOffsetsActionIntegrationTest extends ClusterTestHarnes
                 .build());
 
     Response response =
-        request(
-                "/v3/clusters/"
-                    + clusterId
-                    + "/topics/"
-                    + TOPIC_NAME
-                    + "/partitions/"
-                    + String.valueOf(PARTITION_ID)
-                    + "/offset")
+        request(expectedOffsetsUrl, ImmutableMap.of("offset_type", "earliest_and_latest"))
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
@@ -108,7 +114,13 @@ public class ListPartitionOffsetsActionIntegrationTest extends ClusterTestHarnes
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/100/offset")
+        request(
+                "/v3/clusters/"
+                    + clusterId
+                    + "/topics/"
+                    + TOPIC_NAME
+                    + "/partitions/100/"
+                    + "offset?offset_type=earliest_and_latest")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -120,7 +132,12 @@ public class ListPartitionOffsetsActionIntegrationTest extends ClusterTestHarnes
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/foobar/partitions/0/offset")
+        request(
+                "/v3/clusters/"
+                    + clusterId
+                    + "/topics/foobar/"
+                    + "partitions/0/"
+                    + "offset?offset_type=earliest_and_latest")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -130,9 +147,26 @@ public class ListPartitionOffsetsActionIntegrationTest extends ClusterTestHarnes
   @ValueSource(strings = {"kraft"})
   public void getPartition_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
-        request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/0/offset")
+        request(
+                "/v3/clusters/foobar/"
+                    + "topics/"
+                    + TOPIC_NAME
+                    + "/partitions/0/"
+                    + "offset?offset_type=earliest_and_latest")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void getPartition_InvalidOffsetType_returnsNotFound(String quorum) {
+    String clusterId = getClusterId();
+
+    Response response =
+        request(expectedOffsetsUrl, ImmutableMap.of("offset_type", "foobar"))
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 }
