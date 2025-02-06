@@ -188,6 +188,12 @@
             <artifactId>snappy-java</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>nl.jqno.equalsverifier</groupId>
+            <artifactId>equalsverifier-nodep</artifactId>
+            <version>3.18.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 
