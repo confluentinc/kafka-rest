@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
@@ -128,7 +129,7 @@ public abstract class ConsumerGroup {
     private final GroupState state;
 
     State(GroupState state) {
-      this.state = state;
+      this.state = Objects.requireNonNull(state);
     }
 
     public GroupState toGroupState() {
@@ -157,6 +158,11 @@ public abstract class ConsumerGroup {
       }
       State that = (State) obj;
       return state == that.state;
+    }
+
+    @Override
+    public int hashCode() {
+      return state.hashCode();
     }
   }
 }
