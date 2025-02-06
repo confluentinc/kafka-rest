@@ -49,6 +49,7 @@ public final class V3ResourcesFeature implements Feature {
     configurable.register(TopicsResource.class);
     configurable.register(ListAllTopicsConfigsAction.class);
     configurable.register(ListAllBrokersConfigsAction.class);
+    configurable.register(ListPartitionOffsetsAction.class);
     return true;
   }
 }
