@@ -1165,7 +1165,6 @@ paths:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
       - $ref: '#/components/parameters/PartitionId'
-      - $ref: '#/components/parameters/OffsetType'
 
     get:
       summary: 'List Partition Offsets'
@@ -1176,6 +1175,8 @@ paths:
         Return the earliest and latest offsets of a partition with the given `partition_id`.
       tags:
         - Partition (v3)
+      parameters:
+        - $ref: '#/components/parameters/OffsetType'
       responses:
         '200':
           $ref: '#/components/responses/ListPartitionOffsetsResponse'
