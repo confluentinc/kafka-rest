@@ -83,7 +83,7 @@ public class ListPartitionOffsetsAction {
 
       AsyncResponses.asyncResume(asyncResponse, response);
     } else {
-      throw new BadRequestException("offset_type is invalid");
+      throw new BadRequestException("offset_type:" + offsetType + " is invalid");
     }
   }
 

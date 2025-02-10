@@ -110,6 +110,52 @@ public class ListPartitionOffsetsActionIntegrationTest extends ClusterTestHarnes
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"kraft"})
+  public void
+      listPartitionOffsets_existingPartitionWithDefaultOffsetType_returnsEarliestAndLatestOffsets(
+          String quorum) throws Exception {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+
+    ListPartitionOffsetsResponse expected =
+        ListPartitionOffsetsResponse.create(
+            PartitionWithOffsetsData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/topics/"
+                                + TOPIC_NAME
+                                + "/partitions/"
+                                + PARTITION_ID
+                                + "/offset")
+                        .setResourceName(
+                            "crn:///kafka="
+                                + clusterId
+                                + "/topic="
+                                + TOPIC_NAME
+                                + "/partition="
+                                + String.valueOf(PARTITION_ID)
+                                + "/offset_type="
+                                + OFFSET_TYPE)
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_NAME)
+                .setPartitionId(PARTITION_ID)
+                .setEarliestOffset(0L)
+                .setLatestOffset(0L)
+                .build());
+
+    Response response = request(expectedOffsetsUrl).accept(MediaType.APPLICATION_JSON).get();
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+
+    ListPartitionOffsetsResponse actual = response.readEntity(ListPartitionOffsetsResponse.class);
+    assertEquals(expected, actual);
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   public void listPartitionOffsets_nonExistingPartition_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
