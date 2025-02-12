@@ -59,6 +59,10 @@ public class ListPartitionOffsetsAction {
     this.urlFactory = requireNonNull(urlFactory);
   }
 
+  /**
+   * TODO: If additional offset types are implemented, create an enum and update the API spec to
+   * reflect all the types, including the default value.
+   */
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.partitions.list.offsets")
