@@ -791,7 +791,7 @@ public abstract class ClusterTestHarness {
       TestUtils.createTopicWithAdmin(
           admin,
           topicName,
-          JavaConverters.asScalaBuffer(servers).toSeq(),
+          JavaConverters.asScalaBuffer(servers),
           quorumTestHarness.controllerServers(),
           numPartitions.orElse(1),
           replicationFactor.orElse((short) 1),
