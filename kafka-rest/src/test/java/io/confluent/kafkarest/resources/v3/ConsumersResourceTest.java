@@ -26,6 +26,7 @@ import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroup.State;
+import io.confluent.kafkarest.entities.ConsumerGroup.Type;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.v3.ConsumerData;
 import io.confluent.kafkarest.entities.v3.ConsumerDataList;
@@ -140,6 +141,8 @@ public class ConsumersResourceTest {
           .setSimple(true)
           .setPartitionAssignor("org.apache.kafka.clients.consumer.RangeAssignor")
           .setState(State.STABLE)
+          .setType(Type.CLASSIC)
+          .setMixedConsumerGroup(false)
           .setCoordinator(BROKER_1)
           .setConsumers(Arrays.asList(CONSUMERS))
           .build();
