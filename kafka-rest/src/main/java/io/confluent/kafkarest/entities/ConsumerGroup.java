@@ -15,11 +15,6 @@
 
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -28,10 +23,17 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.MemberDescription;
 import org.apache.kafka.common.GroupState;
 import org.apache.kafka.common.GroupType;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 @AutoValue
 public abstract class ConsumerGroup {
@@ -150,7 +152,7 @@ public abstract class ConsumerGroup {
     public static final State ASSIGNING = new State(GroupState.ASSIGNING);
     public static final State RECONCILING = new State(GroupState.RECONCILING);
 
-    // States that only apply to both group types.
+    // States that apply to both group types.
     public static final State STABLE = new State(GroupState.STABLE);
     public static final State DEAD = new State(GroupState.DEAD);
     public static final State EMPTY = new State(GroupState.EMPTY);
