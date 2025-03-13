@@ -150,7 +150,7 @@ public abstract class ConsumerGroup {
     public static final State ASSIGNING = new State(GroupState.ASSIGNING);
     public static final State RECONCILING = new State(GroupState.RECONCILING);
 
-    // States that only apply to both group types.
+    // States that apply to both group types.
     public static final State STABLE = new State(GroupState.STABLE);
     public static final State DEAD = new State(GroupState.DEAD);
     public static final State EMPTY = new State(GroupState.EMPTY);

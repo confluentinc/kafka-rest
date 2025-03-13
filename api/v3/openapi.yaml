@@ -2172,6 +2172,8 @@ components:
             - is_simple
             - partition_assignor
             - state
+            - type
+            - is_mixed_consumer_group
             - coordinator
             - consumers
             - lag_summary
@@ -2186,6 +2188,10 @@ components:
               type: string
             state:
               $ref: '#/components/schemas/ConsumerGroupState'
+            type:
+              $ref: '#/components/schemas/ConsumerGroupType'
+            is_mixed_consumer_group:
+              type: boolean
             coordinator:
               $ref: '#/components/schemas/Relationship'
             consumers:
@@ -2211,9 +2217,19 @@ components:
         - UNKNOWN
         - PREPARING_REBALANCE
         - COMPLETING_REBALANCE
+        - ASSIGNING
+        - RECONCILING
         - STABLE
         - DEAD
         - EMPTY
+    
+    ConsumerGroupType:
+      type: string
+      x-extensible-enum:
+        - UNKNOWN
+        - CLASSIC
+        - CONSUMER
+        - SHARE
 
     ConsumerLagData:
       allOf:
@@ -3296,6 +3312,8 @@ components:
             is_simple: false
             partition_assignor: 'org.apache.kafka.clients.consumer.RoundRobinAssignor'
             state: 'STABLE'
+            type: 'CLASSIC'
+            is_mixed_consumer_group: false
             coordinator:
               related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/brokers/1'
             consumers:
@@ -3793,6 +3811,8 @@ components:
                 is_simple: false
                 partition_assignor: 'org.apache.kafka.clients.consumer.RoundRobinAssignor'
                 state: 'STABLE'
+                type: 'CLASSIC'
+                is_mixed_consumer_group: false
                 coordinator:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/brokers/1'
                 consumers:
@@ -3808,6 +3828,8 @@ components:
                 is_simple: false
                 partition_assignor: 'org.apache.kafka.clients.consumer.StickyAssignor'
                 state: 'PREPARING_REBALANCE'
+                type: 'CLASSIC'
+                is_mixed_consumer_group: false
                 coordinator:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/brokers/2'
                 consumers:
@@ -3823,6 +3845,8 @@ components:
                 is_simple: false
                 partition_assignor: 'org.apache.kafka.clients.consumer.RangeAssignor'
                 state: 'DEAD'
+                type: 'CLASSIC'
+                is_mixed_consumer_group: false
                 coordinator:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/brokers/3'
                 consumers:
