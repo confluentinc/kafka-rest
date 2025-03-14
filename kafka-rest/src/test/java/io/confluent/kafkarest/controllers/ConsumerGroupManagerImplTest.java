@@ -32,8 +32,10 @@ import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroup.State;
+import io.confluent.kafkarest.entities.ConsumerGroup.Type;
 import io.confluent.kafkarest.entities.Partition;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -223,6 +225,160 @@ public class ConsumerGroupManagerImplTest {
                       /* partitionId= */ 9,
                       /* replicas= */ emptyList())))
           .build()
+    },
+    {
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-3")
+          .setConsumerId("consumer-7")
+          .setClientId("client-7")
+          .setInstanceId("instance-7")
+          .setHost("71.72.73.74")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-4",
+                      /* partitionId= */ 1,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-5",
+                      /* partitionId= */ 2,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-6",
+                      /* partitionId= */ 3,
+                      /* replicas= */ emptyList())))
+          .build(),
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-3")
+          .setConsumerId("consumer-8")
+          .setClientId("client-8")
+          .setInstanceId("instance-8")
+          .setHost("81.82.83.84")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-4",
+                      /* partitionId= */ 4,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-5",
+                      /* partitionId= */ 5,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-6",
+                      /* partitionId= */ 6,
+                      /* replicas= */ emptyList())))
+          .build(),
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-3")
+          .setConsumerId("consumer-9")
+          .setClientId("client-9")
+          .setInstanceId("instance-9")
+          .setHost("91.92.93.94")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-7",
+                      /* partitionId= */ 7,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-8",
+                      /* partitionId= */ 8,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-9",
+                      /* partitionId= */ 9,
+                      /* replicas= */ emptyList())))
+          .build()
+    },
+    {
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-4")
+          .setConsumerId("consumer-10")
+          .setClientId("client-10")
+          .setInstanceId("instance-10")
+          .setHost("101.102.103.104")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-4",
+                      /* partitionId= */ 1,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-5",
+                      /* partitionId= */ 2,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-6",
+                      /* partitionId= */ 3,
+                      /* replicas= */ emptyList())))
+          .build(),
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-4")
+          .setConsumerId("consumer-11")
+          .setClientId("client-11")
+          .setInstanceId("instance-11")
+          .setHost("111.112.113.114")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-4",
+                      /* partitionId= */ 4,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-5",
+                      /* partitionId= */ 5,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-6",
+                      /* partitionId= */ 6,
+                      /* replicas= */ emptyList())))
+          .build(),
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-4")
+          .setConsumerId("consumer-12")
+          .setClientId("client-12")
+          .setInstanceId("instance-12")
+          .setHost("121.122.123.124")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-7",
+                      /* partitionId= */ 7,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-8",
+                      /* partitionId= */ 8,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-9",
+                      /* partitionId= */ 9,
+                      /* replicas= */ emptyList())))
+          .build()
     }
   };
 
@@ -233,6 +389,8 @@ public class ConsumerGroupManagerImplTest {
         .setSimple(true)
         .setPartitionAssignor("org.apache.kafka.clients.consumer.RangeAssignor")
         .setState(State.STABLE)
+        .setType(Type.CLASSIC)
+        .setMixedConsumerGroup(false)
         .setCoordinator(BROKER_1)
         .setConsumers(Arrays.asList(CONSUMERS[0]))
         .build(),
@@ -242,8 +400,32 @@ public class ConsumerGroupManagerImplTest {
         .setSimple(false)
         .setPartitionAssignor("org.apache.kafka.clients.consumer.RoundRobinAssignor")
         .setState(State.COMPLETING_REBALANCE)
+        .setType(Type.CLASSIC)
+        .setMixedConsumerGroup(false)
         .setCoordinator(BROKER_2)
         .setConsumers(Arrays.asList(CONSUMERS[1]))
+        .build(),
+    ConsumerGroup.builder()
+        .setClusterId(CLUSTER_ID)
+        .setConsumerGroupId("consumer-group-3")
+        .setSimple(false)
+        .setPartitionAssignor("org.apache.kafka.clients.consumer.StickyAssignor")
+        .setState(State.RECONCILING)
+        .setType(Type.CONSUMER)
+        .setMixedConsumerGroup(true)
+        .setCoordinator(BROKER_2)
+        .setConsumers(Arrays.asList(CONSUMERS[2]))
+        .build(),
+    ConsumerGroup.builder()
+        .setClusterId(CLUSTER_ID)
+        .setConsumerGroupId("consumer-group-4")
+        .setSimple(false)
+        .setPartitionAssignor("org.apache.kafka.clients.consumer.CooperativeStickyAssignor")
+        .setState(State.STABLE)
+        .setType(Type.CONSUMER)
+        .setMixedConsumerGroup(false)
+        .setCoordinator(BROKER_2)
+        .setConsumers(Arrays.asList(CONSUMERS[3]))
         .build()
   };
 
@@ -268,39 +450,32 @@ public class ConsumerGroupManagerImplTest {
   @BeforeEach
   public void setUp() {
     consumerGroupListings =
-        new ConsumerGroupListing[] {
-          createMock(ConsumerGroupListing.class), createMock(ConsumerGroupListing.class)
-        };
+        IntStream.range(0, CONSUMER_GROUPS.length)
+            .mapToObj(i -> createMock(ConsumerGroupListing.class))
+            .toArray(ConsumerGroupListing[]::new);
+
     consumerGroupDescriptions =
-        new ConsumerGroupDescription[] {
-          createMock(ConsumerGroupDescription.class), createMock(ConsumerGroupDescription.class)
-        };
+        IntStream.range(0, CONSUMER_GROUPS.length)
+            .mapToObj(i -> createMock(ConsumerGroupDescription.class))
+            .toArray(ConsumerGroupDescription[]::new);
+
     memberDescriptions =
-        new MemberDescription[][] {
-          {
-            createMock(MemberDescription.class),
-            createMock(MemberDescription.class),
-            createMock(MemberDescription.class)
-          },
-          {
-            createMock(MemberDescription.class),
-            createMock(MemberDescription.class),
-            createMock(MemberDescription.class)
-          }
-        };
+        Arrays.stream(CONSUMERS)
+            .map(
+                consumerArray ->
+                    Arrays.stream(consumerArray)
+                        .map(consumer -> createMock(MemberDescription.class))
+                        .toArray(MemberDescription[]::new))
+            .toArray(MemberDescription[][]::new);
+
     memberAssignments =
-        new MemberAssignment[][] {
-          {
-            createMock(MemberAssignment.class),
-            createMock(MemberAssignment.class),
-            createMock(MemberAssignment.class)
-          },
-          {
-            createMock(MemberAssignment.class),
-            createMock(MemberAssignment.class),
-            createMock(MemberAssignment.class)
-          }
-        };
+        Arrays.stream(CONSUMERS)
+            .map(
+                consumerArray ->
+                    Arrays.stream(consumerArray)
+                        .map(consumer -> createMock(MemberAssignment.class))
+                        .toArray(MemberAssignment[]::new))
+            .toArray(MemberAssignment[][]::new);
 
     consumerGroupManager = new ConsumerGroupManagerImpl(adminClient, clusterManager);
   }
@@ -339,6 +514,8 @@ public class ConsumerGroupManagerImplTest {
           .andStubReturn(CONSUMER_GROUPS[i].getPartitionAssignor());
       expect(consumerGroupDescriptions[i].groupState())
           .andStubReturn(CONSUMER_GROUPS[i].getState().toGroupState());
+      expect(consumerGroupDescriptions[i].type())
+          .andStubReturn(CONSUMER_GROUPS[i].getType().toGroupType());
       expect(consumerGroupDescriptions[i].coordinator())
           .andStubReturn(CONSUMER_GROUPS[i].getCoordinator().toNode());
       expect(consumerGroupDescriptions[i].members())
@@ -353,6 +530,7 @@ public class ConsumerGroupManagerImplTest {
             .andStubReturn(CONSUMERS[i][j].getInstanceId());
         expect(memberDescriptions[i][j].clientId()).andStubReturn(CONSUMERS[i][j].getClientId());
         expect(memberDescriptions[i][j].host()).andStubReturn(CONSUMERS[i][j].getHost());
+        expect(memberDescriptions[i][j].upgraded()).andStubReturn(Optional.of(3 * i + j > 6));
         expect(memberDescriptions[i][j].assignment()).andStubReturn(memberAssignments[i][j]);
         expect(memberAssignments[i][j].topicPartitions())
             .andStubReturn(
@@ -366,7 +544,7 @@ public class ConsumerGroupManagerImplTest {
 
     List<ConsumerGroup> consumerGroups = consumerGroupManager.listConsumerGroups(CLUSTER_ID).get();
 
-    assertEquals(Arrays.asList(CONSUMER_GROUPS), consumerGroups);
+    assertEquals(new HashSet<>(Arrays.asList(CONSUMER_GROUPS)), new HashSet<>(consumerGroups));
   }
 
   @Test
@@ -402,6 +580,8 @@ public class ConsumerGroupManagerImplTest {
         .andStubReturn(CONSUMER_GROUPS[0].getPartitionAssignor());
     expect(consumerGroupDescriptions[0].groupState())
         .andStubReturn(CONSUMER_GROUPS[0].getState().toGroupState());
+    expect(consumerGroupDescriptions[0].type())
+        .andStubReturn(CONSUMER_GROUPS[0].getType().toGroupType());
     expect(consumerGroupDescriptions[0].coordinator())
         .andStubReturn(CONSUMER_GROUPS[0].getCoordinator().toNode());
     expect(consumerGroupDescriptions[0].members())
