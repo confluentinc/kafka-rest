@@ -41,6 +41,7 @@ import io.confluent.kafkarest.exceptions.BadRequestException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Singleton;
 import org.apache.avro.AvroTypeException;
 import org.everit.json.schema.ValidationException;
 
@@ -56,10 +57,11 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
       @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
       @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs) {
     requireNonNull(schemaRegistryClient);
-    avroSerializer = new AvroSerializer(schemaRegistryClient, avroSerializerConfigs);
+    avroSerializer = AvroSerializer.getInstance(schemaRegistryClient, avroSerializerConfigs);
     jsonschemaSerializer =
-        new JsonSchemaSerializer(schemaRegistryClient, jsonschemaSerializerConfigs);
-    protobufSerializer = new ProtobufSerializer(schemaRegistryClient, protobufSerializerConfigs);
+        JsonSchemaSerializer.getInstance(schemaRegistryClient, jsonschemaSerializerConfigs);
+    protobufSerializer =
+        ProtobufSerializer.getInstance(schemaRegistryClient, protobufSerializerConfigs);
   }
 
   @Override
@@ -128,11 +130,24 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
         protobufSerializer.serialize(subject, topicName, protobufSchema, record, isKey));
   }
 
+  @Singleton
   private static final class AvroSerializer extends AbstractKafkaAvroSerializer {
+
+    private static volatile AvroSerializer instance;
 
     private AvroSerializer(SchemaRegistryClient schemaRegistryClient, Map<String, Object> configs) {
       this.schemaRegistry = requireNonNull(schemaRegistryClient);
       configure(serializerConfig(configs));
+    }
+
+    private static AvroSerializer getInstance(
+        SchemaRegistryClient schemaRegistryClient, Map<String, Object> configs) {
+      synchronized (AvroSerializer.class) {
+        if (instance == null) {
+          instance = new AvroSerializer(schemaRegistryClient, configs);
+        }
+        return instance;
+      }
     }
 
     private byte[] serialize(String subject, AvroSchema schema, Object data) {
@@ -140,8 +155,11 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
     }
   }
 
+  @Singleton
   private static final class JsonSchemaSerializer
       extends AbstractKafkaJsonSchemaSerializer<Object> {
+
+    private static volatile JsonSchemaSerializer instance;
 
     private JsonSchemaSerializer(
         SchemaRegistryClient schemaRegistryClient, Map<String, Object> configs) {
@@ -149,17 +167,40 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
       configure(serializerConfig(configs));
     }
 
+    private static JsonSchemaSerializer getInstance(
+        SchemaRegistryClient schemaRegistryClient, Map<String, Object> configs) {
+      synchronized (JsonSchemaSerializer.class) {
+        if (instance == null) {
+          instance = new JsonSchemaSerializer(schemaRegistryClient, configs);
+        }
+        return instance;
+      }
+    }
+
     private byte[] serialize(String subject, JsonSchema schema, Object data) {
       return serializeImpl(subject, JsonSchemaUtils.getValue(data), schema);
     }
   }
 
+  @Singleton
   private static final class ProtobufSerializer extends KafkaProtobufSerializer<Message> {
+
+    private static volatile ProtobufSerializer instance;
 
     private ProtobufSerializer(
         SchemaRegistryClient schemaRegistryClient, Map<String, Object> configs) {
       this.schemaRegistry = requireNonNull(schemaRegistryClient);
       configure(serializerConfig(configs));
+    }
+
+    private static ProtobufSerializer getInstance(
+        SchemaRegistryClient schemaRegistryClient, Map<String, Object> configs) {
+      synchronized (ProtobufSerializer.class) {
+        if (instance == null) {
+          instance = new ProtobufSerializer(schemaRegistryClient, configs);
+        }
+        return instance;
+      }
     }
 
     private byte[] serialize(
