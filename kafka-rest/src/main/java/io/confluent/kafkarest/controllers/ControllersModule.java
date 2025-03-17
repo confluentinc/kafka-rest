@@ -52,7 +52,9 @@ public final class ControllersModule extends AbstractBinder {
     bindFactory(SchemaManagerFactory.class).to(SchemaManager.class);
     bind(TopicConfigManagerImpl.class).to(TopicConfigManager.class);
     bind(TopicManagerImpl.class).to(TopicManager.class);
-    bindFactory(SchemaRecordSerializerFactory.class).to(SchemaRecordSerializer.class);
+    bindFactory(SchemaRecordSerializerFactory.class)
+        .to(SchemaRecordSerializer.class)
+        .in(Singleton.class);
   }
 
   private static final class SchemaRecordSerializerFactory
@@ -76,6 +78,7 @@ public final class ControllersModule extends AbstractBinder {
     }
 
     @Override
+    @Singleton
     public SchemaRecordSerializer provide() {
       if (schemaRegistryClient.isPresent()) {
         return new SchemaRecordSerializerImpl(
