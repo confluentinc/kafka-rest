@@ -142,12 +142,14 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
 
     private static AvroSerializer getInstance(
         SchemaRegistryClient schemaRegistryClient, Map<String, Object> configs) {
-      synchronized (AvroSerializer.class) {
-        if (instance == null) {
-          instance = new AvroSerializer(schemaRegistryClient, configs);
+      if (instance == null) {
+        synchronized (AvroSerializer.class) {
+          if (instance == null) {
+            instance = new AvroSerializer(schemaRegistryClient, configs);
+          }
         }
-        return instance;
       }
+      return instance;
     }
 
     private byte[] serialize(String subject, AvroSchema schema, Object data) {
@@ -169,12 +171,14 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
 
     private static JsonSchemaSerializer getInstance(
         SchemaRegistryClient schemaRegistryClient, Map<String, Object> configs) {
-      synchronized (JsonSchemaSerializer.class) {
-        if (instance == null) {
-          instance = new JsonSchemaSerializer(schemaRegistryClient, configs);
+      if (instance == null) {
+        synchronized (JsonSchemaSerializer.class) {
+          if (instance == null) {
+            instance = new JsonSchemaSerializer(schemaRegistryClient, configs);
+          }
         }
-        return instance;
       }
+      return instance;
     }
 
     private byte[] serialize(String subject, JsonSchema schema, Object data) {
@@ -195,12 +199,14 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
 
     private static ProtobufSerializer getInstance(
         SchemaRegistryClient schemaRegistryClient, Map<String, Object> configs) {
-      synchronized (ProtobufSerializer.class) {
-        if (instance == null) {
-          instance = new ProtobufSerializer(schemaRegistryClient, configs);
+      if (instance == null) {
+        synchronized (ProtobufSerializer.class) {
+          if (instance == null) {
+            instance = new ProtobufSerializer(schemaRegistryClient, configs);
+          }
         }
-        return instance;
       }
+      return instance;
     }
 
     private byte[] serialize(
