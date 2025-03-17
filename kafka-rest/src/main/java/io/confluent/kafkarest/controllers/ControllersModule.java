@@ -17,6 +17,7 @@ package io.confluent.kafkarest.controllers;
 
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.config.ConfigModule.AvroSerializerConfigs;
@@ -55,16 +56,19 @@ public final class ControllersModule extends AbstractBinder {
     bindFactory(SchemaRecordSerializerFactory.class).to(SchemaRecordSerializer.class);
   }
 
-  private static final class SchemaRecordSerializerFactory
+  @VisibleForTesting
+  protected static final class SchemaRecordSerializerFactory
       implements Factory<SchemaRecordSerializer> {
 
+    private static volatile SchemaRecordSerializer schemaRecordSerializer;
     private final Optional<SchemaRegistryClient> schemaRegistryClient;
     private final Map<String, Object> avroSerializerConfigs;
     private final Map<String, Object> jsonschemaSerializerConfigs;
     private final Map<String, Object> protobufSerializerConfigs;
 
+    @VisibleForTesting
     @Inject
-    private SchemaRecordSerializerFactory(
+    protected SchemaRecordSerializerFactory(
         Optional<SchemaRegistryClient> schemaRegistryClient,
         @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
         @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
@@ -76,16 +80,24 @@ public final class ControllersModule extends AbstractBinder {
     }
 
     @Override
+    @Singleton
     public SchemaRecordSerializer provide() {
-      if (schemaRegistryClient.isPresent()) {
-        return new SchemaRecordSerializerImpl(
-            schemaRegistryClient.get(),
-            avroSerializerConfigs,
-            jsonschemaSerializerConfigs,
-            protobufSerializerConfigs);
-      } else {
-        return new SchemaRecordSerializerThrowing();
+      if (schemaRecordSerializer == null) {
+        synchronized (SchemaRecordSerializer.class) {
+          if (schemaRegistryClient.isPresent()) {
+            schemaRecordSerializer =
+                new SchemaRecordSerializerImpl(
+                    schemaRegistryClient.get(),
+                    avroSerializerConfigs,
+                    jsonschemaSerializerConfigs,
+                    protobufSerializerConfigs);
+            return schemaRecordSerializer;
+          } else {
+            return new SchemaRecordSerializerThrowing();
+          }
+        }
       }
+      return schemaRecordSerializer;
     }
 
     @Override
