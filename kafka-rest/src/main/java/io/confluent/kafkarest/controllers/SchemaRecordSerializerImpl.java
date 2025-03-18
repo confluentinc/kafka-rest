@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.controllers;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static io.confluent.kafkarest.entities.EmbeddedFormat.AVRO;
 import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -71,6 +72,9 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
       boolean isKey) {
     checkArgument(format.requiresSchema());
     if (data.isNull()) {
+      if (AVRO == format) {
+        throw Errors.invalidPayloadException("Null input provided. Data is required.");
+      }
       return Optional.empty();
     }
     if (!schema.isPresent()) {

@@ -18,9 +18,14 @@ package io.confluent.kafkarest.controllers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.fasterxml.jackson.databind.node.NullNode;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import org.easymock.EasyMock;
 import org.junit.jupiter.api.Test;
 
 public class SchemaRecordSerializerTest {
@@ -40,5 +45,24 @@ public class SchemaRecordSerializerTest {
         "Error serializing message. Schema Registry not defined, "
             + "no Schema Registry client available to serialize message.",
         rcve.getMessage());
+  }
+
+  @Test
+  public void errorWhenNullDataInAvro() {
+    SchemaRegistryClient schemaRegistryClient = EasyMock.createNiceMock(SchemaRegistryClient.class);
+    Map<String, Object> commonConfigs = new HashMap<>();
+    commonConfigs.put("schema.registry.url", "http://localhost:8081");
+    SchemaRecordSerializer schemaRecordSerializer =
+        new SchemaRecordSerializerImpl(
+            schemaRegistryClient, commonConfigs, commonConfigs, commonConfigs);
+    RestConstraintViolationException rcve =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                schemaRecordSerializer.serialize(
+                    EmbeddedFormat.AVRO, "topic", Optional.empty(), NullNode.getInstance(), true));
+
+    assertEquals(42206, rcve.getErrorCode());
+    assertEquals("Payload error. Null input provided. Data is required.", rcve.getMessage());
   }
 }
