@@ -795,41 +795,32 @@ public class RecordSerializerFacadeTest {
 
   @Test
   public void serializeNullAvroKeyNullSchema_throwsInvalidPayloadException() {
-    RestConstraintViolationException rcve =
-        assertThrows(
-            RestConstraintViolationException.class,
-            () ->
-                recordSerializer.serialize(
-                    EmbeddedFormat.AVRO,
-                    TOPIC_NAME,
-                    /* schema= */ Optional.empty(),
-                    NullNode.getInstance(),
-                    /* isKey= */ true));
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.AVRO,
+            TOPIC_NAME,
+            /* schema= */ Optional.empty(),
+            NullNode.getInstance(),
+            /* isKey= */ true);
 
-    assertEquals(42206, rcve.getErrorCode());
-    assertEquals("Payload error. Null input provided. Data is required.", rcve.getMessage());
+    assertFalse(serialized.isPresent());
   }
 
   @Test
-  public void serializeNullAvroKeyNonNullableSchema_throwsInvalidPayloadException()
-      throws Exception {
+  public void serializeNullAvroKeyNonNullableSchema_returnsEmpty() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
 
-    RestConstraintViolationException rcve =
-        assertThrows(
-            RestConstraintViolationException.class,
-            () ->
-                recordSerializer.serialize(
-                    EmbeddedFormat.AVRO,
-                    TOPIC_NAME,
-                    Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-                    NullNode.getInstance(),
-                    /* isKey= */ true));
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.AVRO,
+            TOPIC_NAME,
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+            NullNode.getInstance(),
+            /* isKey= */ true);
 
-    assertEquals(42206, rcve.getErrorCode());
-    assertEquals("Payload error. Null input provided. Data is required.", rcve.getMessage());
+    assertFalse(serialized.isPresent());
   }
 
   @Test

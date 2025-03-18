@@ -72,7 +72,7 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
       boolean isKey) {
     checkArgument(format.requiresSchema());
     if (data.isNull()) {
-      if (AVRO == format) {
+      if (!isKey && AVRO == format) {
         throw Errors.invalidPayloadException("Null input provided. Data is required.");
       }
       return Optional.empty();
