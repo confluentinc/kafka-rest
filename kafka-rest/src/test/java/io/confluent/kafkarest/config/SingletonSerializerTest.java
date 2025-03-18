@@ -13,11 +13,12 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.controllers;
+package io.confluent.kafkarest.config;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-import io.confluent.kafkarest.config.ConfigModule;
+import io.confluent.kafkarest.controllers.ControllersModule;
+import io.confluent.kafkarest.controllers.SchemaRecordSerializer;
 import java.util.HashMap;
 import java.util.Map;
 import org.glassfish.hk2.api.ServiceLocator;
@@ -27,7 +28,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ControllersModuleTest {
+public class SingletonSerializerTest {
 
   private ServiceLocator serviceLocator;
 
