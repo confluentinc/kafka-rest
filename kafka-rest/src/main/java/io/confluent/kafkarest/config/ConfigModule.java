@@ -229,7 +229,7 @@ public final class ConfigModule extends AbstractBinder {
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface AvroSerializerConfigs {}
 
-  private static final class AvroSerializerConfigsImpl
+  public static final class AvroSerializerConfigsImpl
       extends AnnotationLiteral<AvroSerializerConfigs> implements AvroSerializerConfigs {}
 
   @Qualifier
@@ -262,7 +262,7 @@ public final class ConfigModule extends AbstractBinder {
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface JsonschemaSerializerConfigs {}
 
-  private static final class JsonschemaSerializerConfigsImpl
+  public static final class JsonschemaSerializerConfigsImpl
       extends AnnotationLiteral<JsonschemaSerializerConfigs>
       implements JsonschemaSerializerConfigs {}
 
@@ -376,7 +376,7 @@ public final class ConfigModule extends AbstractBinder {
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface ProtobufSerializerConfigs {}
 
-  private static final class ProtobufSerializerConfigsImpl
+  public static final class ProtobufSerializerConfigsImpl
       extends AnnotationLiteral<ProtobufSerializerConfigs> implements ProtobufSerializerConfigs {}
 
   @Qualifier
