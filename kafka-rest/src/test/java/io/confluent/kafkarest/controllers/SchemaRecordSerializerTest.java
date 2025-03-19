@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -27,13 +29,14 @@ public class SchemaRecordSerializerTest {
 
   @Test
   public void errorWhenNoSchemaRegistryDefined() {
-    SchemaRecordSerializer schemaRecordSerializer = new SchemaRecordSerializerThrowing();
+    Map<String, Object> commonConfigs = new HashMap<>();
     RestConstraintViolationException rcve =
         assertThrows(
             RestConstraintViolationException.class,
             () ->
-                schemaRecordSerializer.serialize(
-                    EmbeddedFormat.AVRO, "topic", Optional.empty(), null, true));
+                new SchemaRecordSerializerImpl(
+                        Optional.empty(), commonConfigs, commonConfigs, commonConfigs)
+                    .serialize(EmbeddedFormat.AVRO, "topic", Optional.empty(), null, true));
 
     assertEquals(42207, rcve.getErrorCode());
     assertEquals(
