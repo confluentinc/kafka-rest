@@ -80,15 +80,11 @@ public final class ControllersModule extends AbstractBinder {
     @Override
     @Singleton
     public SchemaRecordSerializer provide() {
-      if (schemaRegistryClient.isPresent()) {
-        return new SchemaRecordSerializerImpl(
-            schemaRegistryClient.get(),
-            avroSerializerConfigs,
-            jsonschemaSerializerConfigs,
-            protobufSerializerConfigs);
-      } else {
-        return new SchemaRecordSerializerThrowing();
-      }
+      return new SchemaRecordSerializerImpl(
+          schemaRegistryClient,
+          avroSerializerConfigs,
+          jsonschemaSerializerConfigs,
+          protobufSerializerConfigs);
     }
 
     @Override
