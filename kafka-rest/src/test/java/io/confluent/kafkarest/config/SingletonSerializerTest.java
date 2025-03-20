@@ -15,12 +15,16 @@
 
 package io.confluent.kafkarest.config;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafkarest.controllers.ControllersModule;
 import io.confluent.kafkarest.controllers.SchemaRecordSerializer;
+import io.confluent.kafkarest.controllers.SchemaRecordSerializerThrowing;
 import java.util.HashMap;
 import java.util.Map;
+import org.easymock.EasyMock;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
@@ -35,13 +39,16 @@ public class SingletonSerializerTest {
   @BeforeEach
   public void setUp() {
     serviceLocator = ServiceLocatorUtilities.createAndPopulateServiceLocator();
+    SchemaRegistryClient mockSchemaRegistryClient = EasyMock.createMock(SchemaRegistryClient.class);
+    EasyMock.replay(mockSchemaRegistryClient);
     ServiceLocatorUtilities.bind(
         serviceLocator,
         new AbstractBinder() {
           @Override
           protected void configure() {
+            bind(mockSchemaRegistryClient).to(SchemaRegistryClient.class);
             Map<String, Object> dummyConfig = new HashMap<>();
-            dummyConfig.put("key", "value");
+            dummyConfig.put("schema.registry.url", "http://localhost:8081");
 
             bind(dummyConfig)
                 .qualifiedBy(new ConfigModule.AvroSerializerConfigsImpl())
@@ -65,5 +72,12 @@ public class SingletonSerializerTest {
 
     assertSame(
         firstInstance, secondInstance, "Instances should be the same due to singleton scope");
+
+    assertFalse(
+        firstInstance instanceof SchemaRecordSerializerThrowing,
+        "Instance should not be of SchemaRecordSerializerThrowing");
+    assertFalse(
+        secondInstance instanceof SchemaRecordSerializerThrowing,
+        "Instance should not be of SchemaRecordSerializerThrowing");
   }
 }
