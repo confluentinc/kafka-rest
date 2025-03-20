@@ -38,7 +38,6 @@ import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import io.confluent.kafkarest.exceptions.BadRequestException;
-import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
@@ -52,21 +51,15 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
   private final ProtobufSerializer protobufSerializer;
 
   SchemaRecordSerializerImpl(
-      Optional<SchemaRegistryClient> schemaRegistryClient,
+      SchemaRegistryClient schemaRegistryClient,
       @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
       @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
-      @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs)
-      throws RestConstraintViolationException {
-    if (schemaRegistryClient.isEmpty()) {
-      throw Errors.messageSerializationException(
-          "Schema Registry not defined, no Schema Registry client available to serialize message.");
-    }
+      @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs) {
     requireNonNull(schemaRegistryClient);
-    avroSerializer = new AvroSerializer(schemaRegistryClient.get(), avroSerializerConfigs);
+    avroSerializer = new AvroSerializer(schemaRegistryClient, avroSerializerConfigs);
     jsonschemaSerializer =
-        new JsonSchemaSerializer(schemaRegistryClient.get(), jsonschemaSerializerConfigs);
-    protobufSerializer =
-        new ProtobufSerializer(schemaRegistryClient.get(), protobufSerializerConfigs);
+        new JsonSchemaSerializer(schemaRegistryClient, jsonschemaSerializerConfigs);
+    protobufSerializer = new ProtobufSerializer(schemaRegistryClient, protobufSerializerConfigs);
   }
 
   @Override
