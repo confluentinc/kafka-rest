@@ -32,9 +32,9 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.rest.exceptions.RestException;
+import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.util.Optional;
-import javax.ws.rs.core.Response.Status;
 import org.apache.avro.SchemaParseException;
 
 final class SchemaManagerImpl implements SchemaManager {

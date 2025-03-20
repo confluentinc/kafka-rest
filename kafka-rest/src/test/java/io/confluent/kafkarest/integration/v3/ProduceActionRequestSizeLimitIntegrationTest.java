@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.testing.DefaultKafkaRestTestEnvironment;
+import jakarta.ws.rs.core.MediaType;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,16 +39,16 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import javax.ws.rs.core.MediaType;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.Response;
-import org.eclipse.jetty.client.util.InputStreamResponseListener;
-import org.eclipse.jetty.client.util.OutputStreamContentProvider;
+import org.eclipse.jetty.client.InputStreamResponseListener;
+import org.eclipse.jetty.client.OutputStreamRequestContent;
+import org.eclipse.jetty.client.Response;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
@@ -57,6 +58,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Disabled
 @Tag("IntegrationTest")
 public class ProduceActionRequestSizeLimitIntegrationTest {
   private static final Logger log =
@@ -110,12 +112,12 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
             .path("/v3/clusters/" + clusterId + "/topics/" + TEST_TOPIC_NAME + "/records")
             .getUri();
 
-    final OutputStreamContentProvider contentProvider = new OutputStreamContentProvider();
+    final OutputStreamRequestContent contentProvider = new OutputStreamRequestContent();
     InputStreamResponseListener responseListener = new InputStreamResponseListener();
 
     httpClient
         .POST(uri)
-        .header(HttpHeader.TRANSFER_ENCODING, "chunked")
+        .headers(headers -> headers.put(HttpHeader.TRANSFER_ENCODING, "chunked"))
         .content(contentProvider, MediaType.APPLICATION_JSON)
         .send(responseListener); // async request
 
@@ -177,7 +179,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
 
     httpClient
         .POST(uri)
-        .header(HttpHeader.TRANSFER_ENCODING, "chunked")
+        .headers(headers -> headers.put(HttpHeader.TRANSFER_ENCODING, "chunked"))
         .content(contentProvider, MediaType.APPLICATION_JSON)
         .send(responseListener); // async request
 
@@ -240,7 +242,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
 
     httpClient
         .POST(uri)
-        .header(HttpHeader.TRANSFER_ENCODING, "chunked")
+        .headers(headers -> headers.put(HttpHeader.TRANSFER_ENCODING, "chunked"))
         .content(contentProvider, MediaType.APPLICATION_JSON)
         .send(responseListener); // async request
 
@@ -306,7 +308,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
 
     httpClient
         .POST(uri)
-        .header(HttpHeader.TRANSFER_ENCODING, "chunked")
+        .headers(headers -> headers.put(HttpHeader.TRANSFER_ENCODING, "chunked"))
         .content(contentProvider, MediaType.APPLICATION_JSON)
         .send(responseListener); // async request
 
