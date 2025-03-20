@@ -22,10 +22,10 @@ import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.config.ConfigModule.AvroSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.JsonschemaSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 

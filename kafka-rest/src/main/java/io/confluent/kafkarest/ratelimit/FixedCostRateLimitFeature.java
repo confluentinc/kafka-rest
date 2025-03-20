@@ -25,13 +25,13 @@ import io.confluent.kafkarest.config.ConfigModule.RateLimitPerClusterCacheExpiry
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.RequestRateLimiterGeneric;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.RequestRateLimiterPerCluster;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.ws.rs.container.DynamicFeature;
+import jakarta.ws.rs.container.ResourceInfo;
+import jakarta.ws.rs.core.FeatureContext;
 import java.time.Duration;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.container.DynamicFeature;
-import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.core.FeatureContext;
 
 final class FixedCostRateLimitFeature implements DynamicFeature {
   private final Map<String, Integer> costs;
