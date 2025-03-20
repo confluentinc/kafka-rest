@@ -15,7 +15,6 @@
 
 package io.confluent.kafkarest.config;
 
-import com.google.common.annotations.VisibleForTesting;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ratelimit.RateLimitBackend;
@@ -230,8 +229,7 @@ public final class ConfigModule extends AbstractBinder {
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface AvroSerializerConfigs {}
 
-  @VisibleForTesting
-  protected static final class AvroSerializerConfigsImpl
+  private static final class AvroSerializerConfigsImpl
       extends AnnotationLiteral<AvroSerializerConfigs> implements AvroSerializerConfigs {}
 
   @Qualifier
@@ -264,8 +262,7 @@ public final class ConfigModule extends AbstractBinder {
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface JsonschemaSerializerConfigs {}
 
-  @VisibleForTesting
-  protected static final class JsonschemaSerializerConfigsImpl
+  private static final class JsonschemaSerializerConfigsImpl
       extends AnnotationLiteral<JsonschemaSerializerConfigs>
       implements JsonschemaSerializerConfigs {}
 
@@ -379,8 +376,7 @@ public final class ConfigModule extends AbstractBinder {
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface ProtobufSerializerConfigs {}
 
-  @VisibleForTesting
-  protected static final class ProtobufSerializerConfigsImpl
+  private static final class ProtobufSerializerConfigsImpl
       extends AnnotationLiteral<ProtobufSerializerConfigs> implements ProtobufSerializerConfigs {}
 
   @Qualifier

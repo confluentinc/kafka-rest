@@ -21,7 +21,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
 
-public interface SchemaRecordSerializer {
+interface SchemaRecordSerializer {
 
   Optional<ByteString> serialize(
       EmbeddedFormat format,

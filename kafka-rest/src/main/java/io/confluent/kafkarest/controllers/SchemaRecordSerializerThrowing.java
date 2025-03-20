@@ -22,7 +22,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
 
-public final class SchemaRecordSerializerThrowing implements SchemaRecordSerializer {
+final class SchemaRecordSerializerThrowing implements SchemaRecordSerializer {
 
   @Override
   public Optional<ByteString> serialize(
