@@ -63,6 +63,7 @@ public class SingletonSerializerTest {
             install(new ControllersModule());
           }
         });
+    EasyMock.verify(mockSchemaRegistryClient);
   }
 
   @Test
