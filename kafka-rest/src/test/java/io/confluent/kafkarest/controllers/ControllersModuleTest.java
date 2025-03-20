@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.controllers;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -19,15 +34,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class ControllersModuleTest {
-  private static final class AvroSerializerConfigsImpl
-      extends AnnotationLiteral<AvroSerializerConfigs> implements AvroSerializerConfigs {}
-
-  private static final class JsonschemaSerializerConfigsImpl
-      extends AnnotationLiteral<JsonschemaSerializerConfigs>
-      implements JsonschemaSerializerConfigs {}
-
-  private static final class ProtobufSerializerConfigsImpl
-      extends AnnotationLiteral<ProtobufSerializerConfigs> implements ProtobufSerializerConfigs {}
 
   private ServiceLocator serviceLocator;
 
@@ -46,13 +52,13 @@ public class ControllersModuleTest {
             dummyConfig.put("schema.registry.url", "http://localhost:8081");
 
             bind(dummyConfig)
-                .qualifiedBy(new AvroSerializerConfigsImpl())
+                .qualifiedBy(new TestAvroSerializerConfigsImpl())
                 .to(new TypeLiteral<Map<String, Object>>() {});
             bind(dummyConfig)
-                .qualifiedBy(new JsonschemaSerializerConfigsImpl())
+                .qualifiedBy(new TestJsonschemaSerializerConfigsImpl())
                 .to(new TypeLiteral<Map<String, Object>>() {});
             bind(dummyConfig)
-                .qualifiedBy(new ProtobufSerializerConfigsImpl())
+                .qualifiedBy(new TestProtobufSerializerConfigsImpl())
                 .to(new TypeLiteral<Map<String, Object>>() {});
 
             install(new ControllersModule());
@@ -76,4 +82,14 @@ public class ControllersModuleTest {
         secondInstance instanceof SchemaRecordSerializerThrowing,
         "Instance should not be of SchemaRecordSerializerThrowing");
   }
+
+  private static final class TestAvroSerializerConfigsImpl
+      extends AnnotationLiteral<AvroSerializerConfigs> implements AvroSerializerConfigs {}
+
+  private static final class TestJsonschemaSerializerConfigsImpl
+      extends AnnotationLiteral<JsonschemaSerializerConfigs>
+      implements JsonschemaSerializerConfigs {}
+
+  private static final class TestProtobufSerializerConfigsImpl
+      extends AnnotationLiteral<ProtobufSerializerConfigs> implements ProtobufSerializerConfigs {}
 }
