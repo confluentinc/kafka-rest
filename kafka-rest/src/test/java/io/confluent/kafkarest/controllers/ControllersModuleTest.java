@@ -22,11 +22,11 @@ public class ControllersModuleTest {
   private static final class AvroSerializerConfigsImpl
       extends AnnotationLiteral<AvroSerializerConfigs> implements AvroSerializerConfigs {}
 
-  protected static final class JsonschemaSerializerConfigsImpl
+  private static final class JsonschemaSerializerConfigsImpl
       extends AnnotationLiteral<JsonschemaSerializerConfigs>
       implements JsonschemaSerializerConfigs {}
 
-  protected static final class ProtobufSerializerConfigsImpl
+  private static final class ProtobufSerializerConfigsImpl
       extends AnnotationLiteral<ProtobufSerializerConfigs> implements ProtobufSerializerConfigs {}
 
   private ServiceLocator serviceLocator;
