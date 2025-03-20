@@ -94,7 +94,7 @@ public class RecordSerializerFacadeTest {
             new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
             () ->
                 new SchemaRecordSerializerImpl(
-                    Optional.ofNullable(schemaRegistryClient),
+                    schemaRegistryClient,
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS));
@@ -106,12 +106,7 @@ public class RecordSerializerFacadeTest {
     RecordSerializerFacade myRecordSerializer =
         new RecordSerializerFacade(
             new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
-            () ->
-                new SchemaRecordSerializerImpl(
-                    Optional.empty(),
-                    SCHEMA_SERIALIZER_CONFIGS,
-                    SCHEMA_SERIALIZER_CONFIGS,
-                    SCHEMA_SERIALIZER_CONFIGS));
+            () -> new SchemaRecordSerializerThrowing());
 
     RestConstraintViolationException rcve =
         assertThrows(
