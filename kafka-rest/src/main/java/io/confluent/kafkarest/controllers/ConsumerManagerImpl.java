@@ -20,10 +20,10 @@ import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import javax.inject.Inject;
 
 final class ConsumerManagerImpl implements ConsumerManager {
 
