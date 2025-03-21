@@ -17,6 +17,7 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.controllers.ClusterConfigManager;
 import io.confluent.kafkarest.entities.ClusterConfig;
 import io.confluent.kafkarest.entities.v3.AlterClusterConfigBatchRequest;
@@ -59,6 +60,10 @@ public final class AlterClusterConfigBatchAction {
       @PathParam("clusterId") String clusterId,
       @PathParam("config_type") ClusterConfig.Type configType,
       @Valid AlterClusterConfigBatchRequest request) {
+    if (request == null) {
+      throw Errors.invalidPayloadException(Errors.NULL_PAYLOAD_ERROR_MESSAGE);
+    }
+
     CompletableFuture<Void> response =
         clusterConfigManager
             .get()
