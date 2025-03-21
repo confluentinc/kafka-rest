@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 @AutoValue
 public abstract class ProduceRequest {

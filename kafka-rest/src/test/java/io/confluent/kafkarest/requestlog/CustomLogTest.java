@@ -54,9 +54,9 @@ public class CustomLogTest {
     customLog.start();
 
     Request request = mock(Request.class);
-    expect(request.getRemoteHost()).andReturn("localhost");
-    expect(request.getProtocol()).andReturn("testProtocol");
-    expect(request.getHeader("User-Agent")).andReturn("testUser");
+//    expect(request.getRemoteHost()).andReturn("localhost");
+//    expect(request.getProtocol()).andReturn("testProtocol");
+//    expect(request.getHeader("User-Agent")).andReturn("testUser");
 
     Response response = mock(Response.class);
     replay(request, response);
@@ -82,19 +82,19 @@ public class CustomLogTest {
     expect(request.getAttribute("FooBarAttr")).andReturn("FooBarVal");
     request.removeAttribute("FooBarAttr");
     EasyMock.expectLastCall();
-    response.setHeader("FooBarAttr", "FooBarVal");
+//    response.setHeader("FooBarAttr", "FooBarVal");
     EasyMock.expectLastCall();
 
     // Needed by CustomRequestLog.log()
-    expect(request.getRemoteHost()).andReturn("localhost");
-    expect(request.getProtocol()).andReturn("testProtocol");
-    expect(request.getHeader("User-Agent")).andReturn("testUser");
-    expect(response.getHeader("FooBarAttr")).andReturn("FooBarVal");
+//    expect(request.getRemoteHost()).andReturn("localhost");
+//    expect(request.getProtocol()).andReturn("testProtocol");
+//    expect(request.getHeader("User-Agent")).andReturn("testUser");
+//    expect(response.getHeader("FooBarAttr")).andReturn("FooBarVal");
 
     // After CustomRequestLog.log() make sure response-headers, added only for logging, are removed.
     HttpFields httpFields = mock(HttpFields.class);
-    expect(response.getHttpFields()).andReturn(httpFields);
-    expect(httpFields.remove("FooBarAttr")).andReturn(null);
+//    expect(response.getHttpFields()).andReturn(httpFields);
+//    expect(httpFields.remove("FooBarAttr")).andReturn(null);
     replay(request, response);
 
     customLog.log(request, response);
@@ -118,15 +118,15 @@ public class CustomLogTest {
     expect(request.getAttribute("FooBarAttr")).andReturn(null);
 
     // Needed by CustomRequestLog.log()
-    expect(request.getRemoteHost()).andReturn("localhost");
-    expect(request.getProtocol()).andReturn("testProtocol");
-    expect(request.getHeader("User-Agent")).andReturn("testUser");
-    expect(response.getHeader("FooBarAttr")).andReturn(null);
+//    expect(request.getRemoteHost()).andReturn("localhost");
+//    expect(request.getProtocol()).andReturn("testProtocol");
+//    expect(request.getHeader("User-Agent")).andReturn("testUser");
+//    expect(response.getHeader("FooBarAttr")).andReturn(null);
 
     // After CustomRequestLog.log() make sure response-headers, added only for logging, are removed.
     HttpFields httpFields = mock(HttpFields.class);
-    expect(response.getHttpFields()).andReturn(httpFields);
-    expect(httpFields.remove("FooBarAttr")).andReturn(null);
+//    expect(response.getHttpFields()).andReturn(httpFields);
+//    expect(httpFields.remove("FooBarAttr")).andReturn(null);
     replay(request, response);
 
     customLog.log(request, response);

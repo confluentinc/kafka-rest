@@ -49,7 +49,7 @@ The following libraries are included in packaged versions of this project:
  * LICENSE: licenses/LICENSE.javassist.txt (MPL, LGPL, Apache 2)
  * HOMEPAGE: http://www.javassist.org
 
-* javax.annotation-api, javax.el, javax.el-api, javax.inject, javax.servlet, javax.ws.rs-api, javax.validation
+* javax.annotation-api, javax.el, javax.el-api, javax.inject, javax.servlet, javax.ws.rs-api, jakarta.validation
  * COPYRIGHT: Coypright Oracle
  * LICENSE: licenses/LICENSE.cddl+gpl2.html
 

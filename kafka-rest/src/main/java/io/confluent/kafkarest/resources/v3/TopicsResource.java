@@ -63,7 +63,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import org.apache.kafka.common.errors.InvalidTopicException;
 
 @Path("/v3/clusters/{clusterId}/topics")

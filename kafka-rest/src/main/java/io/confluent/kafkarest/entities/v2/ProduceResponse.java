@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 public final class ProduceResponse {
 

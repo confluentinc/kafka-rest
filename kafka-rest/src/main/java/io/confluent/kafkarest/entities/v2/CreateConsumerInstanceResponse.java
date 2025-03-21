@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.URL;
 
 public final class CreateConsumerInstanceResponse {

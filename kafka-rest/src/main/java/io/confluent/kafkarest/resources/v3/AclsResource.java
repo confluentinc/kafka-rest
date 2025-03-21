@@ -58,7 +58,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @Path("/v3/clusters/{clusterId}/acls")
 @ResourceName("api.v3.acls.*")

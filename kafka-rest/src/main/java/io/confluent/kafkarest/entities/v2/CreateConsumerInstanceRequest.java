@@ -26,7 +26,7 @@ import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import org.apache.kafka.common.config.ConfigException;
 
 public final class CreateConsumerInstanceRequest {

@@ -50,7 +50,7 @@ import jakarta.ws.rs.core.Response.Status;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/configs")
 @ResourceName("api.v3.topic-configs.*")

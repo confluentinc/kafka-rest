@@ -37,8 +37,8 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 @Path("/topics")
 @Consumes({
@@ -69,7 +69,7 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
       @Valid @NotNull ProduceRequest request) {
-    CompletableFuture<ProduceResponse> response =
+    CompletableFuture<ProduceResponse> response = //HERE
         produceWithoutSchema(
             EmbeddedFormat.BINARY, topicName, /* partitionId= */ Optional.empty(), request);
 

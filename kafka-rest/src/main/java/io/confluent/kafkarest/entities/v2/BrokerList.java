@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 public final class BrokerList {
 

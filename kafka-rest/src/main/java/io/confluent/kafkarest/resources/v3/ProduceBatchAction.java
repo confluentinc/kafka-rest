@@ -70,7 +70,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collector;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import org.apache.kafka.common.errors.SerializationException;
 
 @DoNotRateLimit

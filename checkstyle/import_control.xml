@@ -90,7 +90,7 @@
   <allow pkg="javax.inject" />
   <allow pkg="javax.management" />
   <allow pkg="javax.net.ssl" />
-  <allow pkg="javax.validation" />
+  <allow pkg="jakarta.validation" />
   <allow pkg="javax.ws.rs" />
   <allow pkg="org.apache.avro" />
   <allow pkg="org.easymock" />
@@ -113,6 +113,7 @@
   <!-- Various one-off classes -->
   <allow class="edu.umd.cs.findbugs.annotations.SuppressFBWarnings" />
   <allow class="javax.xml.bind.DatatypeConverter" />
+  <allow class="jakarta.xml.bind.PropertyException" />
   <allow class="org.everit.json.schema.ValidationException" />
   <allow class="org.hibernate.validator.constraints.URL" />
   <allow class="javax.servlet.http.HttpServletRequest" />

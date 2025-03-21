@@ -37,7 +37,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @Path("/v3/clusters/{clusterId}/acls:batch")
 @ResourceName("api.v3.acls.*")
