@@ -16,7 +16,7 @@
 package io.confluent.kafkarest.ratelimit;
 
 import io.confluent.kafkarest.exceptions.StatusCodeException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 /**
  * An exception thrown when the request rate-limit has been exceeded.
