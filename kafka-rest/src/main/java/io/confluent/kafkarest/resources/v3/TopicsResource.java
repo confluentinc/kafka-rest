@@ -40,6 +40,7 @@ import io.confluent.kafkarest.response.UrlFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -63,7 +64,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
 import org.apache.kafka.common.errors.InvalidTopicException;
 
 @Path("/v3/clusters/{clusterId}/topics")

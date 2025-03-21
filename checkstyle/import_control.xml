@@ -86,12 +86,12 @@
   <allow pkg="com.google.protobuf" />
   <allow pkg="io.github.resilience4j" />
   <allow pkg="java" />
-  <allow pkg="javax.annotation" />
-  <allow pkg="javax.inject" />
+  <allow pkg="jakarta.annotation" />
+  <allow pkg="jakarta.inject" />
   <allow pkg="javax.management" />
   <allow pkg="javax.net.ssl" />
-  <allow pkg="javax.validation" />
-  <allow pkg="javax.ws.rs" />
+  <allow pkg="jakarta.validation" />
+  <allow pkg="jakarta.ws.rs" />
   <allow pkg="org.apache.avro" />
   <allow pkg="org.easymock" />
   <allow pkg="org.eclipse.jetty" />

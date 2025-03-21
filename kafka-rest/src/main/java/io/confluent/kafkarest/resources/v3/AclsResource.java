@@ -38,6 +38,7 @@ import io.confluent.kafkarest.response.UrlFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -58,7 +59,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
 
 @Path("/v3/clusters/{clusterId}/acls")
 @ResourceName("api.v3.acls.*")

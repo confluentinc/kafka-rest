@@ -48,6 +48,7 @@ import io.confluent.rest.annotations.PerformanceMetric;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -70,7 +71,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collector;
-import javax.validation.Valid;
 import org.apache.kafka.common.errors.SerializationException;
 
 @DoNotRateLimit

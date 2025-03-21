@@ -25,6 +25,7 @@ import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.rest.annotations.PerformanceMetric;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -36,7 +37,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.concurrent.CompletableFuture;
-import javax.validation.Valid;
 
 @Path("/v3/clusters/{clusterId}/{config_type}-configs:alter")
 @ResourceName("api.v3.cluster-configs.*")

@@ -34,6 +34,7 @@ import io.confluent.kafkarest.response.UrlFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -50,7 +51,6 @@ import jakarta.ws.rs.core.Response.Status;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/configs")
 @ResourceName("api.v3.topic-configs.*")
