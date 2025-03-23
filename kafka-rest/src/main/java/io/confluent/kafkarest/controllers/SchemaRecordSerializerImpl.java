@@ -70,9 +70,6 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
       JsonNode data,
       boolean isKey) {
     checkArgument(format.requiresSchema());
-    if (data.isNull()) {
-      return Optional.empty();
-    }
     if (!schema.isPresent()) {
       throw isKey ? Errors.keySchemaMissingException() : Errors.valueSchemaMissingException();
     }
