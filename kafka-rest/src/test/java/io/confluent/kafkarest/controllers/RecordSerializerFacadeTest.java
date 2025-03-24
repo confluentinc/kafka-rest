@@ -1634,7 +1634,7 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNullProtobfuKeyNullSchema_throwsRestConstraintViolationException() {
+  public void serializeNullProtobufKeyNullSchema_throwsRestConstraintViolationException() {
     RestConstraintViolationException rcve =
         assertThrows(
             RestConstraintViolationException.class,
@@ -1739,7 +1739,7 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNullProtobfuValueNullSchema_throwsRestConstraintViolationException() {
+  public void serializeNullProtobufValueNullSchema_throwsRestConstraintViolationException() {
     RestConstraintViolationException rcve =
         assertThrows(
             RestConstraintViolationException.class,
