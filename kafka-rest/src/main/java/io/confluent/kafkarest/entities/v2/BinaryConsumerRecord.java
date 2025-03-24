@@ -20,12 +20,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EntityUtils;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.StringJoiner;
-import javax.annotation.Nullable;
 
 public final class BinaryConsumerRecord {
 

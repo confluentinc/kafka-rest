@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.resources;
 
+import jakarta.annotation.Nullable;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.ResponseBuilder;
@@ -23,7 +24,6 @@ import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

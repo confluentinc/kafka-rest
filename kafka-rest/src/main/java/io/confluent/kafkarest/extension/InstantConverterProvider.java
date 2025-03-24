@@ -17,6 +17,7 @@ package io.confluent.kafkarest.extension;
 
 import static java.util.Objects.requireNonNull;
 
+import jakarta.annotation.Nullable;
 import jakarta.ws.rs.ext.ParamConverter;
 import jakarta.ws.rs.ext.ParamConverterProvider;
 import jakarta.ws.rs.ext.Provider;
@@ -24,7 +25,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import javax.annotation.Nullable;
 
 /**
  * A {@link ParamConverterProvider} for {@link InstantConverter}.

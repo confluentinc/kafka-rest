@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.ConfigSynonym;
+import jakarta.annotation.Nullable;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 @AutoValue
 public abstract class ConfigSynonymData {

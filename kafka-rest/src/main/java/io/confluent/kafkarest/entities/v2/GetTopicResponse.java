@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicConfig;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.HashMap;
@@ -27,7 +28,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 public final class GetTopicResponse {
 
