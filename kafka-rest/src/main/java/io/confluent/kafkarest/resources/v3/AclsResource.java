@@ -162,7 +162,7 @@ public final class AclsResource {
       @Valid CreateAclRequest request) {
 
     if (request == null) {
-      throw Errors.invalidPayloadException("Null input provided. Data is required.");
+      throw Errors.invalidPayloadException(Errors.NULL_PAYLOAD_ERROR_MESSAGE);
     }
 
     CompletableFuture<Void> response =

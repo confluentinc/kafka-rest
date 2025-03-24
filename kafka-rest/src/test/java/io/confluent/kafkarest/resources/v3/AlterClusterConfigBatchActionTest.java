@@ -22,8 +22,10 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.controllers.ClusterConfigManager;
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.ClusterConfig;
@@ -33,6 +35,7 @@ import io.confluent.kafkarest.entities.v3.AlterConfigBatchRequestData;
 import io.confluent.kafkarest.entities.v3.AlterConfigBatchRequestData.AlterEntry;
 import io.confluent.kafkarest.entities.v3.AlterConfigBatchRequestData.AlterOperation;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
+import io.confluent.rest.exceptions.RestConstraintViolationException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.Arrays;
 import org.easymock.EasyMockExtension;
@@ -76,6 +79,17 @@ public final class AlterClusterConfigBatchActionTest {
   @BeforeEach
   public void setUp() {
     alterClusterConfigBatchAction = new AlterClusterConfigBatchAction(() -> clusterConfigManager);
+  }
+
+  @Test
+  public void alterClusterConfigBatch_nullPayload() {
+    RestConstraintViolationException e =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                alterClusterConfigBatchAction.alterClusterConfigBatch(
+                    new FakeAsyncResponse(), CLUSTER_ID, ClusterConfig.Type.BROKER, null));
+    assertTrue(e.getMessage().contains(Errors.NULL_PAYLOAD_ERROR_MESSAGE));
   }
 
   @Test

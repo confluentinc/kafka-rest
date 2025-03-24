@@ -25,6 +25,8 @@ import org.apache.kafka.common.config.ConfigException;
 
 public class Errors {
 
+  public static final String NULL_PAYLOAD_ERROR_MESSAGE = "Null input provided. Data is required.";
+
   public static final int KAFKA_AUTHENTICATION_ERROR_CODE =
       KafkaExceptionMapper.KAFKA_AUTHENTICATION_ERROR_CODE;
   public static final int KAFKA_AUTHORIZATION_ERROR_CODE =
