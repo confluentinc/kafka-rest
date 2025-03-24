@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -29,6 +30,8 @@ import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest.SchemaPartitionProduceRecord;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
+import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
+import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -182,20 +185,15 @@ public class AvroProducerTest extends ClusterTestHarness {
     Response response =
         request("/topics/" + topicName + "/partitions/0", queryParams)
             .post(Entity.entity(payload, Versions.KAFKA_V2_JSON_AVRO));
-    assertOKResponse(response, Versions.KAFKA_V2_JSON);
-    final ProduceResponse poffsetResponse =
-        TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
-    assertEquals(offsetResponse, poffsetResponse.getOffsets());
-    TestUtils.assertTopicContains(
-        plaintextBrokerList,
-        topicName,
-        payload.toProduceRequest().getRecords(),
-        0,
-        KafkaAvroDeserializer.class.getName(),
-        KafkaAvroDeserializer.class.getName(),
-        deserializerProps,
-        false);
-    assertEquals((Integer) 1, poffsetResponse.getValueSchemaId());
+    assertErrorResponse(
+        ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
+        response,
+        42201,
+        null,
+        Versions.KAFKA_V2_JSON);
+    ErrorResponse actual = response.readEntity(ErrorResponse.class);
+    assertEquals(42201, actual.getErrorCode());
+    assertEquals("Unrecognized field: error_code", actual.getMessage());
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
