@@ -35,9 +35,9 @@ import io.confluent.kafkarest.entities.v3.AlterConfigBatchRequestData.AlterEntry
 import io.confluent.kafkarest.entities.v3.AlterConfigBatchRequestData.AlterOperation;
 import io.confluent.kafkarest.entities.v3.AlterTopicConfigBatchRequest;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
+import jakarta.ws.rs.NotFoundException;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.util.Arrays;
-import javax.ws.rs.NotFoundException;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.junit.jupiter.api.BeforeEach;

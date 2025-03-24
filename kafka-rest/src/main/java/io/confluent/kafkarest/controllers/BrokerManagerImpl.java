@@ -21,10 +21,10 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import javax.inject.Inject;
 
 final class BrokerManagerImpl implements BrokerManager {
 

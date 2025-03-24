@@ -102,7 +102,7 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
       Object attrVal = request.getAttribute(attr);
       if (attrVal != null) {
         request.removeAttribute(attr);
-        response.setHeader(attr, attrVal.toString());
+        response.getHeaders().put(attr, attrVal.toString());
       }
     }
 
@@ -116,7 +116,7 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
     } finally {
       // Remove the response-headers that were added above just for logging.
       for (String attr : this.requestAttributesToLog) {
-        response.getHttpFields().remove(attr);
+        response.getHeaders().remove(attr);
       }
     }
   }
