@@ -15,8 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
-import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
-import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static io.confluent.kafkarest.TestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -182,7 +181,7 @@ public class AvroProducerTest extends ClusterTestHarness {
     Response response =
         request("/topics/" + topicName + "/partitions/0", queryParams)
             .post(Entity.entity(payload, Versions.KAFKA_V2_JSON_AVRO));
-    assertOKResponse(response, Versions.KAFKA_V2_JSON);
+    assertErrorResponse(Response.Status.BAD_REQUEST, response, Versions.KAFKA_V2_JSON);
     final ProduceResponse poffsetResponse =
         TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     assertEquals(offsetResponse, poffsetResponse.getOffsets());
