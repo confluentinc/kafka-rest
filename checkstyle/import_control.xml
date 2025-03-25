@@ -86,12 +86,15 @@
   <allow pkg="com.google.protobuf" />
   <allow pkg="io.github.resilience4j" />
   <allow pkg="java" />
+  <allow pkg="jakarta.annotation" />
   <allow pkg="javax.annotation" />
-  <allow pkg="javax.inject" />
+  <allow pkg="jakarta.inject" />
   <allow pkg="javax.management" />
   <allow pkg="javax.net.ssl" />
-  <allow pkg="javax.validation" />
-  <allow pkg="javax.ws.rs" />
+  <allow pkg="jakarta.validation" />
+  <allow pkg="jakarta.ws.rs" />
+  <allow pkg="jakarta.servlet.http" />
+  <allow pkg="jakarta.xml.bind" />
   <allow pkg="org.apache.avro" />
   <allow pkg="org.easymock" />
   <allow pkg="org.eclipse.jetty" />
@@ -113,6 +116,7 @@
   <!-- Various one-off classes -->
   <allow class="edu.umd.cs.findbugs.annotations.SuppressFBWarnings" />
   <allow class="javax.xml.bind.DatatypeConverter" />
+  <allow class="jakarta.xml.bind.PropertyException" />
   <allow class="org.everit.json.schema.ValidationException" />
   <allow class="org.hibernate.validator.constraints.URL" />
   <allow class="javax.servlet.http.HttpServletRequest" />

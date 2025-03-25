@@ -16,8 +16,8 @@
 package io.confluent.kafkarest.exceptions.v3;
 
 import io.confluent.kafkarest.exceptions.StatusCodeException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
 
 public final class V3ExceptionMapper implements ExceptionMapper<StatusCodeException> {
 

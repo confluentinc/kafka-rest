@@ -17,8 +17,8 @@ package io.confluent.kafkarest.exceptions;
 
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
 
 public final class RestConstraintViolationExceptionMapper
     implements ExceptionMapper<RestConstraintViolationException> {

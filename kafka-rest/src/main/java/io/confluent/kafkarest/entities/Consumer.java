@@ -19,10 +19,10 @@ import static java.util.Collections.emptyList;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import org.apache.kafka.clients.admin.MemberDescription;
 
 @AutoValue
