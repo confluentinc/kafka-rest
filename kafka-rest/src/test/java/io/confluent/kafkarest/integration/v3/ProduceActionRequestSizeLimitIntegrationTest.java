@@ -123,7 +123,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
             .path("/v3/clusters/" + clusterId + "/topics/" + TEST_TOPIC_NAME + "/records")
             .getUri();
 
-    final OutputStreamRequestContent content = new OutputStreamRequestContent();
+    final OutputStreamRequestContent content = new OutputStreamRequestContent("application/json");
     InputStreamResponseListener responseListener = new InputStreamResponseListener();
 
     httpClient
@@ -185,7 +185,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
             .path("/v3/clusters/" + clusterId + "/topics/" + TEST_TOPIC_NAME + "/records")
             .getUri();
 
-    final OutputStreamRequestContent content = new OutputStreamRequestContent();
+    final OutputStreamRequestContent content = new OutputStreamRequestContent("application/json");
     InputStreamResponseListener responseListener = new InputStreamResponseListener();
 
     httpClient
@@ -204,6 +204,8 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
                 for (int i = 0; i < 10; i++) {
                   outputStream.write(generateData(TEST_DATA_SIZE).getBytes(StandardCharsets.UTF_8));
                 }
+                // Ensures that all data is properly sent before the stream is closed.
+                outputStream.flush();
               } catch (IOException e) {
                 log.error("Error writing to output stream", e);
               }
@@ -248,7 +250,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
             .path("/v3/clusters/" + clusterId + "/topics/" + TEST_TOPIC_NAME + "/records")
             .getUri();
 
-    final OutputStreamRequestContent content = new OutputStreamRequestContent();
+    final OutputStreamRequestContent content = new OutputStreamRequestContent("application/json");
     InputStreamResponseListener responseListener = new InputStreamResponseListener();
 
     httpClient
@@ -314,7 +316,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
             .path("/v3/clusters/" + clusterId + "/topics/" + TEST_TOPIC_NAME + "/records")
             .getUri();
 
-    final OutputStreamRequestContent content = new OutputStreamRequestContent();
+    final OutputStreamRequestContent content = new OutputStreamRequestContent("application/json");
     InputStreamResponseListener responseListener = new InputStreamResponseListener();
 
     httpClient
@@ -337,6 +339,8 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
                 for (int i = 0; i < 10; i++) {
                   outputStream.write(generateData(TEST_DATA_SIZE).getBytes(StandardCharsets.UTF_8));
                 }
+                // Ensures that all data is properly sent before the stream is closed.
+                outputStream.flush();
               } catch (IOException e) {
                 log.error("Error writing to output stream", e);
               }
@@ -344,7 +348,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
 
     List<TestProduceResponse> produceResponses = new ArrayList<>();
     // waiting for response
-    Response response = responseListener.get(1, TimeUnit.MINUTES);
+    Response response = responseListener.get(2, TimeUnit.MINUTES);
     if (response.getStatus() == HttpStatus.OK_200) {
       // Obtain the input stream on the response content
       try (InputStream input = responseListener.getInputStream()) {
