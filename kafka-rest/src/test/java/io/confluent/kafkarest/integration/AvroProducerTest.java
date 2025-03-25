@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -30,8 +29,6 @@ import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest.SchemaPartitionProduceRecord;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
-import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
-import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -57,56 +54,56 @@ public class AvroProducerTest extends ClusterTestHarness {
   // keys and one complex type for records is sufficient.
   private static final String keySchemaStr = "{\"name\":\"int\",\"type\": \"int\"}";
   private static final String valueSchemaStr =
-      "{\"type\": \"record\", "
-          + "\"name\":\"test\","
-          + "\"fields\":[{"
-          + "  \"name\":\"field\", "
-          + "  \"type\": \"int\""
-          + "}]}";
+          "{\"type\": \"record\", "
+                  + "\"name\":\"test\","
+                  + "\"fields\":[{"
+                  + "  \"name\":\"field\", "
+                  + "  \"type\": \"int\""
+                  + "}]}";
   private static final Schema valueSchema = new Schema.Parser().parse(valueSchemaStr);
 
   private static final JsonNode[] testKeys = {
-    TestUtils.jsonTree("1"),
-    TestUtils.jsonTree("2"),
-    TestUtils.jsonTree("3"),
-    TestUtils.jsonTree("4")
+          TestUtils.jsonTree("1"),
+          TestUtils.jsonTree("2"),
+          TestUtils.jsonTree("3"),
+          TestUtils.jsonTree("4")
   };
 
   private static final JsonNode[] testValues = {
-    TestUtils.jsonTree("{\"field\": 1}"),
-    TestUtils.jsonTree("{\"field\": 2}"),
-    TestUtils.jsonTree("{\"field\": 3}"),
-    TestUtils.jsonTree("{\"field\": 4}"),
+          TestUtils.jsonTree("{\"field\": 1}"),
+          TestUtils.jsonTree("{\"field\": 2}"),
+          TestUtils.jsonTree("{\"field\": 3}"),
+          TestUtils.jsonTree("{\"field\": 4}"),
   };
 
   // Produce to topic inputs & results
 
   protected final List<SchemaTopicProduceRecord> topicRecordsWithPartitionsAndKeys =
-      Arrays.asList(
-          new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0),
-          new SchemaTopicProduceRecord(testKeys[1], testValues[1], 1),
-          new SchemaTopicProduceRecord(testKeys[2], testValues[2], 1),
-          new SchemaTopicProduceRecord(testKeys[3], testValues[3], 2));
+          Arrays.asList(
+                  new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0),
+                  new SchemaTopicProduceRecord(testKeys[1], testValues[1], 1),
+                  new SchemaTopicProduceRecord(testKeys[2], testValues[2], 1),
+                  new SchemaTopicProduceRecord(testKeys[3], testValues[3], 2));
   protected final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys =
-      Arrays.asList(
-          new PartitionOffset(0, 0L, null, null),
-          new PartitionOffset(0, 1L, null, null),
-          new PartitionOffset(1, 0L, null, null),
-          new PartitionOffset(1, 1L, null, null));
+          Arrays.asList(
+                  new PartitionOffset(0, 0L, null, null),
+                  new PartitionOffset(0, 1L, null, null),
+                  new PartitionOffset(1, 0L, null, null),
+                  new PartitionOffset(1, 1L, null, null));
 
   // Produce to partition inputs & results
   protected final List<SchemaPartitionProduceRecord> partitionRecordsOnlyValues =
-      Arrays.asList(
-          new SchemaPartitionProduceRecord(null, testValues[0]),
-          new SchemaPartitionProduceRecord(null, testValues[1]),
-          new SchemaPartitionProduceRecord(null, testValues[2]),
-          new SchemaPartitionProduceRecord(null, testValues[3]));
+          Arrays.asList(
+                  new SchemaPartitionProduceRecord(null, testValues[0]),
+                  new SchemaPartitionProduceRecord(null, testValues[1]),
+                  new SchemaPartitionProduceRecord(null, testValues[2]),
+                  new SchemaPartitionProduceRecord(null, testValues[3]));
   protected final List<PartitionOffset> producePartitionOffsetOnlyValues =
-      Arrays.asList(
-          new PartitionOffset(0, 0L, null, null),
-          new PartitionOffset(0, 1L, null, null),
-          new PartitionOffset(0, 2L, null, null),
-          new PartitionOffset(0, 3L, null, null));
+          Arrays.asList(
+                  new PartitionOffset(0, 0L, null, null),
+                  new PartitionOffset(0, 1L, null, null),
+                  new PartitionOffset(0, 2L, null, null),
+                  new PartitionOffset(0, 3L, null, null));
 
   public AvroProducerTest() {
     super(1, true);
@@ -125,37 +122,37 @@ public class AvroProducerTest extends ClusterTestHarness {
   }
 
   protected <K, V> void testProduceToTopic(
-      List<SchemaTopicProduceRecord> records, List<PartitionOffset> offsetResponses) {
+          List<SchemaTopicProduceRecord> records, List<PartitionOffset> offsetResponses) {
     testProduceToTopic(records, offsetResponses, Collections.emptyMap());
   }
 
   protected <K, V> void testProduceToTopic(
-      List<SchemaTopicProduceRecord> records,
-      List<PartitionOffset> offsetResponses,
-      Map<String, String> queryParams) {
+          List<SchemaTopicProduceRecord> records,
+          List<PartitionOffset> offsetResponses,
+          Map<String, String> queryParams) {
     SchemaTopicProduceRequest payload =
-        SchemaTopicProduceRequest.create(
-            records,
-            keySchemaStr,
-            /* keySchemaId= */ null,
-            valueSchemaStr,
-            /* valueSchemaId= */ null);
+            SchemaTopicProduceRequest.create(
+                    records,
+                    keySchemaStr,
+                    /* keySchemaId= */ null,
+                    valueSchemaStr,
+                    /* valueSchemaId= */ null);
     Response response =
-        request("/topics/" + topicName, queryParams)
-            .post(Entity.entity(payload, Versions.KAFKA_V2_JSON_AVRO));
+            request("/topics/" + topicName, queryParams)
+                    .post(Entity.entity(payload, Versions.KAFKA_V2_JSON_AVRO));
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final ProduceResponse produceResponse =
-        TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
+            TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     TestUtils.assertPartitionOffsetsEqual(offsetResponses, produceResponse.getOffsets());
     TestUtils.assertTopicContains(
-        plaintextBrokerList,
-        topicName,
-        payload.toProduceRequest().getRecords(),
-        null,
-        KafkaAvroDeserializer.class.getName(),
-        KafkaAvroDeserializer.class.getName(),
-        deserializerProps,
-        false);
+            plaintextBrokerList,
+            topicName,
+            payload.toProduceRequest().getRecords(),
+            null,
+            KafkaAvroDeserializer.class.getName(),
+            KafkaAvroDeserializer.class.getName(),
+            deserializerProps,
+            false);
     assertEquals(produceResponse.getKeySchemaId(), (Integer) 1);
     assertEquals(produceResponse.getValueSchemaId(), (Integer) 2);
   }
@@ -167,33 +164,38 @@ public class AvroProducerTest extends ClusterTestHarness {
   }
 
   protected <K, V> void testProduceToPartition(
-      List<SchemaPartitionProduceRecord> records, List<PartitionOffset> offsetResponse) {
+          List<SchemaPartitionProduceRecord> records, List<PartitionOffset> offsetResponse) {
     testProduceToPartition(records, offsetResponse, Collections.emptyMap());
   }
 
   protected <K, V> void testProduceToPartition(
-      List<SchemaPartitionProduceRecord> records,
-      List<PartitionOffset> offsetResponse,
-      Map<String, String> queryParams) {
+          List<SchemaPartitionProduceRecord> records,
+          List<PartitionOffset> offsetResponse,
+          Map<String, String> queryParams) {
     SchemaPartitionProduceRequest payload =
-        SchemaPartitionProduceRequest.create(
-            records,
-            /* keySchema= */ null,
-            /* keySchemaId= */ null,
-            /* valueSchema= */ valueSchemaStr,
-            /* valueSchemaId= */ null);
+            SchemaPartitionProduceRequest.create(
+                    records,
+                    /* keySchema= */ null,
+                    /* keySchemaId= */ null,
+                    /* valueSchema= */ valueSchemaStr,
+                    /* valueSchemaId= */ null);
     Response response =
-        request("/topics/" + topicName + "/partitions/0", queryParams)
-            .post(Entity.entity(payload, Versions.KAFKA_V2_JSON_AVRO));
-    assertErrorResponse(
-        ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
-        response,
-        42201,
-        null,
-        Versions.KAFKA_V2_JSON);
-    ErrorResponse actual = response.readEntity(ErrorResponse.class);
-    assertEquals(42201, actual.getErrorCode());
-    assertEquals("Unrecognized field: error_code", actual.getMessage());
+            request("/topics/" + topicName + "/partitions/0", queryParams)
+                    .post(Entity.entity(payload, Versions.KAFKA_V2_JSON_AVRO));
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
+    final ProduceResponse poffsetResponse =
+            TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
+    assertEquals(offsetResponse, poffsetResponse.getOffsets());
+    TestUtils.assertTopicContains(
+            plaintextBrokerList,
+            topicName,
+            payload.toProduceRequest().getRecords(),
+            0,
+            KafkaAvroDeserializer.class.getName(),
+            KafkaAvroDeserializer.class.getName(),
+            deserializerProps,
+            false);
+    assertEquals((Integer) 1, poffsetResponse.getValueSchemaId());
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
