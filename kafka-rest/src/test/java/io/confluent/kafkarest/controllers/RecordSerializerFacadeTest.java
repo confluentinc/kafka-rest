@@ -97,7 +97,8 @@ public class RecordSerializerFacadeTest {
                     schemaRegistryClient,
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS,
-                    SCHEMA_SERIALIZER_CONFIGS));
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    false));
   }
 
   @Test
@@ -794,18 +795,45 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNullAvroKeyNullSchema_throwsRestConstraintViolation() {
-    RestConstraintViolationException rcve =
-        assertThrows(
-            RestConstraintViolationException.class,
-            () ->
-                recordSerializer.serialize(
-                    EmbeddedFormat.AVRO,
-                    TOPIC_NAME,
-                    /* schema= */ Optional.empty(),
-                    NullNode.getInstance(),
-                    /* isKey= */ true));
-    assertEquals("Request includes keys but does not include key schema", rcve.getMessage());
+  public void serializeNullAvroKeyNullSchema_returnsEmpty() {
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.AVRO,
+            TOPIC_NAME,
+            /* schema= */ Optional.empty(),
+            NullNode.getInstance(),
+            /* isKey= */ true);
+    assertFalse(serialized.isPresent());
+  }
+
+  @Test
+  public void serializeNullAvroKeyNullableSchema_allowsNullAndSerializes() throws Exception {
+    String schemaString =
+        "{\"type\":\"record\",\"name\":\"MyRecord\",\"namespace\":\"com.example\",\""
+            + "fields\":[{\"name\":\"myNullableInt\","
+            + "\"type\":[\"null\",\"int\"],\"default\":null}]}";
+    AvroSchema schema = new AvroSchema(schemaString);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
+    ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
+    node.putNull("myNullableInt");
+    ByteString serialized =
+        recordSerializer
+            .serialize(
+                EmbeddedFormat.AVRO,
+                TOPIC_NAME,
+                Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                node,
+                /* isKey= */ true)
+            .get();
+
+    KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
+    GenericRecord expectedRecord = new GenericData.Record(schema.rawSchema());
+    expectedRecord.put("myNullableInt", null);
+    Object deserialized =
+        deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
+    assertEquals(expectedRecord, deserialized);
   }
 
   @Test
@@ -829,8 +857,36 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNonNullAvroKeyNullSchema_throwsSerializationException() {
+  public void serializeNullAvroKeyNonNullableSchemaAlwaysEmptyConfigured_returnsEmpty()
+      throws Exception {
+    AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
+    recordSerializer =
+        new RecordSerializerFacade(
+            new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
+            () ->
+                new SchemaRecordSerializerImpl(
+                    schemaRegistryClient,
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    true));
+
+    Optional<ByteString> byteString =
+        recordSerializer.serialize(
+            EmbeddedFormat.AVRO,
+            TOPIC_NAME,
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+            NullNode.getInstance(),
+            /* isKey= */ true);
+
+    assertFalse(byteString.isPresent());
+  }
+
+  @Test
+  public void serializeNonNullAvroKeyNullSchema_throwsSerializationException() {
     assertThrows(
         RestConstraintViolationException.class,
         () ->
@@ -1100,18 +1156,15 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNullAvroValueNullSchema_throwsRestConstraintViolationException() {
-    RestConstraintViolationException rcve =
-        assertThrows(
-            RestConstraintViolationException.class,
-            () ->
-                recordSerializer.serialize(
-                    EmbeddedFormat.AVRO,
-                    TOPIC_NAME,
-                    /* schema= */ Optional.empty(),
-                    NullNode.getInstance(),
-                    /* isKey= */ false));
-    assertEquals("Request includes values but does not include value schema", rcve.getMessage());
+  public void serializeNullAvroValueNullSchema_returnsEmpty() {
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.AVRO,
+            TOPIC_NAME,
+            /* schema= */ Optional.empty(),
+            NullNode.getInstance(),
+            /* isKey= */ false);
+    assertFalse(serialized.isPresent());
   }
 
   @Test
@@ -1318,18 +1371,15 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNullJsonschemaKeyNullSchema_throwsRestConstraintViolationException() {
-    RestConstraintViolationException rcve =
-        assertThrows(
-            RestConstraintViolationException.class,
-            () ->
-                recordSerializer.serialize(
-                    EmbeddedFormat.JSONSCHEMA,
-                    TOPIC_NAME,
-                    /* schema= */ Optional.empty(),
-                    NullNode.getInstance(),
-                    /* isKey= */ true));
-    assertEquals("Request includes keys but does not include key schema", rcve.getMessage());
+  public void serializeNullJsonschemaKeyNullSchema_returnsEmpty() {
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.JSONSCHEMA,
+            TOPIC_NAME,
+            /* schema= */ Optional.empty(),
+            NullNode.getInstance(),
+            /* isKey= */ true);
+    assertFalse(serialized.isPresent());
   }
 
   @Test
@@ -1537,19 +1587,15 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNullJsonschemaValueNullSchema_throwsRestConstraintViolationException() {
-    RestConstraintViolationException rcve =
-        assertThrows(
-            RestConstraintViolationException.class,
-            () ->
-                recordSerializer.serialize(
-                    EmbeddedFormat.JSONSCHEMA,
-                    TOPIC_NAME,
-                    /* schema= */ Optional.empty(),
-                    NullNode.getInstance(),
-                    /* isKey= */ false));
-
-    assertEquals("Request includes values but does not include value schema", rcve.getMessage());
+  public void serializeNullJsonschemaValueNullSchema_returnsEmpty() {
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.JSONSCHEMA,
+            TOPIC_NAME,
+            /* schema= */ Optional.empty(),
+            NullNode.getInstance(),
+            /* isKey= */ false);
+    assertFalse(serialized.isPresent());
   }
 
   @Test
@@ -1634,18 +1680,15 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNullProtobufKeyNullSchema_throwsRestConstraintViolationException() {
-    RestConstraintViolationException rcve =
-        assertThrows(
-            RestConstraintViolationException.class,
-            () ->
-                recordSerializer.serialize(
-                    EmbeddedFormat.PROTOBUF,
-                    TOPIC_NAME,
-                    /* schema= */ Optional.empty(),
-                    NullNode.getInstance(),
-                    /* isKey= */ true));
-    assertEquals("Request includes keys but does not include key schema", rcve.getMessage());
+  public void serializeNullProtobufKeyNullSchema_returnsEmpty() {
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.PROTOBUF,
+            TOPIC_NAME,
+            /* schema= */ Optional.empty(),
+            NullNode.getInstance(),
+            /* isKey= */ true);
+    assertFalse(serialized.isPresent());
   }
 
   @Test
@@ -1739,19 +1782,15 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNullProtobufValueNullSchema_throwsRestConstraintViolationException() {
-    RestConstraintViolationException rcve =
-        assertThrows(
-            RestConstraintViolationException.class,
-            () ->
-                recordSerializer.serialize(
-                    EmbeddedFormat.PROTOBUF,
-                    TOPIC_NAME,
-                    /* schema= */ Optional.empty(),
-                    NullNode.getInstance(),
-                    /* isKey= */ false));
-
-    assertEquals("Request includes values but does not include value schema", rcve.getMessage());
+  public void serializeNullProtobufValueNullSchema_returnsEmpty() {
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.PROTOBUF,
+            TOPIC_NAME,
+            /* schema= */ Optional.empty(),
+            NullNode.getInstance(),
+            /* isKey= */ false);
+    assertFalse(serialized.isPresent());
   }
 
   @Test

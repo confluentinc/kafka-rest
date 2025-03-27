@@ -185,6 +185,10 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new SchemaRegistryConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() {});
 
+    bind(config.isNullNodeAlwaysEmptyRecordEnabled())
+        .qualifiedBy(new NullNodeAlwaysEmptyEnabledConfigImpl())
+        .to(Boolean.class);
+
     bind(schemaRegistryConfig.requestHeaders())
         .qualifiedBy(new SchemaRegistryRequestHeadersConfigImpl())
         .to(new TypeLiteral<Map<String, String>>() {});
@@ -480,5 +484,14 @@ public final class ConfigModule extends AbstractBinder {
   private static final class StreamingConnectionMaxDurationGracePeriodImpl
       extends AnnotationLiteral<StreamingMaxConnectionGracePeriod>
       implements StreamingMaxConnectionGracePeriod {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface NullNodeAlwaysEmptyEnabledConfig {}
+
+  private static final class NullNodeAlwaysEmptyEnabledConfigImpl
+      extends AnnotationLiteral<NullNodeAlwaysEmptyEnabledConfig>
+      implements NullNodeAlwaysEmptyEnabledConfig {}
 }
 // CHECKSTYLE:ON:ClassDataAbstractionCoupling

@@ -41,6 +41,7 @@ final class NoSchemaRecordSerializer {
   Optional<ByteString> serialize(EmbeddedFormat format, JsonNode data) {
     checkArgument(!format.requiresSchema());
 
+    // Revisit
     if (data.isNull()) {
       return Optional.empty();
     }
