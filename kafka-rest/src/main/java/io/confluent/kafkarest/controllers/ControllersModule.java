@@ -21,6 +21,7 @@ import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.config.ConfigModule.AvroSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.JsonschemaSerializerConfigs;
+import io.confluent.kafkarest.config.ConfigModule.NullNodeAlwaysEmptyEnabledConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
 import java.util.Map;
 import java.util.Optional;
@@ -66,17 +67,20 @@ public final class ControllersModule extends AbstractBinder {
     private final Map<String, Object> avroSerializerConfigs;
     private final Map<String, Object> jsonschemaSerializerConfigs;
     private final Map<String, Object> protobufSerializerConfigs;
+    private final boolean nullNodeAlwaysEmptyRecord;
 
     @Inject
     private SchemaRecordSerializerFactory(
         Optional<SchemaRegistryClient> schemaRegistryClient,
         @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
         @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
-        @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs) {
+        @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs,
+        @NullNodeAlwaysEmptyEnabledConfig Boolean nullNodeAlwaysEmptyRecord) {
       this.schemaRegistryClient = requireNonNull(schemaRegistryClient);
       this.avroSerializerConfigs = requireNonNull(avroSerializerConfigs);
       this.jsonschemaSerializerConfigs = requireNonNull(jsonschemaSerializerConfigs);
       this.protobufSerializerConfigs = requireNonNull(protobufSerializerConfigs);
+      this.nullNodeAlwaysEmptyRecord = nullNodeAlwaysEmptyRecord;
     }
 
     @Override
@@ -87,7 +91,8 @@ public final class ControllersModule extends AbstractBinder {
             schemaRegistryClient.get(),
             avroSerializerConfigs,
             jsonschemaSerializerConfigs,
-            protobufSerializerConfigs);
+            protobufSerializerConfigs,
+            nullNodeAlwaysEmptyRecord);
       } else {
         return new SchemaRecordSerializerThrowing();
       }

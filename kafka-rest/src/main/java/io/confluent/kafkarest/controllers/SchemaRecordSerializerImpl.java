@@ -46,6 +46,7 @@ import org.everit.json.schema.ValidationException;
 
 final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
 
+  private final boolean nullNodeAlwaysEmptyRecord;
   private final AvroSerializer avroSerializer;
   private final JsonSchemaSerializer jsonschemaSerializer;
   private final ProtobufSerializer protobufSerializer;
@@ -54,12 +55,14 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
       SchemaRegistryClient schemaRegistryClient,
       @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
       @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
-      @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs) {
+      @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs,
+      boolean nullNodeAlwaysEmptyRecord) {
     requireNonNull(schemaRegistryClient);
     avroSerializer = new AvroSerializer(schemaRegistryClient, avroSerializerConfigs);
     jsonschemaSerializer =
         new JsonSchemaSerializer(schemaRegistryClient, jsonschemaSerializerConfigs);
     protobufSerializer = new ProtobufSerializer(schemaRegistryClient, protobufSerializerConfigs);
+    this.nullNodeAlwaysEmptyRecord = nullNodeAlwaysEmptyRecord;
   }
 
   @Override
@@ -70,10 +73,13 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
       JsonNode data,
       boolean isKey) {
     checkArgument(format.requiresSchema());
-    if (data.isNull()) {
+    if (nullNodeAlwaysEmptyRecord && data.isNull()) {
       return Optional.empty();
     }
-    if (!schema.isPresent()) {
+    if (data.isNull() && schema.isEmpty()) {
+      return Optional.empty();
+    }
+    if (schema.isEmpty()) {
       throw isKey ? Errors.keySchemaMissingException() : Errors.valueSchemaMissingException();
     }
 
