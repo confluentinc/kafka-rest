@@ -519,6 +519,13 @@ public class KafkaRestConfig extends RestConfig {
       "Whether to use custom-request-logging i.e. CustomLog.java. Instead of using"
           + "Jetty's request-logging.";
   private static final boolean USE_CUSTOM_REQUEST_LOGGING_DEFAULT = true;
+  public static final String NULL_NODE_ALWAYS_EMPTY_RECORD_CONFIG = "null.node.always.empty.record";
+  private static final String NULL_NODE_ALWAYS_EMPTY_RECORD_DOC =
+      "Null Nodes in either key or value will always be treated as empty records "
+          + "for formats that require schema"
+          + "This is useful when you want to treat null nodes as empty records. "
+          + "Default is false.";
+  private static final boolean NULL_NODE_ALWAYS_EMPTY_RECORD_DEFAULT = false;
 
   private static final ConfigDef config;
   private volatile Metrics metrics;
@@ -930,7 +937,13 @@ public class KafkaRestConfig extends RestConfig {
             Type.BOOLEAN,
             USE_CUSTOM_REQUEST_LOGGING_DEFAULT,
             Importance.LOW,
-            USE_CUSTOM_REQUEST_LOGGING_DOC);
+            USE_CUSTOM_REQUEST_LOGGING_DOC)
+        .define(
+            NULL_NODE_ALWAYS_EMPTY_RECORD_CONFIG,
+            Type.BOOLEAN,
+            NULL_NODE_ALWAYS_EMPTY_RECORD_DEFAULT,
+            Importance.LOW,
+            NULL_NODE_ALWAYS_EMPTY_RECORD_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {
@@ -1236,6 +1249,10 @@ public class KafkaRestConfig extends RestConfig {
 
   public final long getProduceRequestSizeLimitMaxBytesConfig() {
     return getLong(PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_CONFIG);
+  }
+
+  public final boolean isNullNodeAlwaysEmptyRecordEnabled() {
+    return getBoolean(NULL_NODE_ALWAYS_EMPTY_RECORD_CONFIG);
   }
 
   public final ImmutableMap<String, Integer> getRateLimitCosts() {
