@@ -48,7 +48,7 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
     for (String attr : requestAttributesToLog) {
       // Add format-specifier to log request-attributes as response-headers in Jetty's
       // CustomRequestLog.
-      formatString += " %{" + attr + "}o";
+      formatString += " %{" + attr + "}attr";
     }
     this.requestAttributesToLog = requestAttributesToLog;
     this.delegateJettyLog = new CustomRequestLog(writer, formatString);
@@ -98,13 +98,6 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
     //    readily available(Vs response).
     // Unfortunately Jetty doesn't provide a way to log request-attributes, hence they are converted
     // to response-headers, which can be logged.
-    for (String attr : this.requestAttributesToLog) {
-      Object attrVal = request.getAttribute(attr);
-      if (attrVal != null) {
-        request.removeAttribute(attr);
-        response.setHeader(attr, attrVal.toString());
-      }
-    }
 
     try {
       delegateJettyLog.log(request, response);
@@ -113,11 +106,6 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
           "Logging with Jetty's CustomRequestLogFailed with exception {}, stack is \n{}",
           e,
           e.getStackTrace());
-    } finally {
-      // Remove the response-headers that were added above just for logging.
-      for (String attr : this.requestAttributesToLog) {
-        response.getHttpFields().remove(attr);
-      }
     }
   }
 }

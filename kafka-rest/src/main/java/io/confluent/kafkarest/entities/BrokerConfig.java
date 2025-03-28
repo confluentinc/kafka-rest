@@ -16,8 +16,8 @@
 package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
+import jakarta.annotation.Nullable;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /** A Kafka broker config */
 @AutoValue
