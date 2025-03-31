@@ -97,7 +97,8 @@ public class RecordSerializerFacadeTest {
                     schemaRegistryClient,
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS,
-                    SCHEMA_SERIALIZER_CONFIGS));
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    false));
   }
 
   @Test
@@ -802,17 +803,78 @@ public class RecordSerializerFacadeTest {
             /* schema= */ Optional.empty(),
             NullNode.getInstance(),
             /* isKey= */ true);
-
     assertFalse(serialized.isPresent());
   }
 
   @Test
-  public void serializeNullAvroKeyNonNullableSchema_returnsEmpty() throws Exception {
+  public void serializeNullAvroKeyNullableSchema_allowsNullAndSerializes() throws Exception {
+    String schemaString =
+        "{\"type\":\"record\",\"name\":\"MyRecord\",\"namespace\":\"com.example\",\""
+            + "fields\":[{\"name\":\"myNullableInt\","
+            + "\"type\":[\"null\",\"int\"],\"default\":null}]}";
+    AvroSchema schema = new AvroSchema(schemaString);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
+    ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
+    node.putNull("myNullableInt");
+    ByteString serialized =
+        recordSerializer
+            .serialize(
+                EmbeddedFormat.AVRO,
+                TOPIC_NAME,
+                Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                node,
+                /* isKey= */ true)
+            .get();
+
+    KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
+    GenericRecord expectedRecord = new GenericData.Record(schema.rawSchema());
+    expectedRecord.put("myNullableInt", null);
+    Object deserialized =
+        deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
+    assertEquals(expectedRecord, deserialized);
+  }
+
+  @Test
+  public void serializeNullAvroKeyNonNullableSchema_throwsBadRequestException() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
 
-    Optional<ByteString> serialized =
+    BadRequestException badRequestException =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                recordSerializer.serialize(
+                    EmbeddedFormat.AVRO,
+                    TOPIC_NAME,
+                    Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                    NullNode.getInstance(),
+                    /* isKey= */ true));
+
+    assertEquals("Expected int. Got VALUE_NULL", badRequestException.getMessage());
+  }
+
+  @Test
+  public void serializeNullAvroKeyNonNullableSchemaAlwaysEmptyConfigured_returnsEmpty()
+      throws Exception {
+    AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
+
+    recordSerializer =
+        new RecordSerializerFacade(
+            new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
+            () ->
+                new SchemaRecordSerializerImpl(
+                    schemaRegistryClient,
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    true));
+
+    Optional<ByteString> byteString =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
@@ -820,12 +882,11 @@ public class RecordSerializerFacadeTest {
             NullNode.getInstance(),
             /* isKey= */ true);
 
-    assertFalse(serialized.isPresent());
+    assertFalse(byteString.isPresent());
   }
 
   @Test
   public void serializeNonNullAvroKeyNullSchema_throwsSerializationException() {
-
     assertThrows(
         RestConstraintViolationException.class,
         () ->
@@ -1103,25 +1164,27 @@ public class RecordSerializerFacadeTest {
             /* schema= */ Optional.empty(),
             NullNode.getInstance(),
             /* isKey= */ false);
-
     assertFalse(serialized.isPresent());
   }
 
   @Test
-  public void serializeNullAvroValueNonNullableSchema_returnsEmpty() throws Exception {
+  public void serializeNullAvroValueNonNullableSchema_throwsBadRequestException() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
 
-    Optional<ByteString> serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.AVRO,
-            TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-            NullNode.getInstance(),
-            /* isKey= */ false);
+    BadRequestException badRequestException =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                recordSerializer.serialize(
+                    EmbeddedFormat.AVRO,
+                    TOPIC_NAME,
+                    Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                    NullNode.getInstance(),
+                    /* isKey= */ false));
 
-    assertFalse(serialized.isPresent());
+    assertEquals("Expected int. Got VALUE_NULL", badRequestException.getMessage());
   }
 
   @Test
@@ -1316,25 +1379,28 @@ public class RecordSerializerFacadeTest {
             /* schema= */ Optional.empty(),
             NullNode.getInstance(),
             /* isKey= */ true);
-
     assertFalse(serialized.isPresent());
   }
 
   @Test
-  public void serializeNullJsonschemaKeyNonNullableSchema_returnsEmpty() throws Exception {
+  public void serializeNullJsonschemaKeyNonNullableSchema_throwsBadRequestException()
+      throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
 
-    Optional<ByteString> serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.JSONSCHEMA,
-            TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-            NullNode.getInstance(),
-            /* isKey= */ true);
+    BadRequestException badRequestException =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                recordSerializer.serialize(
+                    EmbeddedFormat.JSONSCHEMA,
+                    TOPIC_NAME,
+                    Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                    NullNode.getInstance(),
+                    /* isKey= */ true));
 
-    assertFalse(serialized.isPresent());
+    assertEquals("#: expected type: Integer, found: null", badRequestException.getMessage());
   }
 
   @Test
@@ -1529,25 +1595,28 @@ public class RecordSerializerFacadeTest {
             /* schema= */ Optional.empty(),
             NullNode.getInstance(),
             /* isKey= */ false);
-
     assertFalse(serialized.isPresent());
   }
 
   @Test
-  public void serializeNullJsonschemaValueNonNullableSchema_returnsEmpty() throws Exception {
+  public void serializeNullJsonschemaValueNonNullableSchema_throwsBadRequestException()
+      throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
 
-    Optional<ByteString> serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.JSONSCHEMA,
-            TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-            NullNode.getInstance(),
-            /* isKey= */ false);
+    BadRequestException badRequestException =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                recordSerializer.serialize(
+                    EmbeddedFormat.JSONSCHEMA,
+                    TOPIC_NAME,
+                    Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                    NullNode.getInstance(),
+                    /* isKey= */ false));
 
-    assertFalse(serialized.isPresent());
+    assertEquals("#: expected type: Integer, found: null", badRequestException.getMessage());
   }
 
   @Test
@@ -1611,7 +1680,7 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNullProtobfuKeyNullSchema_returnsEmpty() {
+  public void serializeNullProtobufKeyNullSchema_returnsEmpty() {
     Optional<ByteString> serialized =
         recordSerializer.serialize(
             EmbeddedFormat.PROTOBUF,
@@ -1619,26 +1688,29 @@ public class RecordSerializerFacadeTest {
             /* schema= */ Optional.empty(),
             NullNode.getInstance(),
             /* isKey= */ true);
-
     assertFalse(serialized.isPresent());
   }
 
   @Test
-  public void serializeNullProtobufKeyNonNullableSchema_returnsEmpty() throws Exception {
+  public void serializeNullProtobufKeyNonNullableSchema_throwsBadRequestException()
+      throws Exception {
     ProtobufSchema schema =
         new ProtobufSchema("syntax = \"proto3\"; message NullKey { int32 foo = 1; bool bar = 2; }");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
 
-    Optional<ByteString> serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.PROTOBUF,
-            TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-            NullNode.getInstance(),
-            /* isKey= */ true);
+    BadRequestException badRequestException =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                recordSerializer.serialize(
+                    EmbeddedFormat.PROTOBUF,
+                    TOPIC_NAME,
+                    Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                    NullNode.getInstance(),
+                    /* isKey= */ true));
 
-    assertFalse(serialized.isPresent());
+    assertEquals("Expect message object but got: null", badRequestException.getMessage());
   }
 
   @Test
@@ -1710,7 +1782,7 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNullProtobfuValueNullSchema_returnsEmpty() {
+  public void serializeNullProtobufValueNullSchema_returnsEmpty() {
     Optional<ByteString> serialized =
         recordSerializer.serialize(
             EmbeddedFormat.PROTOBUF,
@@ -1718,27 +1790,30 @@ public class RecordSerializerFacadeTest {
             /* schema= */ Optional.empty(),
             NullNode.getInstance(),
             /* isKey= */ false);
-
     assertFalse(serialized.isPresent());
   }
 
   @Test
-  public void serializeNullProtobufValueNonNullableSchema_returnsEmpty() throws Exception {
+  public void serializeNullProtobufValueNonNullableSchema_throwsBadRequestException()
+      throws Exception {
     ProtobufSchema schema =
         new ProtobufSchema(
             "syntax = \"proto3\"; message NullValue { int32 foo = 1; bool bar = 2; }");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
 
-    Optional<ByteString> serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.PROTOBUF,
-            TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-            NullNode.getInstance(),
-            /* isKey= */ false);
+    BadRequestException badRequestException =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                recordSerializer.serialize(
+                    EmbeddedFormat.PROTOBUF,
+                    TOPIC_NAME,
+                    Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                    NullNode.getInstance(),
+                    /* isKey= */ false));
 
-    assertFalse(serialized.isPresent());
+    assertEquals("Expect message object but got: null", badRequestException.getMessage());
   }
 
   @Test
