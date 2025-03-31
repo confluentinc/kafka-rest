@@ -21,7 +21,7 @@ import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.config.ConfigModule.AvroSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.JsonschemaSerializerConfigs;
-import io.confluent.kafkarest.config.ConfigModule.NullNodeAlwaysEmptyEnabledConfig;
+import io.confluent.kafkarest.config.ConfigModule.NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
 import java.util.Map;
 import java.util.Optional;
@@ -67,7 +67,7 @@ public final class ControllersModule extends AbstractBinder {
     private final Map<String, Object> avroSerializerConfigs;
     private final Map<String, Object> jsonschemaSerializerConfigs;
     private final Map<String, Object> protobufSerializerConfigs;
-    private final boolean nullNodeAlwaysEmptyRecord;
+    private final boolean nullRequestBodyAlwaysPublishEmptyRecord;
 
     @Inject
     private SchemaRecordSerializerFactory(
@@ -75,12 +75,13 @@ public final class ControllersModule extends AbstractBinder {
         @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
         @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
         @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs,
-        @NullNodeAlwaysEmptyEnabledConfig Boolean nullNodeAlwaysEmptyRecord) {
+        @NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig
+            Boolean nullRequestBodyAlwaysPublishEmptyRecord) {
       this.schemaRegistryClient = requireNonNull(schemaRegistryClient);
       this.avroSerializerConfigs = requireNonNull(avroSerializerConfigs);
       this.jsonschemaSerializerConfigs = requireNonNull(jsonschemaSerializerConfigs);
       this.protobufSerializerConfigs = requireNonNull(protobufSerializerConfigs);
-      this.nullNodeAlwaysEmptyRecord = nullNodeAlwaysEmptyRecord;
+      this.nullRequestBodyAlwaysPublishEmptyRecord = nullRequestBodyAlwaysPublishEmptyRecord;
     }
 
     @Override
@@ -92,7 +93,7 @@ public final class ControllersModule extends AbstractBinder {
             avroSerializerConfigs,
             jsonschemaSerializerConfigs,
             protobufSerializerConfigs,
-            nullNodeAlwaysEmptyRecord);
+            nullRequestBodyAlwaysPublishEmptyRecord);
       } else {
         return new SchemaRecordSerializerThrowing();
       }
