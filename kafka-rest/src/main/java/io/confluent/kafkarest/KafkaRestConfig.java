@@ -519,13 +519,16 @@ public class KafkaRestConfig extends RestConfig {
       "Whether to use custom-request-logging i.e. CustomLog.java. Instead of using"
           + "Jetty's request-logging.";
   private static final boolean USE_CUSTOM_REQUEST_LOGGING_DEFAULT = true;
-  public static final String NULL_NODE_ALWAYS_EMPTY_RECORD_CONFIG = "null.node.always.empty.record";
-  private static final String NULL_NODE_ALWAYS_EMPTY_RECORD_DOC =
-      "Null Nodes in either key or value will always be treated as empty records "
-          + "for formats that require schema"
-          + "This is useful when you want to treat null nodes as empty records. "
-          + "Default is false.";
-  private static final boolean NULL_NODE_ALWAYS_EMPTY_RECORD_DEFAULT = false;
+  public static final String NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_CONFIG =
+      "null.request.body.always.publishes.empty.record";
+  private static final String NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_DOC =
+      "Before commit d65a0b3, when a schema was specified, "
+          + "but the associated key or value request body was null, "
+          + "then the message was published with an empty key or value. "
+          + "If a schema does not allow a null value, then the message should be rejected. "
+          + "After commit d65a0b3, the new behaviour where the message is rejected in this "
+          + "scenario is the default. This configuration property enable the old behaviour.";
+  private static final boolean NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_DEFAULT = false;
 
   private static final ConfigDef config;
   private volatile Metrics metrics;
@@ -939,11 +942,11 @@ public class KafkaRestConfig extends RestConfig {
             Importance.LOW,
             USE_CUSTOM_REQUEST_LOGGING_DOC)
         .define(
-            NULL_NODE_ALWAYS_EMPTY_RECORD_CONFIG,
+            NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_CONFIG,
             Type.BOOLEAN,
-            NULL_NODE_ALWAYS_EMPTY_RECORD_DEFAULT,
+            NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_DEFAULT,
             Importance.LOW,
-            NULL_NODE_ALWAYS_EMPTY_RECORD_DOC);
+            NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {
@@ -1251,8 +1254,8 @@ public class KafkaRestConfig extends RestConfig {
     return getLong(PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_CONFIG);
   }
 
-  public final boolean isNullNodeAlwaysEmptyRecordEnabled() {
-    return getBoolean(NULL_NODE_ALWAYS_EMPTY_RECORD_CONFIG);
+  public final boolean isNullRequestBodyAlwaysPublishEmptyRecordEnabled() {
+    return getBoolean(NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_CONFIG);
   }
 
   public final ImmutableMap<String, Integer> getRateLimitCosts() {
