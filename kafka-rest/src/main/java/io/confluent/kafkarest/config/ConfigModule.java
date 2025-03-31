@@ -185,8 +185,8 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new SchemaRegistryConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() {});
 
-    bind(config.isNullNodeAlwaysEmptyRecordEnabled())
-        .qualifiedBy(new NullNodeAlwaysEmptyEnabledConfigImpl())
+    bind(config.isNullRequestBodyAlwaysPublishEmptyRecordEnabled())
+        .qualifiedBy(new NullRequestBodyAlwaysPublishEmptyRecordEnabledConfigImpl())
         .to(Boolean.class);
 
     bind(schemaRegistryConfig.requestHeaders())
@@ -488,10 +488,10 @@ public final class ConfigModule extends AbstractBinder {
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-  public @interface NullNodeAlwaysEmptyEnabledConfig {}
+  public @interface NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig {}
 
-  private static final class NullNodeAlwaysEmptyEnabledConfigImpl
-      extends AnnotationLiteral<NullNodeAlwaysEmptyEnabledConfig>
-      implements NullNodeAlwaysEmptyEnabledConfig {}
+  private static final class NullRequestBodyAlwaysPublishEmptyRecordEnabledConfigImpl
+      extends AnnotationLiteral<NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig>
+      implements NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig {}
 }
 // CHECKSTYLE:ON:ClassDataAbstractionCoupling
