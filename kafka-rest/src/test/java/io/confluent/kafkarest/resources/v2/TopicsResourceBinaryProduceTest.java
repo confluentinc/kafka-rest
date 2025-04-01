@@ -64,7 +64,6 @@ import org.apache.kafka.common.errors.SaslAuthenticationException;
 import org.apache.kafka.common.errors.TopicAuthorizationException;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -244,7 +243,6 @@ public class TopicsResourceBinaryProduceTest
     testProduceToTopicSuccess(PRODUCE_RECORDS_WITH_NULL_VALUES);
   }
 
-  @Disabled
   @Test
   public void testProduceInvalidRequest() {
     Response response =

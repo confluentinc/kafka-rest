@@ -35,8 +35,8 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * An extension that creates and sets a {@link org.eclipse.jetty.jaas.security.spi.PropertyFileLoginModule}
- * as the default Java Login Module.
+ * An extension that creates and sets a {@link
+ * org.eclipse.jetty.jaas.security.spi.PropertyFileLoginModule} as the default Java Login Module.
  *
  * <p>This fixture should be used only when you don't have any other option, for example, when
  * configuring Kafka REST or Schema Registry Basic Authentication. Using it might cause unforeseen
