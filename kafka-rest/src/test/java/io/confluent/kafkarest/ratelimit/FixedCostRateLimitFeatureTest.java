@@ -20,12 +20,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

@@ -194,6 +194,12 @@
             <version>3.18.2</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <!-- 2.3.3 is the closest major version to the EoL javaee/jaxb-api 2.3.0 -->
+            <version>3.0.1</version>
+        </dependency>
     </dependencies>
 
 
