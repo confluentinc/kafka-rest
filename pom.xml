@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>[8.0.0-0, 8.0.1-0)</version>
+        <version>8.0.0-0</version>
     </parent>
 
     <artifactId>kafka-rest-parent</artifactId>
@@ -132,13 +132,13 @@
             <dependency>
                 <groupId>org.glassfish.jersey.connectors</groupId>
                 <artifactId>jersey-apache-connector</artifactId>
-                <version>2.34</version>
+                <version>3.1.9</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>io.confluent</groupId>
                 <artifactId>kafka-schema-registry</artifactId>
-                <version>${io.confluent.schema-registry.version}</version>
+                <version>8.0.0-0</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.yaml</groupId>

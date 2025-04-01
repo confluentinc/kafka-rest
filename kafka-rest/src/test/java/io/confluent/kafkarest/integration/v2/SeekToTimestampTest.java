@@ -20,10 +20,10 @@ import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NA
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
 import io.confluent.kafkarest.integration.AbstractConsumerTest;
+import jakarta.ws.rs.core.GenericType;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import javax.ws.rs.core.GenericType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;

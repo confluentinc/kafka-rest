@@ -20,7 +20,7 @@
     </description>
 
     <properties>
-        <io.confluent.schema-registry.version>${confluent.version.range}</io.confluent.schema-registry.version>
+        <io.confluent.schema-registry.version>8.0.0-0</io.confluent.schema-registry.version>
     </properties>
 
     <dependencies>
@@ -45,22 +45,22 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-avro-serializer</artifactId>
-            <version>${io.confluent.schema-registry.version}</version>
+            <version>8.0.0-0</version>
         </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-json-serializer</artifactId>
-            <version>${io.confluent.schema-registry.version}</version>
+            <version>8.0.0-0</version>
         </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-json-schema-serializer</artifactId>
-            <version>${io.confluent.schema-registry.version}</version>
+            <version>8.0.0-0</version>
         </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-protobuf-serializer</artifactId>
-            <version>${io.confluent.schema-registry.version}</version>
+            <version>8.0.0-0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -145,7 +145,7 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-schema-registry</artifactId>
-            <version>${io.confluent.schema-registry.version}</version>
+            <version>8.0.0-0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -193,6 +193,12 @@
             <artifactId>equalsverifier-nodep</artifactId>
             <version>3.18.2</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <!-- 2.3.3 is the closest major version to the EoL javaee/jaxb-api 2.3.0 -->
+            <version>3.0.1</version>
         </dependency>
     </dependencies>
 

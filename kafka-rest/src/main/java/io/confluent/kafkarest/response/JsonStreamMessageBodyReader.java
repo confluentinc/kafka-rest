@@ -22,16 +22,16 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.response.JsonStream.SizeLimitEntityStream;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.ext.MessageBodyReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.ext.MessageBodyReader;
 
 /** A {@link MessageBodyReader} for {@link JsonStream}. */
 public final class JsonStreamMessageBodyReader implements MessageBodyReader<JsonStream<?>> {

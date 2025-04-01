@@ -15,12 +15,12 @@
 
 package io.confluent.kafkarest.extension;
 
-import javax.ws.rs.Priorities;
+import jakarta.ws.rs.Priorities;
 
 /**
  * A collection of priority constants to be used for components ordered based on their {@link
- * javax.annotation.Priority} class-level annotation value. "More" because they can be perceived as
- * an add-on to {@link Priorities}.
+ * jakarta.annotation.Priority} class-level annotation value. "More" because they can be perceived
+ * as an add-on to {@link Priorities}.
  */
 public final class MorePriorities {
 
