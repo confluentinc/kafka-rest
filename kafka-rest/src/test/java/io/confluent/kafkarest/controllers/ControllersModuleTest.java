@@ -19,9 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import io.confluent.kafkarest.config.ConfigModule;
 import io.confluent.kafkarest.config.ConfigModule.AvroSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.JsonschemaSerializerConfigs;
+import io.confluent.kafkarest.config.ConfigModule.NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,7 +63,7 @@ public class ControllersModuleTest {
                 .to(new TypeLiteral<Map<String, Object>>() {});
 
             bind(false)
-                .qualifiedBy(new TestNullNodeAlwaysEmptyEnabledConfigImpl())
+                .qualifiedBy(new TestNullRequestBodyAlwaysPublishEmptyRecordEnabledConfigImpl())
                 .to(Boolean.class);
             install(new ControllersModule());
           }
@@ -97,7 +97,7 @@ public class ControllersModuleTest {
   private static final class TestProtobufSerializerConfigsImpl
       extends AnnotationLiteral<ProtobufSerializerConfigs> implements ProtobufSerializerConfigs {}
 
-  private static final class TestNullNodeAlwaysEmptyEnabledConfigImpl
-      extends AnnotationLiteral<ConfigModule.NullNodeAlwaysEmptyEnabledConfig>
-      implements ConfigModule.NullNodeAlwaysEmptyEnabledConfig {}
+  private static final class TestNullRequestBodyAlwaysPublishEmptyRecordEnabledConfigImpl
+      extends AnnotationLiteral<NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig>
+      implements NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig {}
 }
