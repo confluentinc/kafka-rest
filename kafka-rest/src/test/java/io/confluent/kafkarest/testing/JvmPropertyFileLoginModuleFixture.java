@@ -35,7 +35,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * An extension that creates and sets a {@link org.eclipse.jetty.jaas.spi.PropertyFileLoginModule}
+ * An extension that creates and sets a {@link org.eclipse.jetty.jaas.security.spi.PropertyFileLoginModule}
  * as the default Java Login Module.
  *
  * <p>This fixture should be used only when you don't have any other option, for example, when
@@ -67,7 +67,7 @@ public final class JvmPropertyFileLoginModuleFixture
         jaasConfig,
         ImmutableList.of(
             name + " {",
-            "  org.eclipse.jetty.jaas.spi.PropertyFileLoginModule required",
+            "  org.eclipse.jetty.security.jaas.spi.PropertyFileLoginModule required",
             "  file=\"" + passConfig + "\"",
             "  debug=\"true\";",
             "};"));
