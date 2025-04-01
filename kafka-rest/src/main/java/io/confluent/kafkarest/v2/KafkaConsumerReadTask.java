@@ -26,8 +26,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * State for tracking the progress of a single consumer read request.
@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  */
 class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
-  private static final Logger log = LoggerFactory.getLogger(KafkaConsumerReadTask.class);
+  private static final Logger log = LogManager.getLogger(KafkaConsumerReadTask.class);
 
   private final KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> parent;
   private final Duration requestTimeout;

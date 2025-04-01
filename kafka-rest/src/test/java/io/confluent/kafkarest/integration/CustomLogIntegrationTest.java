@@ -53,8 +53,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * Integration tests to validate request-log has necessary custom-log when request is rate-limited.
@@ -62,7 +62,7 @@ import org.slf4j.LoggerFactory;
 @Tag("IntegrationTest")
 public class CustomLogIntegrationTest extends ClusterTestHarness {
 
-  private static final Logger log = LoggerFactory.getLogger(CustomLogIntegrationTest.class);
+  private static final Logger log = LogManager.getLogger(CustomLogIntegrationTest.class);
 
   private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
 

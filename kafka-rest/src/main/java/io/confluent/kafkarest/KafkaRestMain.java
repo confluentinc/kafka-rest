@@ -17,12 +17,12 @@ package io.confluent.kafkarest;
 
 import io.confluent.rest.RestConfigException;
 import java.io.IOException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public class KafkaRestMain {
 
-  private static final Logger log = LoggerFactory.getLogger(KafkaRestMain.class);
+  private static final Logger log = LogManager.getLogger(KafkaRestMain.class);
 
   static {
     // for localhost testing only, with schema registry url https://localhost

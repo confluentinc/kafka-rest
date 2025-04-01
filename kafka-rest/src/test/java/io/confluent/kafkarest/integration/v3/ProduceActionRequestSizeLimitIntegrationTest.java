@@ -54,13 +54,13 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 @Tag("IntegrationTest")
 public class ProduceActionRequestSizeLimitIntegrationTest {
   private static final Logger log =
-      LoggerFactory.getLogger(ProduceActionRequestSizeLimitIntegrationTest.class);
+      LogManager.getLogger(ProduceActionRequestSizeLimitIntegrationTest.class);
   private static final Random RNG = new Random();
   private static final String TEST_MESSAGE_TEMPLATE =
       "{ " + "\"value\" : { " + "\"type\" : \"JSON\", " + "\"data\" : \"%s\" " + "}}";

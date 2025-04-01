@@ -19,13 +19,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils;
 import java.io.IOException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /** Provides conversion of JSON to/from Avro. */
 public final class AvroConverter implements SchemaConverter {
 
-  private static final Logger log = LoggerFactory.getLogger(AvroConverter.class);
+  private static final Logger log = LogManager.getLogger(AvroConverter.class);
 
   private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 

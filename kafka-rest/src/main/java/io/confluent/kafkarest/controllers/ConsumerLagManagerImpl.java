@@ -33,14 +33,14 @@ import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 final class ConsumerLagManagerImpl extends AbstractConsumerLagManager
     implements ConsumerLagManager {
 
   private final ConsumerGroupManager consumerGroupManager;
-  private static final Logger log = LoggerFactory.getLogger(ConsumerLagManagerImpl.class);
+  private static final Logger log = LogManager.getLogger(ConsumerLagManagerImpl.class);
 
   @Inject
   ConsumerLagManagerImpl(Admin kafkaAdminClient, ConsumerGroupManager consumerGroupManager) {

@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<Configuration name="Log4j2">
+    <Appenders>
+        <Console name="stdout" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d] %v1Level %m (%c:%L)%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="TRACE">
+            <AppenderRef ref="stdout"/>
+        </Root>
+        <Logger name="org.apache.kafka" level="ERROR"/>
+        <Logger name="org.I0Itec.zkclient" level="ERROR"/>
+        <Logger name="org.apache.zookeeper" level="ERROR"/>
+        <Logger name="org.hibernate.validator" level="ERROR"/>
+        <Logger name="org.eclipse" level="ERROR"/>
+        <Logger name="kafka" level="ERROR"/>
+    </Loggers>
+</Configuration>
