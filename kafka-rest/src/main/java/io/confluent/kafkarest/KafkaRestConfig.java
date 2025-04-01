@@ -64,13 +64,13 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.types.Password;
 import org.apache.kafka.common.metrics.Metrics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /** Settings for the Kafka REST server. */
 public class KafkaRestConfig extends RestConfig {
 
-  private static final Logger log = LoggerFactory.getLogger(KafkaRestConfig.class);
+  private static final Logger log = LogManager.getLogger(KafkaRestConfig.class);
 
   private final KafkaRestMetricsContext metricsContext;
   public static final String TELEMETRY_PREFIX = "confluent.telemetry.";

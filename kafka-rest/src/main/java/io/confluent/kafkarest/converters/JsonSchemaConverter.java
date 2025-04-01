@@ -18,13 +18,13 @@ package io.confluent.kafkarest.converters;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaUtils;
 import java.io.IOException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /** Provides conversion of JSON to/from JSON Schema. */
 public final class JsonSchemaConverter implements SchemaConverter {
 
-  private static final Logger log = LoggerFactory.getLogger(JsonSchemaConverter.class);
+  private static final Logger log = LogManager.getLogger(JsonSchemaConverter.class);
 
   private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 

@@ -52,13 +52,13 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
 
   private static final long ONE_SECOND_MS = 1000L;
-  private static final Logger log = LoggerFactory.getLogger(AbstractConsumerTest.class);
+  private static final Logger log = LogManager.getLogger(AbstractConsumerTest.class);
 
   public AbstractConsumerTest() {}
 

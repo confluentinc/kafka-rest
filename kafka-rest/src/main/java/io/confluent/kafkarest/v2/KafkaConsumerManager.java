@@ -72,8 +72,8 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * Manages consumer instances by mapping instance IDs to consumer objects, processing read requests,
@@ -86,7 +86,7 @@ import org.slf4j.LoggerFactory;
  */
 public class KafkaConsumerManager {
 
-  private static final Logger log = LoggerFactory.getLogger(KafkaConsumerManager.class);
+  private static final Logger log = LogManager.getLogger(KafkaConsumerManager.class);
 
   private final KafkaRestConfig config;
   private final Clock clock = Clock.systemUTC();

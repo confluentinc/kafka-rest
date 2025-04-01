@@ -33,8 +33,8 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultKafkaRestContext implements KafkaRestContext {
 
-  private static final Logger log = LoggerFactory.getLogger(DefaultKafkaRestContext.class);
+  private static final Logger log = LogManager.getLogger(DefaultKafkaRestContext.class);
 
   private final KafkaRestConfig config;
   private KafkaConsumerManager kafkaConsumerManager;

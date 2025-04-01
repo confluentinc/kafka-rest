@@ -42,15 +42,15 @@ import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 final class PartitionManagerImpl implements PartitionManager {
 
   private final Admin adminClient;
   private final TopicManager topicManager;
 
-  private static final Logger log = LoggerFactory.getLogger(PartitionManagerImpl.class);
+  private static final Logger log = LogManager.getLogger(PartitionManagerImpl.class);
 
   @Inject
   PartitionManagerImpl(Admin adminClient, TopicManager topicManager) {

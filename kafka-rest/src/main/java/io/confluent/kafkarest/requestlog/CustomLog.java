@@ -23,8 +23,8 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * CustomLog implements Jetty's RequestLog interface. It offers the same log-format jetty's
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CustomLog extends AbstractLifeCycle implements RequestLog {
 
-  private static final Logger log = LoggerFactory.getLogger(CustomLog.class);
+  private static final Logger log = LogManager.getLogger(CustomLog.class);
 
   private final CustomRequestLog delegateJettyLog;
 

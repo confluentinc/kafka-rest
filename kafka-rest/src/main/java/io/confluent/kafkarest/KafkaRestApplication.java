@@ -55,13 +55,13 @@ import org.eclipse.jetty.server.Slf4jRequestLogWriter;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.StringUtil;
 import org.glassfish.jersey.server.ServerProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /** Utilities for configuring and running an embedded Kafka server. */
 public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
-  private static final Logger log = LoggerFactory.getLogger(KafkaRestApplication.class);
+  private static final Logger log = LogManager.getLogger(KafkaRestApplication.class);
 
   List<RestResourceExtension> restResourceExtensions;
 

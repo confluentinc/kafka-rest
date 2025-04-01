@@ -18,12 +18,12 @@ package io.confluent.kafkarest.common;
 import java.util.concurrent.CompletableFuture;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.internals.KafkaFutureImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public final class KafkaFutures {
 
-  private static final Logger log = LoggerFactory.getLogger(KafkaFutures.class);
+  private static final Logger log = LogManager.getLogger(KafkaFutures.class);
 
   private KafkaFutures() {}
 

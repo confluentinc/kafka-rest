@@ -24,8 +24,8 @@ import javax.annotation.Nullable;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /** Utilities to deal with {@link AsyncResponse}. */
 public final class AsyncResponses {
@@ -88,7 +88,7 @@ public final class AsyncResponses {
       return this;
     }
 
-    private static final Logger log = LoggerFactory.getLogger(AsyncResponse.class);
+    private static final Logger log = LogManager.getLogger(AsyncResponse.class);
 
     /** Resumes this {@code AsyncResponseBuilder}. */
     public void asyncResume(AsyncResponse asyncResponse) {

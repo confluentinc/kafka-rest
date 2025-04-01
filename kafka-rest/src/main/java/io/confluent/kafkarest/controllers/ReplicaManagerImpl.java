@@ -33,8 +33,8 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DescribeLogDirsOptions;
 import org.apache.kafka.clients.admin.DescribeLogDirsResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 final class ReplicaManagerImpl implements ReplicaManager {
 
@@ -42,7 +42,7 @@ final class ReplicaManagerImpl implements ReplicaManager {
   private final BrokerManager brokerManager;
   private final PartitionManager partitionManager;
 
-  private static final Logger log = LoggerFactory.getLogger(ReplicaManagerImpl.class);
+  private static final Logger log = LogManager.getLogger(ReplicaManagerImpl.class);
 
   @Inject
   ReplicaManagerImpl(

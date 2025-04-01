@@ -38,15 +38,15 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public class ConsumerJsonTest extends AbstractConsumerTest {
 
   private static final String topicName = "topic1";
   private static final String groupName = "testconsumergroup";
 
-  private static final Logger log = LoggerFactory.getLogger(ConsumerJsonTest.class);
+  private static final Logger log = LogManager.getLogger(ConsumerJsonTest.class);
 
   private Map<String, Object> exampleMapValue() {
     Map<String, Object> res = new HashMap<String, Object>();

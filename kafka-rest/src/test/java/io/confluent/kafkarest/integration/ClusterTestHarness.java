@@ -108,8 +108,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import scala.Option;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
@@ -122,7 +122,7 @@ import scala.collection.Seq;
 @Tag("IntegrationTest")
 public abstract class ClusterTestHarness {
 
-  private static final Logger log = LoggerFactory.getLogger(ClusterTestHarness.class);
+  private static final Logger log = LogManager.getLogger(ClusterTestHarness.class);
 
   public static final int DEFAULT_NUM_BROKERS = 1;
   public static final int MAX_MESSAGE_SIZE = (2 << 20) * 10; // 10 MiB

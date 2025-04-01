@@ -93,13 +93,13 @@
   <allow pkg="javax.validation" />
   <allow pkg="javax.ws.rs" />
   <allow pkg="org.apache.avro" />
+  <allow pkg="org.apache.logging.log4j" />
   <allow pkg="org.easymock" />
   <allow pkg="org.eclipse.jetty" />
   <allow pkg="org.glassfish.hk2" />
   <allow pkg="org.glassfish.jersey" />
   <allow pkg="org.hamcrest" />
   <allow pkg="org.junit" />
-  <allow pkg="org.slf4j" />
 
   <!-- Kafka REST's own base package -->
   <allow pkg="io.confluent.kafkarest" />
