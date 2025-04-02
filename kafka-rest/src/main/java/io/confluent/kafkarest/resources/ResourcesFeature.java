@@ -20,8 +20,8 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.resources.v2.V2ResourcesFeature;
 import io.confluent.kafkarest.resources.v3.V3ResourcesFeature;
-import javax.ws.rs.core.Feature;
-import javax.ws.rs.core.FeatureContext;
+import jakarta.ws.rs.core.Feature;
+import jakarta.ws.rs.core.FeatureContext;
 
 public final class ResourcesFeature implements Feature {
   private final KafkaRestConfig config;

@@ -20,8 +20,8 @@ import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NA
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
+import jakarta.ws.rs.core.GenericType;
 import java.util.List;
-import javax.ws.rs.core.GenericType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;

@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.converters;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 /**
  * Exception thrown when conversion fails. Since this should generally be converted into a 422 HTTP
