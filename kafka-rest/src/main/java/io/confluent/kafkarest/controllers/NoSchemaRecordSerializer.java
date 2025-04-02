@@ -25,9 +25,9 @@ import io.confluent.kafka.serializers.KafkaJsonSerializerConfig;
 import io.confluent.kafkarest.config.ConfigModule.JsonSerializerConfigs;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.exceptions.BadRequestException;
+import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
 
 final class NoSchemaRecordSerializer {
 

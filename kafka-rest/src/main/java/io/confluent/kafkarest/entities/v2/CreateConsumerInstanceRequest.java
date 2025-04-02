@@ -23,10 +23,10 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import java.util.Objects;
 import java.util.StringJoiner;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import org.apache.kafka.common.config.ConfigException;
 
 public final class CreateConsumerInstanceRequest {
