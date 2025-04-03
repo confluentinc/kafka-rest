@@ -24,6 +24,12 @@ The following libraries are included in packaged versions of this project:
  * NOTICE: licenses/NOTICE.log4j.txt
  * HOMEPAGE: http://logging.apache.org/log4j/1.2/
 
+* Apache Log4j
+ * COPYRIGHT: Copyright 1999-2024 Apache Software Foundation
+ * LICENSE: licenses/LICENSE.apache2.txt
+ * NOTICE: licenses/NOTICE.log4j2.txt
+ * HOMEPAGE: https://logging.apache.org/log4j/2.x/
+
 * Apache ZooKeeper
  * COPYRIGHT: Copyright 2009-2014 The Apache Software Foundation
  * LICENSE: licenses/LICENSE.apache2.txt
