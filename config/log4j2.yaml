@@ -1,0 +1,32 @@
+Configuration:
+  name: "Log4j2"
+  Properties:
+    Property:
+      # Fallback if the system property is not set
+      - name: "kafka-rest.logs.dir"
+        value: "."
+  Appenders:
+    RollingFile:
+      name: "file"
+      fileName: "${sys:kafka-rest.log.dir}/kafka-rest.log"
+      filePattern: "/kafka-rest.log.%i"
+      PatternLayout:
+        pattern: "[%d] %v1Level %m (%c)%n"
+      Policies:
+        SizeBasedTriggeringPolicy:
+          size: "100MB"
+      DefaultRolloverStrategy:
+        max: "10"
+        # Using the min strategy, the newest log file will have index 1 and the oldest one will have index max.
+        fileIndex: "min"
+    Console:
+      name: "STDOUT"
+      target: "SYSTEM_OUT"
+      PatternLayout:
+        pattern: "[%d] %v1Level %m (%c:%L)%n"
+  Loggers:
+    Root:
+      level: "INFO"
+      AppenderRef:
+        - ref: "file"
+        - ref: "STDOUT"
