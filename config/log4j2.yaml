@@ -11,7 +11,7 @@ Configuration:
       fileName: "${sys:kafka-rest.log.dir}/kafka-rest.log"
       filePattern: "/kafka-rest.log.%i"
       PatternLayout:
-        pattern: "[%d] %v1Level %m (%c)%n"
+        pattern: "[%d] %p %m (%c)%n"
       Policies:
         SizeBasedTriggeringPolicy:
           size: "100MB"
@@ -23,7 +23,7 @@ Configuration:
       name: "STDOUT"
       target: "SYSTEM_OUT"
       PatternLayout:
-        pattern: "[%d] %v1Level %m (%c:%L)%n"
+        pattern: "[%d] %p %m (%c:%L)%n"
   Loggers:
     Root:
       level: "INFO"
