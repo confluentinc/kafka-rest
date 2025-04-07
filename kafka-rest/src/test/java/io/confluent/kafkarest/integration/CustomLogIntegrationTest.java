@@ -587,7 +587,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     }
     int rateLimitedRequests = 0;
     int totalRequests = 0;
-    while (true) {
+    while (totalRequests < expectedNumOfEntries) {
       String entry = logEntries.poll();
       if (entry == null) {
         break;
