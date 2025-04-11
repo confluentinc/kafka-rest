@@ -26,7 +26,7 @@ public interface UrlFactory {
    * {@code schema} will be the same as the incoming request schema, {@code authority} will be
    * derived from {@code host.name} and {@code port} configs, {@code advertised.listeners} config,
    * {@code listeners} config, or the incoming request authority, in order of preference, and {@code
-   * base_path} will be the base path this application's {@link jakarta.servlet.ServletContext} was
+   * base_path} will be the base path this application's {@link javax.servlet.ServletContext} was
    * installed at.
    */
   String create(String... segments);
@@ -38,7 +38,7 @@ public interface UrlFactory {
    * where {@code schema} will be the same as the incoming request schema, {@code authority} will be
    * derived from {@code host.name} and {@code port} configs, {@code advertised.listeners} config,
    * {@code listeners} config, or the incoming request authority, in order of preference, and {@code
-   * base_path} will be the base path this application's {@link jakarta.servlet.ServletContext} was
+   * base_path} will be the base path this application's {@link javax.servlet.ServletContext} was
    * installed at.
    */
   UrlBuilder newUrlBuilder();

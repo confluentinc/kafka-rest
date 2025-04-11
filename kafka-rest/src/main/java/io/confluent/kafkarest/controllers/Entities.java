@@ -15,10 +15,10 @@
 
 package io.confluent.kafkarest.controllers;
 
-import jakarta.ws.rs.NotFoundException;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Function;
+import javax.ws.rs.NotFoundException;
 
 final class Entities {
 

@@ -16,10 +16,10 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.response.UrlFactoryImpl;
-import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.ws.rs.core.UriInfo;
 import org.apache.kafka.common.config.ConfigException;
 
 public class UriUtils {

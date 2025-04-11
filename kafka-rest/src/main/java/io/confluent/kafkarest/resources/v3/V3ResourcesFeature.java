@@ -15,8 +15,8 @@
 
 package io.confluent.kafkarest.resources.v3;
 
-import jakarta.ws.rs.core.Feature;
-import jakarta.ws.rs.core.FeatureContext;
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
 
 public final class V3ResourcesFeature implements Feature {
 

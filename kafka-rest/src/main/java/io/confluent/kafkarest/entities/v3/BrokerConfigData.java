@@ -20,9 +20,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import io.confluent.kafkarest.entities.ConfigSource;
-import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 @AutoValue
 public abstract class BrokerConfigData extends AbstractConfigData {

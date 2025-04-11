@@ -18,14 +18,14 @@ package io.confluent.kafkarest.resources.v2;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.rest.annotations.PerformanceMetric;
-import jakarta.validation.Valid;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
 import java.util.HashMap;
 import java.util.Map;
+import javax.validation.Valid;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 
 @Path("/")
 @Produces({Versions.KAFKA_V2_JSON_WEIGHTED})

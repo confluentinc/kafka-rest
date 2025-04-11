@@ -19,8 +19,8 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionDurationConfig;
 import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionGracePeriod;
-import jakarta.inject.Inject;
 import java.time.Duration;
+import javax.inject.Inject;
 
 public final class StreamingResponseFactory {
 

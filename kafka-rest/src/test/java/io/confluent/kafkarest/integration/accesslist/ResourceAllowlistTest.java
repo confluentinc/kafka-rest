@@ -18,8 +18,8 @@ package io.confluent.kafkarest.integration.accesslist;
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import jakarta.ws.rs.core.Response.Status;
 import java.util.Properties;
+import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
