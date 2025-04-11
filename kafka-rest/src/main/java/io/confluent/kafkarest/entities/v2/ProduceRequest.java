@@ -20,10 +20,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotEmpty;
 
 @AutoValue
 public abstract class ProduceRequest {

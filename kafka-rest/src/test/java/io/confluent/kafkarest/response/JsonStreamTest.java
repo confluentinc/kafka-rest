@@ -32,7 +32,6 @@ import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.exceptions.ProduceRequestTooLargeException;
 import io.confluent.kafkarest.response.JsonStream.SizeLimitEntityStream;
-import jakarta.ws.rs.BadRequestException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -46,6 +45,7 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.UUID;
+import javax.ws.rs.BadRequestException;
 import org.junit.jupiter.api.Test;
 
 // CHECKSTYLE:OFF:ClassDataAbstractionCoupling

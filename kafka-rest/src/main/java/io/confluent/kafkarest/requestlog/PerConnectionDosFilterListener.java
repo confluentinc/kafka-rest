@@ -19,7 +19,7 @@ import io.confluent.kafkarest.ratelimit.RateLimitExceededException.ErrorCodes;
 import io.confluent.rest.jetty.DoSFilter;
 import io.confluent.rest.jetty.DoSFilter.Action;
 import io.confluent.rest.jetty.DoSFilter.OverLimit;
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * This class is a Jetty DosFilter.Listener, for the per-connection-dos(aka per IP, or non-global)

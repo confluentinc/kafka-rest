@@ -31,11 +31,11 @@ import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicP
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.common.acl.AccessControlEntry;
 import org.apache.kafka.common.acl.AclBinding;

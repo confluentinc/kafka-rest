@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>kafka-rest-parent</artifactId>
-        <version>8.0.0-905</version>
+        <version>8.0.0-805</version>
     </parent>
 
     <artifactId>kafka-rest</artifactId>
@@ -20,7 +20,7 @@
     </description>
 
     <properties>
-        <io.confluent.schema-registry.version>8.0.0-647</io.confluent.schema-registry.version>
+        <io.confluent.schema-registry.version>8.0.0-606</io.confluent.schema-registry.version>
     </properties>
 
     <dependencies>
@@ -193,12 +193,6 @@
             <artifactId>equalsverifier-nodep</artifactId>
             <version>3.18.2</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.xml.bind</groupId>
-            <artifactId>jakarta.xml.bind-api</artifactId>
-            <!-- 2.3.3 is the closest major version to the EoL javaee/jaxb-api 2.3.0 -->
-            <version>3.0.1</version>
         </dependency>
     </dependencies>
 

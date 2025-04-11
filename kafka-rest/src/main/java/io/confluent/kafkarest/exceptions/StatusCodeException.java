@@ -17,7 +17,7 @@ package io.confluent.kafkarest.exceptions;
 
 import static java.util.Objects.requireNonNull;
 
-import jakarta.ws.rs.core.Response.Status;
+import javax.ws.rs.core.Response.Status;
 
 /** An exception that can be returned as an HTTP response. */
 public class StatusCodeException extends RuntimeException {

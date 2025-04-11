@@ -17,10 +17,10 @@ package io.confluent.kafkarest.entities.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
+import javax.annotation.Nullable;
 
 public final class ConsumerAssignmentResponse {
 

@@ -17,9 +17,9 @@ package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import org.apache.kafka.common.TopicPartition;
 
 @AutoValue

@@ -20,9 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.UriUtils;
-import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Properties;
+import javax.ws.rs.core.UriInfo;
 import org.apache.kafka.common.config.ConfigException;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.BeforeEach;

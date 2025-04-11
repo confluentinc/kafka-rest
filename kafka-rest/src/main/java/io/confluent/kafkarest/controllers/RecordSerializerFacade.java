@@ -21,9 +21,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 final class RecordSerializerFacade implements RecordSerializer {
 

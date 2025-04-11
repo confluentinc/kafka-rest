@@ -22,21 +22,17 @@ import static org.easymock.EasyMock.verify;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
+import org.easymock.EasyMock;
 import org.eclipse.jetty.http.HttpFields;
-import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Response;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-@Disabled("KNET-18040")
 public class CustomLogTest {
 
   private String logEntry;
-
-  private static String LOG_FORMAT = "%m %uri";
 
   private class TestLogWriter implements RequestLog.Writer {
 
@@ -53,12 +49,14 @@ public class CustomLogTest {
 
   @Test
   public void test_IfNoAttributeConfigured_ThenLogMatchesFormat() throws Exception {
-    CustomLog customLog = new CustomLog(new TestLogWriter(), LOG_FORMAT, new String[] {});
+    CustomLog customLog =
+        new CustomLog(new TestLogWriter(), "%{client}a %H %{User-Agent}i", new String[] {});
     customLog.start();
 
     Request request = mock(Request.class);
-    expect(request.getMethod()).andReturn("PATCH");
-    expect(request.getHttpURI()).andReturn(HttpURI.from("testUri"));
+    expect(request.getRemoteHost()).andReturn("localhost");
+    expect(request.getProtocol()).andReturn("testProtocol");
+    expect(request.getHeader("User-Agent")).andReturn("testUser");
 
     Response response = mock(Response.class);
     replay(request, response);
@@ -66,71 +64,74 @@ public class CustomLogTest {
     customLog.log(request, response);
     verify(request, response);
 
-    assertEquals("PATCH testUri", logEntry);
+    assertEquals("localhost testProtocol testUser", logEntry);
   }
 
   @Test
   public void test_IfAttributeConfiguredAndSetOnRequest_And_ThenLogged() throws Exception {
     CustomLog customLog =
-        new CustomLog(new TestLogWriter(), LOG_FORMAT, new String[] {"FooBarAttr"});
+        new CustomLog(
+            new TestLogWriter(), "%{client}a %H %{User-Agent}i", new String[] {"FooBarAttr"});
     customLog.start();
 
     Request request = mock(Request.class);
     Response response = mock(Response.class);
-    HttpFields.Mutable httpFields = mock(HttpFields.Mutable.class);
 
     // Before Jetty's CustomRequestLog.log() is called, need to convert request-attribute ->
     // response-header for logging.
     expect(request.getAttribute("FooBarAttr")).andReturn("FooBarVal");
-    expect(request.removeAttribute("FooBarAttr")).andReturn(null);
-    // Set response-header for logging
-    expect(response.getHeaders()).andReturn(httpFields).anyTimes();
-    expect(httpFields.put("FooBarAttr", "FooBarVal")).andReturn(httpFields);
+    request.removeAttribute("FooBarAttr");
+    EasyMock.expectLastCall();
+    response.setHeader("FooBarAttr", "FooBarVal");
+    EasyMock.expectLastCall();
 
-    // Setup request values for logging
-    expect(request.getMethod()).andReturn("PATCH");
-    expect(request.getHttpURI()).andReturn(HttpURI.from("testUri"));
-    expect(httpFields.get("FooBarAttr")).andReturn("FooBarVal");
+    // Needed by CustomRequestLog.log()
+    expect(request.getRemoteHost()).andReturn("localhost");
+    expect(request.getProtocol()).andReturn("testProtocol");
+    expect(request.getHeader("User-Agent")).andReturn("testUser");
+    expect(response.getHeader("FooBarAttr")).andReturn("FooBarVal");
 
-    // After CustomRequestLog.log() make sure response-headers added only for logging, are removed.
-    expect(httpFields.remove("FooBarAttr")).andReturn(httpFields);
-
-    replay(request, response, httpFields);
+    // After CustomRequestLog.log() make sure response-headers, added only for logging, are removed.
+    HttpFields httpFields = mock(HttpFields.class);
+    expect(response.getHttpFields()).andReturn(httpFields);
+    expect(httpFields.remove("FooBarAttr")).andReturn(null);
+    replay(request, response);
 
     customLog.log(request, response);
-    verify(request, response, httpFields);
+    verify(request, response);
 
-    assertEquals("PATCH testUri FooBarVal", logEntry);
+    assertEquals("localhost testProtocol testUser FooBarVal", logEntry);
   }
 
   @Test
   public void test_IfAttributeConfiguredAndNotSetOnRequest_And_ThenNotLogged() throws Exception {
     CustomLog customLog =
-        new CustomLog(new TestLogWriter(), LOG_FORMAT, new String[] {"FooBarAttr"});
+        new CustomLog(
+            new TestLogWriter(), "%{client}a %H %{User-Agent}i", new String[] {"FooBarAttr"});
     customLog.start();
 
     Request request = mock(Request.class);
     Response response = mock(Response.class);
-    HttpFields.Mutable httpFields = mock(HttpFields.Mutable.class);
 
     // Before Jetty's CustomRequestLog.log() is called, configured request-attribute will be checked
     // but don't expect any response-headers to be set if attribute isn't set(i.e. null)
     expect(request.getAttribute("FooBarAttr")).andReturn(null);
 
     // Needed by CustomRequestLog.log()
-    expect(request.getMethod()).andReturn("PATCH");
-    expect(request.getHttpURI()).andReturn(HttpURI.from("testUri"));
-    expect(httpFields.get("FooBarAttr")).andReturn(null);
+    expect(request.getRemoteHost()).andReturn("localhost");
+    expect(request.getProtocol()).andReturn("testProtocol");
+    expect(request.getHeader("User-Agent")).andReturn("testUser");
+    expect(response.getHeader("FooBarAttr")).andReturn(null);
 
-    // After CustomRequestLog.log() make sure response-headers added only for logging, are removed.
-    expect(response.getHeaders()).andReturn(httpFields).anyTimes();
-    expect(httpFields.remove("FooBarAttr")).andReturn(httpFields);
-
-    replay(request, response, httpFields);
+    // After CustomRequestLog.log() make sure response-headers, added only for logging, are removed.
+    HttpFields httpFields = mock(HttpFields.class);
+    expect(response.getHttpFields()).andReturn(httpFields);
+    expect(httpFields.remove("FooBarAttr")).andReturn(null);
+    replay(request, response);
 
     customLog.log(request, response);
-    verify(request, response, httpFields);
+    verify(request, response);
 
-    assertEquals("PATCH testUri -", logEntry);
+    assertEquals("localhost testProtocol testUser -", logEntry);
   }
 }

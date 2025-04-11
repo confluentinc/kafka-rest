@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.exceptions;
 
-import jakarta.ws.rs.core.Response.Status;
+import javax.ws.rs.core.Response.Status;
 
 public class BadRequestException extends StatusCodeException {
 
