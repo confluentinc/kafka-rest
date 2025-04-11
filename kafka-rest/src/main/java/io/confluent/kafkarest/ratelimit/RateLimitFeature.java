@@ -16,9 +16,9 @@
 package io.confluent.kafkarest.ratelimit;
 
 import io.confluent.kafkarest.config.ConfigModule.RateLimitEnabledConfig;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Feature;
-import jakarta.ws.rs.core.FeatureContext;
+import javax.inject.Inject;
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 /**

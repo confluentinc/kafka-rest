@@ -16,10 +16,10 @@
 package io.confluent.kafkarest.entities.v2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotBlank;
 import java.util.Objects;
 import java.util.StringJoiner;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.URL;
 
 public final class CreateConsumerInstanceResponse {

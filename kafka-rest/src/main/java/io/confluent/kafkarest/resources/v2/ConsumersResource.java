@@ -44,26 +44,26 @@ import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.kafkarest.v2.KafkaConsumerState;
 import io.confluent.kafkarest.v2.SchemaKafkaConsumerState;
 import io.confluent.rest.annotations.PerformanceMetric;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.DefaultValue;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.container.AsyncResponse;
-import jakarta.ws.rs.container.Suspended;
-import jakarta.ws.rs.core.UriInfo;
 import java.time.Duration;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.UriInfo;
 
 @Path("/consumers")
 // We include embedded formats here so you can always use these headers when interacting with
@@ -100,7 +100,7 @@ public final class ConsumersResource {
   @PerformanceMetric("consumer.create+v2")
   @ResourceName("api.v2.consumers.create")
   public CreateConsumerInstanceResponse createGroup(
-      @jakarta.ws.rs.core.Context UriInfo uriInfo,
+      @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       @Valid CreateConsumerInstanceRequest config) {
     if (config == null) {
@@ -131,7 +131,7 @@ public final class ConsumersResource {
   @PerformanceMetric("consumer.subscribe+v2")
   @ResourceName("api.v2.consumers.subscribe")
   public void subscribe(
-      @jakarta.ws.rs.core.Context UriInfo uriInfo,
+      @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @Valid @NotNull ConsumerSubscriptionRecord subscription) {
@@ -147,7 +147,7 @@ public final class ConsumersResource {
   @PerformanceMetric("consumer.subscription+v2")
   @ResourceName("api.v2.consumers.get-subscription")
   public ConsumerSubscriptionResponse subscription(
-      @jakarta.ws.rs.core.Context UriInfo uriInfo,
+      @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance) {
     return context.get().getKafkaConsumerManager().subscription(group, instance);
@@ -158,7 +158,7 @@ public final class ConsumersResource {
   @PerformanceMetric("consumer.unsubscribe+v2")
   @ResourceName("api.v2.consumers.unsubscribe")
   public void unsubscribe(
-      @jakarta.ws.rs.core.Context UriInfo uriInfo,
+      @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance) {
     context.get().getKafkaConsumerManager().unsubscribe(group, instance);
@@ -318,7 +318,7 @@ public final class ConsumersResource {
   @PerformanceMetric("consumer.seek-to-beginning+v2")
   @ResourceName("api.v2.consumers.seek-to-beginning")
   public void seekToBeginning(
-      @jakarta.ws.rs.core.Context UriInfo uriInfo,
+      @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @Valid @NotNull ConsumerSeekToRequest seekToRequest) {
@@ -334,7 +334,7 @@ public final class ConsumersResource {
   @PerformanceMetric("consumer.seek-to-end+v2")
   @ResourceName("api.v2.consumers.seek-to-end")
   public void seekToEnd(
-      @jakarta.ws.rs.core.Context UriInfo uriInfo,
+      @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @Valid @NotNull ConsumerSeekToRequest seekToRequest) {
@@ -350,7 +350,7 @@ public final class ConsumersResource {
   @PerformanceMetric("consumer.seek-to-offset+v2")
   @ResourceName("api.v2.consumers.seek-to-offset")
   public void seekToOffset(
-      @jakarta.ws.rs.core.Context UriInfo uriInfo,
+      @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @Valid @NotNull ConsumerSeekRequest request) {
@@ -366,7 +366,7 @@ public final class ConsumersResource {
   @PerformanceMetric("consumer.assign+v2")
   @ResourceName("api.v2.consumers.assign")
   public void assign(
-      @jakarta.ws.rs.core.Context UriInfo uriInfo,
+      @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @Valid @NotNull ConsumerAssignmentRequest assignmentRequest) {
@@ -382,7 +382,7 @@ public final class ConsumersResource {
   @PerformanceMetric("consumer.assignment+v2")
   @ResourceName("api.v2.consumers.get-assignments")
   public ConsumerAssignmentResponse assignment(
-      @jakarta.ws.rs.core.Context UriInfo uriInfo,
+      @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance) {
     return context.get().getKafkaConsumerManager().assignment(group, instance);

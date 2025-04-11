@@ -31,10 +31,10 @@ import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterCountG
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiterCacheLoader;
 import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 
 public class ProduceRateLimiters {
 

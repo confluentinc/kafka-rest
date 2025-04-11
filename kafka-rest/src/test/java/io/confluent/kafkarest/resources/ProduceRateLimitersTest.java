@@ -31,11 +31,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
 import io.confluent.kafkarest.resources.v3.ProduceRateLimiters;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.util.Properties;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 
 public class ProduceRateLimitersTest {

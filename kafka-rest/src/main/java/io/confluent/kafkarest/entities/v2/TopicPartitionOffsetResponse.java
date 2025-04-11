@@ -18,9 +18,9 @@ package io.confluent.kafkarest.entities.v2;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import jakarta.annotation.Nullable;
 import java.util.Objects;
 import java.util.StringJoiner;
+import javax.annotation.Nullable;
 
 /**
  * Response for GET /topics/(topic)/partitions/(partition)/offsets requests.

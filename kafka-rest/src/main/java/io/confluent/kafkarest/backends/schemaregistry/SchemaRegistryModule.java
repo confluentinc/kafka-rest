@@ -19,9 +19,9 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafkarest.KafkaRestContext;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;

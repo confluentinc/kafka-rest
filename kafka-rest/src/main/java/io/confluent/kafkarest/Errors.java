@@ -20,7 +20,7 @@ import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
-import jakarta.ws.rs.core.Response;
+import javax.ws.rs.core.Response;
 import org.apache.kafka.common.config.ConfigException;
 
 public class Errors {

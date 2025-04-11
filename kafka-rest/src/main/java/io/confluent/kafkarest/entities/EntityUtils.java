@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.entities;
 
-import jakarta.xml.bind.DatatypeConverter;
+import javax.xml.bind.DatatypeConverter;
 
 public class EntityUtils {
 

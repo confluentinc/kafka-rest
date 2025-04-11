@@ -16,9 +16,9 @@
 package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
-import jakarta.annotation.Nullable;
 import java.time.Instant;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 @AutoValue

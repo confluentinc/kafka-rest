@@ -17,11 +17,11 @@ package io.confluent.kafkarest.entities.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 public final class BrokerList {
 

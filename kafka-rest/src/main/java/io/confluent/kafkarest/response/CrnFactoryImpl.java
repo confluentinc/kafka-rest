@@ -16,8 +16,8 @@
 package io.confluent.kafkarest.response;
 
 import io.confluent.kafkarest.config.ConfigModule.CrnAuthorityConfig;
-import jakarta.inject.Inject;
 import java.util.StringJoiner;
+import javax.inject.Inject;
 
 /**
  * A {@link CrnFactory} that uses the given {@code crnAuthorityConfig} as the Confluent Resource

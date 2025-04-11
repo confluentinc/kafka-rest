@@ -19,13 +19,13 @@ import io.confluent.kafkarest.config.ConfigModule.AdvertisedListenersConfig;
 import io.confluent.kafkarest.config.ConfigModule.HostNameConfig;
 import io.confluent.kafkarest.config.ConfigModule.ListenersConfig;
 import io.confluent.kafkarest.config.ConfigModule.PortConfig;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
 
 public final class UrlFactoryImpl implements UrlFactory {
 

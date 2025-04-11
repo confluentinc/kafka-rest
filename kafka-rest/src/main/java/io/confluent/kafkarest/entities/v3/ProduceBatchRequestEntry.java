@@ -34,11 +34,11 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
 import io.confluent.kafkarest.resources.v3.ProduceBatchAction;
-import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 @AutoValue
 @JsonDeserialize(using = ProduceBatchRequestEntry.Deserializer.class)

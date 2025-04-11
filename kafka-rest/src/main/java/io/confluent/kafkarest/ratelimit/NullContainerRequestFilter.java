@@ -15,9 +15,9 @@
 
 package io.confluent.kafkarest.ratelimit;
 
-import jakarta.ws.rs.container.ContainerRequestContext;
-import jakarta.ws.rs.container.ContainerRequestFilter;
 import java.io.IOException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
 
 /** A {@link ContainerRequestFilter} that doesn't filter anything. */
 final class NullContainerRequestFilter implements ContainerRequestFilter {

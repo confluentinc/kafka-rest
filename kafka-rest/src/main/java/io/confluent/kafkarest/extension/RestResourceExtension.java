@@ -16,7 +16,7 @@
 package io.confluent.kafkarest.extension;
 
 import io.confluent.kafkarest.KafkaRestConfig;
-import jakarta.ws.rs.core.Configurable;
+import javax.ws.rs.core.Configurable;
 
 /** Any custom resources like filters, providers, etc can be added by extending this interface. */
 public interface RestResourceExtension {

@@ -21,10 +21,10 @@ import io.confluent.kafkarest.entities.Acl.PatternType;
 import io.confluent.kafkarest.entities.Acl.Permission;
 import io.confluent.kafkarest.entities.Acl.ResourceType;
 import io.confluent.kafkarest.entities.v3.CreateAclRequest;
-import jakarta.annotation.Nullable;
-import jakarta.ws.rs.BadRequestException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
+import javax.ws.rs.BadRequestException;
 
 public interface AclManager {
 

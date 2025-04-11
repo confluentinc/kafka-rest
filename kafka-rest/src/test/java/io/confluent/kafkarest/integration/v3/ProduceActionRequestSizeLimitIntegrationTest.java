@@ -38,14 +38,13 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.core.MediaType;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.InputStreamResponseListener;
-import org.eclipse.jetty.client.OutputStreamRequestContent;
-import org.eclipse.jetty.client.Response;
-import org.eclipse.jetty.client.transport.HttpClientTransportDynamic;
+import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.util.InputStreamResponseListener;
+import org.eclipse.jetty.client.util.OutputStreamContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -73,18 +72,6 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
 
   private HttpClient httpClient;
 
-  static HttpClient httpClient(SslContextFactory.Client sslContextFactory) {
-    final HttpClient client;
-    if (sslContextFactory != null) {
-      ClientConnector clientConnector = new ClientConnector();
-      clientConnector.setSslContextFactory(sslContextFactory);
-      client = new HttpClient(new HttpClientTransportDynamic(clientConnector));
-    } else {
-      client = new HttpClient();
-    }
-    return client;
-  }
-
   @RegisterExtension
   public final DefaultKafkaRestTestEnvironment testEnv = new DefaultKafkaRestTestEnvironment(false);
 
@@ -101,7 +88,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
 
     SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
     sslContextFactory.setSslContext(testEnv.certificates().getSslContext("kafka-rest"));
-    httpClient = httpClient(sslContextFactory);
+    httpClient = new HttpClient(sslContextFactory);
     httpClient.start();
   }
 
@@ -123,13 +110,13 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
             .path("/v3/clusters/" + clusterId + "/topics/" + TEST_TOPIC_NAME + "/records")
             .getUri();
 
-    final OutputStreamRequestContent content = new OutputStreamRequestContent("application/json");
+    final OutputStreamContentProvider contentProvider = new OutputStreamContentProvider();
     InputStreamResponseListener responseListener = new InputStreamResponseListener();
 
     httpClient
         .POST(uri)
-        .headers(headers -> headers.put(HttpHeader.TRANSFER_ENCODING, "chunked"))
-        .body(content)
+        .header(HttpHeader.TRANSFER_ENCODING, "chunked")
+        .content(contentProvider, MediaType.APPLICATION_JSON)
         .send(responseListener); // async request
 
     httpClient
@@ -137,7 +124,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
         .execute(
             () -> {
               // send data in a separate thread
-              try (OutputStream outputStream = content.getOutputStream()) {
+              try (OutputStream outputStream = contentProvider.getOutputStream()) {
                 for (int i = 0; i < 5; i++) {
                   outputStream.write(generateData(TEST_DATA_SIZE).getBytes(StandardCharsets.UTF_8));
                 }
@@ -185,13 +172,13 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
             .path("/v3/clusters/" + clusterId + "/topics/" + TEST_TOPIC_NAME + "/records")
             .getUri();
 
-    final OutputStreamRequestContent content = new OutputStreamRequestContent("application/json");
+    final OutputStreamContentProvider contentProvider = new OutputStreamContentProvider();
     InputStreamResponseListener responseListener = new InputStreamResponseListener();
 
     httpClient
         .POST(uri)
-        .headers(headers -> headers.put(HttpHeader.TRANSFER_ENCODING, "chunked"))
-        .body(content)
+        .header(HttpHeader.TRANSFER_ENCODING, "chunked")
+        .content(contentProvider, MediaType.APPLICATION_JSON)
         .send(responseListener); // async request
 
     httpClient
@@ -199,13 +186,11 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
         .execute(
             () -> {
               // send data in a separate thread
-              try (OutputStream outputStream = content.getOutputStream()) {
+              try (OutputStream outputStream = contentProvider.getOutputStream()) {
                 // all the messages are within limit
                 for (int i = 0; i < 10; i++) {
                   outputStream.write(generateData(TEST_DATA_SIZE).getBytes(StandardCharsets.UTF_8));
                 }
-                // Ensures that all data is properly sent before the stream is closed.
-                outputStream.flush();
               } catch (IOException e) {
                 log.error("Error writing to output stream", e);
               }
@@ -250,13 +235,13 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
             .path("/v3/clusters/" + clusterId + "/topics/" + TEST_TOPIC_NAME + "/records")
             .getUri();
 
-    final OutputStreamRequestContent content = new OutputStreamRequestContent("application/json");
+    final OutputStreamContentProvider contentProvider = new OutputStreamContentProvider();
     InputStreamResponseListener responseListener = new InputStreamResponseListener();
 
     httpClient
         .POST(uri)
-        .headers(headers -> headers.put(HttpHeader.TRANSFER_ENCODING, "chunked"))
-        .body(content)
+        .header(HttpHeader.TRANSFER_ENCODING, "chunked")
+        .content(contentProvider, MediaType.APPLICATION_JSON)
         .send(responseListener); // async request
 
     httpClient
@@ -264,7 +249,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
         .execute(
             () -> {
               // send data in a separate thread
-              try (OutputStream outputStream = content.getOutputStream()) {
+              try (OutputStream outputStream = contentProvider.getOutputStream()) {
                 // this is over limit size
                 outputStream.write(
                     generateData(TEST_DATA_SIZE + 16 * 1024).getBytes(StandardCharsets.UTF_8));
@@ -316,13 +301,13 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
             .path("/v3/clusters/" + clusterId + "/topics/" + TEST_TOPIC_NAME + "/records")
             .getUri();
 
-    final OutputStreamRequestContent content = new OutputStreamRequestContent("application/json");
+    final OutputStreamContentProvider contentProvider = new OutputStreamContentProvider();
     InputStreamResponseListener responseListener = new InputStreamResponseListener();
 
     httpClient
         .POST(uri)
-        .headers(headers -> headers.put(HttpHeader.TRANSFER_ENCODING, "chunked"))
-        .body(content)
+        .header(HttpHeader.TRANSFER_ENCODING, "chunked")
+        .content(contentProvider, MediaType.APPLICATION_JSON)
         .send(responseListener); // async request
 
     httpClient
@@ -330,7 +315,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
         .execute(
             () -> {
               // send data in a separate thread
-              try (OutputStream outputStream = content.getOutputStream()) {
+              try (OutputStream outputStream = contentProvider.getOutputStream()) {
                 outputStream.write(generateData(TEST_DATA_SIZE).getBytes(StandardCharsets.UTF_8));
                 // this is over limit size
                 outputStream.write(
@@ -339,8 +324,6 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
                 for (int i = 0; i < 10; i++) {
                   outputStream.write(generateData(TEST_DATA_SIZE).getBytes(StandardCharsets.UTF_8));
                 }
-                // Ensures that all data is properly sent before the stream is closed.
-                outputStream.flush();
               } catch (IOException e) {
                 log.error("Error writing to output stream", e);
               }
@@ -348,7 +331,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
 
     List<TestProduceResponse> produceResponses = new ArrayList<>();
     // waiting for response
-    Response response = responseListener.get(2, TimeUnit.MINUTES);
+    Response response = responseListener.get(1, TimeUnit.MINUTES);
     if (response.getStatus() == HttpStatus.OK_200) {
       // Obtain the input stream on the response content
       try (InputStream input = responseListener.getInputStream()) {

@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
-import jakarta.annotation.Nullable;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 @AutoValue
 public abstract class ProduceBatchResponseFailureEntry {

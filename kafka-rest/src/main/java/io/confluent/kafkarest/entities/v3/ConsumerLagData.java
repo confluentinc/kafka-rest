@@ -19,8 +19,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.entities.ConsumerLag;
-import jakarta.annotation.Nullable;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 @AutoValue
 public abstract class ConsumerLagData extends Resource {

@@ -16,7 +16,7 @@
 package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
-import jakarta.annotation.Nullable;
+import javax.annotation.Nullable;
 import org.apache.kafka.clients.admin.ConfigEntry;
 
 /**

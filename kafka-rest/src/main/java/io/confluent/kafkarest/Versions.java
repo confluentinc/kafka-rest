@@ -15,9 +15,9 @@
 
 package io.confluent.kafkarest;
 
-import jakarta.ws.rs.core.MediaType;
 import java.util.Arrays;
 import java.util.List;
+import javax.ws.rs.core.MediaType;
 
 public class Versions {
 

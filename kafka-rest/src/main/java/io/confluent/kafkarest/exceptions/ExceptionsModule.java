@@ -19,15 +19,15 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.exceptions.v2.V2ExceptionMapper;
 import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.Feature;
-import jakarta.ws.rs.core.FeatureContext;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-import jakarta.ws.rs.ext.ExceptionMapper;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import javax.inject.Inject;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.ExceptionMapper;
 
 /** Module to install exception handlers for {@link StatusCodeException}. */
 public final class ExceptionsModule implements Feature {
