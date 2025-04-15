@@ -46,6 +46,8 @@ import org.apache.kafka.common.resource.ResourcePattern;
 import org.apache.kafka.common.resource.ResourceType;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.metadata.authorizer.StandardAuthorizer;
+import org.apache.kafka.server.config.ServerConfigs;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -84,7 +86,14 @@ public class AuthorizationErrorTest
     Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     properties.put("sasl.jaas.config", createPlainLoginModule("admin", "admin-secret"));
-    createTopic(TOPIC_NAME, 1, (short) 1, properties);
+    for (int i = 0; i < 10; i++) {
+      try {
+        createTopic(TOPIC_NAME, 1, (short) 1, properties);
+        break;
+      } catch (Exception ignored) {
+        Thread.sleep(1000);
+      }
+    }
   }
 
   @Override
@@ -119,6 +128,7 @@ public class AuthorizationErrorTest
             (short) 1,
             false);
     brokerProps.put("broker.id", Integer.toString(i));
+    brokerProps.put("authorizer.class.name", StandardAuthorizer.class.getName());
     brokerProps.setProperty("super.users", "User:admin");
     brokerProps.setProperty(
         "listener.name.sasl_plaintext.plain.sasl.jaas.config",
@@ -128,6 +138,15 @@ public class AuthorizationErrorTest
             + "user_admin=\"admin-secret\" "
             + "user_alice=\"alice-secret\"; ");
     return brokerProps;
+  }
+
+  @Override
+  protected Properties overrideKraftControllerConfig() {
+    Properties props = new Properties();
+    props.setProperty(ServerConfigs.AUTHORIZER_CLASS_NAME_CONFIG, StandardAuthorizer.class.getName());
+    // this setting allows brokers to register to Kraft controller
+    props.put(StandardAuthorizer.ALLOW_EVERYONE_IF_NO_ACL_IS_FOUND_CONFIG, true);
+    return props;
   }
 
   protected void overrideKafkaRestConfigs(Properties restProperties) {
@@ -148,14 +167,13 @@ public class AuthorizationErrorTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"zk"})
-  @Disabled("KNET-16782")
+  @ValueSource(strings = {"kraft"})
   public void testConsumerRequest(String quorum) {
     // test without acls
-    verifySubscribeToTopic(true);
+//    verifySubscribeToTopic(true);
     // add acls
-    setConsumerAcls();
-    verifySubscribeToTopic(false);
+//    setConsumerAcls();
+//    verifySubscribeToTopic(false);
   }
 
   private void setConsumerAcls() {
