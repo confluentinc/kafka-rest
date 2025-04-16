@@ -101,7 +101,7 @@ public class AuthorizationErrorTest
                         .setConfigs(new ArrayList<>())
                         .build(),
                     MediaType.APPLICATION_JSON));
-    assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
   }
 
   @Override
