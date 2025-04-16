@@ -18,6 +18,7 @@ package io.confluent.kafkarest.integration;
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,8 +32,11 @@ import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicP
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
+import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -46,15 +50,15 @@ import org.apache.kafka.common.resource.ResourcePattern;
 import org.apache.kafka.common.resource.ResourceType;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.metadata.authorizer.StandardAuthorizer;
+import org.apache.kafka.server.config.ServerConfigs;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import scala.Option;
 
-@Disabled("Until we fix KNET-16472, this test should be disabled")
 public class AuthorizationErrorTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
@@ -84,7 +88,20 @@ public class AuthorizationErrorTest
     Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     properties.put("sasl.jaas.config", createPlainLoginModule("admin", "admin-secret"));
-    createTopic(TOPIC_NAME, 1, (short) 1, properties);
+    String clusterId = getClusterId();
+    String topicUrl = "/v3/clusters/" + clusterId + "/topics";
+    Response response =
+        request(topicUrl)
+            .post(
+                Entity.entity(
+                    CreateTopicRequest.builder()
+                        .setTopicName(TOPIC_NAME)
+                        .setPartitionsCount(1)
+                        .setReplicationFactor((short) 1)
+                        .setConfigs(new ArrayList<>())
+                        .build(),
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
   }
 
   @Override
@@ -119,6 +136,7 @@ public class AuthorizationErrorTest
             (short) 1,
             false);
     brokerProps.put("broker.id", Integer.toString(i));
+    brokerProps.put("authorizer.class.name", StandardAuthorizer.class.getName());
     brokerProps.setProperty("super.users", "User:admin");
     brokerProps.setProperty(
         "listener.name.sasl_plaintext.plain.sasl.jaas.config",
@@ -128,6 +146,15 @@ public class AuthorizationErrorTest
             + "user_admin=\"admin-secret\" "
             + "user_alice=\"alice-secret\"; ");
     return brokerProps;
+  }
+
+  @Override
+  protected Properties overrideKraftControllerConfig() {
+    Properties props = new Properties();
+    props.put(ServerConfigs.AUTHORIZER_CLASS_NAME_CONFIG, StandardAuthorizer.class.getName());
+    // this setting allows brokers to register to Kraft controller
+    props.put(StandardAuthorizer.ALLOW_EVERYONE_IF_NO_ACL_IS_FOUND_CONFIG, true);
+    return props;
   }
 
   protected void overrideKafkaRestConfigs(Properties restProperties) {
@@ -148,8 +175,7 @@ public class AuthorizationErrorTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"zk"})
-  @Disabled("KNET-16782")
+  @ValueSource(strings = {"kraft"})
   public void testConsumerRequest(String quorum) {
     // test without acls
     verifySubscribeToTopic(true);
@@ -177,8 +203,7 @@ public class AuthorizationErrorTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"zk"})
-  @Disabled("KNET-16782")
+  @ValueSource(strings = {"kraft"})
   public void testProducerAuthorization(String quorum) {
     BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecords);
     // test without any acls
@@ -280,7 +305,7 @@ public class AuthorizationErrorTest
     Properties adminProperties = new Properties();
     adminProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     adminProperties.put("security.protocol", "SASL_PLAINTEXT");
-    adminProperties.setProperty("sasl.mechanism", "PLAIN");
+    adminProperties.put("sasl.mechanism", "PLAIN");
     adminProperties.put("sasl.jaas.config", createPlainLoginModule("admin", "admin-secret"));
     return adminProperties;
   }
