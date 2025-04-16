@@ -18,6 +18,7 @@ package io.confluent.kafkarest.integration;
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -92,7 +93,7 @@ public class AuthorizationErrorTest
     properties.put("sasl.jaas.config", createPlainLoginModule("admin", "admin-secret"));
     String clusterId = getClusterId();
     String topicUrl = "/v3/clusters/" + clusterId + "/topics";
-    Response respose =
+    Response response =
         request(topicUrl)
             .post(
                 Entity.entity(
@@ -103,8 +104,7 @@ public class AuthorizationErrorTest
                         .setConfigs(new ArrayList<>())
                         .build(),
                     MediaType.APPLICATION_JSON));
-    System.out.println(respose);
-//    createTopic(TOPIC_NAME, 1, (short) 1, properties);
+    assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Override
