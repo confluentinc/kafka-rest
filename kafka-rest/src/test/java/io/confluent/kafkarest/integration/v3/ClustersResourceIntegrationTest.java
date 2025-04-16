@@ -47,7 +47,6 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
-
     Response response = request("/v3/clusters").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
@@ -57,7 +56,8 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(1, actualClusterData.size());
     Resource.Relationship relationship = actualClusterData.get(0).getController().orElse(null);
     assertNotNull(relationship);
-    assertTrue(relationship.getRelated().startsWith(baseUrl + "/v3/clusters/" + clusterId + "/brokers/"));
+    assertTrue(
+        relationship.getRelated().startsWith(baseUrl + "/v3/clusters/" + clusterId + "/brokers/"));
 
     ListClustersResponse expected =
         ListClustersResponse.create(
@@ -117,7 +117,8 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
     ClusterData actualClusterData = actual.getValue();
     Resource.Relationship relationship = actualClusterData.getController().orElse(null);
     assertNotNull(relationship);
-    assertTrue(relationship.getRelated().startsWith(baseUrl + "/v3/clusters/" + clusterId + "/brokers/"));
+    assertTrue(
+        relationship.getRelated().startsWith(baseUrl + "/v3/clusters/" + clusterId + "/brokers/"));
 
     GetClusterResponse expected =
         GetClusterResponse.create(

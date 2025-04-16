@@ -36,7 +36,6 @@ import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -152,7 +151,7 @@ public class AuthorizationErrorTest
   @Override
   protected Properties overrideKraftControllerConfig() {
     Properties props = new Properties();
-    props.setProperty(ServerConfigs.AUTHORIZER_CLASS_NAME_CONFIG, StandardAuthorizer.class.getName());
+    props.put(ServerConfigs.AUTHORIZER_CLASS_NAME_CONFIG, StandardAuthorizer.class.getName());
     // this setting allows brokers to register to Kraft controller
     props.put(StandardAuthorizer.ALLOW_EVERYONE_IF_NO_ACL_IS_FOUND_CONFIG, true);
     return props;
