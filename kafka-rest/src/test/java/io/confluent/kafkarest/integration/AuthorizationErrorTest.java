@@ -136,7 +136,7 @@ public class AuthorizationErrorTest
             (short) 1,
             false);
     brokerProps.put("broker.id", Integer.toString(i));
-    brokerProps.put("authorizer.class.name", StandardAuthorizer.class.getName());
+    brokerProps.put(ServerConfigs.AUTHORIZER_CLASS_NAME_CONFIG, StandardAuthorizer.class.getName());
     brokerProps.setProperty("super.users", "User:admin");
     brokerProps.setProperty(
         "listener.name.sasl_plaintext.plain.sasl.jaas.config",

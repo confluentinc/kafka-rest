@@ -54,6 +54,8 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
 
     ImmutableList<ClusterData> actualClusterData = actual.getValue().getData();
     assertEquals(1, actualClusterData.size());
+    // getControllerID() is non-deterministic in Kraft,
+    // so we're relying on the returned controller for building actual object
     Resource.Relationship relationship = actualClusterData.get(0).getController().orElse(null);
     assertNotNull(relationship);
     assertTrue(
@@ -115,6 +117,8 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
     GetClusterResponse actual = response.readEntity(GetClusterResponse.class);
 
     ClusterData actualClusterData = actual.getValue();
+    // getControllerID() is non-deterministic in Kraft,
+    // so we're relying on the returned controller for building actual object
     Resource.Relationship relationship = actualClusterData.getController().orElse(null);
     assertNotNull(relationship);
     assertTrue(
