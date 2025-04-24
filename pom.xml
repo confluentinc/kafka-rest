@@ -48,8 +48,8 @@
         <confluent.maven.repo>https://packages.confluent.io/maven/</confluent.maven.repo>
         <checkstyle.config.location>checkstyle/checkstyle.xml</checkstyle.config.location>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
-        <io.confluent.kafka-rest.version>8.0.0-0</io.confluent.kafka-rest.version>
-        <!-- Allow enough heap space for integration tests with both Kraft and Zookeeper -->
+        <io.confluent.kafka-rest.version>8.1.0-0</io.confluent.kafka-rest.version>
+        <!-- Allow enough heap space for integration tests with Kraft -->
         <argLine>-Xmx4g -Xms2g</argLine>
     </properties>
 
@@ -143,21 +143,6 @@
                     <exclusion>
                         <groupId>org.yaml</groupId>
                         <artifactId>snakeyaml</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.zookeeper</groupId>
-                <artifactId>zookeeper</artifactId>
-                <version>${zookeeper.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>ch.qos.logback</groupId>
-                        <artifactId>logback-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>ch.qos.logback</groupId>
-                        <artifactId>logback-classic</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
