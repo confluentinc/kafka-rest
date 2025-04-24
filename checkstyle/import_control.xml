@@ -163,7 +163,6 @@
   <allow class="kafka.server.QuorumTestHarness" />
   <allow class="kafka.utils.CoreUtils" />
   <allow class="kafka.utils.TestUtils" />
-  <allow class="kafka.zk.EmbeddedZookeeper" />
   <!-- For verifying equals contract -->
   <allow class="nl.jqno.equalsverifier.EqualsVerifier" exact-match="true"/>
 </import-control>
