@@ -31,7 +31,7 @@ import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
 /**
- * An extension that runs a Zookeeper/Kraft controller server.
+ * An extension that runs aKraft controller server.
  *
  * <p>This fixture currently does not support SSL and/or SASL.
  */
