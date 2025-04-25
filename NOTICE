@@ -109,7 +109,3 @@ The following libraries are included in packaged versions of this project:
  * COPYRIGHT: Original Author: Lasse Collin <lasse.collin@tukaani.org>
  * LICENSE: Public Domain
  * HOMEPAGE: http://tukaani.org/xz/java.html
-
-* ZkClient
- * LICENSE: licenses/LICENSE.apache2.txt
- * HOMEPAGE: https://github.com/sgroschupf/zkclient

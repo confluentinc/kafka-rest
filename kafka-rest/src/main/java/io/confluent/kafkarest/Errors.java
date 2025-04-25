@@ -205,9 +205,6 @@ public class Errors {
     return new RestConstraintViolationException(cause, PRODUCE_BATCH_EXCEPTION_ERROR_CODE);
   }
 
-  public static final String ZOOKEEPER_ERROR_MESSAGE = "Zookeeper error: ";
-  public static final int ZOOKEEPER_ERROR_ERROR_CODE = 50001;
-
   // This is a catch-all for Kafka exceptions that can't otherwise be easily classified. For
   // producer operations this will be embedded in the per-message response. For consumer errors,
   // these are returned in the standard error format

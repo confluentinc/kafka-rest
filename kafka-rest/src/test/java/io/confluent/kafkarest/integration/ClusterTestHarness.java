@@ -219,7 +219,7 @@ public abstract class ClusterTestHarness {
   private void setupMethod() throws Exception {
     checkState(testInfo != null);
     log.info("Starting controller of {}", getClass().getSimpleName());
-    // start controller (either Zk or Kraft)
+    // start controller (Kraft)
     this.quorumTestHarness =
         new DefaultQuorumTestHarness(
             overrideKraftControllerSecurityProtocol(), overrideKraftControllerConfig());
@@ -395,12 +395,12 @@ public abstract class ClusterTestHarness {
     return String.format("http://localhost:%d", restPort);
   }
 
-  /** Only applicable in Kraft tests, no effect in Zk tests */
+  /** Only applicable in Kraft tests */
   protected Properties overrideKraftControllerConfig() {
     return new Properties();
   }
 
-  /** Only applicable in Kraft tests, no effect in Zk tests */
+  /** Only applicable in Kraft tests */
   protected SecurityProtocol overrideKraftControllerSecurityProtocol() {
     return SecurityProtocol.PLAINTEXT;
   }
