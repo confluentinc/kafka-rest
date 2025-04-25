@@ -7,7 +7,6 @@ servlet.
 
 Components:
 
-  * 1 Zookeeper instance (`zookeeper:9091`)
   * 3 Kafka brokers:
     1. `kafka-1:9291`, `http://kafka-1:9193`
     2. `kafka-2:9292`, `http://kafka-2:9293`
