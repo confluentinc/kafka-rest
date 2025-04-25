@@ -3,13 +3,13 @@ Configuration:
   Properties:
     Property:
       # Fallback if the system property is not set
-      - name: "kafka-rest.log.dir"
-        value: "./logs"
+      - name: "kafka-rest.logs.dir"
+        value: "."
   Appenders:
     RollingFile:
       name: "file"
       fileName: "${sys:kafka-rest.log.dir}/kafka-rest.log"
-      filePattern: "${sys:kafka-rest.log.dir}/kafka-rest.log.%i"
+      filePattern: "/kafka-rest.log.%i"
       PatternLayout:
         pattern: "[%d] %p %m (%c)%n"
       Policies:
