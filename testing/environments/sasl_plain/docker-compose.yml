@@ -15,25 +15,10 @@
 version: "3.7"
 
 services:
-  zookeeper:
-    image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-zookeeper:6.0.x-latest
-    hostname: zookeeper
-    container_name: sasl-plain-zookeeper
-    volumes:
-      - ./zookeeper-jaas.conf:/etc/zookeeper/zookeeper-jaas.conf
-    environment:
-      ZOOKEEPER_CLIENT_PORT: "9091"
-      ZOOKEEPER_SERVER_ID: 1
-      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/zookeeper/zookeeper-jaas.conf"
-    ports:
-      - "9091:9091"
-
   kafka-1:
     image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:6.0.x-latest
     hostname: kafka-1
     container_name: sasl-plain-kafka-1
-    depends_on:
-      - zookeeper
     volumes:
       - ./kafka-jaas.conf:/etc/kafka/kafka-jaas.conf
     environment:
@@ -47,7 +32,6 @@ services:
       KAFKA_SASL_ENABLED_MECHANISMS: "PLAIN"
       KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: "PLAIN"
       KAFKA_SUPER_USERS: "User:kafka;User:kafkarest;User:schemaregistry"
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
       KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka-jaas.conf"
     ports:
       - "9291:9291"
@@ -56,8 +40,6 @@ services:
     image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:6.0.x-latest
     hostname: kafka-2
     container_name: sasl-plain-kafka-2
-    depends_on:
-      - zookeeper
     volumes:
       - ./kafka-jaas.conf:/etc/kafka/kafka-jaas.conf
     environment:
@@ -71,7 +53,6 @@ services:
       KAFKA_SASL_ENABLED_MECHANISMS: "PLAIN"
       KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: "PLAIN"
       KAFKA_SUPER_USERS: "User:kafka;User:kafkarest;User:schemaregistry"
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
       KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka-jaas.conf"
     ports:
       - "9292:9292"
@@ -80,8 +61,6 @@ services:
     image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:6.0.x-latest
     hostname: kafka-3
     container_name: sasl-plain-kafka-3
-    depends_on:
-      - zookeeper
     volumes:
       - ./kafka-jaas.conf:/etc/kafka/kafka-jaas.conf
     environment:
@@ -95,7 +74,6 @@ services:
       KAFKA_SASL_ENABLED_MECHANISMS: "PLAIN"
       KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: "PLAIN"
       KAFKA_SUPER_USERS: "User:kafka;User:kafkarest;User:schemaregistry"
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
       KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka-jaas.conf"
     ports:
       - "9293:9293"
