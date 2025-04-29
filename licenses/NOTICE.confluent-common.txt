@@ -21,7 +21,3 @@ The following libraries are included in packaged versions of this project:
  * COPYRIGHT: Copyright (c) 2004-2013 QOS.ch
  * LICENSE: licenses/LICENSE.mit.txt
  * HOMEPAGE: http://www.slf4j.org/
-
-* ZkClient
- * LICENSE: licenses/LICENSE.apache2.txt
- * HOMEPAGE: https://github.com/sgroschupf/zkclient
