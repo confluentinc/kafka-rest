@@ -97,7 +97,6 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                     .build())
                             .setClusterId(clusterId)
                             .setTopicName(TOPIC_1)
-                            .setInternal(false)
                             .setReplicationFactor(1)
                             .setPartitionsCount(1)
                             .setPartitions(
@@ -140,7 +139,6 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                     .build())
                             .setClusterId(clusterId)
                             .setTopicName(TOPIC_2)
-                            .setInternal(false)
                             .setReplicationFactor(1)
                             .setPartitionsCount(1)
                             .setPartitions(
@@ -183,7 +181,6 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                     .build())
                             .setClusterId(clusterId)
                             .setTopicName(TOPIC_3)
-                            .setInternal(false)
                             .setReplicationFactor(1)
                             .setPartitionsCount(1)
                             .setPartitions(
@@ -250,7 +247,6 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                         .build())
                 .setClusterId(clusterId)
                 .setTopicName(TOPIC_1)
-                .setInternal(false)
                 .setReplicationFactor(1)
                 .setPartitionsCount(1)
                 .setPartitions(
@@ -321,7 +317,6 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                         .build())
                 .setClusterId(clusterId)
                 .setTopicName(topicName)
-                .setInternal(false)
                 .setReplicationFactor(1)
                 .setPartitionsCount(0)
                 .setPartitions(
@@ -389,7 +384,6 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                         .build())
                 .setClusterId(clusterId)
                 .setTopicName(topicName)
-                .setInternal(false)
                 .setReplicationFactor(2) // As determined by the actual replicas asignments below.
                 .setPartitionsCount(0)
                 .setPartitions(
@@ -534,7 +528,6 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                         .build())
                 .setClusterId(clusterId)
                 .setTopicName(topicName)
-                .setInternal(false)
                 .setReplicationFactor(0)
                 .setPartitionsCount(0)
                 .setPartitions(
@@ -596,7 +589,6 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                         .build())
                 .setClusterId(clusterId)
                 .setTopicName(topicName)
-                .setInternal(false)
                 .setReplicationFactor(2)
                 .setPartitionsCount(1)
                 .setPartitions(

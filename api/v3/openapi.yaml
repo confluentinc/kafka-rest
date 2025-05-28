@@ -2343,7 +2343,6 @@ components:
           required:
             - cluster_id
             - topic_name
-            - is_internal
             - replication_factor
             - partitions_count
             - partitions
@@ -2354,8 +2353,6 @@ components:
               type: string
             topic_name:
               type: string
-            is_internal:
-              type: boolean
             replication_factor:
               type: integer
             partitions_count:
@@ -2591,7 +2588,6 @@ components:
               resource_name: 'crn:///kafka=cluster-1/topic=topic-X'
             cluster_id: 'cluster-1'
             topic_name: 'topic-X'
-            is_internal: false
             replication_factor: 3
             partitions_count: 1
             partitions:
@@ -2953,7 +2949,6 @@ components:
               resource_name: 'crn:///kafka=cluster-1/topic=topic-1'
             cluster_id: 'cluster-1'
             topic_name: 'topic-1'
-            is_internal: false
             replication_factor: 3
             partitions_count: 1
             partitions:
@@ -3582,7 +3577,6 @@ components:
                   resource_name: 'crn:///kafka=cluster-1/topic=topic-1'
                 cluster_id: 'cluster-1'
                 topic_name: 'topic-1'
-                is_internal: false
                 replication_factor: 3
                 partitions_count: 1
                 partitions:
@@ -3597,7 +3591,6 @@ components:
                   resource_name: 'crn:///kafka=cluster-1/topic=topic-2'
                 cluster_id: 'cluster-1'
                 topic_name: 'topic-2'
-                is_internal: true
                 replication_factor: 4
                 partitions_count: 1
                 partitions:
@@ -3612,7 +3605,6 @@ components:
                   resource_name: 'crn:///kafka=cluster-1/topic=topic-3'
                 cluster_id: 'cluster-1'
                 topic_name: 'topic-3'
-                is_internal: false
                 replication_factor: 5
                 partitions_count: 1
                 partitions:

@@ -35,9 +35,6 @@ public abstract class TopicData extends Resource {
   @JsonProperty("topic_name")
   public abstract String getTopicName();
 
-  @JsonProperty("is_internal")
-  public abstract boolean isInternal();
-
   @JsonProperty("replication_factor")
   public abstract int getReplicationFactor();
 
@@ -64,7 +61,6 @@ public abstract class TopicData extends Resource {
     return builder()
         .setClusterId(topic.getClusterId())
         .setTopicName(topic.getName())
-        .setInternal(topic.isInternal())
         .setReplicationFactor(topic.getReplicationFactor())
         .setPartitionsCount(topic.getPartitions().size())
         .setAuthorizedOperations(topic.getAuthorizedOperations());
@@ -76,7 +72,6 @@ public abstract class TopicData extends Resource {
       @JsonProperty("metadata") Metadata metadata,
       @JsonProperty("cluster_id") String clusterId,
       @JsonProperty("topic_name") String topicName,
-      @JsonProperty("is_internal") boolean isInternal,
       @JsonProperty("replication_factor") int replicationFactor,
       @JsonProperty("partitions_count") int partitionsCount,
       @JsonProperty("partitions") Relationship partitions,
@@ -88,7 +83,6 @@ public abstract class TopicData extends Resource {
         .setMetadata(metadata)
         .setClusterId(clusterId)
         .setTopicName(topicName)
-        .setInternal(isInternal)
         .setReplicationFactor(replicationFactor)
         .setPartitionsCount(partitionsCount)
         .setPartitions(partitions)
@@ -106,8 +100,6 @@ public abstract class TopicData extends Resource {
     public abstract Builder setClusterId(String clusterId);
 
     public abstract Builder setTopicName(String topicName);
-
-    public abstract Builder setInternal(boolean isInternal);
 
     public abstract Builder setReplicationFactor(int replicationFactor);
 

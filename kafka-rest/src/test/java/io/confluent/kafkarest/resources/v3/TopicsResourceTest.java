@@ -339,7 +339,6 @@ public class TopicsResourceTest {
                 .build())
         .setClusterId("cluster-1")
         .setTopicName(topicName)
-        .setInternal(isInternal)
         .setReplicationFactor(replicationFactor)
         .setPartitions(
             Resource.Relationship.create(
