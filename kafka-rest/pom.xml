@@ -163,7 +163,6 @@
         </dependency>
     </dependencies>
 
-
     <build>
         <plugins>
             <plugin>
@@ -256,7 +255,7 @@
                             <skip>true</skip>
                         </configuration>
                     </plugin>
-    
+
                     <!-- skip integration tests because they do not include smoke tests (other components have smoke tests) -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
