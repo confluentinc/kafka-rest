@@ -96,6 +96,8 @@ public final class AsyncResponses {
         throw new IllegalStateException();
       }
 
+      //I don't think the exception is thrown outside of the lambda.  ie whatever calls asyncResume doesn't get thrown the exception, it gets eatn up by jetty's exception handler.
+      // Though, even if it does get thrown, eg to AclResources.createAcl() (which is one example of what calls asyncResume), then that'll just throw to teh jetty layer anyway, and prompt the same exception handling
       entityFuture.whenComplete(
           (entity, exception) -> {
             if (exception == null) {
@@ -105,7 +107,8 @@ public final class AsyncResponses {
               if (entityAnnotations != null) {
                 asyncResponse.resume(responseBuilder.entity(entity, entityAnnotations).build());
               } else {
-                asyncResponse.resume(responseBuilder.entity(entity).build());
+                //For testing we could throw the IllegalStateException here, to force the error case
+                asyncResponse.resume(responseBuilder.entity(entity).build()); // This line is throwing, I think because the response object is not available any more?
               }
             } else if (exception instanceof CompletionException) {
               log.error(
