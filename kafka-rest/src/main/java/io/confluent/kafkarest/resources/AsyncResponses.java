@@ -98,43 +98,51 @@ public final class AsyncResponses {
 
       entityFuture.whenComplete(
           (entity, exception) -> {
-            // Check if response is still suspended before attempting to resume
-            if (!asyncResponse.isSuspended()) {
-              log.debug("AsyncResponse already completed, skipping resume");
-              return;
-            }
-
-            try {
-              if (exception == null) {
-                if (statusFunction != null) {
-                  responseBuilder.status(statusFunction.apply(entity));
-                }
-                if (entityAnnotations != null) {
-                  asyncResponse.resume(responseBuilder.entity(entity, entityAnnotations).build());
-                } else {
-                  asyncResponse.resume(responseBuilder.entity(entity).build());
-                }
-              } else if (exception instanceof CompletionException) {
-                log.error(
-                    "Async response CompletionException with error response entity of type {}: {}",
-                    entity != null ? entity.getClass() : "unknown",
-                    entity,
-                    exception);
-                asyncResponse.resume(exception.getCause());
-              } else {
-                log.error(
-                    "Async response exception with error response entity of type {}: {}",
-                    entity != null ? entity.getClass() : "unknown",
-                    entity,
-                    exception);
-                asyncResponse.resume(exception);
-              }
-            } catch (IllegalStateException e) {
-              log.warn("Failed to resume AsyncResponse - likely recycled by container", e);
-            } catch (Exception e) {
-              log.error("Unexpected error while resuming AsyncResponse", e);
-            }
+            handleResponse(asyncResponse, entity, exception);
           });
+    }
+
+    private void handleResponse(AsyncResponse asyncResponse, T entity, Throwable exception) {
+      // Check if response is still suspended before attempting to resume
+      if (!asyncResponse.isSuspended()) {
+        log.debug("AsyncResponse already completed, skipping resume");
+        return;
+      }
+
+      try {
+        if (exception == null) {
+          handleSuccessfulResponse(asyncResponse, entity);
+        } else if (exception instanceof CompletionException) {
+          log.error(
+              "Async response CompletionException with error response entity of type {}: {}",
+              entity != null ? entity.getClass() : "unknown",
+              entity,
+              exception);
+          asyncResponse.resume(exception.getCause());
+        } else {
+          log.error(
+              "Async response exception with error response entity of type {}: {}",
+              entity != null ? entity.getClass() : "unknown",
+              entity,
+              exception);
+          asyncResponse.resume(exception);
+        }
+      } catch (IllegalStateException e) {
+        log.warn("Failed to resume AsyncResponse - likely recycled by container", e);
+      } catch (Exception e) {
+        log.error("Unexpected error while resuming AsyncResponse", e);
+      }
+    }
+
+    private void handleSuccessfulResponse(AsyncResponse asyncResponse, T entity) {
+      if (statusFunction != null) {
+        responseBuilder.status(statusFunction.apply(entity));
+      }
+      if (entityAnnotations != null) {
+        asyncResponse.resume(responseBuilder.entity(entity, entityAnnotations).build());
+      } else {
+        asyncResponse.resume(responseBuilder.entity(entity).build());
+      }
     }
   }
 }
