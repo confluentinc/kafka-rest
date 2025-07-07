@@ -255,7 +255,7 @@ public final class AclsResource {
                                     .thenComparing(AclData::getPermission))
                             .collect(Collectors.toList())));
 
-    AsyncResponses.asyncResume(asyncResponse, response);
+    AsyncResponses.asyncResume(asyncResponse, response, true);
   }
 
   public AclData toAclData(Acl acl) {

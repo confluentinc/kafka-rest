@@ -37,6 +37,13 @@ public final class AsyncResponses {
     AsyncResponseBuilder.<T>from(Response.ok()).entity(entity).asyncResume(asyncResponse);
   }
 
+  public static <T> void asyncResume(
+      AsyncResponse asyncResponse, CompletableFuture<T> entity, boolean isDeleteAclCall) {
+    AsyncResponseBuilder.<T>from(Response.ok())
+        .entity(entity)
+        .asyncResume(asyncResponse, isDeleteAclCall);
+  }
+
   /** A analogous of {@link AsyncResponse} for {@link ResponseBuilder}. */
   public static final class AsyncResponseBuilder<T> {
 
@@ -123,6 +130,43 @@ public final class AsyncResponses {
               asyncResponse.resume(exception);
             }
           });
+    }
+
+    public void asyncResume(AsyncResponse asyncResponse, boolean isDeleteAclCall) {
+      if (entityFuture == null) {
+        throw new IllegalStateException();
+      }
+      entityFuture.whenComplete(
+          (entity, exception) -> {
+            if (exception == null) {
+              if (statusFunction != null) {
+                responseBuilder.status(statusFunction.apply(entity));
+              }
+              if (entityAnnotations != null) {
+                asyncResponse.resume(responseBuilder.entity(entity, entityAnnotations).build());
+              } else {
+                asyncResponse.resume(responseBuilder.entity(entity).build());
+              }
+            } else if (exception instanceof CompletionException) {
+              log.error(
+                  "Async response CompletionException with error response entity of type {}: {}",
+                  entity != null ? entity.getClass() : "unknown",
+                  entity,
+                  exception);
+              asyncResponse.resume(exception.getCause());
+            } else {
+              log.error(
+                  "Async response exception with error response entity of type {}: {}",
+                  entity != null ? entity.getClass() : "unknown",
+                  entity,
+                  exception);
+              asyncResponse.resume(exception);
+            }
+          });
+      if (isDeleteAclCall) {
+        log.error("Delete ACL call throws error");
+        throw new IllegalStateException("Response does not exist (likely recycled)");
+      }
     }
   }
 }
