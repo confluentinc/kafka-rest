@@ -1,22 +1,33 @@
 Configuration:
   name: "Log4j2"
   Appenders:
-    Console:
-      name: "STDOUT"
-      target: "SYSTEM_OUT"
+#    Console:
+#      name: "STDOUT"
+#      PatternLayout:
+#        pattern: "[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%t] %p %m (%c:%L)%n"
+    File:
+      name: "FILE"
+      fileName: "logs/kafka-rest.log"
       PatternLayout:
-        pattern: "[%d] %p %m (%c:%L)%n"
+        pattern: "[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%t] %p %m (%c:%L)%n"
   Loggers:
     Root:
-      level: "TRACE"
+      level: "DEBUG"
       AppenderRef:
-        ref: "STDOUT"
+#        - ref: "STDOUT"
+        - ref: "FILE"
     Logger:
       - name: "kafka"
         level: "ERROR"
       - name: "org.apache.kafka"
         level: "ERROR"
-      - name: "org.eclipse"
-        level: "ERROR"
+      #      - name: "org.eclipse.jetty.ee10.servlet"
+      #        level: "TRACE"
+      #      - name: "org.eclipse"
+      #        level: "ERROR"
       - name: "org.hibernate.validator"
+        level: "ERROR"
+      - name: "com.yammer.metrics"
+        level: "ERROR"
+      - name: "io.confluent.kafkarest.KafkaRestConfig"
         level: "ERROR"

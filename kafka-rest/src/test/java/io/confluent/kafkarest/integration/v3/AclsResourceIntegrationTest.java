@@ -129,6 +129,8 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   public void setUp(TestInfo testInfo) throws Exception {
     super.setUp(testInfo);
 
+    createTopic("topic-1", 3, (short) 3);
+
     clusterId = getClusterId();
     baseAclUrl = "/v3/clusters/" + clusterId + "/acls";
     batchAclUrl = baseAclUrl + ":batch";
@@ -259,6 +261,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   @ValueSource(strings = {"kraft"})
   public void testCreateSearchAndSeparateDelete(String quorum) {
     createAliceAndBobAcls();
+
+    String baseUrl = restConnect + "/v3";
+    String clusterId = getClusterId();
 
     DeleteAclsResponse expectedDeleteAliceResponse =
         DeleteAclsResponse.create(
