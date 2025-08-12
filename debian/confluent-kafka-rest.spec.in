@@ -11,7 +11,7 @@ Vendor: Confluent, Inc.
 Packager: Confluent Packaging <packages@confluent.io>
 BuildArch: noarch
 
-Requires: confluent-rest-utils
+Requires: confluent-rest-utils = ##RPMVERSION##
 
 %description
 
