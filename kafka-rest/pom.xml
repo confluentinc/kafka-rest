@@ -152,11 +152,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-           <groupId>org.bouncycastle</groupId>
-           <artifactId>bcprov-ext-jdk18on</artifactId>
-           <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-all</artifactId>
             <scope>test</scope>
@@ -256,7 +251,7 @@
                             <skip>true</skip>
                         </configuration>
                     </plugin>
-    
+
                     <!-- skip integration tests because they do not include smoke tests (other components have smoke tests) -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
