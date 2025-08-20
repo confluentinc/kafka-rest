@@ -144,17 +144,19 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   private void securityResourceExtensionWarning(KafkaRestConfig config) {
     String extensions = config.getString(KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
-    if (StringUtil.isBlank(extensions) ||
-            !extensions.toLowerCase().contains("io.confluent.kafkarest.security.kafkarestsecurityresourceextension")) {
-      log.warn("Unable to detect an Enterprise license. " +
-          "If an Enterprise license is expected to be configured, please install and activate " +
-          "the security plugins component following instructions on this website: " +
-          "https://docs.confluent.io/platform/current/confluent-security-plugins/" +
-          "kafka-rest.html#kafka-rest-security-plugins-install. " +
-          "Confluent does not offer Enterprise support for any self-managed " +
-          "(Confluent Platform) components without a valid Enterprise license. " +
-          "Please ignore this warning if not using an Enterprise edition of this software."
-      );
+    if (StringUtil.isBlank(extensions)
+        || !extensions
+            .toLowerCase()
+            .contains("io.confluent.kafkarest.security.kafkarestsecurityresourceextension")) {
+      log.warn(
+          "Unable to detect an Enterprise license. "
+              + "If an Enterprise license is expected to be configured, please install and activate "
+              + "the security plugins component following instructions on this website: "
+              + "https://docs.confluent.io/platform/current/confluent-security-plugins/"
+              + "kafka-rest.html#kafka-rest-security-plugins-install. "
+              + "Confluent does not offer Enterprise support for any self-managed "
+              + "(Confluent Platform) components without a valid Enterprise license. "
+              + "Please ignore this warning if not using an Enterprise edition of this software.");
     }
   }
 
