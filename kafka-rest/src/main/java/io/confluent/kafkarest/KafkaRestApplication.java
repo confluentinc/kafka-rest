@@ -150,8 +150,9 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
             .contains("io.confluent.kafkarest.security.kafkarestsecurityresourceextension")) {
       log.warn(
           "Unable to detect an Enterprise license. "
-              + "If an Enterprise license is expected to be configured, please install and activate "
-              + "the security plugins component following instructions on this website: "
+              + "If an Enterprise license is expected to be configured, "
+              + "please install and activate the security plugins component "
+              + "following instructions on this website: "
               + "https://docs.confluent.io/platform/current/confluent-security-plugins/"
               + "kafka-rest.html#kafka-rest-security-plugins-install. "
               + "Confluent does not offer Enterprise support for any self-managed "
