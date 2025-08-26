@@ -219,16 +219,17 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   private void securityResourceExtensionWarning(KafkaRestConfig config) {
     List<String> extensions = config.getList(KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
-    for (String extension : extensions) {
-      if (!StringUtil.isBlank(extension)
-          && extension
+    for (Object extension : extensions) {
+      String extensionName = extension.toString();
+      if (!StringUtil.isBlank(extensionName)
+          && extensionName
               .toLowerCase()
               .contains("io.confluent.kafkarest.security.kafkarestsecurityresourceextension")) {
         return;
       }
     }
     log.warn(
-        "REST security extension is not configured. "
+        "REST security extensions are not configured. "
             + "If an Enterprise license is expected to be configured, "
             + "please install and activate the security plugins component "
             + "following instructions on this website: "
