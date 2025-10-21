@@ -17,7 +17,6 @@ package io.confluent.kafkarest.tools;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.confluent.common.utils.AbstractPerformanceTest;
 import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.Versions;
@@ -34,7 +33,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-@SuppressFBWarnings("DMI_RANDOM_USED_ONLY_ONCE") // https://github.com/spotbugs/spotbugs/issues/1539
 public class ConsumerPerformance extends AbstractPerformanceTest {
 
   private static final Random RANDOM = new Random();
