@@ -15,7 +15,30 @@
 
 package io.confluent.kafkarest;
 
-public class SystemTime extends org.apache.kafka.common.utils.SystemTime implements Time {
+import java.util.function.Supplier;
+
+public class SystemTime implements Time {
+  private final org.apache.kafka.common.utils.Time delegate = Time.SYSTEM;
+
+  @Override
+  public long milliseconds() {
+    return delegate.milliseconds();
+  }
+
+  @Override
+  public long nanoseconds() {
+    return delegate.nanoseconds();
+  }
+
+  @Override
+  public void sleep(long ms) {
+    delegate.sleep(ms);
+  }
+
+  @Override
+  public void waitObject(Object o, Supplier<Boolean> supplier, long l) throws InterruptedException {
+    delegate.waitObject(o, supplier, l);
+  }
 
   @Override
   public void waitOn(Object on, long ms) throws InterruptedException {
