@@ -15,7 +15,6 @@
 
 package io.confluent.kafkarest;
 
-
 public class SystemTime extends org.apache.kafka.common.utils.SystemTime implements Time {
 
   @Override
