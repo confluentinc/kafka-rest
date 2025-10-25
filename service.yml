@@ -6,6 +6,10 @@ codeowners:
 semaphore:
   enable: true
   pipeline_type: cp
+  pr_ci_gating:
+    enable: true
+    project_name: kafka-rest
+  status_level: block
   nano_version: true
   downstream_projects: ["confluent-security-plugins", "ce-kafka-rest", "confluent-cloud-plugins"]
   # kafka-rest has many tests, so we need to run on a bigger machine
