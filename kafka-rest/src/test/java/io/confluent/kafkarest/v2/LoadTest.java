@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.SystemTime;
+import io.confluent.kafkarest.SystemTimeImpl;
 import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
@@ -80,7 +80,7 @@ public class LoadTest {
     private long readStartMs;
 
     ConsumerTestRun(MockConsumer consumer) {
-      this(consumer, new SystemTime());
+      this(consumer, new SystemTimeImpl());
     }
 
     ConsumerTestRun(MockConsumer consumer, Time time) {
