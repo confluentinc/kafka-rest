@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest;
 
-public class SystemTime extends org.apache.kafka.common.utils.SystemTime implements Time {
+public class SystemTimeImpl extends org.apache.kafka.common.utils.SystemTime implements Time {
 
   @Override
   public void waitOn(Object on, long ms) throws InterruptedException {
