@@ -17,7 +17,7 @@ package io.confluent.kafkarest;
 
 import java.util.function.Supplier;
 
-public class SystemTime implements Time {
+public class SystemTimeImpl implements Time {
   private final org.apache.kafka.common.utils.Time delegate = Time.SYSTEM;
 
   @Override
