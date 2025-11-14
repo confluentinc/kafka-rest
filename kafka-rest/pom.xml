@@ -193,7 +193,7 @@
         <dependency>
             <groupId>nl.jqno.equalsverifier</groupId>
             <artifactId>equalsverifier-nodep</artifactId>
-            <version>3.18.2</version>
+            <version>4.2.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
