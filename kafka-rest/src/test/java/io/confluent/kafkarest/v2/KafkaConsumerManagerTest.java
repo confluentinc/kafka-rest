@@ -90,10 +90,17 @@ public class KafkaConsumerManagerTest {
 
   @BeforeEach
   public void setUp() {
+    sawCallback = false;
+    actualException = null;
+    actualRecords = null;
+    actualOffsets = null;
     setUpConsumer(setUpProperties());
   }
 
   private void setUpConsumer(Properties properties) {
+    if (consumerManager != null) {
+      consumerManager.shutdown();
+    }
     config = new KafkaRestConfig(properties);
     consumerManager = new KafkaConsumerManager(config, consumerFactory);
     consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST, groupName);
