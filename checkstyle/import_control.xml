@@ -147,7 +147,7 @@
   <allow class="org.apache.kafka.network.SocketServerConfigs" />
   <allow class="org.apache.kafka.raft.QuorumConfig" />
   <allow class="org.apache.kafka.server.config.DelegationTokenManagerConfigs" />
-  <allow class="org.apache.kafka.server.config.KRaftConfigs" />
+  <allow class="org.apache.kafka.raft.KRaftConfigs" />
   <allow class="org.apache.kafka.server.config.ReplicationConfigs" />
   <allow class="org.apache.kafka.server.config.ServerConfigs" />
   <allow class="org.apache.kafka.server.config.ServerLogConfigs" />
