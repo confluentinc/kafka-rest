@@ -7,6 +7,8 @@ semaphore:
   enable: true
   pipeline_type: cp
   nano_version: true
+  execution_time_limit:
+    hours: 2
   downstream_projects: ["confluent-security-plugins", "ce-kafka-rest", "confluent-cloud-plugins"]
   # kafka-rest has many tests, so we need to run on a bigger machine
   machine_type: s1-prod-ubuntu20-04-amd64-2
