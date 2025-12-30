@@ -6,6 +6,8 @@ codeowners:
 semaphore:
   enable: true
   pipeline_type: cp
+  execution_time_limit:
+    hours: 2
   nano_version: true
   downstream_projects: ["confluent-security-plugins", "ce-kafka-rest", "confluent-cloud-plugins"]
 git:
