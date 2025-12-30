@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -26,8 +27,8 @@ import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.testing.JvmPropertyFileLoginModuleFixture;
 import io.confluent.kafkarest.testing.KafkaClusterFixture;
 import io.confluent.kafkarest.testing.KafkaRestFixture;
+import io.confluent.kafkarest.testing.QuorumControllerFixture;
 import io.confluent.kafkarest.testing.SchemaRegistryFixture;
-import io.confluent.kafkarest.testing.ZookeeperFixture;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -37,8 +38,9 @@ import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @Tag("IntegrationTest")
 public class SchemaRegistrySaslInheritTest {
@@ -55,7 +57,7 @@ public class SchemaRegistrySaslInheritTest {
 
   @Order(2)
   @RegisterExtension
-  public final ZookeeperFixture zookeeper = ZookeeperFixture.create();
+  public final QuorumControllerFixture quorumController = QuorumControllerFixture.create();
 
   @Order(3)
   @RegisterExtension
@@ -67,7 +69,7 @@ public class SchemaRegistrySaslInheritTest {
           .addSuperUser("schema-registry")
           .setNumBrokers(3)
           .setSecurityProtocol(SecurityProtocol.SASL_PLAINTEXT)
-          .setZookeeper(zookeeper)
+          .setQuorumController(quorumController)
           .build();
 
   @Order(4)
@@ -99,8 +101,9 @@ public class SchemaRegistrySaslInheritTest {
     kafkaCluster.createTopic(TOPIC_NAME, 3, (short) 1);
   }
 
-  @Test
-  public void produceAvroWithRawSchema() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithRawSchema(String quorum) throws Exception {
     String clusterId = kafkaCluster.getClusterId();
     String key = "foo";
     String value = "bar";

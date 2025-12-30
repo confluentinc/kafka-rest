@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -72,9 +73,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 // TODO ddimitrov This continues being way too flaky.
 //  Until we fix it (KREST-1542), we should ignore it, as it might be hiding even worse errors.
@@ -135,8 +137,9 @@ public class ProduceActionIntegrationTest {
     testEnv.kafkaRest().closeApp();
   }
 
-  @Test
-  public void produceBinary() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinary(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     ByteString value = ByteString.copyFromUtf8("bar");
@@ -179,8 +182,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, ByteString.copyFrom(produced.value()));
   }
 
-  @Test
-  public void produceBinaryWithNullData() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryWithNullData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -221,8 +225,9 @@ public class ProduceActionIntegrationTest {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceBinaryWithInvalidData_throwsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryWithInvalidData_throwsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -253,8 +258,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceString() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceString(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
     String value = "bar";
@@ -297,8 +303,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceStringWithEmptyData() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringWithEmptyData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -339,8 +346,9 @@ public class ProduceActionIntegrationTest {
     assertTrue(produced.value().isEmpty());
   }
 
-  @Test
-  public void produceStringWithNullData() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringWithNullData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -381,8 +389,9 @@ public class ProduceActionIntegrationTest {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceWithInvalidData_throwsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceWithInvalidData_throwsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"records\": {\"subject\": \"foobar\" } }";
 
@@ -405,8 +414,9 @@ public class ProduceActionIntegrationTest {
         actual.getMessage());
   }
 
-  @Test
-  public void produceJson() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJson(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
     String value = "bar";
@@ -451,8 +461,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonWithNullData() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonWithNullData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -495,8 +506,9 @@ public class ProduceActionIntegrationTest {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceAvroWithRawSchema() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithRawSchema(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
     String value = "bar";
@@ -541,8 +553,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceAvroWithRawSchemaAndNullData_throwsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithRawSchemaAndNullData_throwsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -585,8 +598,9 @@ public class ProduceActionIntegrationTest {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceAvroWithRawSchemaAndInvalidData() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithRawSchemaAndInvalidData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -619,8 +633,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceAvroWithSchemaId() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithSchemaId(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
         testEnv
@@ -671,8 +686,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceAvroWithSchemaVersion() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithSchemaVersion(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
         testEnv
@@ -723,8 +739,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceAvroWithLatestSchema() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithLatestSchema(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     testEnv
         .schemaRegistry()
@@ -765,8 +782,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceAvroWithRawSchemaAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithRawSchemaAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
     String value = "bar";
@@ -813,8 +831,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceAvroWithSchemaIdAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithSchemaIdAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
         testEnv
@@ -867,8 +886,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceAvroWithSchemaVersionAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithSchemaVersionAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
         testEnv
@@ -921,8 +941,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceAvroWithLatestSchemaAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithLatestSchemaAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     testEnv
         .schemaRegistry()
@@ -971,8 +992,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceAvroWithRawSchemaAndSubjectStrategy() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithRawSchemaAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String keyRawSchema =
         "{\"type\": \"record\", \"name\": \"MyKey\", \"fields\": [{\"name\": \"foo\", \"type\": "
@@ -1032,8 +1054,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue, produced.value());
   }
 
-  @Test
-  public void produceAvroWithSchemaIdAndSubjectStrategy() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithSchemaIdAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     AvroSchema keySchema =
         new AvroSchema(
@@ -1098,8 +1121,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue, produced.value());
   }
 
-  @Test
-  public void produceAvroWithSchemaVersionAndSubjectStrategy() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithSchemaVersionAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     AvroSchema keySchema =
         new AvroSchema(
@@ -1164,8 +1188,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue, produced.value());
   }
 
-  @Test
-  public void produceAvroWithLatestSchemaAndSubjectStrategy() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithLatestSchemaAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     AvroSchema keySchema =
         new AvroSchema(
@@ -1228,8 +1253,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithRawSchema() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithRawSchema(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     TextNode key = TextNode.valueOf("foo");
     TextNode value = TextNode.valueOf("bar");
@@ -1274,8 +1300,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithRawSchemaAndNullData() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithRawSchemaAndNullData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -1318,8 +1345,10 @@ public class ProduceActionIntegrationTest {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithRawSchemaAndInvalidData_throwsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithRawSchemaAndInvalidData_throwsBadRequest(String quorum)
+      throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -1352,8 +1381,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceJsonschemaWithSchemaId() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithSchemaId(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
         testEnv
@@ -1404,8 +1434,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithSchemaVersion() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithSchemaVersion(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
         testEnv
@@ -1456,8 +1487,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithLatestSchema() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithLatestSchema(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     testEnv
         .schemaRegistry()
@@ -1498,8 +1530,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithRawSchemaAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithRawSchemaAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     TextNode key = TextNode.valueOf("foo");
     TextNode value = TextNode.valueOf("bar");
@@ -1546,8 +1579,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithSchemaIdAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithSchemaIdAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
         testEnv
@@ -1600,8 +1634,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithSchemaVersionAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithSchemaVersionAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
         testEnv
@@ -1654,8 +1689,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithLatestSchemaAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithLatestSchemaAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     testEnv
         .schemaRegistry()
@@ -1697,8 +1733,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithRawSchemaAndSubjectStrategy() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithRawSchemaAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String keyRawSchema =
         "{\"type\": \"object\", \"title\": \"MyKey\", \"properties\": {\"foo\": "
@@ -1753,8 +1790,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithSchemaIdAndSubjectStrategy() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithSchemaIdAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     JsonSchema keySchema =
         new JsonSchema(
@@ -1815,8 +1853,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithSchemaVersionAndSubjectStrategy() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithSchemaVersionAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     JsonSchema keySchema =
         new JsonSchema(
@@ -1877,8 +1916,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceJsonschemaWithLatestSchemaAndSubjectStrategy() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonschemaWithLatestSchemaAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     JsonSchema keySchema =
         new JsonSchema(
@@ -1937,8 +1977,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceProtobufWithRawSchema() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithRawSchema(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -1993,8 +2034,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue.build().toByteString(), produced.value().toByteString());
   }
 
-  @Test
-  public void produceProtobufWithRawSchemaAndNullData() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithRawSchemaAndNullData(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2041,8 +2083,10 @@ public class ProduceActionIntegrationTest {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceProtobufWithRawSchemaAndInvalidData_throwsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithRawSchemaAndInvalidData_throwsBadRequest(String quorum)
+      throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2079,8 +2123,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceProtobufWithSchemaId() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithSchemaId(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2136,8 +2181,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue.build().toByteString(), produced.value().toByteString());
   }
 
-  @Test
-  public void produceProtobufWithSchemaVersion() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithSchemaVersion(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2193,8 +2239,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue.build().toByteString(), produced.value().toByteString());
   }
 
-  @Test
-  public void produceProtobufWithLatestSchema() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithLatestSchema(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2241,8 +2288,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue.build().toByteString(), produced.value().toByteString());
   }
 
-  @Test
-  public void produceProtobufWithRawSchemaAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithRawSchemaAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2299,8 +2347,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue.build().toByteString(), produced.value().toByteString());
   }
 
-  @Test
-  public void produceProtobufWithSchemaIdAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithSchemaIdAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2359,8 +2408,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue.build().toByteString(), produced.value().toByteString());
   }
 
-  @Test
-  public void produceProtobufWithSchemaVersionAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithSchemaVersionAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2419,8 +2469,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue.build().toByteString(), produced.value().toByteString());
   }
 
-  @Test
-  public void produceProtobufWithLatestSchemaAndSubject() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithLatestSchemaAndSubject(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2469,8 +2520,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue.build().toByteString(), produced.value().toByteString());
   }
 
-  @Test
-  public void produceProtobufWithRawSchemaAndSubjectStrategy() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithRawSchemaAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2527,8 +2579,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue.build().toByteString(), produced.value().toByteString());
   }
 
-  @Test
-  public void produceProtobufWithSchemaIdAndSubjectStrategy() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceProtobufWithSchemaIdAndSubjectStrategy(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2589,8 +2642,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(expectedValue.build().toByteString(), produced.value().toByteString());
   }
 
-  @Test
-  public void produceBinaryWithPartitionId() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryWithPartitionId(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     int partitionId = 1;
     ByteString key = ByteString.copyFromUtf8("foo");
@@ -2635,8 +2689,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, ByteString.copyFrom(produced.value()));
   }
 
-  @Test
-  public void produceBinaryWithTimestamp() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryWithTimestamp(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     Instant timestamp = Instant.ofEpochMilli(1000);
     ByteString key = ByteString.copyFromUtf8("foo");
@@ -2682,8 +2737,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(timestamp, Instant.ofEpochMilli(produced.timestamp()));
   }
 
-  @Test
-  public void produceBinaryWithHeaders() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryWithHeaders(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     ByteString value = ByteString.copyFromUtf8("bar");
@@ -2740,8 +2796,9 @@ public class ProduceActionIntegrationTest {
         ImmutableList.copyOf(produced.headers().headers("header-2")));
   }
 
-  @Test
-  public void produceBinaryAndAvro() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryAndAvro(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     String value = "bar";
@@ -2785,8 +2842,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceBinaryKeyOnly() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryKeyOnly(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     ProduceRequest request =
@@ -2823,8 +2881,9 @@ public class ProduceActionIntegrationTest {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceBinaryValueOnly() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryValueOnly(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString value = ByteString.copyFromUtf8("bar");
     ProduceRequest request =
@@ -2861,8 +2920,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, ByteString.copyFrom(produced.value()));
   }
 
-  @Test
-  public void produceStringWithPartitionId() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringWithPartitionId(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     int partitionId = 1;
     String key = "foo";
@@ -2907,8 +2967,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceStringWithTimestamp() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringWithTimestamp(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     Instant timestamp = Instant.ofEpochMilli(1000);
     String key = "foo";
@@ -2954,8 +3015,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(timestamp, Instant.ofEpochMilli(produced.timestamp()));
   }
 
-  @Test
-  public void produceStringWithHeaders() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringWithHeaders(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
     String value = "bar";
@@ -3012,8 +3074,9 @@ public class ProduceActionIntegrationTest {
         ImmutableList.copyOf(produced.headers().headers("header-2")));
   }
 
-  @Test
-  public void produceStringAndAvro() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringAndAvro(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
     String value = "bar";
@@ -3057,8 +3120,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceStringKeyOnly() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringKeyOnly(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
     ProduceRequest request =
@@ -3095,8 +3159,9 @@ public class ProduceActionIntegrationTest {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceStringValueOnly() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringValueOnly(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String value = "bar";
     ProduceRequest request =
@@ -3133,8 +3198,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(value, produced.value());
   }
 
-  @Test
-  public void produceNothing() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceNothing(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request = ProduceRequest.builder().setOriginalSize(0L).build();
 
@@ -3162,8 +3228,9 @@ public class ProduceActionIntegrationTest {
     assertNull(produced.value());
   }
 
-  @Test
-  public void produceJsonBatch() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceJsonBatch(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ArrayList<ProduceRequest> requests = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
@@ -3232,8 +3299,9 @@ public class ProduceActionIntegrationTest {
     }
   }
 
-  @Test
-  public void produceStringBatch() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringBatch(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ArrayList<ProduceRequest> requests = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
@@ -3302,8 +3370,10 @@ public class ProduceActionIntegrationTest {
     }
   }
 
-  @Test
-  public void produceBinaryBatchWithInvalidData_throwsMultipleBadRequests() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryBatchWithInvalidData_throwsMultipleBadRequests(String quorum)
+      throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ArrayList<ProduceRequest> requests = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
@@ -3345,8 +3415,9 @@ public class ProduceActionIntegrationTest {
     }
   }
 
-  @Test
-  public void produceBinaryWithSchemaSubject_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryWithSchemaSubject_returnsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"BINARY\", \"subject\": \"foobar\" } }";
 
@@ -3364,8 +3435,10 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceBinaryWithSchemaSubjectStrategy_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryWithSchemaSubjectStrategy_returnsBadRequest(String quorum)
+      throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"BINARY\", \"subject_name_strategy\": \"TOPIC\" } }";
 
@@ -3383,8 +3456,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceBinaryWithRawSchema_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryWithRawSchema_returnsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"type\": \"BINARY\", \"schema\": \"{ \\\"type\\\": \\\"string\\\" }\" } }";
@@ -3403,8 +3477,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceBinaryWithSchemaId_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryWithSchemaId_returnsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"BINARY\", \"schema_id\": 1 } }";
 
@@ -3422,8 +3497,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceBinaryWithSchemaVersion_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryWithSchemaVersion_returnsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"BINARY\", \"schema_version\": 1 } }";
 
@@ -3441,8 +3517,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceStringWithSchemaSubject_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringWithSchemaSubject_returnsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"STRING\", \"subject\": \"foobar\" } }";
 
@@ -3460,8 +3537,10 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceStringWithSchemaSubjectStrategy_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringWithSchemaSubjectStrategy_returnsBadRequest(String quorum)
+      throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"STRING\", \"subject_name_strategy\": \"TOPIC\" } }";
 
@@ -3479,8 +3558,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceStringWithRawSchema_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringWithRawSchema_returnsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"type\": \"STRING\", \"schema\": \"{ \\\"type\\\": \\\"string\\\" }\" } }";
@@ -3499,8 +3579,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceStringWithSchemaId_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringWithSchemaId_returnsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"STRING\", \"schema_id\": 1 } }";
 
@@ -3518,8 +3599,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceStringWithSchemaVersion_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceStringWithSchemaVersion_returnsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"STRING\", \"schema_version\": 1 } }";
 
@@ -3537,8 +3619,10 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceAvroWithTypeAndSchemaVersion_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithTypeAndSchemaVersion_returnsBadRequest(String quorum)
+      throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"AVRO\", \"schema_version\": 1 } }";
 
@@ -3556,8 +3640,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceAvroWithTypeAndSchemaId_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithTypeAndSchemaId_returnsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"AVRO\", \"schema_id\": 1 } }";
 
@@ -3575,8 +3660,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceAvroWithTypeAndLatestSchema_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithTypeAndLatestSchema_returnsBadRequest(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"AVRO\" } }";
 
@@ -3594,8 +3680,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceAvroWithSchemaSubjectAndSchemaSubjectStrategy_returnsBadRequest()
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithSchemaSubjectAndSchemaSubjectStrategy_returnsBadRequest(String quorum)
       throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
@@ -3615,8 +3702,10 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceAvroWithSchemaIdAndSchemaVersion_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithSchemaIdAndSchemaVersion_returnsBadRequest(String quorum)
+      throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"schema_id\": 1, \"schema_version\": 1 } }";
 
@@ -3634,8 +3723,10 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceAvroWithRawSchemaAndSchemaId_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithRawSchemaAndSchemaId_returnsBadRequest(String quorum)
+      throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"schema\": \"{ \\\"type\\\": \\\"string\\\" }\", \"schema_id\": 1 } }";
@@ -3654,8 +3745,10 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceAvroWithRawSchemaAndSchemaVersion_returnsBadRequest() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithRawSchemaAndSchemaVersion_returnsBadRequest(String quorum)
+      throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"schema\": \"{ \\\"type\\\": \\\"string\\\" }\", \"schema_version\": 1 } }";
@@ -3674,9 +3767,10 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceAvroWithRecordSchemaSubjectStrategyAndSchemaVersion_returnsBadRequest()
-      throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithRecordSchemaSubjectStrategyAndSchemaVersion_returnsBadRequest(
+      String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"subject_name_strategy\": \"RECORD_NAME\", \"schema_version\": 1 } }";
@@ -3695,9 +3789,10 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceAvroWithRecordSchemaSubjectStrategyAndLatestVersion_returnsBadRequest()
-      throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceAvroWithRecordSchemaSubjectStrategyAndLatestVersion_returnsBadRequest(
+      String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"subject_name_strategy\": \"RECORD_NAME\" } }";
 
@@ -3715,8 +3810,9 @@ public class ProduceActionIntegrationTest {
     assertEquals(400, actual.getErrorCode());
   }
 
-  @Test
-  public void produceBinaryWithLargerSizeMessage() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceBinaryWithLargerSizeMessage(String quorum) throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     // Kafka server and producer is configured to accept messages upto 20971520 Bytes (20MB) but
@@ -3807,15 +3903,19 @@ public class ProduceActionIntegrationTest {
     assertEquals(actual.get(0).getErrorCode(), 429);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenGlobalByteLimitReached_thenCallerIsRateLimited")
-  public void test_whenGlobalByteLimitReached_thenCallerIsRateLimited() throws Exception {
+  public void test_whenGlobalByteLimitReached_thenCallerIsRateLimited(String quorum)
+      throws Exception {
     doByteLimitReachedTest();
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenClusterByteLimitReached_thenCallerIsRateLimited")
-  public void test_whenClusterByteLimitReached_thenCallerIsRateLimited() throws Exception {
+  public void test_whenClusterByteLimitReached_thenCallerIsRateLimited(String quorum)
+      throws Exception {
     doByteLimitReachedTest();
   }
 
@@ -3865,15 +3965,19 @@ public class ProduceActionIntegrationTest {
     assertEquals(actual.get(0).getErrorCode(), 429);
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited")
-  public void test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited() throws Exception {
+  public void test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited(String quorum)
+      throws Exception {
     doCountLimitTest();
   }
 
-  @Test
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
   @DisplayName("test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited")
-  public void test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited() throws Exception {
+  public void test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited(String quorum)
+      throws Exception {
     doCountLimitTest();
   }
 

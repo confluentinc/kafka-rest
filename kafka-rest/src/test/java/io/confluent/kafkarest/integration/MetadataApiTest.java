@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
@@ -38,7 +39,9 @@ import java.util.Properties;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Tests metadata access against a real cluster. This isn't exhaustive since the unit tests cover
@@ -90,14 +93,15 @@ public class MetadataApiTest extends ClusterTestHarness {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     createTopic(topic1Name, topic1Partitions.size(), numReplicas);
     createTopic(topic2Name, topic2Partitions.size(), numReplicas);
   }
 
-  @Test
-  public void testBrokers() throws InterruptedException {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testBrokers(String quorum) throws InterruptedException {
     // Listing
     Response response = request("/brokers").get();
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
@@ -123,8 +127,9 @@ public class MetadataApiTest extends ClusterTestHarness {
     }
   */
 
-  @Test
-  public void testTopicsList() throws InterruptedException {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testTopicsList(String quorum) throws InterruptedException {
     // Listing
     testWithRetry(
         () -> {
@@ -157,8 +162,9 @@ public class MetadataApiTest extends ClusterTestHarness {
         Versions.KAFKA_V2_JSON);
   }
 
-  @Test
-  public void testPartitionsList() throws InterruptedException {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void testPartitionsList(String quorum) throws InterruptedException {
     // Listing
 
     testWithRetry(() -> verifyPartitionGet(topic1Name, 2, 1));

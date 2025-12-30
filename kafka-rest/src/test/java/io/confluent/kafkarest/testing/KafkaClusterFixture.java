@@ -213,7 +213,7 @@ public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachC
     private SecurityProtocol securityProtocol = SecurityProtocol.PLAINTEXT;
     private final ImmutableMap.Builder<String, String> users = ImmutableMap.builder();
     private final ImmutableSet.Builder<String> superUsers = ImmutableSet.builder();
-    private ZookeeperFixture zookeeper = null;
+    private QuorumControllerFixture quorumController = null;
 
     private Builder() {}
 
@@ -254,14 +254,14 @@ public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachC
       return this;
     }
 
-    public Builder setZookeeper(ZookeeperFixture zookeeper) {
-      this.zookeeper = requireNonNull(zookeeper);
+    public Builder setQuorumController(QuorumControllerFixture quorumController) {
+      this.quorumController = requireNonNull(quorumController);
       return this;
     }
 
     public KafkaClusterFixture build() {
       checkState(numBrokers > 0);
-      checkState(zookeeper != null);
+      checkState(quorumController != null);
       return new KafkaClusterFixture(
           IntStream.range(0, numBrokers)
               .mapToObj(
@@ -273,7 +273,7 @@ public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachC
                             .addSuperUsers(superUsers.build())
                             .setConfigs(configs)
                             .setSecurityProtocol(securityProtocol)
-                            .setZookeeper(zookeeper);
+                            .setQuorumController(quorumController);
                     if (certificates != null) {
                       broker.setCertificate(certificates, keyNames.get(brokerId));
                     }
