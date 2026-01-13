@@ -50,6 +50,8 @@ import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
 import org.apache.kafka.clients.admin.MemberAssignment;
 import org.apache.kafka.clients.admin.MemberDescription;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.errors.GroupAuthorizationException;
+import org.apache.kafka.common.internals.KafkaFutureImpl;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.junit.jupiter.api.BeforeEach;
@@ -496,15 +498,14 @@ public class ConsumerGroupManagerImplTest {
                     .map(ConsumerGroup::getConsumerGroupId)
                     .collect(Collectors.toList())))
         .andReturn(describeConsumerGroupsResult);
-    expect(describeConsumerGroupsResult.all())
+    expect(describeConsumerGroupsResult.describedGroups())
         .andReturn(
-            KafkaFuture.completedFuture(
-                IntStream.range(0, CONSUMER_GROUPS.length)
-                    .boxed()
-                    .collect(
-                        Collectors.toMap(
-                            i -> CONSUMER_GROUPS[i].getConsumerGroupId(),
-                            i -> consumerGroupDescriptions[i]))));
+            IntStream.range(0, CONSUMER_GROUPS.length)
+                .boxed()
+                .collect(
+                    Collectors.toMap(
+                        i -> CONSUMER_GROUPS[i].getConsumerGroupId(),
+                        i -> KafkaFuture.completedFuture(consumerGroupDescriptions[i]))));
     for (int i = 0; i < CONSUMER_GROUPS.length; i++) {
       expect(consumerGroupDescriptions[i].groupId())
           .andStubReturn(CONSUMER_GROUPS[i].getConsumerGroupId());
@@ -567,11 +568,11 @@ public class ConsumerGroupManagerImplTest {
             adminClient.describeConsumerGroups(
                 singletonList(CONSUMER_GROUPS[0].getConsumerGroupId())))
         .andReturn(describeConsumerGroupsResult);
-    expect(describeConsumerGroupsResult.all())
+    expect(describeConsumerGroupsResult.describedGroups())
         .andReturn(
-            KafkaFuture.completedFuture(
-                singletonMap(
-                    CONSUMER_GROUPS[0].getConsumerGroupId(), consumerGroupDescriptions[0])));
+            singletonMap(
+                CONSUMER_GROUPS[0].getConsumerGroupId(),
+                KafkaFuture.completedFuture(consumerGroupDescriptions[0])));
     expect(consumerGroupDescriptions[0].groupId())
         .andStubReturn(CONSUMER_GROUPS[0].getConsumerGroupId());
     expect(consumerGroupDescriptions[0].isSimpleConsumerGroup())
@@ -638,7 +639,7 @@ public class ConsumerGroupManagerImplTest {
             adminClient.describeConsumerGroups(
                 singletonList(CONSUMER_GROUPS[0].getConsumerGroupId())))
         .andReturn(describeConsumerGroupsResult);
-    expect(describeConsumerGroupsResult.all()).andReturn(KafkaFuture.completedFuture(emptyMap()));
+    expect(describeConsumerGroupsResult.describedGroups()).andReturn(emptyMap());
     replay(clusterManager, adminClient, listConsumerGroupsResult, describeConsumerGroupsResult);
 
     Optional<ConsumerGroup> consumerGroup =
@@ -647,5 +648,94 @@ public class ConsumerGroupManagerImplTest {
             .get();
 
     assertFalse(consumerGroup.isPresent());
+  }
+
+  @Test
+  public void listConsumerGroups_withPartialAuthorization_returnsOnlyAuthorizedGroups()
+      throws Exception {
+    // Setup: User can list all groups but only has DESCRIBE permission on groups 0 and 2.
+    // Groups 1 and 3 will return GroupAuthorizationException.
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.listConsumerGroups()).andReturn(listConsumerGroupsResult);
+    expect(listConsumerGroupsResult.all())
+        .andReturn(KafkaFuture.completedFuture(Arrays.asList(consumerGroupListings)));
+
+    for (int i = 0; i < CONSUMER_GROUPS.length; i++) {
+      expect(consumerGroupListings[i].groupId()).andReturn(CONSUMER_GROUPS[i].getConsumerGroupId());
+      replay(consumerGroupListings[i]);
+    }
+
+    expect(
+            adminClient.describeConsumerGroups(
+                Arrays.stream(CONSUMER_GROUPS)
+                    .map(ConsumerGroup::getConsumerGroupId)
+                    .collect(Collectors.toList())))
+        .andReturn(describeConsumerGroupsResult);
+
+    // Create futures: groups 0 and 2 succeed, groups 1 and 3 fail with authorization exception
+    java.util.Map<String, KafkaFuture<ConsumerGroupDescription>> groupFutures =
+        new java.util.HashMap<>();
+
+    // Authorized groups (0 and 2) - return successful futures
+    int[] authorizedIndices = {0, 2};
+    for (int i : authorizedIndices) {
+      groupFutures.put(
+          CONSUMER_GROUPS[i].getConsumerGroupId(),
+          KafkaFuture.completedFuture(consumerGroupDescriptions[i]));
+
+      expect(consumerGroupDescriptions[i].groupId())
+          .andStubReturn(CONSUMER_GROUPS[i].getConsumerGroupId());
+      expect(consumerGroupDescriptions[i].isSimpleConsumerGroup())
+          .andStubReturn(CONSUMER_GROUPS[i].isSimple());
+      expect(consumerGroupDescriptions[i].partitionAssignor())
+          .andStubReturn(CONSUMER_GROUPS[i].getPartitionAssignor());
+      expect(consumerGroupDescriptions[i].groupState())
+          .andStubReturn(CONSUMER_GROUPS[i].getState().toGroupState());
+      expect(consumerGroupDescriptions[i].type())
+          .andStubReturn(CONSUMER_GROUPS[i].getType().toGroupType());
+      expect(consumerGroupDescriptions[i].coordinator())
+          .andStubReturn(CONSUMER_GROUPS[i].getCoordinator().toNode());
+      expect(consumerGroupDescriptions[i].members())
+          .andStubReturn(Arrays.asList(memberDescriptions[i]));
+      replay(consumerGroupDescriptions[i]);
+
+      for (int j = 0; j < CONSUMER_GROUPS[i].getConsumers().size(); j++) {
+        expect(memberDescriptions[i][j].consumerId())
+            .andStubReturn(CONSUMERS[i][j].getConsumerId());
+        expect(memberDescriptions[i][j].groupInstanceId())
+            .andStubReturn(CONSUMERS[i][j].getInstanceId());
+        expect(memberDescriptions[i][j].clientId()).andStubReturn(CONSUMERS[i][j].getClientId());
+        expect(memberDescriptions[i][j].host()).andStubReturn(CONSUMERS[i][j].getHost());
+        expect(memberDescriptions[i][j].upgraded()).andStubReturn(Optional.of(3 * i + j > 6));
+        expect(memberDescriptions[i][j].assignment()).andStubReturn(memberAssignments[i][j]);
+        expect(memberAssignments[i][j].topicPartitions())
+            .andStubReturn(
+                CONSUMERS[i][j].getAssignedPartitions().stream()
+                    .map(Partition::toTopicPartition)
+                    .collect(Collectors.toSet()));
+        replay(memberDescriptions[i][j], memberAssignments[i][j]);
+      }
+    }
+
+    // Unauthorized groups (1 and 3) - return failed futures with GroupAuthorizationException
+    int[] unauthorizedIndices = {1, 3};
+    for (int i : unauthorizedIndices) {
+      KafkaFutureImpl<ConsumerGroupDescription> failedFuture = new KafkaFutureImpl<>();
+      failedFuture.completeExceptionally(
+          new GroupAuthorizationException(CONSUMER_GROUPS[i].getConsumerGroupId()));
+      groupFutures.put(CONSUMER_GROUPS[i].getConsumerGroupId(), failedFuture);
+    }
+
+    expect(describeConsumerGroupsResult.describedGroups()).andReturn(groupFutures);
+    replay(clusterManager, adminClient, listConsumerGroupsResult, describeConsumerGroupsResult);
+
+    // Execute
+    List<ConsumerGroup> consumerGroups = consumerGroupManager.listConsumerGroups(CLUSTER_ID).get();
+
+    // Verify: Only authorized groups (0 and 2) are returned
+    HashSet<ConsumerGroup> expected =
+        new HashSet<>(Arrays.asList(CONSUMER_GROUPS[0], CONSUMER_GROUPS[2]));
+    assertEquals(expected, new HashSet<>(consumerGroups));
+    assertEquals(2, consumerGroups.size());
   }
 }
