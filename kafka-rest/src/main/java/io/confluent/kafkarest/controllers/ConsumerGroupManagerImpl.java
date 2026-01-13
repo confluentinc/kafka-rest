@@ -22,18 +22,25 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import jakarta.inject.Inject;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
 import org.apache.kafka.common.GroupState;
+import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.errors.GroupAuthorizationException;
 import org.apache.kafka.common.errors.GroupIdNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
+
+  private static final Logger log = LoggerFactory.getLogger(ConsumerGroupManagerImpl.class);
 
   private final Admin adminClient;
   private final ClusterManager clusterManager;
@@ -74,28 +81,73 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
 
   private CompletableFuture<List<ConsumerGroup>> getConsumerGroups(
       String clusterId, List<String> consumerGroupIds) {
-    return KafkaFutures.toCompletableFuture(
-            adminClient.describeConsumerGroups(consumerGroupIds).all())
-        .exceptionally(
-            error -> {
-              if (error.getCause() instanceof GroupIdNotFoundException) {
-                return Collections.emptyMap();
-              }
-              throw new CompletionException(error);
-            })
+
+    Map<String, KafkaFuture<ConsumerGroupDescription>> groupFutures =
+        adminClient.describeConsumerGroups(consumerGroupIds).describedGroups();
+
+    List<CompletableFuture<Optional<ConsumerGroup>>> futures =
+        groupFutures.entrySet().stream()
+            .map(entry -> describeGroupWithFallback(clusterId, entry.getKey(), entry.getValue()))
+            .collect(Collectors.toList());
+
+    return collectSuccessfulResults(futures);
+  }
+
+  private CompletableFuture<Optional<ConsumerGroup>> describeGroupWithFallback(
+      String clusterId, String groupId, KafkaFuture<ConsumerGroupDescription> future) {
+
+    return KafkaFutures.toCompletableFuture(future)
+        .thenApply(description -> toConsumerGroup(clusterId, description))
+        .exceptionally(error -> handleDescribeError(groupId, error));
+  }
+
+  private Optional<ConsumerGroup> toConsumerGroup(
+      String clusterId, ConsumerGroupDescription description) {
+
+    // Kafka returns a dummy description for non-existent groups (simple=true, state=DEAD)
+    boolean isNonExistentGroup =
+        description.isSimpleConsumerGroup() && description.groupState() == GroupState.DEAD;
+
+    if (isNonExistentGroup) {
+      return Optional.empty();
+    }
+
+    return Optional.of(ConsumerGroup.fromConsumerGroupDescription(clusterId, description));
+  }
+
+
+  private Optional<ConsumerGroup> handleDescribeError(String groupId, Throwable error) {
+    if (hasCause(error, GroupAuthorizationException.class)) {
+      log.debug("Skipping consumer group '{}' due to authorization failure", groupId);
+      return Optional.empty();
+    }
+
+    if (hasCause(error, GroupIdNotFoundException.class)) {
+      return Optional.empty();
+    }
+
+    throw new CompletionException(error);
+  }
+
+  private CompletableFuture<List<ConsumerGroup>> collectSuccessfulResults(
+      List<CompletableFuture<Optional<ConsumerGroup>>> futures) {
+
+    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
         .thenApply(
-            descriptions ->
-                descriptions.values().stream()
-                    .filter(
-                        // When describing a consumer-group that does not exist, AdminClient returns
-                        // a dummy consumer-group with simple=true and state=DEAD.
-                        // TODO: Investigate a better way of detecting non-existent consumer-group.
-                        description ->
-                            !description.isSimpleConsumerGroup()
-                                || description.groupState() != GroupState.DEAD)
-                    .map(
-                        description ->
-                            ConsumerGroup.fromConsumerGroupDescription(clusterId, description))
+            ignored ->
+                futures.stream()
+                    .map(CompletableFuture::join)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
                     .collect(Collectors.toList()));
+  }
+
+  private static boolean hasCause(Throwable ex, Class<? extends Throwable> causeType) {
+    for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+      if (causeType.isInstance(cause)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
