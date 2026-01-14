@@ -486,7 +486,7 @@ public class ConsumerGroupManagerImplTest {
   public void listConsumerGroups_returnsConsumerGroups() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.listConsumerGroups()).andReturn(listConsumerGroupsResult);
-    expect(listConsumerGroupsResult.all())
+    expect(listConsumerGroupsResult.valid())
         .andReturn(KafkaFuture.completedFuture(Arrays.asList(consumerGroupListings)));
     for (int i = 0; i < CONSUMER_GROUPS.length; i++) {
       expect(consumerGroupListings[i].groupId()).andReturn(CONSUMER_GROUPS[i].getConsumerGroupId());
@@ -657,7 +657,7 @@ public class ConsumerGroupManagerImplTest {
     // Groups 1 and 3 will return GroupAuthorizationException.
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.listConsumerGroups()).andReturn(listConsumerGroupsResult);
-    expect(listConsumerGroupsResult.all())
+    expect(listConsumerGroupsResult.valid())
         .andReturn(KafkaFuture.completedFuture(Arrays.asList(consumerGroupListings)));
 
     for (int i = 0; i < CONSUMER_GROUPS.length; i++) {

@@ -58,7 +58,7 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
         .thenApply(
             cluster -> checkEntityExists(cluster, "Cluster %s could not be found.", clusterId))
         .thenCompose(
-            cluster -> KafkaFutures.toCompletableFuture(adminClient.listConsumerGroups().all()))
+            cluster -> KafkaFutures.toCompletableFuture(adminClient.listConsumerGroups().valid()))
         .thenCompose(
             listings ->
                 getConsumerGroups(
@@ -114,7 +114,6 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
 
     return Optional.of(ConsumerGroup.fromConsumerGroupDescription(clusterId, description));
   }
-
 
   private Optional<ConsumerGroup> handleDescribeError(String groupId, Throwable error) {
     if (hasCause(error, GroupAuthorizationException.class)) {
