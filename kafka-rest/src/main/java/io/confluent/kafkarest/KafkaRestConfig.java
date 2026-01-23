@@ -243,7 +243,8 @@ public class KafkaRestConfig extends RestConfig {
           + "Due to the produce request size counting algorithm's limitation, it is recommended "
           + "to add 8192 (8KiB) buffer to the intended number that you want to set for the limit "
           + "to avoid rejecting legitimate produce requests."
-          + "If this limit is set to a non-positive number, no limit is applied. Default is 0.";
+          + "If this limit is set to 0 or a negative number, no limit is applied. Default is "
+          + "0.";
   public static final String PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_DEFAULT = "0";
   public static final ConfigDef.Range PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_VALIDATOR =
       ConfigDef.Range.atLeast(0);
