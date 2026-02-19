@@ -33,8 +33,6 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.client.RequestEntityProcessing;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,8 +46,11 @@ public class ProduceActionRateLimitIntegrationTest {
 
   private static final String TOPIC_NAME = "topic-1";
 
+  // Use HTTP for the REST listener to avoid HTTPS + streaming response connection lifecycle
+  // issues introduced by Jersey 2.46 SSL changes.
   @RegisterExtension
-  public final DefaultKafkaRestTestEnvironment testEnv = new DefaultKafkaRestTestEnvironment(false);
+  public final DefaultKafkaRestTestEnvironment testEnv =
+      new DefaultKafkaRestTestEnvironment(false, /* useHttpListener= */ true);
 
   @BeforeEach
   public void setUp(TestInfo testInfo) throws Exception {
@@ -120,16 +121,10 @@ public class ProduceActionRateLimitIntegrationTest {
             .setOriginalSize(0L)
             .build();
 
-    // Use BUFFERED entity processing to send the full request body with Content-Length
-    // before the server starts processing. Without this, HttpUrlConnector uses chunked
-    // transfer encoding, and the server may close the connection (after sending the
-    // rate-limit error response) before the client writes the terminating chunk, causing
-    // a SocketException: Broken pipe.
     Response response =
         testEnv
             .kafkaRest()
             .target()
-            .property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED)
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
             .accept(MediaType.APPLICATION_JSON)
@@ -174,13 +169,10 @@ public class ProduceActionRateLimitIntegrationTest {
             .setOriginalSize(0L)
             .build();
 
-    // Use BUFFERED entity processing to avoid SocketException: Broken pipe.
-    // See comment in doByteLimitReachedTest() for details.
     Response response1 =
         testEnv
             .kafkaRest()
             .target()
-            .property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED)
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
             .accept(MediaType.APPLICATION_JSON)
@@ -189,7 +181,6 @@ public class ProduceActionRateLimitIntegrationTest {
         testEnv
             .kafkaRest()
             .target()
-            .property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED)
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
             .accept(MediaType.APPLICATION_JSON)
