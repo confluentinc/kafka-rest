@@ -48,8 +48,11 @@ public class ProduceActionRateLimitIntegrationTest {
 
   private static final String TOPIC_NAME = "topic-1";
 
+  // Use HTTP for the REST listener to avoid HTTPS + streaming response connection lifecycle
+  // issues introduced by Jersey 2.46 SSL changes.
   @RegisterExtension
-  public final DefaultKafkaRestTestEnvironment testEnv = new DefaultKafkaRestTestEnvironment(false);
+  public final DefaultKafkaRestTestEnvironment testEnv =
+      new DefaultKafkaRestTestEnvironment(false, /* useHttpListener= */ true);
 
   @BeforeEach
   public void setUp(TestInfo testInfo) throws Exception {

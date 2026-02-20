@@ -86,7 +86,8 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
   }
 
   @RegisterExtension
-  public final DefaultKafkaRestTestEnvironment testEnv = new DefaultKafkaRestTestEnvironment(false);
+  public final DefaultKafkaRestTestEnvironment testEnv =
+      new DefaultKafkaRestTestEnvironment(false, /* useHttpListener= */ true);
 
   @BeforeEach
   public void setUp(TestInfo testInfo) throws Exception {
