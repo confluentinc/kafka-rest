@@ -74,7 +74,7 @@ public class ProduceActionRequestSizeLimitIntegrationTest {
   // issues introduced by Jersey 2.46 SSL changes.
   @RegisterExtension
   public final DefaultKafkaRestTestEnvironment testEnv =
-          new DefaultKafkaRestTestEnvironment(false, /* useHttpListener= */ true);
+      new DefaultKafkaRestTestEnvironment(false, /* useHttpListener= */ true);
 
   @BeforeEach
   public void setUp(TestInfo testInfo) throws Exception {
