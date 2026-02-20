@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -29,7 +30,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
@@ -41,14 +44,15 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
 
     createTopic(TOPIC_NAME, 1, (short) 1);
   }
 
-  @Test
-  public void listReplicas_existingPartition_returnsReplicas() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listReplicas_existingPartition_returnsReplicas(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -106,8 +110,9 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expected, actual);
   }
 
-  @Test
-  public void listReplicas_nonExistingPartition_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listReplicas_nonExistingPartition_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -117,8 +122,9 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void listReplicas_nonExistingTopic_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listReplicas_nonExistingTopic_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -128,8 +134,9 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void listReplicas_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listReplicas_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/0/replicas")
             .accept(MediaType.APPLICATION_JSON)
@@ -137,8 +144,9 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getReplica_existingReplica_returnsReplica() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getReplica_existingReplica_returnsReplica(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -182,8 +190,9 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expected, actual);
   }
 
-  @Test
-  public void getReplica_nonExistingReplica_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getReplica_nonExistingReplica_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -198,8 +207,9 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getReplica_nonExistingPartition_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getReplica_nonExistingPartition_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -214,8 +224,9 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getReplica_nonExistingTopic_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getReplica_nonExistingTopic_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -225,8 +236,9 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getReplica_nonExistingCluster_returnsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getReplica_nonExistingCluster_returnsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/0/replicas/0")
             .accept(MediaType.APPLICATION_JSON)

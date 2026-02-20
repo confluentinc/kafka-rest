@@ -130,20 +130,25 @@
   <allow class="javax.security.auth.login.Configuration" />
   <allow class="scala.Option" />
   <allow class="scala.collection.JavaConverters" />
+  <allow class="scala.collection.Seq" />
   <!-- b. Non-public Apache Kafka APIs -->
   <allow class="org.apache.kafka.clients.CommonClientConfigs" />
   <allow class="org.apache.kafka.common.config.types.Password" />
   <allow class="org.apache.kafka.common.network.ListenerName" />
   <allow class="org.apache.kafka.common.protocol.Errors" />
   <allow class="org.apache.kafka.common.security.JaasUtils" />
+  <allow class="org.apache.kafka.metadata.authorizer.StandardAuthorizer" />
   <allow class="org.apache.kafka.test.TestSslUtils" />
   <!-- c. Non-public Confluent Community Kafka APIs -->
   <allow class="kafka.admin.AclCommand" />
   <allow class="kafka.security.authorizer.AclAuthorizer" />
   <allow class="kafka.server.KafkaConfig" />
   <allow class="kafka.server.KafkaServer" />
+  <allow class="kafka.server.KafkaBroker" />
+  <allow class="kafka.server.QuorumTestHarness" />
   <allow class="kafka.utils.CoreUtils" />
   <allow class="kafka.utils.TestUtils" />
+  <allow class="kafka.utils.TestInfoUtils" />
   <allow class="kafka.zk.EmbeddedZookeeper" />
 
 </import-control>
