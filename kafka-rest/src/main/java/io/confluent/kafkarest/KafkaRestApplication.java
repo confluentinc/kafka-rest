@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest;
 
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
@@ -118,13 +119,25 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public ObjectMapper getJsonMapper() {
-    return super.getJsonMapper()
-        .registerModule(new GuavaModule())
-        .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule())
-        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-        .setDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"))
-        .setTimeZone(TimeZone.getTimeZone("UTC"));
+    ObjectMapper mapper =
+        super.getJsonMapper()
+            .registerModule(new GuavaModule())
+            .registerModule(new Jdk8Module())
+            .registerModule(new JavaTimeModule())
+            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+            .setDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"))
+            .setTimeZone(TimeZone.getTimeZone("UTC"));
+
+    // Work around jackson.databind 2.15+ default StreamReadConstraints.maxStringLength of
+    // 20,000,000. Large binary messages (e.g. ~20MB) are base64-encoded to strings that
+    // exceed this limit. We rely on existing message size checks in
+    // JsonStreamMessageBodyReader.readFrom() rather than Jackson's string length constraint.
+    mapper
+        .getFactory()
+        .setStreamReadConstraints(
+            StreamReadConstraints.builder().maxStringLength(Integer.MAX_VALUE).build());
+
+    return mapper;
   }
 
   @Override
