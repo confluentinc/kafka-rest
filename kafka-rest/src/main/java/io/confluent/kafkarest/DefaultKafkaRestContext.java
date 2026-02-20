@@ -47,7 +47,7 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   private SchemaRegistryClient schemaRegistryClient;
 
   public DefaultKafkaRestContext(KafkaRestConfig config) {
-    log.debug("Creating context with config: {}", config);
+    log.debug("Creating DefaultKafkaRestContext");
     this.config = requireNonNull(config);
   }
 

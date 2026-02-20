@@ -18,6 +18,7 @@ package io.confluent.kafkarest.resources.v3;
 import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.Errors;
@@ -50,6 +51,7 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -57,6 +59,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.errors.SerializationException;
 import org.eclipse.jetty.http.HttpStatus;
@@ -85,6 +88,8 @@ public final class ProduceAction {
   private final ProduceRateLimiters produceRateLimiters;
   private final ExecutorService executorService;
 
+  @Context private HttpServletRequest httpServletRequest;
+
   @Inject
   public ProduceAction(
       Provider<SchemaManager> schemaManagerProvider,
@@ -94,6 +99,28 @@ public final class ProduceAction {
       StreamingResponseFactory streamingResponseFactory,
       ProduceRateLimiters produceRateLimiters,
       @ProduceResponseThreadPool ExecutorService executorService) {
+    this(
+        schemaManagerProvider,
+        recordSerializer,
+        produceControllerProvider,
+        producerMetrics,
+        streamingResponseFactory,
+        produceRateLimiters,
+        executorService,
+        null);
+  }
+
+  @Inject
+  @VisibleForTesting
+  ProduceAction(
+      Provider<SchemaManager> schemaManagerProvider,
+      Provider<RecordSerializer> recordSerializer,
+      Provider<ProduceController> produceControllerProvider,
+      Provider<ProducerMetrics> producerMetrics,
+      StreamingResponseFactory streamingResponseFactory,
+      ProduceRateLimiters produceRateLimiters,
+      @ProduceResponseThreadPool ExecutorService executorService,
+      HttpServletRequest httpServletRequest) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
@@ -101,6 +128,7 @@ public final class ProduceAction {
     this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
     this.produceRateLimiters = requireNonNull(produceRateLimiters);
     this.executorService = requireNonNull(executorService);
+    this.httpServletRequest = httpServletRequest;
   }
 
   @POST
@@ -137,7 +165,7 @@ public final class ProduceAction {
     final long requestStartNs = System.nanoTime();
 
     try {
-      produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
+      produceRateLimiters.rateLimit(clusterId, request.getOriginalSize(), httpServletRequest);
     } catch (RateLimitExceededException e) {
       recordRateLimitedMetrics(metrics);
       // KREST-4356 Use our own CompletionException that will avoid the costly stack trace fill.

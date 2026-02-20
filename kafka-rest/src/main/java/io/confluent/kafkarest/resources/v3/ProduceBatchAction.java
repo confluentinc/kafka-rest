@@ -58,6 +58,7 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -100,6 +101,8 @@ public final class ProduceBatchAction {
   private final ProduceRateLimiters produceRateLimiters;
   private final int produceBatchMaximumEntries;
   private final ExecutorService executorService;
+
+  @Context private HttpServletRequest httpServletRequest;
 
   @Inject
   public ProduceBatchAction(
@@ -205,7 +208,7 @@ public final class ProduceBatchAction {
 
     try {
       try {
-        produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
+        produceRateLimiters.rateLimit(clusterId, request.getOriginalSize(), httpServletRequest);
       } catch (RateLimitExceededException e) {
         recordRateLimitedMetrics(metrics);
         // KREST-4356 Use our own CompletionException that will avoid the costly stack trace fill.

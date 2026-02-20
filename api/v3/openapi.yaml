@@ -1433,12 +1433,18 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ProduceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse_ProduceRecords'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
         '403':
           $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
+        '413':
+          $ref: '#/components/responses/RequestEntityTooLargeErrorResponse'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaTypeErrorResponse'
         '422':
           $ref: '#/components/responses/UnprocessableEntity_ProduceRecord'
         '429':
@@ -1466,12 +1472,16 @@ paths:
       responses:
         '207':
           $ref: '#/components/responses/ProduceBatchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse_ProduceRecords'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
         '403':
           $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaTypeErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -4358,6 +4368,20 @@ components:
                 error_code: 400
                 message: "resource_type cannot be unspecified or UNKNOWN"
 
+    BadRequestErrorResponse_ProduceRecords:
+      description: 'Indicates a bad request error. It could be caused by an unexpected request
+        body format or other forms of request validation failure.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            header_not_base64_encoded:
+              description: "Thrown when headers in the produce-record are not base64 encoded."
+              value:
+                error_code: 400
+                message: "Cannot deserialize value of type `byte[]` from String \"\": Unexpected end of base64-encoded String: base64 variant 'MIME-NO-LINEFEEDS' expects padding (one or more '=' characters) at the end. This Base64Variant might have been incorrectly configured"
+
     UnprocessableEntity_ProduceRecord:
       description: 'Indicates a bad request error. It could be caused by an unexpected request
         body format or other forms of request validation failure.'
@@ -4474,6 +4498,33 @@ components:
                             </table>
                         </body>
                     </html>'
+
+    RequestEntityTooLargeErrorResponse:
+      description: 'This implies the client is sending a request payload that is larger than the maximum message size the
+        server can accept.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            produce_records_expects_json:
+              description: "Thrown by /records API if payload size exceeds the message max size"
+              value:
+                error_code: 413
+                message:  "The request included a message larger than the maximum message size the server can accept."
+
+    UnsupportedMediaTypeErrorResponse:
+      description: 'This implies the client is sending the request payload format in an unsupported format.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            produce_records_expects_json:
+              description: "Thrown by /records API if payload format content-type doesn't match expected application/json"
+              value:
+                error_code: 415
+                message:  "HTTP 415 Unsupported Media Type"
 
     ServerErrorResponse:
       description: 'A server-side problem that might not be addressable from the client side.
