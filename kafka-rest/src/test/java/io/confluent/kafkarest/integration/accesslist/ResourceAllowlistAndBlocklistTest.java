@@ -18,8 +18,8 @@ package io.confluent.kafkarest.integration.accesslist;
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import jakarta.ws.rs.core.Response.Status;
 import java.util.Properties;
-import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -32,7 +32,7 @@ public class ResourceAllowlistAndBlocklistTest extends ResourceAccesslistTestBas
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testAllowlistAndBlocklist(String quorum) {
     // Even though the checks are not exactly independent (i.e. topic deletion should be tried
     // after topic creation), all of them are executed in a single test, as: (1) they are touching

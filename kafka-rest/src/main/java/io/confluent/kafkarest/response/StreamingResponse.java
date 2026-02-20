@@ -21,8 +21,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
-import com.fasterxml.jackson.jaxrs.base.JsonMappingExceptionMapper;
-import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
+import com.fasterxml.jackson.jakarta.rs.base.JsonMappingExceptionMapper;
+import com.fasterxml.jackson.jakarta.rs.base.JsonParseExceptionMapper;
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -33,10 +33,17 @@ import io.confluent.kafkarest.exceptions.RestConstraintViolationExceptionMapper;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
+import io.confluent.kafkarest.requestlog.CustomLog.ProduceRecordErrorCounter;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
+import jakarta.annotation.Nullable;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.ext.ExceptionMapper;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -47,12 +54,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import javax.annotation.Nullable;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.ext.ExceptionMapper;
 import org.glassfish.jersey.server.ChunkedOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,7 +160,8 @@ public abstract class StreamingResponse<T> {
    * <p>This method will block until all requests are read in. The responses are computed and
    * written to {@code asyncResponse} asynchronously.
    */
-  public final void resume(AsyncResponse asyncResponse) {
+  public final void resume(
+      AsyncResponse asyncResponse, ProduceRecordErrorCounter produceRecordErrorCounter) {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
@@ -186,7 +188,11 @@ public abstract class StreamingResponse<T> {
                               "Streaming connection open for longer than allowed",
                               "Connection will be closed.")))));
         } else if (!closingStarted) {
-          responseQueue.push(next().handle(this::handleNext));
+          responseQueue.push(
+              next()
+                  .handle(
+                      (result, exception) ->
+                          handleNext(result, exception, produceRecordErrorCounter)));
         } else {
           break;
         }
@@ -218,11 +224,17 @@ public abstract class StreamingResponse<T> {
     responseQueue.close();
   }
 
-  private ResultOrError handleNext(T result, @Nullable Throwable error) {
+  private ResultOrError handleNext(
+      T result, @Nullable Throwable error, ProduceRecordErrorCounter produceRecordErrorCounter) {
     if (error == null) {
       return ResultOrError.result(result);
     } else {
       log.debug("Error processing streaming operation.", error);
+      if (error.getCause() == null) {
+        throw new IllegalArgumentException("Error cause is null", error);
+      }
+      int errorCode = EXCEPTION_MAPPER.toErrorResponse(error.getCause()).getErrorCode();
+      produceRecordErrorCounter.incrementErrorCount(errorCode);
       return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
     }
   }

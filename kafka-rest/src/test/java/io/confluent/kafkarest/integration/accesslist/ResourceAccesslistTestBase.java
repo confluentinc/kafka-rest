@@ -16,10 +16,10 @@
 package io.confluent.kafkarest.integration.accesslist;
 
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.Properties;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 public class ResourceAccesslistTestBase extends ClusterTestHarness {
 

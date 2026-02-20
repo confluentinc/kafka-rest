@@ -4,7 +4,6 @@
 
 Components:
 
-  * 1 Zookeeper instance (`zookeeper:9091`)
   * 3 Kafka brokers (`kafka-1:9291`, `kafka-2:9292`, `kafka-3:9293`)
   * 1 REST Proxy instance (`kafka-rest:9391`)
 

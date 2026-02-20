@@ -15,8 +15,8 @@
 
 package io.confluent.kafkarest.resources.v3;
 
-import javax.ws.rs.core.Feature;
-import javax.ws.rs.core.FeatureContext;
+import jakarta.ws.rs.core.Feature;
+import jakarta.ws.rs.core.FeatureContext;
 
 public final class V3ResourcesFeature implements Feature {
 
@@ -49,6 +49,7 @@ public final class V3ResourcesFeature implements Feature {
     configurable.register(TopicsResource.class);
     configurable.register(ListAllTopicsConfigsAction.class);
     configurable.register(ListAllBrokersConfigsAction.class);
+    configurable.register(ListPartitionOffsetsAction.class);
     return true;
   }
 }

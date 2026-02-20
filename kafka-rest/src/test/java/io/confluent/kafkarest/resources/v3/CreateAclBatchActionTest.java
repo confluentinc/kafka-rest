@@ -20,13 +20,17 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.controllers.AclManager;
 import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.v3.CreateAclBatchRequest;
 import io.confluent.kafkarest.entities.v3.CreateAclBatchRequestData;
 import io.confluent.kafkarest.entities.v3.CreateAclRequest;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
+import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -72,6 +76,15 @@ public class CreateAclBatchActionTest {
   @BeforeEach
   public void setUp() {
     aclsResource = new CreateAclBatchAction(() -> aclManager);
+  }
+
+  @Test
+  public void createAcls_nullPayload() {
+    RestConstraintViolationException e =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () -> aclsResource.createAcls(new FakeAsyncResponse(), CLUSTER_ID, null));
+    assertTrue(e.getMessage().contains(Errors.NULL_PAYLOAD_ERROR_MESSAGE));
   }
 
   @Test

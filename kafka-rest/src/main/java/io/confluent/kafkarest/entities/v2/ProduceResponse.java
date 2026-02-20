@@ -19,12 +19,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.Errors;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotEmpty;
-import javax.ws.rs.core.Response;
 
 public final class ProduceResponse {
 

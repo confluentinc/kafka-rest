@@ -36,9 +36,6 @@ base_dir=$env_dir/../../..
 aws ecr get-login-password --region us-west-2 \
  | docker login --username AWS --password-stdin 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/
 
-# Download latest cp-zookeeper image.
-docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-zookeeper:6.0.x-latest
-
 # Download latest cp-server image.
 docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:6.0.x-latest
 

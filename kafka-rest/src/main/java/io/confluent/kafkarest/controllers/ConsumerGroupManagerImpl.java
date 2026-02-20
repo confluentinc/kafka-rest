@@ -21,17 +21,17 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.ConsumerGroup;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
-import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.common.GroupState;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.errors.GroupAuthorizationException;
 import org.apache.kafka.common.errors.GroupIdNotFoundException;
@@ -106,7 +106,7 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
 
     // Kafka returns a dummy description for non-existent groups (simple=true, state=DEAD)
     boolean isNonExistentGroup =
-        description.isSimpleConsumerGroup() && description.state() == ConsumerGroupState.DEAD;
+        description.isSimpleConsumerGroup() && description.groupState() == GroupState.DEAD;
 
     if (isNonExistentGroup) {
       return Optional.empty();

@@ -21,9 +21,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import jakarta.annotation.Nullable;
 import java.time.Instant;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 @AutoValue
 public abstract class ProduceResponse {

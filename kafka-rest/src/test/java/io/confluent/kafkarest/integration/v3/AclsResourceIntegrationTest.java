@@ -33,14 +33,14 @@ import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.SearchAclsResponse;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.metadata.authorizer.StandardAuthorizer;
 import org.junit.jupiter.api.BeforeEach;
@@ -97,11 +97,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
 
   @Override
   public Properties overrideBrokerProperties(int i, Properties props) {
-    if (isKraftTest()) {
-      props.put("authorizer.class.name", StandardAuthorizer.class.getName());
-    } else {
-      props.put("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
-    }
+    props.put("authorizer.class.name", StandardAuthorizer.class.getName());
     props.put(
         "listener.name.sasl_plaintext.plain.sasl.jaas.config",
         "org.apache.kafka.common.security.plain.PlainLoginModule required "
@@ -260,7 +256,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testCreateSearchAndSeparateDelete(String quorum) {
     createAliceAndBobAcls();
 
@@ -319,7 +315,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testCreateSearchAndMultiDelete(String quorum) {
     createAliceAndBobAcls();
 
@@ -358,7 +354,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testMultiDeleteBadQueryParameter(String quorum) {
     createAliceAndBobAcls();
 
@@ -398,7 +394,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testBatchAclCreate(String quorum) {
 
     SearchAclsResponse expectedPreCreateSearchResponse =
@@ -491,7 +487,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testBatchAclCreateWithNoRequestBody(String quorum) {
 
     Response nullRequestBodyResponse =
@@ -523,7 +519,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testBatchAclCreateRequestWithBodyAndNoContent(String quorum) {
 
     Response emptyRequestBodyResponse =
@@ -555,7 +551,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testBatchAclCreateWithBodyAndEmptyData(String quorum) {
 
     List<CreateAclRequest> acls = Arrays.asList();
@@ -593,7 +589,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testBatchAclCreateInvalidEntry(String quorum) {
 
     CreateAclRequest bob =

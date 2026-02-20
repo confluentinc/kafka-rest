@@ -38,10 +38,24 @@ import io.confluent.kafkarest.exceptions.StacklessCompletionException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
+import io.confluent.kafkarest.requestlog.CustomLog.ProduceRecordErrorCounter;
+import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.Suspended;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -49,18 +63,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collector;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.errors.SerializationException;
 import org.eclipse.jetty.http.HttpStatus;
 
@@ -147,13 +149,19 @@ public final class ProduceAction {
       throw Errors.invalidPayloadException("Request body is empty. Data is required.");
     }
 
+    ProduceRecordErrorCounter produceRecordErrorCounter = new ProduceRecordErrorCounter();
+
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
         .compose(
             request ->
                 produce(clusterId, topicName, request, controller, producerMetricsProvider.get()))
-        .resume(asyncResponse);
+        .resume(asyncResponse, produceRecordErrorCounter);
+
+    httpServletRequest.setAttribute(
+        CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS,
+        produceRecordErrorCounter);
   }
 
   private CompletableFuture<ProduceResponse> produce(

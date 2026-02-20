@@ -33,16 +33,16 @@ import io.confluent.kafkarest.entities.v2.SchemaConsumerRecord;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import javax.validation.ConstraintViolationException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -73,7 +73,7 @@ public abstract class SchemaProduceConsumeTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void produceThenConsume_returnsExactlyProduced(String quorum) throws Exception {
     createTopic(TOPIC, /* numPartitions= */ 1, /* replicationFactor= */ (short) 1);
 

@@ -29,11 +29,11 @@ import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
 import io.confluent.kafkarest.entities.v3.GetClusterConfigResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.Arrays;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -44,7 +44,7 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void listClusterConfigs_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/broker-configs").accept(MediaType.APPLICATION_JSON).get();
@@ -52,7 +52,7 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void getClusterConfig_nonExistingConfig_throwsNotFound(String quorum) {
     String clusterId = getClusterId();
 
@@ -64,7 +64,7 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void getClusterConfig_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/broker-configs/max.connections")
@@ -74,7 +74,7 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void updateAndReset_existingConfig_returnsDefaultUpdatedAndDefaultAgain(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -303,7 +303,7 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void updateClusterConfig_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/broker-configs/compression.type")
@@ -313,7 +313,7 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void resetClusterConfig_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/broker-configs/compression.type")
@@ -323,7 +323,7 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void alterConfigBatch_withExistingConfig(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();

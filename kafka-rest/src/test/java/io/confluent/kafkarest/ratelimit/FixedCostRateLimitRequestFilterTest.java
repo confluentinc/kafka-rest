@@ -30,9 +30,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.UriInfo;
 import org.glassfish.jersey.internal.util.collection.ImmutableMultivaluedMap;
 import org.junit.jupiter.api.Test;
 

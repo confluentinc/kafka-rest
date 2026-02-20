@@ -15,13 +15,23 @@
 
 package io.confluent.kafkarest.entities;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
-import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.clients.admin.MemberDescription;
+import org.apache.kafka.common.GroupState;
+import org.apache.kafka.common.GroupType;
 
 @AutoValue
 public abstract class ConsumerGroup {
@@ -37,6 +47,10 @@ public abstract class ConsumerGroup {
   public abstract String getPartitionAssignor();
 
   public abstract State getState();
+
+  public abstract Type getType();
+
+  public abstract boolean isMixedConsumerGroup();
 
   public abstract Broker getCoordinator();
 
@@ -67,7 +81,9 @@ public abstract class ConsumerGroup {
         .setPartitionAssignor(description.partitionAssignor())
         // I have only been able to see state=PREPARING_REBALANCE on all my tests.
         // TODO: Investigate how to get actual state of consumer group.
-        .setState(State.fromConsumerGroupState(description.state()))
+        .setState(new State(description.groupState()))
+        .setType(new Type(description.type()))
+        .setMixedConsumerGroup(hasNonUpgradedMember(description.type(), description.members()))
         .setCoordinator(Broker.fromNode(clusterId, description.coordinator()))
         .setConsumers(
             description.members().stream()
@@ -76,6 +92,21 @@ public abstract class ConsumerGroup {
                         Consumer.fromMemberDescription(clusterId, description.groupId(), consumer))
                 .collect(Collectors.toList()))
         .build();
+  }
+
+  private static boolean hasNonUpgradedMember(
+      GroupType groupType, Collection<MemberDescription> memberDescriptions) {
+    if (groupType == GroupType.CONSUMER) {
+      for (MemberDescription memberDescription : memberDescriptions) {
+        // If one of the group members is not upgraded or has unknown upgrade status,
+        // we treat the consumer group as partially upgraded.
+        if ((memberDescription.upgraded().isPresent() && !memberDescription.upgraded().get())
+            || memberDescription.upgraded().isEmpty()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @AutoValue.Builder
@@ -93,6 +124,10 @@ public abstract class ConsumerGroup {
 
     public abstract Builder setState(State state);
 
+    public abstract Builder setType(Type type);
+
+    public abstract Builder setMixedConsumerGroup(boolean isMixedConsumerGroup);
+
     public abstract Builder setCoordinator(Broker coordinator);
 
     public abstract Builder setConsumers(List<Consumer> consumers);
@@ -100,33 +135,126 @@ public abstract class ConsumerGroup {
     public abstract ConsumerGroup build();
   }
 
-  public enum State {
-    UNKNOWN,
+  /**
+   * Encapsulates the GroupState enum to provide a JSON string format that: serialize to
+   * SCREAMING_SNAKE_CASE of state name and deserialize from SCREAMING_SNAKE_CASE of state name
+   */
+  public static class State {
+    public static final State UNKNOWN = new State(GroupState.UNKNOWN);
 
-    PREPARING_REBALANCE,
+    // States that only apply to the classic groups.
+    public static final State PREPARING_REBALANCE = new State(GroupState.PREPARING_REBALANCE);
+    public static final State COMPLETING_REBALANCE = new State(GroupState.COMPLETING_REBALANCE);
 
-    COMPLETING_REBALANCE,
+    // States that only apply to the consumer groups.
+    public static final State ASSIGNING = new State(GroupState.ASSIGNING);
+    public static final State RECONCILING = new State(GroupState.RECONCILING);
 
-    STABLE,
+    // States that apply to both group types.
+    public static final State STABLE = new State(GroupState.STABLE);
+    public static final State DEAD = new State(GroupState.DEAD);
+    public static final State EMPTY = new State(GroupState.EMPTY);
 
-    DEAD,
+    // map of name (in SCREAMING_SNAKE_CASE) to enum GroupState
+    private static final Map<String, GroupState> NAME_TO_ENUM =
+        Arrays.stream(GroupState.values())
+            .collect(
+                Collectors.toMap(
+                    state -> state.name().toUpperCase(Locale.ROOT), Function.identity()));
 
-    EMPTY;
+    private final GroupState state;
 
-    public static State fromConsumerGroupState(ConsumerGroupState state) {
-      try {
-        return State.valueOf(state.name());
-      } catch (IllegalArgumentException e) {
-        return UNKNOWN;
-      }
+    State(GroupState state) {
+      this.state = Objects.requireNonNull(state);
     }
 
-    public ConsumerGroupState toConsumerGroupState() {
-      try {
-        return ConsumerGroupState.valueOf(name());
-      } catch (IllegalArgumentException e) {
-        return ConsumerGroupState.UNKNOWN;
+    public GroupState toGroupState() {
+      return state;
+    }
+
+    @JsonValue
+    @Override
+    public String toString() {
+      return state.name().toUpperCase(Locale.ROOT);
+    }
+
+    @JsonCreator
+    public static State fromString(String state) {
+      return new State(
+          NAME_TO_ENUM.getOrDefault(state.toUpperCase(Locale.ROOT), GroupState.UNKNOWN));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
       }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      State that = (State) obj;
+      return state == that.state;
+    }
+
+    @Override
+    public int hashCode() {
+      return state.hashCode();
+    }
+  }
+
+  /**
+   * Encapsulates the GroupType enum to provide a JSON string format: serialize to
+   * SCREAMING_SNAKE_CASE of type name and deserialize from SCREAMING_SNAKE_CASE of type name
+   */
+  public static class Type {
+    public static final Type UNKNOWN = new Type(GroupType.UNKNOWN);
+    public static final Type CLASSIC = new Type(GroupType.CLASSIC);
+    public static final Type CONSUMER = new Type(GroupType.CONSUMER);
+    public static final Type SHARE = new Type(GroupType.SHARE);
+
+    // map of name (in SCREAMING_SNAKE_CASE) to enum GroupType
+    private static final Map<String, GroupType> NAME_TO_ENUM =
+        Arrays.stream(GroupType.values())
+            .collect(
+                Collectors.toMap(
+                    type -> type.name().toUpperCase(Locale.ROOT), Function.identity()));
+
+    private final GroupType type;
+
+    Type(GroupType type) {
+      this.type = Objects.requireNonNull(type);
+    }
+
+    public GroupType toGroupType() {
+      return type;
+    }
+
+    @JsonValue
+    @Override
+    public String toString() {
+      return type.name().toUpperCase(Locale.ROOT);
+    }
+
+    @JsonCreator
+    public static Type fromString(String type) {
+      return new Type(NAME_TO_ENUM.getOrDefault(type.toUpperCase(Locale.ROOT), GroupType.UNKNOWN));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      Type that = (Type) obj;
+      return type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+      return type.hashCode();
     }
   }
 }

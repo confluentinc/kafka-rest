@@ -33,11 +33,11 @@ import io.confluent.kafkarest.entities.v2.BrokerList;
 import io.confluent.kafkarest.entities.v2.GetPartitionResponse;
 import io.confluent.kafkarest.entities.v2.GetTopicResponse;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -100,7 +100,7 @@ public class MetadataApiTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testBrokers(String quorum) throws InterruptedException {
     // Listing
     Response response = request("/brokers").get();
@@ -109,26 +109,8 @@ public class MetadataApiTest extends ClusterTestHarness {
     assertEquals(new BrokerList(Arrays.asList(0, 1)), brokers);
   }
 
-  /* This should work, but due to the lack of timeouts in ZkClient, if ZK is down some calls
-   *  will just block forever, see https://issues.apache.org/jira/browse/KAFKA-1907. We should
-   *  reenable this once we can apply timeouts to ZK operations.
-   */
-  /*
-    @Test
-    public void testZkFailure() throws InterruptedException {
-      // Kill ZK so the request will generate an error.
-      zookeeper.shutdown();
-
-      // Since this is handled via an ExceptionMapper, testing one endpoint is good enough
-      Response response = request("/brokers").get();
-      assertErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, response,
-                          Errors.ZOOKEEPER_ERROR_ERROR_CODE, Errors.ZOOKEEPER_ERROR_MESSAGE,
-                          Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    }
-  */
-
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testTopicsList(String quorum) throws InterruptedException {
     // Listing
     testWithRetry(
@@ -163,7 +145,7 @@ public class MetadataApiTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testPartitionsList(String quorum) throws InterruptedException {
     // Listing
 

@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.exceptions;
 
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response.Status;
 
 /**
  * An exception that indicates a Kafka operation has been attempted for an unsupported protocol

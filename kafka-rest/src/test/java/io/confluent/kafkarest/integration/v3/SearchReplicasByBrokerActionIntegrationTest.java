@@ -24,12 +24,12 @@ import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.SearchReplicasByBrokerResponse;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -57,7 +57,7 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void searchReplicasByBroker_existingBroker_returnsReplicas(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -157,7 +157,7 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void searchReplicasByBroker_nonExistingBroker_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
 

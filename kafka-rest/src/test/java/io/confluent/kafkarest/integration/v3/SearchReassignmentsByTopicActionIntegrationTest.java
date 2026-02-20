@@ -22,13 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.entities.v3.SearchReassignmentsByTopicResponse;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +52,7 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void searchReassignmentsByTopic_returnsReassignments(String quorum) throws Exception {
     String clusterId = getClusterId();
 
@@ -85,7 +85,7 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void searchReassignmentsByTopic_nonExistingCluster_returnsNotFound(String quorum)
       throws Exception {
 
@@ -98,7 +98,7 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void searchReassignmentsByTopic_nonExistingTopic_returnsEmpty(String quorum)
       throws Exception {
     String clusterId = getClusterId();

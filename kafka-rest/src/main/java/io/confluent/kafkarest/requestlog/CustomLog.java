@@ -15,6 +15,9 @@
 
 package io.confluent.kafkarest.requestlog;
 
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.RequestLog;
@@ -39,11 +42,13 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
 
   private final String[] requestAttributesToLog;
 
+  public static final String PRODUCE_ERROR_CODE_LOG_PREFIX = "Codes=";
+
   public CustomLog(RequestLog.Writer writer, String formatString, String[] requestAttributesToLog) {
     for (String attr : requestAttributesToLog) {
       // Add format-specifier to log request-attributes as response-headers in Jetty's
       // CustomRequestLog.
-      formatString += " %{" + attr + "}o";
+      formatString += " %{" + attr + "}attr";
     }
     this.requestAttributesToLog = requestAttributesToLog;
     this.delegateJettyLog = new CustomRequestLog(writer, formatString);
@@ -63,6 +68,27 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
     }
   }
 
+  /**
+   * This class aggregates error-codes for produce-records within a single (http)produce-request.
+   * This implements toString() method which is used by CustomLog to get a message to log for the
+   * aggregated error counts.
+   */
+  public static class ProduceRecordErrorCounter {
+    private final Map<Integer, Integer> produceErrorCodeCountMap = new TreeMap<>();
+
+    public synchronized void incrementErrorCount(int httpErrorCode) {
+      produceErrorCodeCountMap.merge(httpErrorCode, 1, Integer::sum);
+    }
+
+    @Override
+    public synchronized String toString() {
+      return PRODUCE_ERROR_CODE_LOG_PREFIX
+          + produceErrorCodeCountMap.entrySet().stream()
+              .map(entry -> entry.getKey() + ":" + entry.getValue())
+              .collect(Collectors.joining(","));
+    }
+  }
+
   @Override
   public void log(Request request, Response response) {
     // The configured request-attributes are converted to response-headers so Jetty can log them.
@@ -72,13 +98,6 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
     //    readily available(Vs response).
     // Unfortunately Jetty doesn't provide a way to log request-attributes, hence they are converted
     // to response-headers, which can be logged.
-    for (String attr : this.requestAttributesToLog) {
-      Object attrVal = request.getAttribute(attr);
-      if (attrVal != null) {
-        request.removeAttribute(attr);
-        response.setHeader(attr, attrVal.toString());
-      }
-    }
 
     try {
       delegateJettyLog.log(request, response);
@@ -87,11 +106,6 @@ public class CustomLog extends AbstractLifeCycle implements RequestLog {
           "Logging with Jetty's CustomRequestLogFailed with exception {}, stack is \n{}",
           e,
           e.getStackTrace());
-    } finally {
-      // Remove the response-headers that were added above just for logging.
-      for (String attr : this.requestAttributesToLog) {
-        response.getHttpFields().remove(attr);
-      }
     }
   }
 }

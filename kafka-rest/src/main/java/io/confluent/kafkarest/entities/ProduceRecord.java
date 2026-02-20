@@ -16,7 +16,7 @@
 package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 @AutoValue
 public abstract class ProduceRecord<K, V> {

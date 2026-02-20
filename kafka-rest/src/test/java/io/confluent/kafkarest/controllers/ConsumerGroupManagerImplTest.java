@@ -32,7 +32,9 @@ import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroup.State;
+import io.confluent.kafkarest.entities.ConsumerGroup.Type;
 import io.confluent.kafkarest.entities.Partition;
+import jakarta.ws.rs.NotFoundException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -40,7 +42,6 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
@@ -226,6 +227,160 @@ public class ConsumerGroupManagerImplTest {
                       /* partitionId= */ 9,
                       /* replicas= */ emptyList())))
           .build()
+    },
+    {
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-3")
+          .setConsumerId("consumer-7")
+          .setClientId("client-7")
+          .setInstanceId("instance-7")
+          .setHost("71.72.73.74")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-4",
+                      /* partitionId= */ 1,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-5",
+                      /* partitionId= */ 2,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-6",
+                      /* partitionId= */ 3,
+                      /* replicas= */ emptyList())))
+          .build(),
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-3")
+          .setConsumerId("consumer-8")
+          .setClientId("client-8")
+          .setInstanceId("instance-8")
+          .setHost("81.82.83.84")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-4",
+                      /* partitionId= */ 4,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-5",
+                      /* partitionId= */ 5,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-6",
+                      /* partitionId= */ 6,
+                      /* replicas= */ emptyList())))
+          .build(),
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-3")
+          .setConsumerId("consumer-9")
+          .setClientId("client-9")
+          .setInstanceId("instance-9")
+          .setHost("91.92.93.94")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-7",
+                      /* partitionId= */ 7,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-8",
+                      /* partitionId= */ 8,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-9",
+                      /* partitionId= */ 9,
+                      /* replicas= */ emptyList())))
+          .build()
+    },
+    {
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-4")
+          .setConsumerId("consumer-10")
+          .setClientId("client-10")
+          .setInstanceId("instance-10")
+          .setHost("101.102.103.104")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-4",
+                      /* partitionId= */ 1,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-5",
+                      /* partitionId= */ 2,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-6",
+                      /* partitionId= */ 3,
+                      /* replicas= */ emptyList())))
+          .build(),
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-4")
+          .setConsumerId("consumer-11")
+          .setClientId("client-11")
+          .setInstanceId("instance-11")
+          .setHost("111.112.113.114")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-4",
+                      /* partitionId= */ 4,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-5",
+                      /* partitionId= */ 5,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-6",
+                      /* partitionId= */ 6,
+                      /* replicas= */ emptyList())))
+          .build(),
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-4")
+          .setConsumerId("consumer-12")
+          .setClientId("client-12")
+          .setInstanceId("instance-12")
+          .setHost("121.122.123.124")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-7",
+                      /* partitionId= */ 7,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-8",
+                      /* partitionId= */ 8,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-9",
+                      /* partitionId= */ 9,
+                      /* replicas= */ emptyList())))
+          .build()
     }
   };
 
@@ -236,6 +391,8 @@ public class ConsumerGroupManagerImplTest {
         .setSimple(true)
         .setPartitionAssignor("org.apache.kafka.clients.consumer.RangeAssignor")
         .setState(State.STABLE)
+        .setType(Type.CLASSIC)
+        .setMixedConsumerGroup(false)
         .setCoordinator(BROKER_1)
         .setConsumers(Arrays.asList(CONSUMERS[0]))
         .build(),
@@ -245,8 +402,32 @@ public class ConsumerGroupManagerImplTest {
         .setSimple(false)
         .setPartitionAssignor("org.apache.kafka.clients.consumer.RoundRobinAssignor")
         .setState(State.COMPLETING_REBALANCE)
+        .setType(Type.CLASSIC)
+        .setMixedConsumerGroup(false)
         .setCoordinator(BROKER_2)
         .setConsumers(Arrays.asList(CONSUMERS[1]))
+        .build(),
+    ConsumerGroup.builder()
+        .setClusterId(CLUSTER_ID)
+        .setConsumerGroupId("consumer-group-3")
+        .setSimple(false)
+        .setPartitionAssignor("org.apache.kafka.clients.consumer.StickyAssignor")
+        .setState(State.RECONCILING)
+        .setType(Type.CONSUMER)
+        .setMixedConsumerGroup(true)
+        .setCoordinator(BROKER_2)
+        .setConsumers(Arrays.asList(CONSUMERS[2]))
+        .build(),
+    ConsumerGroup.builder()
+        .setClusterId(CLUSTER_ID)
+        .setConsumerGroupId("consumer-group-4")
+        .setSimple(false)
+        .setPartitionAssignor("org.apache.kafka.clients.consumer.CooperativeStickyAssignor")
+        .setState(State.STABLE)
+        .setType(Type.CONSUMER)
+        .setMixedConsumerGroup(false)
+        .setCoordinator(BROKER_2)
+        .setConsumers(Arrays.asList(CONSUMERS[3]))
         .build()
   };
 
@@ -271,39 +452,32 @@ public class ConsumerGroupManagerImplTest {
   @BeforeEach
   public void setUp() {
     consumerGroupListings =
-        new ConsumerGroupListing[] {
-          createMock(ConsumerGroupListing.class), createMock(ConsumerGroupListing.class)
-        };
+        IntStream.range(0, CONSUMER_GROUPS.length)
+            .mapToObj(i -> createMock(ConsumerGroupListing.class))
+            .toArray(ConsumerGroupListing[]::new);
+
     consumerGroupDescriptions =
-        new ConsumerGroupDescription[] {
-          createMock(ConsumerGroupDescription.class), createMock(ConsumerGroupDescription.class)
-        };
+        IntStream.range(0, CONSUMER_GROUPS.length)
+            .mapToObj(i -> createMock(ConsumerGroupDescription.class))
+            .toArray(ConsumerGroupDescription[]::new);
+
     memberDescriptions =
-        new MemberDescription[][] {
-          {
-            createMock(MemberDescription.class),
-            createMock(MemberDescription.class),
-            createMock(MemberDescription.class)
-          },
-          {
-            createMock(MemberDescription.class),
-            createMock(MemberDescription.class),
-            createMock(MemberDescription.class)
-          }
-        };
+        Arrays.stream(CONSUMERS)
+            .map(
+                consumerArray ->
+                    Arrays.stream(consumerArray)
+                        .map(consumer -> createMock(MemberDescription.class))
+                        .toArray(MemberDescription[]::new))
+            .toArray(MemberDescription[][]::new);
+
     memberAssignments =
-        new MemberAssignment[][] {
-          {
-            createMock(MemberAssignment.class),
-            createMock(MemberAssignment.class),
-            createMock(MemberAssignment.class)
-          },
-          {
-            createMock(MemberAssignment.class),
-            createMock(MemberAssignment.class),
-            createMock(MemberAssignment.class)
-          }
-        };
+        Arrays.stream(CONSUMERS)
+            .map(
+                consumerArray ->
+                    Arrays.stream(consumerArray)
+                        .map(consumer -> createMock(MemberAssignment.class))
+                        .toArray(MemberAssignment[]::new))
+            .toArray(MemberAssignment[][]::new);
 
     consumerGroupManager = new ConsumerGroupManagerImpl(adminClient, clusterManager);
   }
@@ -339,8 +513,10 @@ public class ConsumerGroupManagerImplTest {
           .andStubReturn(CONSUMER_GROUPS[i].isSimple());
       expect(consumerGroupDescriptions[i].partitionAssignor())
           .andStubReturn(CONSUMER_GROUPS[i].getPartitionAssignor());
-      expect(consumerGroupDescriptions[i].state())
-          .andStubReturn(CONSUMER_GROUPS[i].getState().toConsumerGroupState());
+      expect(consumerGroupDescriptions[i].groupState())
+          .andStubReturn(CONSUMER_GROUPS[i].getState().toGroupState());
+      expect(consumerGroupDescriptions[i].type())
+          .andStubReturn(CONSUMER_GROUPS[i].getType().toGroupType());
       expect(consumerGroupDescriptions[i].coordinator())
           .andStubReturn(CONSUMER_GROUPS[i].getCoordinator().toNode());
       expect(consumerGroupDescriptions[i].members())
@@ -355,6 +531,7 @@ public class ConsumerGroupManagerImplTest {
             .andStubReturn(CONSUMERS[i][j].getInstanceId());
         expect(memberDescriptions[i][j].clientId()).andStubReturn(CONSUMERS[i][j].getClientId());
         expect(memberDescriptions[i][j].host()).andStubReturn(CONSUMERS[i][j].getHost());
+        expect(memberDescriptions[i][j].upgraded()).andStubReturn(Optional.of(3 * i + j > 6));
         expect(memberDescriptions[i][j].assignment()).andStubReturn(memberAssignments[i][j]);
         expect(memberAssignments[i][j].topicPartitions())
             .andStubReturn(
@@ -368,7 +545,7 @@ public class ConsumerGroupManagerImplTest {
 
     List<ConsumerGroup> consumerGroups = consumerGroupManager.listConsumerGroups(CLUSTER_ID).get();
 
-    assertEquals(Arrays.asList(CONSUMER_GROUPS), consumerGroups);
+    assertEquals(new HashSet<>(Arrays.asList(CONSUMER_GROUPS)), new HashSet<>(consumerGroups));
   }
 
   @Test
@@ -402,8 +579,10 @@ public class ConsumerGroupManagerImplTest {
         .andStubReturn(CONSUMER_GROUPS[0].isSimple());
     expect(consumerGroupDescriptions[0].partitionAssignor())
         .andStubReturn(CONSUMER_GROUPS[0].getPartitionAssignor());
-    expect(consumerGroupDescriptions[0].state())
-        .andStubReturn(CONSUMER_GROUPS[0].getState().toConsumerGroupState());
+    expect(consumerGroupDescriptions[0].groupState())
+        .andStubReturn(CONSUMER_GROUPS[0].getState().toGroupState());
+    expect(consumerGroupDescriptions[0].type())
+        .andStubReturn(CONSUMER_GROUPS[0].getType().toGroupType());
     expect(consumerGroupDescriptions[0].coordinator())
         .andStubReturn(CONSUMER_GROUPS[0].getCoordinator().toNode());
     expect(consumerGroupDescriptions[0].members())
@@ -474,8 +653,8 @@ public class ConsumerGroupManagerImplTest {
   @Test
   public void listConsumerGroups_withPartialAuthorization_returnsOnlyAuthorizedGroups()
       throws Exception {
-    // Setup: User can list all groups but only has DESCRIBE permission on group 0.
-    // Group 1 will return GroupAuthorizationException.
+    // Setup: User can list all groups but only has DESCRIBE permission on groups 0 and 2.
+    // Groups 1 and 3 will return GroupAuthorizationException.
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.listConsumerGroups()).andReturn(listConsumerGroupsResult);
     expect(listConsumerGroupsResult.valid())
@@ -493,12 +672,12 @@ public class ConsumerGroupManagerImplTest {
                     .collect(Collectors.toList())))
         .andReturn(describeConsumerGroupsResult);
 
-    // Create futures: group 0 succeeds, group 1 fails with authorization exception
+    // Create futures: groups 0 and 2 succeed, groups 1 and 3 fail with authorization exception
     java.util.Map<String, KafkaFuture<ConsumerGroupDescription>> groupFutures =
         new java.util.HashMap<>();
 
-    // Authorized group (0) - return successful future
-    int[] authorizedIndices = {0};
+    // Authorized groups (0 and 2) - return successful futures
+    int[] authorizedIndices = {0, 2};
     for (int i : authorizedIndices) {
       groupFutures.put(
           CONSUMER_GROUPS[i].getConsumerGroupId(),
@@ -510,8 +689,10 @@ public class ConsumerGroupManagerImplTest {
           .andStubReturn(CONSUMER_GROUPS[i].isSimple());
       expect(consumerGroupDescriptions[i].partitionAssignor())
           .andStubReturn(CONSUMER_GROUPS[i].getPartitionAssignor());
-      expect(consumerGroupDescriptions[i].state())
-          .andStubReturn(CONSUMER_GROUPS[i].getState().toConsumerGroupState());
+      expect(consumerGroupDescriptions[i].groupState())
+          .andStubReturn(CONSUMER_GROUPS[i].getState().toGroupState());
+      expect(consumerGroupDescriptions[i].type())
+          .andStubReturn(CONSUMER_GROUPS[i].getType().toGroupType());
       expect(consumerGroupDescriptions[i].coordinator())
           .andStubReturn(CONSUMER_GROUPS[i].getCoordinator().toNode());
       expect(consumerGroupDescriptions[i].members())
@@ -525,6 +706,7 @@ public class ConsumerGroupManagerImplTest {
             .andStubReturn(CONSUMERS[i][j].getInstanceId());
         expect(memberDescriptions[i][j].clientId()).andStubReturn(CONSUMERS[i][j].getClientId());
         expect(memberDescriptions[i][j].host()).andStubReturn(CONSUMERS[i][j].getHost());
+        expect(memberDescriptions[i][j].upgraded()).andStubReturn(Optional.of(3 * i + j > 6));
         expect(memberDescriptions[i][j].assignment()).andStubReturn(memberAssignments[i][j]);
         expect(memberAssignments[i][j].topicPartitions())
             .andStubReturn(
@@ -535,8 +717,8 @@ public class ConsumerGroupManagerImplTest {
       }
     }
 
-    // Unauthorized group (1) - return failed future with GroupAuthorizationException
-    int[] unauthorizedIndices = {1};
+    // Unauthorized groups (1 and 3) - return failed futures with GroupAuthorizationException
+    int[] unauthorizedIndices = {1, 3};
     for (int i : unauthorizedIndices) {
       KafkaFutureImpl<ConsumerGroupDescription> failedFuture = new KafkaFutureImpl<>();
       failedFuture.completeExceptionally(
@@ -550,9 +732,10 @@ public class ConsumerGroupManagerImplTest {
     // Execute
     List<ConsumerGroup> consumerGroups = consumerGroupManager.listConsumerGroups(CLUSTER_ID).get();
 
-    // Verify: Only authorized group (0) is returned
-    HashSet<ConsumerGroup> expected = new HashSet<>(singletonList(CONSUMER_GROUPS[0]));
+    // Verify: Only authorized groups (0 and 2) are returned
+    HashSet<ConsumerGroup> expected =
+        new HashSet<>(Arrays.asList(CONSUMER_GROUPS[0], CONSUMER_GROUPS[2]));
     assertEquals(expected, new HashSet<>(consumerGroups));
-    assertEquals(1, consumerGroups.size());
+    assertEquals(2, consumerGroups.size());
   }
 }

@@ -19,6 +19,7 @@ import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ratelimit.RateLimitBackend;
 import io.confluent.rest.RestConfig;
+import jakarta.inject.Qualifier;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -30,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Qualifier;
 import org.glassfish.hk2.api.AnnotationLiteral;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -184,6 +184,10 @@ public final class ConfigModule extends AbstractBinder {
     bind(config.getSchemaRegistryConfigs())
         .qualifiedBy(new SchemaRegistryConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() {});
+
+    bind(config.isNullRequestBodyAlwaysPublishEmptyRecordEnabled())
+        .qualifiedBy(new NullRequestBodyAlwaysPublishEmptyRecordEnabledConfigImpl())
+        .to(Boolean.class);
 
     bind(schemaRegistryConfig.requestHeaders())
         .qualifiedBy(new SchemaRegistryRequestHeadersConfigImpl())
@@ -480,5 +484,14 @@ public final class ConfigModule extends AbstractBinder {
   private static final class StreamingConnectionMaxDurationGracePeriodImpl
       extends AnnotationLiteral<StreamingMaxConnectionGracePeriod>
       implements StreamingMaxConnectionGracePeriod {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig {}
+
+  private static final class NullRequestBodyAlwaysPublishEmptyRecordEnabledConfigImpl
+      extends AnnotationLiteral<NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig>
+      implements NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig {}
 }
 // CHECKSTYLE:ON:ClassDataAbstractionCoupling

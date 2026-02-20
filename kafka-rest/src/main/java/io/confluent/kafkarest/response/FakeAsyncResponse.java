@@ -15,15 +15,15 @@
 
 package io.confluent.kafkarest.response;
 
+import jakarta.annotation.Nullable;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.TimeoutHandler;
+import jakarta.ws.rs.core.Response;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.TimeoutHandler;
-import javax.ws.rs.core.Response;
 
 /** A fake {@link AsyncResponse} to be used in tests. */
 public final class FakeAsyncResponse implements AsyncResponse {

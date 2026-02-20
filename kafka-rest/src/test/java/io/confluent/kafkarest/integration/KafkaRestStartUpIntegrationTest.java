@@ -18,10 +18,10 @@ package io.confluent.kafkarest.integration;
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.Properties;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -40,7 +40,7 @@ public class KafkaRestStartUpIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void kafkaRest_withInvalidAdminConfigs_startsUp(String quorum) {
     // Make sure that Admin is not created on startup. If it were, the server would fail to startup,
     // since the above security configs are incomplete. See
@@ -52,7 +52,7 @@ public class KafkaRestStartUpIntegrationTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testHttpResponseHeader(String quorum) {
     Response response = request("/v3/clusters").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(response.getHeaderString("X-XSS-Protection"), "1; mode=block");

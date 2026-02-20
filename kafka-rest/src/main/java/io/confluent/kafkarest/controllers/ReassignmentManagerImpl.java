@@ -21,13 +21,13 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Reassignment;
+import jakarta.inject.Inject;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.PartitionReassignment;
 import org.apache.kafka.common.TopicPartition;

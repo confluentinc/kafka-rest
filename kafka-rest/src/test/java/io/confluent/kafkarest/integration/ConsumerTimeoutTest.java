@@ -20,8 +20,8 @@ import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NA
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
+import jakarta.ws.rs.core.GenericType;
 import java.util.List;
-import javax.ws.rs.core.GenericType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,7 +34,7 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
 
   private static final Integer REQUEST_TIMEOUT_MS = 500;
   // This is pretty large since there is sometimes significant overhead to doing a read (e.g.
-  // checking topic existence in ZK)
+  // checking topic existence)
   // Tests have seen > 2s delays between registering the consumer and the consume
   private static final Integer INSTANCE_TIMEOUT_MS = 3500;
   // There is a 1s sleep in the KafkaConsumerManager cleanup thread, which means that if the
@@ -54,7 +54,7 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testConsumerTimeout(String quorum) throws InterruptedException {
     String instanceUri =
         startConsumeMessages(

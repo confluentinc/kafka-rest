@@ -18,9 +18,9 @@ package io.confluent.kafkarest.entities.v3;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.entities.ConfigSource;
+import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 public abstract class AbstractConfigData extends Resource {
 

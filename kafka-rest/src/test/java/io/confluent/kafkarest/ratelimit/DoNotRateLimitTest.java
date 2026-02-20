@@ -19,11 +19,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 import org.junit.jupiter.api.Test;
 
 public final class DoNotRateLimitTest extends AbstractRateLimitTest {

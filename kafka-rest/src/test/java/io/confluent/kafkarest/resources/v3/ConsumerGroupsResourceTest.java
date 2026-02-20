@@ -26,6 +26,7 @@ import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroup.State;
+import io.confluent.kafkarest.entities.ConsumerGroup.Type;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.v3.ConsumerGroupData;
 import io.confluent.kafkarest.entities.v3.ConsumerGroupDataList;
@@ -37,9 +38,9 @@ import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
+import jakarta.ws.rs.NotFoundException;
 import java.util.Arrays;
 import java.util.Optional;
-import javax.ws.rs.NotFoundException;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.junit.jupiter.api.BeforeEach;
@@ -222,6 +223,8 @@ public class ConsumerGroupsResourceTest {
         .setSimple(true)
         .setPartitionAssignor("org.apache.kafka.clients.consumer.RangeAssignor")
         .setState(State.STABLE)
+        .setType(Type.CLASSIC)
+        .setMixedConsumerGroup(false)
         .setCoordinator(BROKER_1)
         .setConsumers(Arrays.asList(CONSUMERS[0]))
         .build(),
@@ -231,6 +234,8 @@ public class ConsumerGroupsResourceTest {
         .setSimple(false)
         .setPartitionAssignor("org.apache.kafka.clients.consumer.RoundRobinAssignor")
         .setState(State.COMPLETING_REBALANCE)
+        .setType(Type.CLASSIC)
+        .setMixedConsumerGroup(false)
         .setCoordinator(BROKER_2)
         .setConsumers(Arrays.asList(CONSUMERS[1]))
         .build()

@@ -1160,6 +1160,39 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/offset:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+      - $ref: '#/components/parameters/PartitionId'
+
+    get:
+      summary: 'List Partition Offsets'
+      operationId: listKafkaPartitionOffsets
+      description: |-
+        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+
+        Return the earliest and latest offsets of a partition with the given `partition_id`.
+      tags:
+        - Partition (v3)
+      parameters:
+        - $ref: '#/components/parameters/OffsetType'
+      responses:
+        '200':
+          $ref: '#/components/responses/ListPartitionOffsetsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
+
   /clusters/{cluster_id}/topics/{topic_name}/partitions:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -1629,6 +1662,14 @@ components:
       required: false
       schema:
         type: boolean
+
+    OffsetType:
+      name: 'offset_type'
+      description: 'Specify the offset type to be fetched for a given partition'
+      in: query
+      required: false
+      schema:
+        type: string
 
     PartitionId:
       name: 'partition_id'
@@ -2131,6 +2172,8 @@ components:
             - is_simple
             - partition_assignor
             - state
+            - type
+            - is_mixed_consumer_group
             - coordinator
             - consumers
             - lag_summary
@@ -2145,9 +2188,13 @@ components:
               type: string
             state:
               $ref: '#/components/schemas/ConsumerGroupState'
+            type:
+              $ref: '#/components/schemas/ConsumerGroupType'
+            is_mixed_consumer_group:
+              type: boolean
             coordinator:
               $ref: '#/components/schemas/Relationship'
-            consumer:
+            consumers:
               $ref: '#/components/schemas/Relationship'
             lag_summary:
               $ref: '#/components/schemas/Relationship'
@@ -2170,9 +2217,19 @@ components:
         - UNKNOWN
         - PREPARING_REBALANCE
         - COMPLETING_REBALANCE
+        - ASSIGNING
+        - RECONCILING
         - STABLE
         - DEAD
         - EMPTY
+    
+    ConsumerGroupType:
+      type: string
+      x-extensible-enum:
+        - UNKNOWN
+        - CLASSIC
+        - CONSUMER
+        - SHARE
 
     ConsumerLagData:
       allOf:
@@ -2316,6 +2373,29 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/PartitionData'
+
+
+    PartitionWithOffsetsData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - topic_name
+            - partition_id
+            - earliest_offset
+            - latest_offset
+          properties:
+            cluster_id:
+              type: string
+            topic_name:
+              type: string
+            partition_id:
+              type: integer
+            earliest_offset:
+              type: int64
+            latest_offset:
+              type: int64
 
     ProduceBatchResponse:
       description: Response for producing a batch of records.
@@ -3232,6 +3312,8 @@ components:
             is_simple: false
             partition_assignor: 'org.apache.kafka.clients.consumer.RoundRobinAssignor'
             state: 'STABLE'
+            type: 'CLASSIC'
+            is_mixed_consumer_group: false
             coordinator:
               related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/brokers/1'
             consumers:
@@ -3729,6 +3811,8 @@ components:
                 is_simple: false
                 partition_assignor: 'org.apache.kafka.clients.consumer.RoundRobinAssignor'
                 state: 'STABLE'
+                type: 'CLASSIC'
+                is_mixed_consumer_group: false
                 coordinator:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/brokers/1'
                 consumers:
@@ -3744,6 +3828,8 @@ components:
                 is_simple: false
                 partition_assignor: 'org.apache.kafka.clients.consumer.StickyAssignor'
                 state: 'PREPARING_REBALANCE'
+                type: 'CLASSIC'
+                is_mixed_consumer_group: false
                 coordinator:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/brokers/2'
                 consumers:
@@ -3759,6 +3845,8 @@ components:
                 is_simple: false
                 partition_assignor: 'org.apache.kafka.clients.consumer.RangeAssignor'
                 state: 'DEAD'
+                type: 'CLASSIC'
+                is_mixed_consumer_group: false
                 coordinator:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/brokers/3'
                 consumers:
@@ -3866,6 +3954,23 @@ components:
                 client_id: 'client-2'
                 assignments:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-2/assignments'
+
+    ListPartitionOffsetsResponse:
+      description: 'The earliest and latest offsets of a partition'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PartitionWithOffsetsData'
+          example:
+            kind: 'KafkaPartitionWithOffsets'
+            metadata:
+              self: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/topics/topic-1/partitions/1/offset'
+              resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/offset'
+            cluster_id: 'cluster-1'
+            topic_name: 'topic-1'
+            partition_id: 1
+            earliest_offset: 10L
+            latest_offset: 100L
 
     ListPartitionsResponse:
       description: 'The list of partitions.'

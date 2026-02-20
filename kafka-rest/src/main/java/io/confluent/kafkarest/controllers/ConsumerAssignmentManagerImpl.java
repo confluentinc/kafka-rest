@@ -19,11 +19,11 @@ import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.entities.ConsumerAssignment;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 final class ConsumerAssignmentManagerImpl implements ConsumerAssignmentManager {
 

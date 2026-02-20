@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.JsonConsumerRecord;
+import jakarta.ws.rs.core.GenericType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,7 +32,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import javax.ws.rs.core.GenericType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -97,7 +97,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testConsumeWithKeys(String quorum) {
     String instanceUri =
         startConsumeMessages(
@@ -115,7 +115,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testConsumeOnlyValues(String quorum) {
     String instanceUri =
         startConsumeMessages(
@@ -133,7 +133,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   @Disabled("This test doesn't verify produce records and is flaky, to be fixed in KREST-10370")
   public void testConsumeWithMultipleParallelConsumers(String quorum) throws InterruptedException {
     class ConsumerTask implements Callable<Void> {

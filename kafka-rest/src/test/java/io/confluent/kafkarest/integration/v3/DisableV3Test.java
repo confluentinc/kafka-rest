@@ -20,10 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.Properties;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -39,7 +39,7 @@ public class DisableV3Test extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void v3ApiIsDisabled(String quorum) {
     Response response = request("/v3/clusters").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());

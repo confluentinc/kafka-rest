@@ -21,13 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import io.confluent.kafkarest.entities.v3.ListAllReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +51,7 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void listAllReassignments_returnsReassignments(String quorum) {
     String clusterId = getClusterId();
 
@@ -79,7 +79,7 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void listAllReassignments_nonExistingCluster_returnsNotFound(String quorum)
       throws Exception {
 

@@ -41,6 +41,7 @@ import io.confluent.kafkarest.ratelimit.RateLimitBackend;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.metrics.RestMetricsContext;
+import jakarta.ws.rs.core.MediaType;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.Duration;
@@ -55,7 +56,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
@@ -108,21 +108,6 @@ public class KafkaRestConfig extends RestConfig {
       "The maximum number of threads to run consumer requests on."
           + " The value of -1 denotes unbounded thread creation";
   public static final String CONSUMER_MAX_THREADS_DEFAULT = "50";
-
-  public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
-  private static final String ZOOKEEPER_CONNECT_DOC =
-      "NOTE: Only required when using v1 Consumer API's. Specifies the ZooKeeper connection string"
-          + " in the form hostname:port where host and port are the host and port of a ZooKeeper"
-          + " server. To allow connecting through other ZooKeeper nodes when that ZooKeeper machine"
-          + " is down you can also specify multiple hosts in the form"
-          + " hostname1:port1,hostname2:port2,hostname3:port3.\n"
-          + "\n"
-          + "The server may also have a ZooKeeper chroot path as part of it's ZooKeeper connection"
-          + " string which puts its data under some path in the global ZooKeeper namespace. If so"
-          + " the consumer should use the same chroot path in its connection string. For example to"
-          + " give a chroot path of /chroot/path you would give the connection string as"
-          + " hostname1:port1,hostname2:port2,hostname3:port3/chroot/path. ";
-  public static final String ZOOKEEPER_CONNECT_DEFAULT = "";
 
   public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
   private static final String BOOTSTRAP_SERVERS_DOC =
@@ -305,10 +290,6 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
 
-  /** <code>client.zk.session.timeout.ms</code> */
-  public static final String KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG =
-      "client.zk.session.timeout.ms";
-
   public static final String KAFKACLIENT_TIMEOUT_CONFIG = "client.timeout.ms";
   /** <code>client.init.timeout.ms</code> */
   public static final String KAFKACLIENT_INIT_TIMEOUT_CONFIG = "client.init.timeout.ms";
@@ -349,7 +330,6 @@ public class KafkaRestConfig extends RestConfig {
       "client.sasl.kerberos.ticket.renew.window.factor";
   public static final String KAFKA_REST_RESOURCE_EXTENSION_CONFIG =
       "kafka.rest.resource.extension.class";
-  protected static final String KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC = "Zookeeper session timeout";
   protected static final String KAFKACLIENT_INIT_TIMEOUT_DOC =
       "The timeout for initialization of the Kafka store, including creation of the Kafka topic "
           + "that stores schema data.";
@@ -519,6 +499,16 @@ public class KafkaRestConfig extends RestConfig {
       "Whether to use custom-request-logging i.e. CustomLog.java. Instead of using"
           + "Jetty's request-logging.";
   private static final boolean USE_CUSTOM_REQUEST_LOGGING_DEFAULT = true;
+  public static final String NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_CONFIG =
+      "null.request.body.always.publishes.empty.record";
+  private static final String NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_DOC =
+      "Before commit d65a0b3, when a schema was specified, "
+          + "but the associated key or value request body was null, "
+          + "then the message was published with an empty key or value. "
+          + "If a schema does not allow a null value, then the message should be rejected. "
+          + "After commit d65a0b3, the new behaviour where the message is rejected in this "
+          + "scenario is the default. This configuration property enables the old behaviour.";
+  private static final boolean NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_DEFAULT = false;
 
   private static final ConfigDef config;
   private volatile Metrics metrics;
@@ -548,12 +538,6 @@ public class KafkaRestConfig extends RestConfig {
             CONSUMER_MAX_THREADS_DEFAULT,
             Importance.MEDIUM,
             CONSUMER_MAX_THREADS_DOC)
-        .define(
-            ZOOKEEPER_CONNECT_CONFIG,
-            Type.STRING,
-            ZOOKEEPER_CONNECT_DEFAULT,
-            Importance.HIGH,
-            ZOOKEEPER_CONNECT_DOC)
         .define(
             BOOTSTRAP_SERVERS_CONFIG,
             Type.STRING,
@@ -682,13 +666,6 @@ public class KafkaRestConfig extends RestConfig {
             SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
             Importance.LOW,
             SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC)
-        .define(
-            KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG,
-            Type.INT,
-            30000,
-            Range.atLeast(0),
-            Importance.LOW,
-            KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC)
         .define(
             KAFKACLIENT_INIT_TIMEOUT_CONFIG,
             Type.INT,
@@ -930,7 +907,13 @@ public class KafkaRestConfig extends RestConfig {
             Type.BOOLEAN,
             USE_CUSTOM_REQUEST_LOGGING_DEFAULT,
             Importance.LOW,
-            USE_CUSTOM_REQUEST_LOGGING_DOC);
+            USE_CUSTOM_REQUEST_LOGGING_DOC)
+        .define(
+            NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_CONFIG,
+            Type.BOOLEAN,
+            NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_DEFAULT,
+            Importance.LOW,
+            NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {
@@ -1236,6 +1219,10 @@ public class KafkaRestConfig extends RestConfig {
 
   public final long getProduceRequestSizeLimitMaxBytesConfig() {
     return getLong(PRODUCE_REQUEST_SIZE_LIMIT_MAX_BYTES_CONFIG);
+  }
+
+  public final boolean isNullRequestBodyAlwaysPublishEmptyRecordEnabled() {
+    return getBoolean(NULL_REQUEST_BODY_ALWAYS_PUBLISH_EMPTY_RECORD_CONFIG);
   }
 
   public final ImmutableMap<String, Integer> getRateLimitCosts() {

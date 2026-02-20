@@ -18,7 +18,7 @@ package io.confluent.kafkarest.ratelimit;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.cache.CacheLoader;
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 /**
  * RequestRateLimiterCacheLoader is a {@link CacheLoader} to help create a {@link

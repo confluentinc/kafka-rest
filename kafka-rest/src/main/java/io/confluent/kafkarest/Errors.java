@@ -20,10 +20,12 @@ import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import org.apache.kafka.common.config.ConfigException;
 
 public class Errors {
+
+  public static final String NULL_PAYLOAD_ERROR_MESSAGE = "Null input provided. Data is required.";
 
   public static final int KAFKA_AUTHENTICATION_ERROR_CODE =
       KafkaExceptionMapper.KAFKA_AUTHENTICATION_ERROR_CODE;
@@ -202,9 +204,6 @@ public class Errors {
   public static RestConstraintViolationException produceBatchException(String cause) {
     return new RestConstraintViolationException(cause, PRODUCE_BATCH_EXCEPTION_ERROR_CODE);
   }
-
-  public static final String ZOOKEEPER_ERROR_MESSAGE = "Zookeeper error: ";
-  public static final int ZOOKEEPER_ERROR_ERROR_CODE = 50001;
 
   // This is a catch-all for Kafka exceptions that can't otherwise be easily classified. For
   // producer operations this will be embedded in the per-message response. For consumer errors,

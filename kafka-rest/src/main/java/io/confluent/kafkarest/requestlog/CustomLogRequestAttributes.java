@@ -24,4 +24,6 @@ public final class CustomLogRequestAttributes {
   private CustomLogRequestAttributes() {}
 
   public static final String REST_ERROR_CODE = "REST_ERROR_CODE";
+  public static final String REST_PRODUCE_RECORD_ERROR_CODE_COUNTS =
+      "REST_PRODUCE_RECORD_ERROR_CODE_COUNTS";
 }

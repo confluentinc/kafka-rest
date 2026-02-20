@@ -17,10 +17,10 @@ package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.ClusterConfig;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.common.config.ConfigResource;
 

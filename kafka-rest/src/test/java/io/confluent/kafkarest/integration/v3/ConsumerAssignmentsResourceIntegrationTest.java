@@ -26,12 +26,12 @@ import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.Resource.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Properties;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.RoundRobinAssignor;
@@ -46,7 +46,7 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void listConsumerAssignments_returnsConsumerAssignments(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -205,7 +205,7 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void listConsumerAssignments_nonExistingCluster_returnsNotFound(String quorum) {
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     KafkaConsumer<?, ?> consumer = createConsumer("consumer-group-1", "client-1");
@@ -223,7 +223,7 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void getConsumerAssignment_returnsConsumerAssignment(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -290,7 +290,7 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void getConsumerAssignment_nonExistingCluster_returnsNotFound(String quorum) {
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
     KafkaConsumer<?, ?> consumer = createConsumer("consumer-group-1", "client-1");
@@ -309,7 +309,7 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void getConsumerAssignment_nonExistingConsumerGroup_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
@@ -331,7 +331,7 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void getConsumerAssignment_nonExistingConsumer_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);
@@ -352,7 +352,7 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void getConsumerAssignment_nonExistingConsumerAssignment_returnsNotFound(String quorum) {
     String clusterId = getClusterId();
     createTopic("topic-1", /* numPartitions= */ 3, /* replicationFactor= */ (short) 1);

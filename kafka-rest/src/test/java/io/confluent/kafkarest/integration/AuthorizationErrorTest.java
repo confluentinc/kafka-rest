@@ -15,10 +15,10 @@
 
 package io.confluent.kafkarest.integration;
 
-import static io.confluent.kafkarest.KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG;
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -32,16 +32,26 @@ import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicP
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
+import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
-import kafka.security.authorizer.AclAuthorizer;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.common.security.auth.KafkaPrincipal;
+import org.apache.kafka.common.acl.AccessControlEntry;
+import org.apache.kafka.common.acl.AclBinding;
+import org.apache.kafka.common.acl.AclOperation;
+import org.apache.kafka.common.acl.AclPermissionType;
+import org.apache.kafka.common.resource.PatternType;
+import org.apache.kafka.common.resource.ResourcePattern;
+import org.apache.kafka.common.resource.ResourceType;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.metadata.authorizer.StandardAuthorizer;
+import org.apache.kafka.server.config.ServerConfigs;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -49,7 +59,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import scala.Option;
 
-/** This integration test uses AclAuthorizer class which is Zk specific. */
 public class AuthorizationErrorTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
@@ -79,7 +88,20 @@ public class AuthorizationErrorTest
     Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     properties.put("sasl.jaas.config", createPlainLoginModule("admin", "admin-secret"));
-    createTopic(TOPIC_NAME, 1, (short) 1, properties);
+    String clusterId = getClusterId();
+    String topicUrl = "/v3/clusters/" + clusterId + "/topics";
+    Response response =
+        request(topicUrl)
+            .post(
+                Entity.entity(
+                    CreateTopicRequest.builder()
+                        .setTopicName(TOPIC_NAME)
+                        .setPartitionsCount(1)
+                        .setReplicationFactor((short) 1)
+                        .setConfigs(new ArrayList<>())
+                        .build(),
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
   }
 
   @Override
@@ -92,9 +114,8 @@ public class AuthorizationErrorTest
     saslProps.setProperty("sasl.mechanism.inter.broker.protocol", "PLAIN");
     Option<Properties> saslProperties = Option.apply(saslProps);
     Properties brokerProps =
-        kafka.utils.TestUtils.createBrokerConfig(
+        createBrokerConfig(
             0,
-            "",
             false,
             false,
             kafka.utils.TestUtils.RandomPort(),
@@ -115,8 +136,7 @@ public class AuthorizationErrorTest
             (short) 1,
             false);
     brokerProps.put("broker.id", Integer.toString(i));
-    brokerProps.put(ZOOKEEPER_CONNECT_CONFIG, zkConnect);
-    brokerProps.setProperty("authorizer.class.name", AclAuthorizer.class.getName());
+    brokerProps.put(ServerConfigs.AUTHORIZER_CLASS_NAME_CONFIG, StandardAuthorizer.class.getName());
     brokerProps.setProperty("super.users", "User:admin");
     brokerProps.setProperty(
         "listener.name.sasl_plaintext.plain.sasl.jaas.config",
@@ -126,6 +146,15 @@ public class AuthorizationErrorTest
             + "user_admin=\"admin-secret\" "
             + "user_alice=\"alice-secret\"; ");
     return brokerProps;
+  }
+
+  @Override
+  protected Properties overrideKraftControllerConfig() {
+    Properties props = new Properties();
+    props.put(ServerConfigs.AUTHORIZER_CLASS_NAME_CONFIG, StandardAuthorizer.class.getName());
+    // this setting allows brokers to register to Kraft controller
+    props.put(StandardAuthorizer.ALLOW_EVERYONE_IF_NO_ACL_IS_FOUND_CONFIG, true);
+    return props;
   }
 
   protected void overrideKafkaRestConfigs(Properties restProperties) {
@@ -146,23 +175,41 @@ public class AuthorizationErrorTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"zk"})
+  @ValueSource(strings = {"kraft"})
   public void testConsumerRequest(String quorum) {
     // test without acls
     verifySubscribeToTopic(true);
     // add acls
-    SecureTestUtils.setConsumerAcls(zkConnect, TOPIC_NAME, USERNAME, CONSUMER_GROUP);
+    setConsumerAcls();
     verifySubscribeToTopic(false);
   }
 
+  private void setConsumerAcls() {
+    AclBinding topicAcl =
+        new AclBinding(
+            new ResourcePattern(ResourceType.TOPIC, TOPIC_NAME, PatternType.LITERAL),
+            new AccessControlEntry(
+                "User:" + USERNAME, "*", AclOperation.READ, AclPermissionType.ALLOW));
+    AclBinding groupAcl =
+        new AclBinding(
+            new ResourcePattern(ResourceType.GROUP, CONSUMER_GROUP, PatternType.LITERAL),
+            new AccessControlEntry(
+                "User:" + USERNAME, "*", AclOperation.READ, AclPermissionType.ALLOW));
+    try {
+      createAcls(Arrays.asList(topicAcl, groupAcl), adminProperties());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProducerAuthorization(String quorum) {
     BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecords);
     // test without any acls
     testProduceToAuthorizationError(TOPIC_NAME, request);
     // add acls
-    SecureTestUtils.setProduceAcls(zkConnect, TOPIC_NAME, USERNAME);
+    setProduceAcls();
     testProduceToTopic(
         TOPIC_NAME,
         request,
@@ -171,6 +218,19 @@ public class AuthorizationErrorTest
         produceOffsets,
         false,
         request.toProduceRequest().getRecords());
+  }
+
+  private void setProduceAcls() {
+    AclBinding topicAcl =
+        new AclBinding(
+            new ResourcePattern(ResourceType.TOPIC, TOPIC_NAME, PatternType.LITERAL),
+            new AccessControlEntry(
+                "User:" + USERNAME, "*", AclOperation.WRITE, AclPermissionType.ALLOW));
+    try {
+      createAcls(Arrays.asList(topicAcl), adminProperties());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void verifySubscribeToTopic(boolean expectFailure) {
@@ -224,7 +284,30 @@ public class AuthorizationErrorTest
   @Override
   protected void setupAcls() {
     // to allow plaintext consumer
-    SecureTestUtils.setConsumerAcls(zkConnect, TOPIC_NAME, KafkaPrincipal.ANONYMOUS.getName(), "*");
+    AclBinding topicAcl =
+        new AclBinding(
+            new ResourcePattern(ResourceType.TOPIC, TOPIC_NAME, PatternType.LITERAL),
+            new AccessControlEntry(
+                "User:ANONYMOUS", "*", AclOperation.READ, AclPermissionType.ALLOW));
+    AclBinding groupAcl =
+        new AclBinding(
+            new ResourcePattern(ResourceType.GROUP, "*", PatternType.LITERAL),
+            new AccessControlEntry(
+                "User:ANONYMOUS", "*", AclOperation.READ, AclPermissionType.ALLOW));
+    try {
+      createAcls(Arrays.asList(topicAcl, groupAcl), adminProperties());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private Properties adminProperties() {
+    Properties adminProperties = new Properties();
+    adminProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    adminProperties.put("security.protocol", "SASL_PLAINTEXT");
+    adminProperties.put("sasl.mechanism", "PLAIN");
+    adminProperties.put("sasl.jaas.config", createPlainLoginModule("admin", "admin-secret"));
+    return adminProperties;
   }
 
   @AfterEach

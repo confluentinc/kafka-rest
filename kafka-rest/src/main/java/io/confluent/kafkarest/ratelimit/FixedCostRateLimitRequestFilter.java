@@ -22,8 +22,8 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.cache.LoadingCache;
 import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
 
 /**
  * A {@link ContainerRequestFilter} that automatically applies a request rate-limit at a fixed cost

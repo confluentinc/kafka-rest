@@ -25,11 +25,11 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import io.confluent.kafkarest.entities.v2.ProduceResponse;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 
 public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends ClusterTestHarness {
 

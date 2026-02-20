@@ -86,12 +86,15 @@
   <allow pkg="com.google.protobuf" />
   <allow pkg="io.github.resilience4j" />
   <allow pkg="java" />
+  <allow pkg="jakarta.annotation" />
   <allow pkg="javax.annotation" />
-  <allow pkg="javax.inject" />
+  <allow pkg="jakarta.inject" />
   <allow pkg="javax.management" />
   <allow pkg="javax.net.ssl" />
-  <allow pkg="javax.validation" />
-  <allow pkg="javax.ws.rs" />
+  <allow pkg="jakarta.validation" />
+  <allow pkg="jakarta.ws.rs" />
+  <allow pkg="jakarta.servlet.http" />
+  <allow pkg="jakarta.xml.bind" />
   <allow pkg="org.apache.avro" />
   <allow pkg="org.easymock" />
   <allow pkg="org.eclipse.jetty" />
@@ -113,6 +116,7 @@
   <!-- Various one-off classes -->
   <allow class="edu.umd.cs.findbugs.annotations.SuppressFBWarnings" />
   <allow class="javax.xml.bind.DatatypeConverter" />
+  <allow class="jakarta.xml.bind.PropertyException" />
   <allow class="org.everit.json.schema.ValidationException" />
   <allow class="org.hibernate.validator.constraints.URL" />
   <allow class="javax.servlet.http.HttpServletRequest" />
@@ -134,21 +138,31 @@
   <!-- b. Non-public Apache Kafka APIs -->
   <allow class="org.apache.kafka.clients.CommonClientConfigs" />
   <allow class="org.apache.kafka.common.config.types.Password" />
+  <allow class="org.apache.kafka.common.network.ConnectionMode" />
   <allow class="org.apache.kafka.common.network.ListenerName" />
   <allow class="org.apache.kafka.common.protocol.Errors" />
   <allow class="org.apache.kafka.common.security.JaasUtils" />
+  <allow class="org.apache.kafka.coordinator.group.GroupCoordinatorConfig" />
   <allow class="org.apache.kafka.metadata.authorizer.StandardAuthorizer" />
+  <allow class="org.apache.kafka.network.SocketServerConfigs" />
+  <allow class="org.apache.kafka.raft.QuorumConfig" />
+  <allow class="org.apache.kafka.server.config.DelegationTokenManagerConfigs" />
+  <allow class="org.apache.kafka.server.config.KRaftConfigs" />
+  <allow class="org.apache.kafka.server.config.ReplicationConfigs" />
+  <allow class="org.apache.kafka.server.config.ServerConfigs" />
+  <allow class="org.apache.kafka.server.config.ServerLogConfigs" />
+  <allow class="org.apache.kafka.storage.internals.log.CleanerConfig" />
   <allow class="org.apache.kafka.test.TestSslUtils" />
   <!-- c. Non-public Confluent Community Kafka APIs -->
   <allow class="kafka.admin.AclCommand" />
   <allow class="kafka.security.authorizer.AclAuthorizer" />
+  <allow class="kafka.security.JaasTestUtils" />
   <allow class="kafka.server.KafkaConfig" />
   <allow class="kafka.server.KafkaServer" />
   <allow class="kafka.server.KafkaBroker" />
   <allow class="kafka.server.QuorumTestHarness" />
   <allow class="kafka.utils.CoreUtils" />
   <allow class="kafka.utils.TestUtils" />
-  <allow class="kafka.utils.TestInfoUtils" />
-  <allow class="kafka.zk.EmbeddedZookeeper" />
-
+  <!-- For verifying equals contract -->
+  <allow class="nl.jqno.equalsverifier.EqualsVerifier" exact-match="true"/>
 </import-control>

@@ -23,12 +23,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
+import jakarta.ws.rs.NotFoundException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import javax.ws.rs.NotFoundException;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.junit.jupiter.api.BeforeEach;

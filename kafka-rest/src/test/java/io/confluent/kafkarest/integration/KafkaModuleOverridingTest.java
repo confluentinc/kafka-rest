@@ -40,15 +40,15 @@ import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.testing.KafkaRestFixture;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.exceptions.RestException;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.Configurable;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.core.Configurable;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.producer.Callback;
@@ -79,7 +79,7 @@ public class KafkaModuleOverridingTest {
           .build();
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void adminIsCreatedPerRequestAndDisposedAfterRequest(String quorum) {
     Response response =
         kafkaRest
@@ -93,7 +93,7 @@ public class KafkaModuleOverridingTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void producerIsCreatedPerRequestAndDisposedAfterRequest(String quorum) {
     Response response =
         kafkaRest
@@ -109,7 +109,7 @@ public class KafkaModuleOverridingTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void consumersResourceIsInitializedCorrectly(String quorum) {
     // ConsumersResource is the only resource requiring a KafkaRestContext. If the context is not
     // injected via a Provider, it will be resolved too early (before filters augmenting the

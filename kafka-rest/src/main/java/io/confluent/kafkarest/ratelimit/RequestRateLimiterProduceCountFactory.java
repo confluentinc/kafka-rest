@@ -16,8 +16,8 @@
 package io.confluent.kafkarest.ratelimit;
 
 import io.confluent.kafkarest.config.ConfigModule;
+import jakarta.inject.Inject;
 import java.time.Duration;
-import javax.inject.Inject;
 
 final class RequestRateLimiterProduceCountFactory extends RequestRateLimiterFactory {
 

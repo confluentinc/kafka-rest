@@ -118,7 +118,7 @@ public class JsonProducerTest
           new PartitionOffset(0, 5L, null, null));
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToTopicKeyAndValue(String quorum) {
     JsonTopicProduceRequest request = JsonTopicProduceRequest.create(topicRecordsWithKeys);
     testProduceToTopic(
@@ -132,7 +132,7 @@ public class JsonProducerTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToTopicNoKey(String quorum) {
     JsonTopicProduceRequest request = JsonTopicProduceRequest.create(topicRecordsWithoutKeys);
     testProduceToTopic(
@@ -146,7 +146,7 @@ public class JsonProducerTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToPartitionKeyAndValue(String quorum) {
     JsonPartitionProduceRequest request =
         JsonPartitionProduceRequest.create(partitionRecordsWithKeys);
@@ -161,7 +161,7 @@ public class JsonProducerTest
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToPartitionNoKey(String quorum) {
     JsonPartitionProduceRequest request =
         JsonPartitionProduceRequest.create(partitionRecordsWithoutKeys);

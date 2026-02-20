@@ -27,13 +27,13 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.testing.DefaultKafkaRestTestEnvironment;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.Properties;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -141,7 +141,7 @@ public class ProduceActionRateLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenGlobalByteLimitReached_thenCallerIsRateLimited")
   public void test_whenGlobalByteLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {
@@ -149,7 +149,7 @@ public class ProduceActionRateLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenClusterByteLimitReached_thenCallerIsRateLimited")
   public void test_whenClusterByteLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {
@@ -203,7 +203,7 @@ public class ProduceActionRateLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited")
   public void test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {
@@ -211,7 +211,7 @@ public class ProduceActionRateLimitIntegrationTest {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited")
   public void test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited(String quorum)
       throws Exception {

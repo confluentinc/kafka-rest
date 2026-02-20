@@ -29,13 +29,13 @@ import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest.SchemaPartitionProduceRecord;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import org.apache.avro.Schema;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -158,7 +158,7 @@ public class AvroProducerTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToTopicWithPartitionsAndKeys(String quorum) {
     testProduceToTopic(topicRecordsWithPartitionsAndKeys, partitionOffsetsWithPartitionsAndKeys);
   }
@@ -199,7 +199,7 @@ public class AvroProducerTest extends ClusterTestHarness {
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
-  @ValueSource(strings = {"kraft", "zk"})
+  @ValueSource(strings = {"kraft"})
   public void testProduceToPartitionOnlyValues(String quorum) {
     testProduceToPartition(partitionRecordsOnlyValues, producePartitionOffsetOnlyValues);
   }

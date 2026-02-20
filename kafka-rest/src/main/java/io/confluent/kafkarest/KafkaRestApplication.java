@@ -21,8 +21,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.jaxrs.base.JsonMappingExceptionMapper;
-import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
+import com.fasterxml.jackson.jakarta.rs.base.JsonMappingExceptionMapper;
+import com.fasterxml.jackson.jakarta.rs.base.JsonParseExceptionMapper;
 import io.confluent.kafkarest.backends.BackendsModule;
 import io.confluent.kafkarest.config.ConfigModule;
 import io.confluent.kafkarest.controllers.ControllersModule;
@@ -44,15 +44,15 @@ import io.confluent.rest.Application;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
+import jakarta.ws.rs.core.Configurable;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Properties;
 import java.util.TimeZone;
-import javax.ws.rs.core.Configurable;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Slf4jRequestLogWriter;
-import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.StringUtil;
 import org.glassfish.jersey.server.ServerProperties;
 import org.slf4j.Logger;
@@ -108,6 +108,9 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     // Set up listeners for dos-filters, needed for custom-logging for when dos-filter rate-limits.
     this.addNonGlobalDosfilterListener(new PerConnectionDosFilterListener());
     this.addGlobalDosfilterListener(new GlobalDosFilterListener());
+
+    // rest.resource.extension.class is required for Enterprise deployments
+    securityResourceExtensionWarning(config);
   }
 
   private static RequestLog createRequestLog(
@@ -130,7 +133,10 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       return new CustomLog(
           requestLogWriter,
           requestLogFormat,
-          new String[] {CustomLogRequestAttributes.REST_ERROR_CODE});
+          new String[] {
+            CustomLogRequestAttributes.REST_ERROR_CODE,
+            CustomLogRequestAttributes.REST_PRODUCE_RECORD_ERROR_CODE_COUNTS
+          });
     }
     // Return null, as Application's ctor would set-up a default request-logger.
     return null;
@@ -144,15 +150,9 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
-        && StringUtil.isBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
+    if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))) {
       throw new RuntimeException(
-          "At least one of "
-              + KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG
-              + " "
-              + "or "
-              + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
-              + " needs to be configured");
+          KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG + " needs to be configured");
     }
 
     config.property(ServerProperties.OUTBOUND_CONTENT_LENGTH_BUFFER, 0);
@@ -215,5 +215,28 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     for (RestResourceExtension restResourceExtension : restResourceExtensions) {
       restResourceExtension.clean();
     }
+  }
+
+  private void securityResourceExtensionWarning(KafkaRestConfig config) {
+    List<String> extensions = config.getList(KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
+    for (Object extension : extensions) {
+      String extensionName = extension.toString();
+      if (!StringUtil.isBlank(extensionName)
+          && extensionName
+              .toLowerCase()
+              .contains("io.confluent.kafkarest.security.kafkarestsecurityresourceextension")) {
+        return;
+      }
+    }
+    log.warn(
+        "REST security extensions are not configured. "
+            + "If an Enterprise license is expected to be configured, "
+            + "please install and activate the security plugins component "
+            + "following instructions on this website: "
+            + "https://docs.confluent.io/platform/current/confluent-security-plugins/"
+            + "kafka-rest.html#kafka-rest-security-plugins-install. "
+            + "Confluent does not offer Enterprise support for any self-managed "
+            + "(Confluent Platform) components without a valid Enterprise license. "
+            + "Please ignore this warning if not using an Enterprise edition of this software.");
   }
 }

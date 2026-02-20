@@ -21,11 +21,12 @@ import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.config.ConfigModule.AvroSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.JsonschemaSerializerConfigs;
+import io.confluent.kafkarest.config.ConfigModule.NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
@@ -52,7 +53,11 @@ public final class ControllersModule extends AbstractBinder {
     bindFactory(SchemaManagerFactory.class).to(SchemaManager.class);
     bind(TopicConfigManagerImpl.class).to(TopicConfigManager.class);
     bind(TopicManagerImpl.class).to(TopicManager.class);
-    bindFactory(SchemaRecordSerializerFactory.class).to(SchemaRecordSerializer.class);
+    // Singleton declaration makes sense with the assumption that SchemaRegistry is initiated at
+    // application start. Revisit behavior in case this guarantee is not met.
+    bindFactory(SchemaRecordSerializerFactory.class)
+        .to(SchemaRecordSerializer.class)
+        .in(Singleton.class);
   }
 
   private static final class SchemaRecordSerializerFactory
@@ -62,27 +67,33 @@ public final class ControllersModule extends AbstractBinder {
     private final Map<String, Object> avroSerializerConfigs;
     private final Map<String, Object> jsonschemaSerializerConfigs;
     private final Map<String, Object> protobufSerializerConfigs;
+    private final boolean nullRequestBodyAlwaysPublishEmptyRecord;
 
     @Inject
     private SchemaRecordSerializerFactory(
         Optional<SchemaRegistryClient> schemaRegistryClient,
         @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
         @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
-        @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs) {
+        @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs,
+        @NullRequestBodyAlwaysPublishEmptyRecordEnabledConfig
+            Boolean nullRequestBodyAlwaysPublishEmptyRecord) {
       this.schemaRegistryClient = requireNonNull(schemaRegistryClient);
       this.avroSerializerConfigs = requireNonNull(avroSerializerConfigs);
       this.jsonschemaSerializerConfigs = requireNonNull(jsonschemaSerializerConfigs);
       this.protobufSerializerConfigs = requireNonNull(protobufSerializerConfigs);
+      this.nullRequestBodyAlwaysPublishEmptyRecord = nullRequestBodyAlwaysPublishEmptyRecord;
     }
 
     @Override
+    @Singleton
     public SchemaRecordSerializer provide() {
       if (schemaRegistryClient.isPresent()) {
         return new SchemaRecordSerializerImpl(
             schemaRegistryClient.get(),
             avroSerializerConfigs,
             jsonschemaSerializerConfigs,
-            protobufSerializerConfigs);
+            protobufSerializerConfigs,
+            nullRequestBodyAlwaysPublishEmptyRecord);
       } else {
         return new SchemaRecordSerializerThrowing();
       }

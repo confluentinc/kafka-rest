@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroup.State;
+import io.confluent.kafkarest.entities.ConsumerGroup.Type;
 
 @AutoValue
 public abstract class ConsumerGroupData extends Resource {
@@ -41,6 +42,12 @@ public abstract class ConsumerGroupData extends Resource {
   @JsonProperty("state")
   public abstract State getState();
 
+  @JsonProperty("type")
+  public abstract Type getType();
+
+  @JsonProperty("is_mixed_consumer_group")
+  public abstract boolean isMixedConsumerGroup();
+
   @JsonProperty("coordinator")
   public abstract Relationship getCoordinator();
 
@@ -60,9 +67,12 @@ public abstract class ConsumerGroupData extends Resource {
         .setConsumerGroupId(consumerGroup.getConsumerGroupId())
         .setSimple(consumerGroup.isSimple())
         .setPartitionAssignor(consumerGroup.getPartitionAssignor())
-        .setState(consumerGroup.getState());
+        .setState(consumerGroup.getState())
+        .setType(consumerGroup.getType())
+        .setMixedConsumerGroup(consumerGroup.isMixedConsumerGroup());
   }
 
+  // CHECKSTYLE:OFF:ParameterNumber
   @JsonCreator
   static ConsumerGroupData fromJson(
       @JsonProperty("kind") String kind,
@@ -72,6 +82,8 @@ public abstract class ConsumerGroupData extends Resource {
       @JsonProperty("is_simple") boolean isSimple,
       @JsonProperty("partition_assignor") String partitionAssignor,
       @JsonProperty("state") State state,
+      @JsonProperty("type") Type type,
+      @JsonProperty("is_mixed_consumer_group") boolean isMixedConsumerGroup,
       @JsonProperty("coordinator") Relationship coordinator,
       @JsonProperty("consumers") Relationship consumers,
       @JsonProperty("lag_summary") Relationship lagSummary) {
@@ -83,11 +95,14 @@ public abstract class ConsumerGroupData extends Resource {
         .setSimple(isSimple)
         .setPartitionAssignor(partitionAssignor)
         .setState(state)
+        .setType(type)
+        .setMixedConsumerGroup(isMixedConsumerGroup)
         .setCoordinator(coordinator)
         .setConsumers(consumers)
         .setLagSummary(lagSummary)
         .build();
   }
+  // CHECKSTYLE:ON:ParameterNumber
 
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
@@ -103,6 +118,10 @@ public abstract class ConsumerGroupData extends Resource {
     public abstract Builder setPartitionAssignor(String partitionAssignor);
 
     public abstract Builder setState(State state);
+
+    public abstract Builder setType(Type type);
+
+    public abstract Builder setMixedConsumerGroup(boolean isMixedConsumerGroup);
 
     public abstract Builder setCoordinator(Relationship coordinator);
 
