@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.testing;
 
+import java.util.Map.Entry;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -23,9 +24,12 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public final class DefaultKafkaRestTestEnvironment
     implements BeforeEachCallback, AfterEachCallback {
 
-  private boolean manageRest = true;
+  private final boolean manageRest;
+  private final boolean useHttpListener;
 
-  public DefaultKafkaRestTestEnvironment() {}
+  public DefaultKafkaRestTestEnvironment() {
+    this(true, false);
+  }
 
   // If manageRest is set to true, this will manage the life-cycle of the rest-instance through the
   // junit-extensions(BeforeEach & AfterEach). This includes starting & stopping rest-instance of
@@ -34,7 +38,15 @@ public final class DefaultKafkaRestTestEnvironment
   // rest-instance for the overall test. Example - ProduceActionIntegrationTest.java, manages
   // the rest-instance, and sets custom KafkaRestConfigs for different test-case.
   public DefaultKafkaRestTestEnvironment(boolean manageRest) {
+    this(manageRest, false);
+  }
+
+  // If useHttpListener is set to true, the REST server will listen on plain HTTP instead of HTTPS.
+  // The Kafka and Schema Registry clients still use SSL. When manageRest is false, callers must
+  // include getClientSslConfigs() in the restConfigs passed to kafkaRest().startApp().
+  public DefaultKafkaRestTestEnvironment(boolean manageRest, boolean useHttpListener) {
     this.manageRest = manageRest;
+    this.useHttpListener = useHttpListener;
   }
 
   private final SslFixture certificates =
@@ -69,16 +81,33 @@ public final class DefaultKafkaRestTestEnvironment
           .setKafkaUser("schema-registry", "schema-registry-pass")
           .build();
 
-  private final KafkaRestFixture kafkaRest =
-      KafkaRestFixture.builder()
-          .setCertificates(certificates, "kafka-rest")
-          .setConfig("producer.max.block.ms", "5000")
-          .setConfig("ssl.client.authentication", "REQUIRED")
-          .setConfig("producer.max.request.size", String.valueOf((2 << 20) * 10))
-          .setKafkaCluster(kafkaCluster)
-          .setKafkaUser("kafka-rest", "kafka-rest-pass")
-          .setSchemaRegistry(schemaRegistry)
-          .build();
+  private KafkaRestFixture kafkaRest;
+
+  private KafkaRestFixture buildKafkaRest() {
+    KafkaRestFixture.Builder builder =
+        KafkaRestFixture.builder()
+            .setConfig("producer.max.block.ms", "5000")
+            .setConfig("producer.max.request.size", String.valueOf((2 << 20) * 10))
+            .setKafkaCluster(kafkaCluster)
+            .setKafkaUser("kafka-rest", "kafka-rest-pass")
+            .setSchemaRegistry(schemaRegistry);
+    if (useHttpListener) {
+      // No setCertificates() so the REST listener uses HTTP. Manually add client SSL configs
+      // so the REST server can still connect to the SASL_SSL Kafka cluster and HTTPS SR.
+      for (Entry<String, String> entry :
+          certificates.getSslConfigs("kafka-rest", "client.").entrySet()) {
+        builder.setConfig(entry.getKey(), entry.getValue());
+      }
+      for (Entry<String, String> entry :
+          certificates.getSslConfigs("kafka-rest", "schema.registry.").entrySet()) {
+        builder.setConfig(entry.getKey(), entry.getValue());
+      }
+    } else {
+      builder.setCertificates(certificates, "kafka-rest");
+      builder.setConfig("ssl.client.authentication", "REQUIRED");
+    }
+    return builder.build();
+  }
 
   @Override
   public void beforeEach(ExtensionContext extensionContext) throws Exception {
@@ -86,6 +115,7 @@ public final class DefaultKafkaRestTestEnvironment
     zookeeper.beforeEach(extensionContext);
     kafkaCluster.beforeEach(extensionContext);
     schemaRegistry.beforeEach(extensionContext);
+    kafkaRest = buildKafkaRest();
     if (this.manageRest) {
       kafkaRest.beforeEach(extensionContext);
     }
