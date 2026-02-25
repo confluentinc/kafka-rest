@@ -198,6 +198,15 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     } else if (testInfo
         .getDisplayName()
         .contains(
+            "test_whenJettyTenantRateLimitTriggered_ThenRequestLogHasRelevantInfo")) {
+      restConfigs.put("dos.filter.enabled", "true");
+      restConfigs.put("dos.filter.tenant.enabled", "true");
+      restConfigs.put("dos.filter.tenant.max.requests.per.sec", 1);
+      restConfigs.put("dos.filter.max.requests.per.connection.per.sec", 99999);
+      restConfigs.put("dos.filter.max.requests.per.sec", 99999);
+    } else if (testInfo
+        .getDisplayName()
+        .contains(
             "test_WhenProduceRequestWithMultipleRecords_ThenRequestLogHasAggregatedErrorCodes")) {
       restConfigs.put("dos.filter.enabled", "true");
       restConfigs.put("dos.filter.max.requests.per.connection.per.sec", 99999);
@@ -305,6 +314,25 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
     verifyLog(
         totalRequests,
         ErrorCodes.DOS_FILTER_MAX_REQUEST_PER_CONNECTION_LIMIT_EXCEEDED,
+        totalRequests - requestsWithStatusOk,
+        false,
+        false,
+        false);
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  @DisplayName("test_whenJettyTenantRateLimitTriggered_ThenRequestLogHasRelevantInfo")
+  public void test_whenJettyTenantRateLimitTriggered_ThenRequestLogHasRelevantInfo(
+      String quorum) {
+    int totalRequests = 100;
+    // Since rate-limit is 1.
+    int requestsWithStatusOk = 1;
+    String url = "/v3/clusters/" + getClusterId() + "/topics/";
+    hammerAtConstantRate(url, Duration.ofMillis(1), 100);
+    verifyLog(
+        totalRequests,
+        ErrorCodes.DOS_FILTER_MAX_REQUEST_PER_TENANT_LIMIT_EXCEEDED,
         totalRequests - requestsWithStatusOk,
         false,
         false,

@@ -37,6 +37,7 @@ import io.confluent.kafkarest.requestlog.CustomLog;
 import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import io.confluent.kafkarest.requestlog.GlobalDosFilterListener;
 import io.confluent.kafkarest.requestlog.PerConnectionDosFilterListener;
+import io.confluent.kafkarest.requestlog.TenantDosFilterListener;
 import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.JsonStreamMessageBodyReader;
 import io.confluent.kafkarest.response.ResponseModule;
@@ -108,6 +109,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     // Set up listeners for dos-filters, needed for custom-logging for when dos-filter rate-limits.
     this.addNonGlobalDosfilterListener(new PerConnectionDosFilterListener());
     this.addGlobalDosfilterListener(new GlobalDosFilterListener());
+    this.addTenantDosfilterListener(new TenantDosFilterListener());
 
     // rest.resource.extension.class is required for Enterprise deployments
     securityResourceExtensionWarning(config);
