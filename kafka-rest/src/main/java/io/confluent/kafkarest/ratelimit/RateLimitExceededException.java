@@ -44,6 +44,7 @@ public final class RateLimitExceededException extends StatusCodeException {
     // Apply to all APIs, via the Dos-filters at Jetty layer.
     public static final int DOS_FILTER_MAX_REQUEST_LIMIT_EXCEEDED = 429007;
     public static final int DOS_FILTER_MAX_REQUEST_PER_CONNECTION_LIMIT_EXCEEDED = 429008;
+    public static final int DOS_FILTER_MAX_REQUEST_PER_TENANT_LIMIT_EXCEEDED = 429009;
   }
 
   public RateLimitExceededException() {
