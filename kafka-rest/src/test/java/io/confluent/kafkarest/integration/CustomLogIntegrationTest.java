@@ -197,8 +197,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
       restConfigs.put(KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND, 1);
     } else if (testInfo
         .getDisplayName()
-        .contains(
-            "test_whenJettyTenantRateLimitTriggered_ThenRequestLogHasRelevantInfo")) {
+        .contains("test_whenJettyTenantRateLimitTriggered_ThenRequestLogHasRelevantInfo")) {
       restConfigs.put("dos.filter.enabled", "true");
       restConfigs.put("dos.filter.tenant.enabled", "true");
       restConfigs.put("dos.filter.tenant.max.requests.per.sec", 1);
@@ -323,8 +322,7 @@ public class CustomLogIntegrationTest extends ClusterTestHarness {
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"kraft"})
   @DisplayName("test_whenJettyTenantRateLimitTriggered_ThenRequestLogHasRelevantInfo")
-  public void test_whenJettyTenantRateLimitTriggered_ThenRequestLogHasRelevantInfo(
-      String quorum) {
+  public void test_whenJettyTenantRateLimitTriggered_ThenRequestLogHasRelevantInfo(String quorum) {
     int totalRequests = 100;
     // Since rate-limit is 1.
     int requestsWithStatusOk = 1;
