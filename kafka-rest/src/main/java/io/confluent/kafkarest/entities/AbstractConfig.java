@@ -41,6 +41,12 @@ public abstract class AbstractConfig {
 
   public abstract ImmutableList<ConfigSynonym> getSynonyms();
 
+  @Nullable
+  public abstract Integer getSchemaErrorCode();
+
+  @Nullable
+  public abstract String getMessage();
+
   /** A builder for {@link AbstractConfig}. */
   public abstract static class Builder<T extends AbstractConfig, B extends Builder<T, B>> {
 
@@ -59,6 +65,10 @@ public abstract class AbstractConfig {
     public abstract B setSource(ConfigSource source);
 
     public abstract B setSynonyms(List<ConfigSynonym> synonyms);
+
+    public abstract B setSchemaErrorCode(@Nullable Integer schemaErrorCode);
+
+    public abstract B setMessage(@Nullable String message);
 
     public abstract T build();
   }
