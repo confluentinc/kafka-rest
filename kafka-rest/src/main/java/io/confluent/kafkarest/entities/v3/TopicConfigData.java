@@ -49,7 +49,9 @@ public abstract class TopicConfigData extends AbstractConfigData {
         .setSynonyms(
             config.getSynonyms().stream()
                 .map(ConfigSynonymData::fromConfigSynonym)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList()))
+        .setSchemaErrorCode(config.getSchemaErrorCode())
+        .setMessage(config.getMessage());
   }
 
   // CHECKSTYLE:OFF:ParameterNumber
@@ -65,7 +67,9 @@ public abstract class TopicConfigData extends AbstractConfigData {
       @JsonProperty("is_read_only") boolean isReadOnly,
       @JsonProperty("is_sensitive") boolean isSensitive,
       @JsonProperty("source") ConfigSource source,
-      @JsonProperty("synonyms") List<ConfigSynonymData> synonyms) {
+      @JsonProperty("synonyms") List<ConfigSynonymData> synonyms,
+      @JsonProperty("schema_error_code") @Nullable Integer schemaErrorCode,
+      @JsonProperty("message") @Nullable String message) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -78,6 +82,8 @@ public abstract class TopicConfigData extends AbstractConfigData {
         .setSensitive(isSensitive)
         .setSource(source)
         .setSynonyms(synonyms)
+        .setSchemaErrorCode(schemaErrorCode)
+        .setMessage(message)
         .build();
   }
   // CHECKSTYLE:ON:ParameterNumber
