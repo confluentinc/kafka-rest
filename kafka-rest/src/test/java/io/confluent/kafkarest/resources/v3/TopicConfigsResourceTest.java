@@ -322,4 +322,140 @@ public class TopicConfigsResourceTest {
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
+
+  @Test
+  public void listTopicConfigs_withSchemaError_returnsAssociationErrorEntry() {
+    TopicConfig associationErrorConfig =
+        TopicConfig.create(
+            CLUSTER_ID,
+            TOPIC_NAME,
+            "confluent.association.error",
+            null,
+            /* isDefault= */ false,
+            /* isReadOnly= */ true,
+            /* isSensitive= */ false,
+            ConfigSource.DYNAMIC_TOPIC_CONFIG,
+            /* synonyms= */ emptyList(),
+            /* schemaErrorCode= */ 40401,
+            /* message= */ "Subject not found");
+
+    expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, TOPIC_NAME))
+        .andReturn(completedFuture(Arrays.asList(CONFIG_1, associationErrorConfig)));
+    replay(topicConfigManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicConfigsResource.listTopicConfigs(response, CLUSTER_ID, TOPIC_NAME);
+
+    ListTopicConfigsResponse expected =
+        ListTopicConfigsResponse.create(
+            TopicConfigDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/topics/topic-1/configs")
+                        .build())
+                .setData(
+                    Arrays.asList(
+                        TopicConfigData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/configs/config-1")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/config=config-1")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setName(CONFIG_1.getName())
+                            .setValue(CONFIG_1.getValue())
+                            .setDefault(CONFIG_1.isDefault())
+                            .setReadOnly(CONFIG_1.isReadOnly())
+                            .setSensitive(CONFIG_1.isSensitive())
+                            .setSource(CONFIG_1.getSource())
+                            .setSynonyms(
+                                CONFIG_1.getSynonyms().stream()
+                                    .map(ConfigSynonymData::fromConfigSynonym)
+                                    .collect(Collectors.toList()))
+                            .build(),
+                        TopicConfigData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/"
+                                            + "topic-1/configs/"
+                                            + "confluent.association.error")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/"
+                                            + "topic=topic-1/config="
+                                            + "confluent.association.error")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setName("confluent.association.error")
+                            .setValue(null)
+                            .setDefault(false)
+                            .setReadOnly(true)
+                            .setSensitive(false)
+                            .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                            .setSynonyms(emptyList())
+                            .setSchemaErrorCode(40401)
+                            .setSchemaErrorMessage("Subject not found")
+                            .build()))
+                .build());
+
+    assertEquals(expected, response.getValue());
+  }
+
+  @Test
+  public void getTopicConfig_withSchemaErrorFields_returnsFieldsInResponse() {
+    TopicConfig associationErrorConfig =
+        TopicConfig.create(
+            CLUSTER_ID,
+            TOPIC_NAME,
+            "confluent.association.error",
+            null,
+            /* isDefault= */ false,
+            /* isReadOnly= */ true,
+            /* isSensitive= */ false,
+            ConfigSource.DYNAMIC_TOPIC_CONFIG,
+            /* synonyms= */ emptyList(),
+            /* schemaErrorCode= */ 40401,
+            /* message= */ "Subject not found");
+
+    expect(topicConfigManager.getTopicConfig(CLUSTER_ID, TOPIC_NAME, "confluent.association.error"))
+        .andReturn(completedFuture(Optional.of(associationErrorConfig)));
+    replay(topicConfigManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicConfigsResource.getTopicConfig(
+        response, CLUSTER_ID, TOPIC_NAME, "confluent.association.error");
+
+    GetTopicConfigResponse expected =
+        GetTopicConfigResponse.create(
+            TopicConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            "/v3/clusters/cluster-1/topics/"
+                                + "topic-1/configs/"
+                                + "confluent.association.error")
+                        .setResourceName(
+                            "crn:///kafka=cluster-1/"
+                                + "topic=topic-1/config="
+                                + "confluent.association.error")
+                        .build())
+                .setClusterId(CLUSTER_ID)
+                .setTopicName(TOPIC_NAME)
+                .setName("confluent.association.error")
+                .setValue(null)
+                .setDefault(false)
+                .setReadOnly(true)
+                .setSensitive(false)
+                .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                .setSynonyms(emptyList())
+                .setSchemaErrorCode(40401)
+                .setSchemaErrorMessage("Subject not found")
+                .build());
+
+    assertEquals(expected, response.getValue());
+  }
 }

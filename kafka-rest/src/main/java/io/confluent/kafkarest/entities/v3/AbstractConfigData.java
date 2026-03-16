@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.entities.ConfigSource;
@@ -50,6 +51,14 @@ public abstract class AbstractConfigData extends Resource {
   @JsonProperty("synonyms")
   public abstract ImmutableList<ConfigSynonymData> getSynonyms();
 
+  @JsonProperty("schema_error_code")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public abstract @Nullable Integer getSchemaErrorCode();
+
+  @JsonProperty("message")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public abstract @Nullable String getSchemaErrorMessage();
+
   public abstract static class Builder<BuilderT extends Builder<BuilderT>>
       extends Resource.Builder<BuilderT> {
 
@@ -70,5 +79,9 @@ public abstract class AbstractConfigData extends Resource {
     public abstract BuilderT setSource(ConfigSource source);
 
     public abstract BuilderT setSynonyms(List<ConfigSynonymData> synonyms);
+
+    public abstract BuilderT setSchemaErrorCode(@Nullable Integer schemaErrorCode);
+
+    public abstract BuilderT setSchemaErrorMessage(@Nullable String schemaErrorMessage);
   }
 }
