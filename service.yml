@@ -6,6 +6,10 @@ codeowners:
 semaphore:
   enable: true
   pipeline_type: cp
+  pr_ci_gating:
+    enable: true
+    project_name: kafka-rest
+  status_level: block
   nano_version: true
   execution_time_limit:
     hours: 2
