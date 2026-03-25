@@ -42,6 +42,9 @@ public enum ConfigSource {
   /** Dynamic broker config that is configured as default for all brokers in the cluster. */
   DYNAMIC_DEFAULT_BROKER_CONFIG,
 
+  /** Dynamic group config that is configured for a specific group. */
+  DYNAMIC_GROUP_CONFIG,
+
   /**
    * Static broker config provided as broker properties at start up (e.g. server.properties file).
    */
