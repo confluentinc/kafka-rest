@@ -998,7 +998,7 @@ public class KafkaRestConfig extends RestConfig {
                 .build());
 
     if (!configs.containsKey(SCHEMA_REGISTRY_URL_CONFIG)) {
-      log.warn(
+      log.debug(
           "Using default value {} for config {}. In a future release this config won't have a "
               + "default value anymore. If you are using Schema Registry, please, specify {} "
               + "explicitly. Requests will fail in a future release if you try to use Schema "
