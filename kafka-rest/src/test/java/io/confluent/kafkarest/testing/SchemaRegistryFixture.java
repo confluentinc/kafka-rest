@@ -175,15 +175,15 @@ public final class SchemaRegistryFixture implements BeforeEachCallback, AfterEac
   }
 
   public KafkaAvroDeserializer createAvroDeserializer() {
-    return new KafkaAvroDeserializer(client);
+    return new KafkaAvroDeserializer(client, getClientConfigs());
   }
 
   public KafkaJsonSchemaDeserializer<Object> createJsonSchemaDeserializer() {
-    return new KafkaJsonSchemaDeserializer<>(client);
+    return new KafkaJsonSchemaDeserializer<>(client, getClientConfigs());
   }
 
   public KafkaProtobufDeserializer<Message> createProtobufDeserializer() {
-    return new KafkaProtobufDeserializer<>(client);
+    return new KafkaProtobufDeserializer<>(client, getClientConfigs());
   }
 
   public static Builder builder() {
