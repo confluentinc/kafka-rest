@@ -157,6 +157,28 @@ public class TopicConfigManagerImplTest {
                   CONFIG_3.isSensitive(),
                   CONFIG_3.isReadOnly())));
 
+  private static final Config ALT_CONFIG =
+      new Config(
+          Arrays.asList(
+              new OpenConfigEntry(
+                  ALT_CONFIG_1.getName(),
+                  ALT_CONFIG_1.getValue(),
+                  ConfigSource.toAdminConfigSource(ALT_CONFIG_1.getSource()),
+                  ALT_CONFIG_1.isSensitive(),
+                  ALT_CONFIG_1.isReadOnly()),
+              new OpenConfigEntry(
+                  ALT_CONFIG_2.getName(),
+                  ALT_CONFIG_2.getValue(),
+                  ConfigSource.toAdminConfigSource(ALT_CONFIG_2.getSource()),
+                  ALT_CONFIG_2.isSensitive(),
+                  ALT_CONFIG_2.isReadOnly()),
+              new OpenConfigEntry(
+                  ALT_CONFIG_3.getName(),
+                  ALT_CONFIG_3.getValue(),
+                  ConfigSource.toAdminConfigSource(ALT_CONFIG_3.getSource()),
+                  ALT_CONFIG_3.isSensitive(),
+                  ALT_CONFIG_3.isReadOnly())));
+
   @Mock private Admin adminClient;
 
   @Mock private ClusterManager clusterManager;
@@ -703,6 +725,90 @@ public class TopicConfigManagerImplTest {
                   AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
                   AlterConfigCommand.delete("foobar")))
           .get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
+  }
+
+  @Test
+  public void alterMultipleTopicsConfigs_existingConfigs_alterConfigs() throws Exception {
+    Map<ConfigResource, Config> describeResult = new HashMap<>();
+    describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG);
+    describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME), ALT_CONFIG);
+
+    Map<ConfigResource, KafkaFuture<Void>> alterResult = new HashMap<>();
+    alterResult.put(
+        new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
+        KafkaFuture.completedFuture(null));
+    alterResult.put(
+        new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME),
+        KafkaFuture.completedFuture(null));
+
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.describeConfigs(anyObject(), anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all()).andReturn(KafkaFuture.completedFuture(describeResult));
+    expect(adminClient.incrementalAlterConfigs(anyObject())).andReturn(alterConfigsResult);
+    expect(alterConfigsResult.values()).andReturn(alterResult);
+    replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
+
+    Map<String, List<AlterConfigCommand>> commandsByTopic = new HashMap<>();
+    commandsByTopic.put(
+        TOPIC_NAME,
+        Arrays.asList(
+            AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
+            AlterConfigCommand.delete(CONFIG_2.getName())));
+    commandsByTopic.put(
+        ALT_TOPIC_NAME, Arrays.asList(AlterConfigCommand.set(ALT_CONFIG_1.getName(), "new-value")));
+
+    topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic).get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void alterMultipleTopicsConfigs_nonExistingCluster_throwsNotFound() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
+    replay(clusterManager);
+
+    Map<String, List<AlterConfigCommand>> commandsByTopic = new HashMap<>();
+    commandsByTopic.put(
+        TOPIC_NAME, Arrays.asList(AlterConfigCommand.set(CONFIG_1.getName(), "new-value")));
+    commandsByTopic.put(
+        ALT_TOPIC_NAME, Arrays.asList(AlterConfigCommand.set(ALT_CONFIG_1.getName(), "new-value")));
+
+    try {
+      topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic).get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
+  }
+
+  @Test
+  public void alterMultipleTopicsConfigs_oneNonExistingConfig_throwsNotFound() throws Exception {
+    Map<ConfigResource, Config> describeResult = new HashMap<>();
+    describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG);
+    describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME), ALT_CONFIG);
+
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.describeConfigs(anyObject(), anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all()).andReturn(KafkaFuture.completedFuture(describeResult));
+    replay(clusterManager, adminClient, describeConfigsResult);
+
+    Map<String, List<AlterConfigCommand>> commandsByTopic = new HashMap<>();
+    commandsByTopic.put(
+        TOPIC_NAME,
+        Arrays.asList(
+            AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
+            AlterConfigCommand.delete("non-existing-config")));
+    commandsByTopic.put(
+        ALT_TOPIC_NAME, Arrays.asList(AlterConfigCommand.set(ALT_CONFIG_1.getName(), "new-value")));
+
+    try {
+      topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
