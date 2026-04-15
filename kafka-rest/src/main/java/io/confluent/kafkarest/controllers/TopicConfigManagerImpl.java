@@ -126,4 +126,16 @@ final class TopicConfigManagerImpl extends AbstractConfigManager<TopicConfig, To
         commands,
         validateOnly);
   }
+
+  @Override
+  public CompletableFuture<Void> alterMultipleTopicsConfigs(
+      String clusterId, Map<String, List<AlterConfigCommand>> commandsByTopic) {
+    Map<ConfigResource, List<AlterConfigCommand>> commandsByResource =
+        commandsByTopic.entrySet().stream()
+            .collect(
+                Collectors.toMap(
+                    e -> new ConfigResource(ConfigResource.Type.TOPIC, e.getKey()),
+                    Map.Entry::getValue));
+    return safeAlterMultipleConfigs(clusterId, commandsByResource);
+  }
 }

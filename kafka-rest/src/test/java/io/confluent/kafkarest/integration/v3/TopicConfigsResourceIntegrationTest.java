@@ -42,6 +42,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
   private static final String TOPIC_1 = "topic-1";
+  private static final String TOPIC_2 = "topic-2";
 
   public TopicConfigsResourceIntegrationTest() {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
@@ -53,6 +54,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     super.setUp(testInfo);
 
     createTopic(TOPIC_1, 1, (short) 1);
+    createTopic(TOPIC_2, 1, (short) 1);
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
@@ -690,5 +692,114 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
               responseAfterUpdate2.readEntity(GetTopicConfigResponse.class);
           assertEquals(expectedAfterUpdate2, actualResponseAfterUpdate2);
         });
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_withExistingConfigs(String quorum) {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+
+    Response updateResponse =
+        request("/v3/clusters/" + clusterId + "/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":["
+                        + "{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"configs\":["
+                        + "{\"name\":\"cleanup.policy\",\"value\":\"compact\"},"
+                        + "{\"name\":\"compression.type\",\"value\":\"gzip\"}]},"
+                        + "{\"topic_name\":\""
+                        + TOPIC_2
+                        + "\",\"configs\":["
+                        + "{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
+
+    // Verify TOPIC_1 cleanup.policy
+    testWithRetry(
+        () -> {
+          Response response =
+              request(
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_1
+                          + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+          GetTopicConfigResponse actual = response.readEntity(GetTopicConfigResponse.class);
+          assertEquals("compact", actual.getValue().getValue());
+        });
+
+    // Verify TOPIC_1 compression.type
+    testWithRetry(
+        () -> {
+          Response response =
+              request(
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_1
+                          + "/configs/compression.type")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+          GetTopicConfigResponse actual = response.readEntity(GetTopicConfigResponse.class);
+          assertEquals("gzip", actual.getValue().getValue());
+        });
+
+    // Verify TOPIC_2 cleanup.policy
+    testWithRetry(
+        () -> {
+          Response response =
+              request(
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_2
+                          + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+          GetTopicConfigResponse actual = response.readEntity(GetTopicConfigResponse.class);
+          assertEquals("compact", actual.getValue().getValue());
+        });
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_nonExistingCluster_throwsNotFound(String quorum) {
+    Response response =
+        request("/v3/clusters/foobar/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":[{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"configs\":[{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_nonExistingConfig_throwsNotFound(String quorum) {
+    String clusterId = getClusterId();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":[{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"configs\":"
+                        + "[{\"name\":\"non-existing-config\",\"value\":\"val\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 }

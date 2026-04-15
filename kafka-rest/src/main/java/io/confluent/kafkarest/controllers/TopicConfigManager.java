@@ -69,4 +69,11 @@ public interface TopicConfigManager {
   // changes (e.g. by avoiding the need to heavily refactor tests).
   CompletableFuture<Void> alterTopicConfigs(
       String clusterId, String topicName, List<AlterConfigCommand> commands, boolean validateOnly);
+
+  /**
+   * Atomically alters the Kafka {@link TopicConfig Topic Configs} for multiple topics according to
+   * {@code commandsByTopic}.
+   */
+  CompletableFuture<Void> alterMultipleTopicsConfigs(
+      String clusterId, Map<String, List<AlterConfigCommand>> commandsByTopic);
 }

@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AlterConfigsOptions;
 import org.apache.kafka.clients.admin.DescribeConfigsOptions;
+import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
@@ -282,5 +283,79 @@ abstract class AbstractConfigManager<
                 new AlterConfigsOptions().validateOnly(true))
             .values()
             .get(resourceId));
+  }
+
+  /**
+   * Atomically alter configs for multiple resources according to {@code commandsByResource},
+   * checking if the configs exist first.
+   */
+  final CompletableFuture<Void> safeAlterMultipleConfigs(
+      String clusterId, Map<ConfigResource, List<AlterConfigCommand>> commandsByResource) {
+    return clusterManager
+        .getCluster(clusterId)
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
+        .thenCompose(
+            cluster ->
+                KafkaFutures.toCompletableFuture(
+                    adminClient
+                        .describeConfigs(
+                            commandsByResource.keySet(),
+                            new DescribeConfigsOptions().includeSynonyms(false))
+                        .all()))
+        .thenApply(
+            configsMap -> {
+              for (Map.Entry<ConfigResource, List<AlterConfigCommand>> entry :
+                  commandsByResource.entrySet()) {
+                ConfigResource resource = entry.getKey();
+                Set<String> configNames =
+                    configsMap.get(resource).entries().stream()
+                        .map(configEntry -> configEntry.name())
+                        .collect(Collectors.toSet());
+                for (AlterConfigCommand command : entry.getValue()) {
+                  if (!configNames.contains(command.getName())) {
+                    throw new NotFoundException(
+                        String.format(
+                            "Config %s cannot be found for %s %s in cluster %s.",
+                            command.getName(), resource.type(), resource.name(), clusterId));
+                  }
+                }
+              }
+              return commandsByResource;
+            })
+        .thenCompose(ignored -> alterMultipleConfigs(commandsByResource))
+        .exceptionally(
+            exception -> {
+              if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
+                throw new UnknownTopicOrPartitionException(
+                    "This server does not host this topic-partition.", exception);
+              } else if (exception instanceof NotFoundException
+                  || exception.getCause() instanceof NotFoundException) {
+                throw new NotFoundException(exception.getCause());
+              } else if (exception instanceof RuntimeException
+                  || exception.getCause() instanceof RuntimeException) {
+                throw (RuntimeException) exception;
+              }
+              throw new CompletionException(exception.getCause());
+            });
+  }
+
+  private CompletableFuture<Void> alterMultipleConfigs(
+      Map<ConfigResource, List<AlterConfigCommand>> commandsByResource) {
+    var result =
+        adminClient.incrementalAlterConfigs(
+            commandsByResource.entrySet().stream()
+                .collect(
+                    Collectors.toMap(
+                        Map.Entry::getKey,
+                        e ->
+                            e.getValue().stream()
+                                .map(AlterConfigCommand::toAlterConfigOp)
+                                .collect(Collectors.toList()))));
+    Map<ConfigResource, KafkaFuture<Void>> resultValues = result.values();
+    CompletableFuture<?>[] futures =
+        commandsByResource.keySet().stream()
+            .map(resource -> KafkaFutures.toCompletableFuture(resultValues.get(resource)))
+            .toArray(CompletableFuture[]::new);
+    return CompletableFuture.allOf(futures);
   }
 }
