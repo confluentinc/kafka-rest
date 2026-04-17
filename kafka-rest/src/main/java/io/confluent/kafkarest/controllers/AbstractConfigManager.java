@@ -30,6 +30,7 @@ import jakarta.ws.rs.NotFoundException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -39,7 +40,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AlterConfigsOptions;
+import org.apache.kafka.clients.admin.AlterConfigsResult;
 import org.apache.kafka.clients.admin.DescribeConfigsOptions;
+import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
@@ -282,5 +285,163 @@ abstract class AbstractConfigManager<
                 new AlterConfigsOptions().validateOnly(true))
             .values()
             .get(resourceId));
+  }
+
+  /**
+   * Alter configs for multiple resources according to {@code commandsByResource}, checking if the
+   * configs exist first.
+   */
+  final CompletableFuture<Void> safeAlterMultipleConfigs(
+      String clusterId, Map<ConfigResource, List<AlterConfigCommand>> commandsByResource) {
+    return safeAlterMultipleConfigs(clusterId, commandsByResource, false);
+  }
+
+  /**
+   * Alter configs for multiple resources according to {@code commandsByResource}, checking if the
+   * configs exist first. If the {@code validateOnly} flag is set, the operation is only dry-ran
+   * (the configs do not get altered as a result).
+   */
+  final CompletableFuture<Void> safeAlterMultipleConfigs(
+      String clusterId,
+      Map<ConfigResource, List<AlterConfigCommand>> commandsByResource,
+      boolean validateOnly) {
+    return clusterManager
+        .getCluster(clusterId)
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
+        .thenCompose(
+            cluster ->
+                KafkaFutures.toCompletableFuture(
+                    adminClient
+                        .describeConfigs(
+                            commandsByResource.keySet(),
+                            new DescribeConfigsOptions().includeSynonyms(false))
+                        .all()))
+        .thenApply(
+            configsMap -> {
+              for (Map.Entry<ConfigResource, List<AlterConfigCommand>> entry :
+                  commandsByResource.entrySet()) {
+                ConfigResource resource = entry.getKey();
+                Set<String> configNames =
+                    configsMap.get(resource).entries().stream()
+                        .map(configEntry -> configEntry.name())
+                        .collect(Collectors.toSet());
+                for (AlterConfigCommand command : entry.getValue()) {
+                  if (!configNames.contains(command.getName())) {
+                    throw new NotFoundException(
+                        String.format(
+                            "Config %s cannot be found for %s %s in cluster %s.",
+                            command.getName(), resource.type(), resource.name(), clusterId));
+                  }
+                }
+              }
+              return commandsByResource;
+            })
+        .thenCompose(
+            ignored ->
+                validateOnly
+                    ? validateMultipleConfigs(commandsByResource)
+                    : alterMultipleConfigs(commandsByResource))
+        .exceptionally(
+            exception -> {
+              if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
+                throw new UnknownTopicOrPartitionException(
+                    "This server does not host this topic-partition.", exception);
+              } else if (exception instanceof NotFoundException
+                  || exception.getCause() instanceof NotFoundException) {
+                throw new NotFoundException(exception.getCause());
+              } else if (exception.getCause() instanceof RuntimeException) {
+                throw (RuntimeException) exception.getCause();
+              } else if (exception instanceof RuntimeException) {
+                throw (RuntimeException) exception;
+              }
+              throw new CompletionException(exception.getCause());
+            });
+  }
+
+  private CompletableFuture<Void> alterMultipleConfigs(
+      Map<ConfigResource, List<AlterConfigCommand>> commandsByResource) {
+    AlterConfigsResult result =
+        adminClient.incrementalAlterConfigs(
+            commandsByResource.entrySet().stream()
+                .collect(
+                    Collectors.toMap(
+                        Map.Entry::getKey,
+                        e ->
+                            e.getValue().stream()
+                                .map(AlterConfigCommand::toAlterConfigOp)
+                                .collect(Collectors.toList()))));
+    Map<ConfigResource, KafkaFuture<Void>> resultValues = result.values();
+    List<CompletableFuture<Void>> futures =
+        commandsByResource.keySet().stream()
+            .map(resource -> KafkaFutures.toCompletableFuture(resultValues.get(resource)))
+            .collect(Collectors.toList());
+    // Wait for ALL futures to complete (success or failure) before collecting errors.
+    // CompletableFuture.allOf() fails fast on the first failure, so we map each future to one
+    // that always completes normally, then check which ones failed afterwards.
+    CompletableFuture<Void> allComplete =
+        CompletableFuture.allOf(
+            futures.stream()
+                .map(f -> f.exceptionally(e -> null))
+                .toArray(CompletableFuture[]::new));
+    return allComplete.thenCompose(
+        ignored -> {
+          // Collect the root cause from each failed future.
+          // Failure detection is based on isCompletedExceptionally(), NOT on whether the
+          // exception message is non-null, to correctly handle exceptions with no message
+          // (e.g. UnknownTopicOrPartitionException constructed without a message argument).
+          List<Throwable> failedCauses =
+              futures.stream()
+                  .filter(CompletableFuture::isCompletedExceptionally)
+                  .map(
+                      f -> {
+                        try {
+                          f.join();
+                          return (Throwable) null;
+                        } catch (CompletionException e) {
+                          return e.getCause() != null ? e.getCause() : e;
+                        }
+                      })
+                  .filter(Objects::nonNull)
+                  .collect(Collectors.toList());
+          if (failedCauses.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+          }
+          if (failedCauses.size() > 1) {
+            List<String> messages =
+                failedCauses.stream()
+                    .map(
+                        cause -> cause.getMessage() != null ? cause.getMessage() : cause.toString())
+                    .collect(Collectors.toList());
+            RuntimeException aggregated =
+                new RuntimeException(
+                    String.format(
+                        "Failed to alter configs for %d resources: %s",
+                        failedCauses.size(), String.join("; ", messages)),
+                    failedCauses.get(0));
+            return CompletableFuture.failedFuture(aggregated);
+          }
+          return CompletableFuture.failedFuture(failedCauses.get(0));
+        });
+  }
+
+  private CompletableFuture<Void> validateMultipleConfigs(
+      Map<ConfigResource, List<AlterConfigCommand>> commandsByResource) {
+    AlterConfigsResult result =
+        adminClient.incrementalAlterConfigs(
+            commandsByResource.entrySet().stream()
+                .collect(
+                    Collectors.toMap(
+                        Map.Entry::getKey,
+                        e ->
+                            e.getValue().stream()
+                                .map(AlterConfigCommand::toAlterConfigOp)
+                                .collect(Collectors.toList()))),
+            new AlterConfigsOptions().validateOnly(true));
+    Map<ConfigResource, KafkaFuture<Void>> resultValues = result.values();
+    CompletableFuture<?>[] futures =
+        commandsByResource.keySet().stream()
+            .map(resource -> KafkaFutures.toCompletableFuture(resultValues.get(resource)))
+            .toArray(CompletableFuture[]::new);
+    return CompletableFuture.allOf(futures);
   }
 }
