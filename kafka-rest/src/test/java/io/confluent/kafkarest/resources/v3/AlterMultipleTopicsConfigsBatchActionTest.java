@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,7 +83,7 @@ public class AlterMultipleTopicsConfigsBatchActionTest {
             AlterConfigCommand.delete("compression.type")));
     commandsByTopic.put(TOPIC_2, Arrays.asList(AlterConfigCommand.set("compression.type", "gzip")));
 
-    expect(topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic))
+    expect(topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic, false))
         .andReturn(completedFuture(null));
     replay(topicConfigManager);
 
@@ -110,7 +111,47 @@ public class AlterMultipleTopicsConfigsBatchActionTest {
                             AlterEntry.builder()
                                 .setName("compression.type")
                                 .setValue("gzip")
-                                .build()))))));
+                                .build()))),
+                Optional.empty())));
+
+    assertNull(response.getValue());
+    assertNull(response.getException());
+    assertTrue(response.isDone());
+  }
+
+  @Test
+  public void alterMultipleTopicsConfigsBatch_validateOnly_callsManagerWithValidateOnlyTrue() {
+    Map<String, List<AlterConfigCommand>> commandsByTopic = new LinkedHashMap<>();
+    commandsByTopic.put(
+        TOPIC_1, Arrays.asList(AlterConfigCommand.set("cleanup.policy", "compact")));
+    commandsByTopic.put(TOPIC_2, Arrays.asList(AlterConfigCommand.set("compression.type", "gzip")));
+
+    expect(topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic, true))
+        .andReturn(completedFuture(null));
+    replay(topicConfigManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    action.alterMultipleTopicsConfigsBatch(
+        response,
+        CLUSTER_ID,
+        AlterMultipleTopicsConfigsBatchRequest.create(
+            AlterMultipleTopicsConfigsBatchRequestData.create(
+                Arrays.asList(
+                    TopicAlterEntry.create(
+                        TOPIC_1,
+                        Collections.singletonList(
+                            AlterEntry.builder()
+                                .setName("cleanup.policy")
+                                .setValue("compact")
+                                .build())),
+                    TopicAlterEntry.create(
+                        TOPIC_2,
+                        Collections.singletonList(
+                            AlterEntry.builder()
+                                .setName("compression.type")
+                                .setValue("gzip")
+                                .build()))),
+                Optional.of(true))));
 
     assertNull(response.getValue());
     assertNull(response.getException());
@@ -124,7 +165,7 @@ public class AlterMultipleTopicsConfigsBatchActionTest {
         TOPIC_1, Arrays.asList(AlterConfigCommand.set("cleanup.policy", "compact")));
     commandsByTopic.put(TOPIC_2, Arrays.asList(AlterConfigCommand.set("compression.type", "gzip")));
 
-    expect(topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic))
+    expect(topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic, false))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicConfigManager);
 
@@ -148,7 +189,8 @@ public class AlterMultipleTopicsConfigsBatchActionTest {
                             AlterEntry.builder()
                                 .setName("compression.type")
                                 .setValue("gzip")
-                                .build()))))));
+                                .build()))),
+                Optional.empty())));
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

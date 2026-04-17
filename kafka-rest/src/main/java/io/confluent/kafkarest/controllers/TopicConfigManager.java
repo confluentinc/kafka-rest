@@ -71,9 +71,19 @@ public interface TopicConfigManager {
       String clusterId, String topicName, List<AlterConfigCommand> commands, boolean validateOnly);
 
   /**
-   * Atomically alters the Kafka {@link TopicConfig Topic Configs} for multiple topics according to
-   * {@code commandsByTopic}.
+   * Alter the Kafka {@link TopicConfig Topic Configs} for multiple topics according to {@code
+   * commandsByTopic}.
    */
   CompletableFuture<Void> alterMultipleTopicsConfigs(
       String clusterId, Map<String, List<AlterConfigCommand>> commandsByTopic);
+
+  /**
+   * Alter the Kafka {@link TopicConfig Topic Configs} for multiple topics according to {@code
+   * commandsByTopic}. If the {@code validateOnly} flag is set, the operation is only dry-ran (the
+   * configs do not get altered as a result).
+   */
+  CompletableFuture<Void> alterMultipleTopicsConfigs(
+      String clusterId,
+      Map<String, List<AlterConfigCommand>> commandsByTopic,
+      boolean validateOnly);
 }

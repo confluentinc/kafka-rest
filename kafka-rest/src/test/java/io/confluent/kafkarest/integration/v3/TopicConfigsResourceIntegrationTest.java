@@ -696,6 +696,53 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
   @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_validateOnly_returnsNoContentWithoutChangingConfig(
+      String quorum) {
+    String clusterId = getClusterId();
+
+    // First get the current value of cleanup.policy for TOPIC_1
+    Response beforeResponse =
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), beforeResponse.getStatus());
+    String originalValue =
+        beforeResponse.readEntity(GetTopicConfigResponse.class).getValue().getValue().orElse(null);
+
+    // Dry-run: validate_only=true should not change the config
+    Response validateResponse =
+        request("/v3/clusters/" + clusterId + "/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"validate_only\":true,\"data\":["
+                        + "{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"configs\":["
+                        + "{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NO_CONTENT.getStatusCode(), validateResponse.getStatus());
+
+    // Verify config was NOT changed
+    testWithRetry(
+        () -> {
+          Response afterResponse =
+              request(
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_1
+                          + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), afterResponse.getStatus());
+          GetTopicConfigResponse actual = afterResponse.readEntity(GetTopicConfigResponse.class);
+          assertEquals(originalValue, actual.getValue().getValue().orElse(null));
+        });
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
   public void alterMultipleTopicsConfigsBatch_withExistingConfigs(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
@@ -732,7 +779,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                   .get();
           assertEquals(Status.OK.getStatusCode(), response.getStatus());
           GetTopicConfigResponse actual = response.readEntity(GetTopicConfigResponse.class);
-          assertEquals("compact", actual.getValue().getValue());
+          assertEquals("compact", actual.getValue().getValue().orElse(null));
         });
 
     // Verify TOPIC_1 compression.type
@@ -749,7 +796,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                   .get();
           assertEquals(Status.OK.getStatusCode(), response.getStatus());
           GetTopicConfigResponse actual = response.readEntity(GetTopicConfigResponse.class);
-          assertEquals("gzip", actual.getValue().getValue());
+          assertEquals("gzip", actual.getValue().getValue().orElse(null));
         });
 
     // Verify TOPIC_2 cleanup.policy
@@ -766,7 +813,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                   .get();
           assertEquals(Status.OK.getStatusCode(), response.getStatus());
           GetTopicConfigResponse actual = response.readEntity(GetTopicConfigResponse.class);
-          assertEquals("compact", actual.getValue().getValue());
+          assertEquals("compact", actual.getValue().getValue().orElse(null));
         });
   }
 
@@ -799,6 +846,22 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                         + TOPIC_1
                         + "\",\"configs\":"
                         + "[{\"name\":\"non-existing-config\",\"value\":\"val\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_nonExistingTopic_throwsNotFound(String quorum) {
+    String clusterId = getClusterId();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":[{\"topic_name\":\"foobar\",\"configs\":"
+                        + "[{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}]}",
                     MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

@@ -26,6 +26,7 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.OpenConfigEntry;
@@ -44,6 +45,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AlterConfigOp;
+import org.apache.kafka.clients.admin.AlterConfigsOptions;
 import org.apache.kafka.clients.admin.AlterConfigsResult;
 import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.ConfigEntry;
@@ -51,6 +53,7 @@ import org.apache.kafka.clients.admin.DescribeConfigsOptions;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
+import org.apache.kafka.common.errors.InvalidConfigurationException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
@@ -732,6 +735,44 @@ public class TopicConfigManagerImplTest {
   }
 
   @Test
+  public void alterMultipleTopicsConfigs_validateOnly_doesNotAlterConfigs() throws Exception {
+    Map<ConfigResource, Config> describeResult = new HashMap<>();
+    describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG);
+    describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME), ALT_CONFIG);
+
+    Map<ConfigResource, KafkaFuture<Void>> validateResult = new HashMap<>();
+    validateResult.put(
+        new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
+        KafkaFuture.completedFuture(null));
+    validateResult.put(
+        new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME),
+        KafkaFuture.completedFuture(null));
+
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.describeConfigs(anyObject(), anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all()).andReturn(KafkaFuture.completedFuture(describeResult));
+    // validateOnly=true: called with AlterConfigsOptions, NOT the two-arg overload
+    expect(adminClient.incrementalAlterConfigs(anyObject(), anyObject(AlterConfigsOptions.class)))
+        .andReturn(alterConfigsResult);
+    expect(alterConfigsResult.values()).andReturn(validateResult);
+    replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
+
+    Map<String, List<AlterConfigCommand>> commandsByTopic = new HashMap<>();
+    commandsByTopic.put(
+        TOPIC_NAME,
+        Arrays.asList(
+            AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
+            AlterConfigCommand.delete(CONFIG_2.getName())));
+    commandsByTopic.put(
+        ALT_TOPIC_NAME, Arrays.asList(AlterConfigCommand.set(ALT_CONFIG_1.getName(), "new-value")));
+
+    topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic, true).get();
+
+    verify(adminClient);
+  }
+
+  @Test
   public void alterMultipleTopicsConfigs_existingConfigs_alterConfigs() throws Exception {
     Map<ConfigResource, Config> describeResult = new HashMap<>();
     describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG);
@@ -812,6 +853,90 @@ public class TopicConfigManagerImplTest {
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
+  }
+
+  @Test
+  public void alterMultipleTopicsConfigs_nonExistingTopic_throwsUnknownTopicOrPartition()
+      throws Exception {
+    Map<ConfigResource, Config> describeResult = new HashMap<>();
+    describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG);
+    describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME), ALT_CONFIG);
+
+    Map<ConfigResource, KafkaFuture<Void>> alterResult = new HashMap<>();
+    alterResult.put(
+        new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
+        KafkaFuture.completedFuture(null));
+    alterResult.put(
+        new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME),
+        KafkaFutures.failedFuture(new UnknownTopicOrPartitionException()));
+
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.describeConfigs(anyObject(), anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all()).andReturn(KafkaFuture.completedFuture(describeResult));
+    expect(adminClient.incrementalAlterConfigs(anyObject())).andReturn(alterConfigsResult);
+    expect(alterConfigsResult.values()).andReturn(alterResult);
+    replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
+
+    Map<String, List<AlterConfigCommand>> commandsByTopic = new HashMap<>();
+    commandsByTopic.put(
+        TOPIC_NAME,
+        Arrays.asList(
+            AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
+            AlterConfigCommand.delete(CONFIG_2.getName())));
+    commandsByTopic.put(
+        ALT_TOPIC_NAME, Arrays.asList(AlterConfigCommand.set(ALT_CONFIG_1.getName(), "new-value")));
+
+    try {
+      topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic).get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
+      assertEquals("This server does not host this topic-partition.", e.getCause().getMessage());
+    }
+  }
+
+  @Test
+  public void alterMultipleTopicsConfigs_multipleFailures_aggregatesErrorMessages()
+      throws Exception {
+    Map<ConfigResource, Config> describeResult = new HashMap<>();
+    describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG);
+    describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME), ALT_CONFIG);
+
+    Map<ConfigResource, KafkaFuture<Void>> alterResult = new HashMap<>();
+    alterResult.put(
+        new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
+        KafkaFutures.failedFuture(new InvalidConfigurationException("bad value for topic-1")));
+    alterResult.put(
+        new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME),
+        KafkaFutures.failedFuture(new InvalidConfigurationException("bad value for topic-2")));
+
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.describeConfigs(anyObject(), anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all()).andReturn(KafkaFuture.completedFuture(describeResult));
+    expect(adminClient.incrementalAlterConfigs(anyObject())).andReturn(alterConfigsResult);
+    expect(alterConfigsResult.values()).andReturn(alterResult);
+    replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
+
+    Map<String, List<AlterConfigCommand>> commandsByTopic = new HashMap<>();
+    commandsByTopic.put(
+        TOPIC_NAME, Arrays.asList(AlterConfigCommand.set(CONFIG_1.getName(), "new-value")));
+    commandsByTopic.put(
+        ALT_TOPIC_NAME, Arrays.asList(AlterConfigCommand.set(ALT_CONFIG_1.getName(), "new-value")));
+
+    try {
+      topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic).get();
+      fail();
+    } catch (ExecutionException e) {
+      String message = e.getCause().getMessage();
+      assertTrue(
+          message.startsWith("Failed to alter configs for 2 resources:"),
+          "Expected aggregated failure message, got: " + message);
+      assertTrue(
+          message.contains("bad value for topic-1") || message.contains("bad value for topic-2"),
+          "Expected per-resource error messages, got: " + message);
     }
   }
 }

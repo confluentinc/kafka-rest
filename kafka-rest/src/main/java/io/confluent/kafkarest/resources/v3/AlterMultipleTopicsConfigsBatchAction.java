@@ -62,11 +62,12 @@ public final class AlterMultipleTopicsConfigsBatchAction {
       throw Errors.invalidPayloadException(Errors.NULL_PAYLOAD_ERROR_MESSAGE);
     }
 
+    boolean validateOnly = request.getValue().getValidateOnly().orElse(false);
     CompletableFuture<Void> response =
         topicConfigManager
             .get()
             .alterMultipleTopicsConfigs(
-                clusterId, request.getValue().toAlterConfigCommandsByTopic());
+                clusterId, request.getValue().toAlterConfigCommandsByTopic(), validateOnly);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)

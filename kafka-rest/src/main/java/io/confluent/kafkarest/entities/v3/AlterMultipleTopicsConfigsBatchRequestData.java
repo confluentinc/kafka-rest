@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @AutoValue
 public abstract class AlterMultipleTopicsConfigsBatchRequestData {
@@ -36,14 +37,20 @@ public abstract class AlterMultipleTopicsConfigsBatchRequestData {
   @JsonProperty("data")
   public abstract ImmutableList<TopicAlterEntry> getData();
 
-  public static AlterMultipleTopicsConfigsBatchRequestData create(List<TopicAlterEntry> data) {
-    return new AutoValue_AlterMultipleTopicsConfigsBatchRequestData(ImmutableList.copyOf(data));
+  @JsonProperty("validate_only")
+  public abstract Optional<Boolean> getValidateOnly();
+
+  public static AlterMultipleTopicsConfigsBatchRequestData create(
+      List<TopicAlterEntry> data, Optional<Boolean> validateOnly) {
+    return new AutoValue_AlterMultipleTopicsConfigsBatchRequestData(
+        ImmutableList.copyOf(data), validateOnly);
   }
 
   @JsonCreator
   static AlterMultipleTopicsConfigsBatchRequestData fromJson(
-      @JsonProperty("data") List<TopicAlterEntry> data) {
-    return create(data);
+      @JsonProperty("data") List<TopicAlterEntry> data,
+      @JsonProperty("validate_only") Optional<Boolean> validateOnly) {
+    return create(data, validateOnly);
   }
 
   public final Map<String, List<AlterConfigCommand>> toAlterConfigCommandsByTopic() {
