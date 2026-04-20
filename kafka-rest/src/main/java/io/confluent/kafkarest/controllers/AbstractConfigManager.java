@@ -28,9 +28,9 @@ import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.ConfigSynonym;
 import jakarta.ws.rs.NotFoundException;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -289,19 +289,23 @@ abstract class AbstractConfigManager<
 
   /**
    * Alter configs for multiple resources according to {@code commandsByResource}, checking if the
-   * configs exist first.
+   * configs exist first. Returns a map of resource to exception for each per-resource failure;
+   * empty map means all succeeded. Cluster-not-found and config-name-not-found errors still fail
+   * the returned future exceptionally.
    */
-  final CompletableFuture<Void> safeAlterMultipleConfigs(
+  final CompletableFuture<Map<ConfigResource, Throwable>> safeAlterMultipleConfigs(
       String clusterId, Map<ConfigResource, List<AlterConfigCommand>> commandsByResource) {
     return safeAlterMultipleConfigs(clusterId, commandsByResource, false);
   }
 
   /**
    * Alter configs for multiple resources according to {@code commandsByResource}, checking if the
-   * configs exist first. If the {@code validateOnly} flag is set, the operation is only dry-ran
-   * (the configs do not get altered as a result).
+   * configs exist first. Returns a map of resource to exception for each per-resource failure;
+   * empty map means all succeeded. Cluster-not-found and config-name-not-found errors still fail
+   * the returned future exceptionally. If the {@code validateOnly} flag is set, the operation is
+   * only dry-ran (the configs do not get altered as a result).
    */
-  final CompletableFuture<Void> safeAlterMultipleConfigs(
+  final CompletableFuture<Map<ConfigResource, Throwable>> safeAlterMultipleConfigs(
       String clusterId,
       Map<ConfigResource, List<AlterConfigCommand>> commandsByResource,
       boolean validateOnly) {
@@ -336,17 +340,10 @@ abstract class AbstractConfigManager<
               }
               return commandsByResource;
             })
-        .thenCompose(
-            ignored ->
-                validateOnly
-                    ? validateMultipleConfigs(commandsByResource)
-                    : alterMultipleConfigs(commandsByResource))
+        .thenCompose(ignored -> alterOrValidateMultipleConfigs(commandsByResource, validateOnly))
         .exceptionally(
             exception -> {
-              if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
-                throw new UnknownTopicOrPartitionException(
-                    "This server does not host this topic-partition.", exception);
-              } else if (exception instanceof NotFoundException
+              if (exception instanceof NotFoundException
                   || exception.getCause() instanceof NotFoundException) {
                 throw new NotFoundException(exception.getCause());
               } else if (exception.getCause() instanceof RuntimeException) {
@@ -358,74 +355,13 @@ abstract class AbstractConfigManager<
             });
   }
 
-  private CompletableFuture<Void> alterMultipleConfigs(
-      Map<ConfigResource, List<AlterConfigCommand>> commandsByResource) {
-    AlterConfigsResult result =
-        adminClient.incrementalAlterConfigs(
-            commandsByResource.entrySet().stream()
-                .collect(
-                    Collectors.toMap(
-                        Map.Entry::getKey,
-                        e ->
-                            e.getValue().stream()
-                                .map(AlterConfigCommand::toAlterConfigOp)
-                                .collect(Collectors.toList()))));
-    Map<ConfigResource, KafkaFuture<Void>> resultValues = result.values();
-    List<CompletableFuture<Void>> futures =
-        commandsByResource.keySet().stream()
-            .map(resource -> KafkaFutures.toCompletableFuture(resultValues.get(resource)))
-            .collect(Collectors.toList());
-    // Wait for ALL futures to complete (success or failure) before collecting errors.
-    // CompletableFuture.allOf() fails fast on the first failure, so we map each future to one
-    // that always completes normally, then check which ones failed afterwards.
-    CompletableFuture<Void> allComplete =
-        CompletableFuture.allOf(
-            futures.stream()
-                .map(f -> f.exceptionally(e -> null))
-                .toArray(CompletableFuture[]::new));
-    return allComplete.thenCompose(
-        ignored -> {
-          // Collect the root cause from each failed future.
-          // Failure detection is based on isCompletedExceptionally(), NOT on whether the
-          // exception message is non-null, to correctly handle exceptions with no message
-          // (e.g. UnknownTopicOrPartitionException constructed without a message argument).
-          List<Throwable> failedCauses =
-              futures.stream()
-                  .filter(CompletableFuture::isCompletedExceptionally)
-                  .map(
-                      f -> {
-                        try {
-                          f.join();
-                          return (Throwable) null;
-                        } catch (CompletionException e) {
-                          return e.getCause() != null ? e.getCause() : e;
-                        }
-                      })
-                  .filter(Objects::nonNull)
-                  .collect(Collectors.toList());
-          if (failedCauses.isEmpty()) {
-            return CompletableFuture.completedFuture(null);
-          }
-          if (failedCauses.size() > 1) {
-            List<String> messages =
-                failedCauses.stream()
-                    .map(
-                        cause -> cause.getMessage() != null ? cause.getMessage() : cause.toString())
-                    .collect(Collectors.toList());
-            RuntimeException aggregated =
-                new RuntimeException(
-                    String.format(
-                        "Failed to alter configs for %d resources: %s",
-                        failedCauses.size(), String.join("; ", messages)),
-                    failedCauses.get(0));
-            return CompletableFuture.failedFuture(aggregated);
-          }
-          return CompletableFuture.failedFuture(failedCauses.get(0));
-        });
-  }
-
-  private CompletableFuture<Void> validateMultipleConfigs(
-      Map<ConfigResource, List<AlterConfigCommand>> commandsByResource) {
+  /**
+   * Fires incrementalAlterConfigs (or validateOnly dry-run) and returns a map of resource →
+   * exception for each per-resource failure. An empty map means all resources succeeded. Uses a
+   * wait-for-all pattern so that failures on multiple resources are all collected before returning.
+   */
+  private CompletableFuture<Map<ConfigResource, Throwable>> alterOrValidateMultipleConfigs(
+      Map<ConfigResource, List<AlterConfigCommand>> commandsByResource, boolean validateOnly) {
     AlterConfigsResult result =
         adminClient.incrementalAlterConfigs(
             commandsByResource.entrySet().stream()
@@ -436,12 +372,36 @@ abstract class AbstractConfigManager<
                             e.getValue().stream()
                                 .map(AlterConfigCommand::toAlterConfigOp)
                                 .collect(Collectors.toList()))),
-            new AlterConfigsOptions().validateOnly(true));
+            new AlterConfigsOptions().validateOnly(validateOnly));
     Map<ConfigResource, KafkaFuture<Void>> resultValues = result.values();
-    CompletableFuture<?>[] futures =
-        commandsByResource.keySet().stream()
-            .map(resource -> KafkaFutures.toCompletableFuture(resultValues.get(resource)))
-            .toArray(CompletableFuture[]::new);
-    return CompletableFuture.allOf(futures);
+    // Build a keyed map of resource → future so we can associate failures with their resource.
+    LinkedHashMap<ConfigResource, CompletableFuture<Void>> futureByResource = new LinkedHashMap<>();
+    for (ConfigResource resource : commandsByResource.keySet()) {
+      futureByResource.put(resource, KafkaFutures.toCompletableFuture(resultValues.get(resource)));
+    }
+    // Wait for ALL futures to complete (success or failure) before collecting errors.
+    // CompletableFuture.allOf() fails fast on the first failure, so we map each future to one
+    // that always completes normally, then check which ones failed afterwards.
+    CompletableFuture<Void> allComplete =
+        CompletableFuture.allOf(
+            futureByResource.values().stream()
+                .map(f -> f.exceptionally(e -> null))
+                .toArray(CompletableFuture[]::new));
+    return allComplete.thenApply(
+        ignored -> {
+          Map<ConfigResource, Throwable> failures = new LinkedHashMap<>();
+          for (Map.Entry<ConfigResource, CompletableFuture<Void>> entry :
+              futureByResource.entrySet()) {
+            CompletableFuture<Void> f = entry.getValue();
+            if (f.isCompletedExceptionally()) {
+              try {
+                f.join();
+              } catch (CompletionException e) {
+                failures.put(entry.getKey(), e.getCause() != null ? e.getCause() : e);
+              }
+            }
+          }
+          return failures;
+        });
   }
 }

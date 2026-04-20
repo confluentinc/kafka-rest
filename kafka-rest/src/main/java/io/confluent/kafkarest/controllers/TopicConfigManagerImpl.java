@@ -128,13 +128,13 @@ final class TopicConfigManagerImpl extends AbstractConfigManager<TopicConfig, To
   }
 
   @Override
-  public CompletableFuture<Void> alterMultipleTopicsConfigs(
+  public CompletableFuture<Map<String, Throwable>> alterMultipleTopicsConfigs(
       String clusterId, Map<String, List<AlterConfigCommand>> commandsByTopic) {
     return alterMultipleTopicsConfigs(clusterId, commandsByTopic, false);
   }
 
   @Override
-  public CompletableFuture<Void> alterMultipleTopicsConfigs(
+  public CompletableFuture<Map<String, Throwable>> alterMultipleTopicsConfigs(
       String clusterId,
       Map<String, List<AlterConfigCommand>> commandsByTopic,
       boolean validateOnly) {
@@ -144,6 +144,10 @@ final class TopicConfigManagerImpl extends AbstractConfigManager<TopicConfig, To
                 Collectors.toMap(
                     e -> new ConfigResource(ConfigResource.Type.TOPIC, e.getKey()),
                     Map.Entry::getValue));
-    return safeAlterMultipleConfigs(clusterId, commandsByResource, validateOnly);
+    return safeAlterMultipleConfigs(clusterId, commandsByResource, validateOnly)
+        .thenApply(
+            failures ->
+                failures.entrySet().stream()
+                    .collect(Collectors.toMap(e -> e.getKey().name(), Map.Entry::getValue)));
   }
 }

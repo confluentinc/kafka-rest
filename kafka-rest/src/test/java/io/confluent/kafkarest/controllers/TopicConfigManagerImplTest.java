@@ -790,7 +790,10 @@ public class TopicConfigManagerImplTest {
     expect(adminClient.describeConfigs(anyObject(), anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all()).andReturn(KafkaFuture.completedFuture(describeResult));
-    expect(adminClient.incrementalAlterConfigs(anyObject())).andReturn(alterConfigsResult);
+    expect(
+            adminClient.incrementalAlterConfigs(
+                anyObject(), anyObject(AlterConfigsOptions.class)))
+        .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values()).andReturn(alterResult);
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
@@ -803,7 +806,9 @@ public class TopicConfigManagerImplTest {
     commandsByTopic.put(
         ALT_TOPIC_NAME, Arrays.asList(AlterConfigCommand.set(ALT_CONFIG_1.getName(), "new-value")));
 
-    topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic).get();
+    Map<String, Throwable> failures =
+        topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic).get();
+    assertTrue(failures.isEmpty(), "Expected no failures but got: " + failures);
 
     verify(adminClient);
   }
@@ -857,7 +862,7 @@ public class TopicConfigManagerImplTest {
   }
 
   @Test
-  public void alterMultipleTopicsConfigs_nonExistingTopic_throwsUnknownTopicOrPartition()
+  public void alterMultipleTopicsConfigs_nonExistingTopic_returnsFailureForTopic()
       throws Exception {
     Map<ConfigResource, Config> describeResult = new HashMap<>();
     describeResult.put(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG);
@@ -875,7 +880,10 @@ public class TopicConfigManagerImplTest {
     expect(adminClient.describeConfigs(anyObject(), anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all()).andReturn(KafkaFuture.completedFuture(describeResult));
-    expect(adminClient.incrementalAlterConfigs(anyObject())).andReturn(alterConfigsResult);
+    expect(
+            adminClient.incrementalAlterConfigs(
+                anyObject(), anyObject(AlterConfigsOptions.class)))
+        .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values()).andReturn(alterResult);
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
@@ -888,13 +896,12 @@ public class TopicConfigManagerImplTest {
     commandsByTopic.put(
         ALT_TOPIC_NAME, Arrays.asList(AlterConfigCommand.set(ALT_CONFIG_1.getName(), "new-value")));
 
-    try {
-      topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic).get();
-      fail();
-    } catch (ExecutionException e) {
-      assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
-      assertEquals("This server does not host this topic-partition.", e.getCause().getMessage());
-    }
+    Map<String, Throwable> failures =
+        topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic).get();
+
+    assertEquals(1, failures.size(), "Expected exactly one failure");
+    assertTrue(failures.containsKey(ALT_TOPIC_NAME));
+    assertEquals(UnknownTopicOrPartitionException.class, failures.get(ALT_TOPIC_NAME).getClass());
   }
 
   @Test
@@ -916,7 +923,10 @@ public class TopicConfigManagerImplTest {
     expect(adminClient.describeConfigs(anyObject(), anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all()).andReturn(KafkaFuture.completedFuture(describeResult));
-    expect(adminClient.incrementalAlterConfigs(anyObject())).andReturn(alterConfigsResult);
+    expect(
+            adminClient.incrementalAlterConfigs(
+                anyObject(), anyObject(AlterConfigsOptions.class)))
+        .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values()).andReturn(alterResult);
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
@@ -926,17 +936,15 @@ public class TopicConfigManagerImplTest {
     commandsByTopic.put(
         ALT_TOPIC_NAME, Arrays.asList(AlterConfigCommand.set(ALT_CONFIG_1.getName(), "new-value")));
 
-    try {
-      topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic).get();
-      fail();
-    } catch (ExecutionException e) {
-      String message = e.getCause().getMessage();
-      assertTrue(
-          message.startsWith("Failed to alter configs for 2 resources:"),
-          "Expected aggregated failure message, got: " + message);
-      assertTrue(
-          message.contains("bad value for topic-1") || message.contains("bad value for topic-2"),
-          "Expected per-resource error messages, got: " + message);
-    }
+    Map<String, Throwable> failures =
+        topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic).get();
+
+    assertEquals(2, failures.size(), "Expected failures for both topics");
+    assertEquals(
+        InvalidConfigurationException.class, failures.get(TOPIC_NAME).getClass());
+    assertEquals("bad value for topic-1", failures.get(TOPIC_NAME).getMessage());
+    assertEquals(
+        InvalidConfigurationException.class, failures.get(ALT_TOPIC_NAME).getClass());
+    assertEquals("bad value for topic-2", failures.get(ALT_TOPIC_NAME).getMessage());
   }
 }
