@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2026 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -20,8 +20,11 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.controllers.TopicConfigManager;
 import io.confluent.kafkarest.entities.v3.AlterMultipleTopicsConfigsBatchRequest;
+import io.confluent.kafkarest.entities.v3.AlterMultipleTopicsConfigsBatchResponse;
+import io.confluent.kafkarest.entities.v3.AlterMultipleTopicsConfigsBatchResponse.FailureEntry;
+import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
-import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
+import io.confluent.kafkarest.response.StreamingResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -35,8 +38,9 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
+import java.util.concurrent.CompletionException;
+import java.util.stream.Collectors;
 
 @Path("/v3/clusters/{clusterId}/topics/-/configs:alter")
 @ResourceName("api.v3.topic-configs.*")
@@ -63,14 +67,33 @@ public final class AlterMultipleTopicsConfigsBatchAction {
     }
 
     boolean validateOnly = request.getValue().getValidateOnly().orElse(false);
-    CompletableFuture<Void> response =
-        topicConfigManager
-            .get()
-            .alterMultipleTopicsConfigs(
-                clusterId, request.getValue().toAlterConfigCommandsByTopic(), validateOnly);
+    topicConfigManager
+        .get()
+        .alterMultipleTopicsConfigs(
+            clusterId, request.getValue().toAlterConfigCommandsByTopic(), validateOnly)
+        .whenComplete(
+            (failures, ex) -> {
+              if (ex != null) {
+                // Pre-validation error (e.g. cluster not found, config name not found) —
+                // let the JAX-RS ExceptionMapper translate it to the appropriate HTTP status.
+                asyncResponse.resume(ex instanceof CompletionException ? ex.getCause() : ex);
+              } else if (failures.isEmpty()) {
+                asyncResponse.resume(Response.noContent().build());
+              } else {
+                List<FailureEntry> entries =
+                    failures.entrySet().stream()
+                        .map(e -> toFailureEntry(e.getKey(), e.getValue()))
+                        .collect(Collectors.toList());
+                asyncResponse.resume(
+                    Response.status(207, "Multi-Status")
+                        .entity(AlterMultipleTopicsConfigsBatchResponse.create(entries))
+                        .build());
+              }
+            });
+  }
 
-    AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
-        .entity(response)
-        .asyncResume(asyncResponse);
+  private static FailureEntry toFailureEntry(String topicName, Throwable cause) {
+    ErrorResponse errorResponse = StreamingResponse.toErrorResponse(cause);
+    return FailureEntry.create(topicName, errorResponse.getErrorCode(), errorResponse.getMessage());
   }
 }
