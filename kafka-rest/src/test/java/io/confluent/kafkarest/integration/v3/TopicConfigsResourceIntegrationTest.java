@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.kafkarest.entities.ConfigSource;
+import io.confluent.kafkarest.entities.v3.AlterMultipleTopicsConfigsBatchResponse;
 import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
@@ -815,6 +816,35 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
           GetTopicConfigResponse actual = response.readEntity(GetTopicConfigResponse.class);
           assertEquals("compact", actual.getValue().getValue().orElse(null));
         });
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_partialInvalidConfig_returns207(String quorum) {
+    String clusterId = getClusterId();
+
+    // TOPIC_1 gets a valid alter; TOPIC_2 gets an invalid config value that Kafka rejects,
+    // triggering a per-topic Kafka-level failure → 207 Multi-Status.
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":["
+                        + "{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"configs\":[{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]},"
+                        + "{\"topic_name\":\""
+                        + TOPIC_2
+                        + "\",\"configs\":[{\"name\":\"cleanup.policy\",\"value\":\"invalid_xyz\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+
+    assertEquals(207, response.getStatus());
+    AlterMultipleTopicsConfigsBatchResponse body =
+        response.readEntity(AlterMultipleTopicsConfigsBatchResponse.class);
+    assertEquals(1, body.getFailures().size());
+    assertEquals(TOPIC_2, body.getFailures().get(0).getTopicName());
+    assertTrue(body.getFailures().get(0).getMessage().isPresent());
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
