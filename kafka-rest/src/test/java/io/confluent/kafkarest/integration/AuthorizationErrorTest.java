@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -43,9 +44,12 @@ import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import scala.Option;
 
+/** This integration test uses AclAuthorizer class which is Zk specific. */
 public class AuthorizationErrorTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
@@ -69,8 +73,9 @@ public class AuthorizationErrorTest
           new PartitionOffset(0, 3L, null, null));
 
   @BeforeEach
-  public void setUp() throws Exception {
-    super.setUp();
+  @Override
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
     Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     properties.put("sasl.jaas.config", createPlainLoginModule("admin", "admin-secret"));
@@ -140,17 +145,19 @@ public class AuthorizationErrorTest
         + "\";";
   }
 
-  @Test
-  public void testConsumerRequest() {
-    // test wihout acls
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"zk"})
+  public void testConsumerRequest(String quorum) {
+    // test without acls
     verifySubscribeToTopic(true);
     // add acls
     SecureTestUtils.setConsumerAcls(zkConnect, TOPIC_NAME, USERNAME, CONSUMER_GROUP);
     verifySubscribeToTopic(false);
   }
 
-  @Test
-  public void testProducerAuthorization() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"zk"})
+  public void testProducerAuthorization(String quorum) {
     BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecords);
     // test without any acls
     testProduceToAuthorizationError(TOPIC_NAME, request);
@@ -221,6 +228,7 @@ public class AuthorizationErrorTest
   }
 
   @AfterEach
+  @Override
   public void tearDown() throws Exception {
     super.tearDown();
   }

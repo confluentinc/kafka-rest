@@ -58,7 +58,7 @@ public final class DefaultKafkaRestTestEnvironment
           .addKey("kafka-rest")
           .build();
 
-  private final ZookeeperFixture zookeeper = ZookeeperFixture.create();
+  private final QuorumControllerFixture quorumControllerFixture = QuorumControllerFixture.create();
 
   private final KafkaClusterFixture kafkaCluster =
       KafkaClusterFixture.builder()
@@ -71,7 +71,7 @@ public final class DefaultKafkaRestTestEnvironment
           .setConfig("message.max.bytes", String.valueOf((2 << 20) * 10))
           .setNumBrokers(3)
           .setSecurityProtocol(SecurityProtocol.SASL_SSL)
-          .setZookeeper(zookeeper)
+          .setQuorumController(quorumControllerFixture)
           .build();
 
   private final SchemaRegistryFixture schemaRegistry =
@@ -112,7 +112,7 @@ public final class DefaultKafkaRestTestEnvironment
   @Override
   public void beforeEach(ExtensionContext extensionContext) throws Exception {
     certificates.beforeEach(extensionContext);
-    zookeeper.beforeEach(extensionContext);
+    quorumControllerFixture.beforeEach(extensionContext);
     kafkaCluster.beforeEach(extensionContext);
     schemaRegistry.beforeEach(extensionContext);
     kafkaRest = buildKafkaRest();
@@ -128,7 +128,7 @@ public final class DefaultKafkaRestTestEnvironment
     }
     schemaRegistry.afterEach(extensionContext);
     kafkaCluster.afterEach(extensionContext);
-    zookeeper.afterEach(extensionContext);
+    quorumControllerFixture.afterEach(extensionContext);
     certificates.afterEach(extensionContext);
   }
 
@@ -136,8 +136,8 @@ public final class DefaultKafkaRestTestEnvironment
     return certificates;
   }
 
-  public ZookeeperFixture zookeeper() {
-    return zookeeper;
+  public QuorumControllerFixture quorumController() {
+    return quorumControllerFixture;
   }
 
   public KafkaClusterFixture kafkaCluster() {

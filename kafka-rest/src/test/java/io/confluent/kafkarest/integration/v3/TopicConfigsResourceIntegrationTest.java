@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,7 +35,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
@@ -46,14 +49,15 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
   @BeforeEach
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(TestInfo testInfo) throws Exception {
+    super.setUp(testInfo);
 
     createTopic(TOPIC_1, 1, (short) 1);
   }
 
-  @Test
-  public void listTopicConfigs_existingTopic_returnsConfigs() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listTopicConfigs_existingTopic_returnsConfigs(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -183,8 +187,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
         String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig3));
   }
 
-  @Test
-  public void listTopicConfigs_nonExistingTopic_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listTopicConfigs_nonExistingTopic_throwsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -194,8 +199,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void listTopicConfigs_nonExistingCluster_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void listTopicConfigs_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs")
             .accept(MediaType.APPLICATION_JSON)
@@ -203,8 +209,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getTopicConfig_existingConfig_returnsConfig() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getTopicConfig_existingConfig_returnsConfig(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -254,8 +261,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expected, actual);
   }
 
-  @Test
-  public void getTopicConfig_nonExistingConfig_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getTopicConfig_nonExistingConfig_throwsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -265,8 +273,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getTopicConfig_nonExistingTopic_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getTopicConfig_nonExistingTopic_throwsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -276,8 +285,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getTopicConfig_nonExistingCluster_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getTopicConfig_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(MediaType.APPLICATION_JSON)
@@ -285,8 +295,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getUpdateReset_withExistingConfig() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void getUpdateReset_withExistingConfig(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -463,8 +474,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
         });
   }
 
-  @Test
-  public void updateTopicConfig_nonExistingConfig_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void updateTopicConfig_nonExistingConfig_throwsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -474,8 +486,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void updateTopicConfig_nonExistingTopic_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void updateTopicConfig_nonExistingTopic_throwsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -485,8 +498,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void updateTopicConfig_nonExistingCluster_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void updateTopicConfig_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(MediaType.APPLICATION_JSON)
@@ -494,16 +508,18 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void updateTopicConfig_nonExistingCluster_noContentType_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void updateTopicConfig_nonExistingCluster_noContentType_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .put(Entity.entity("{\"value\":\"compact\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void resetTopicConfig_nonExistingConfig_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void resetTopicConfig_nonExistingConfig_throwsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -513,8 +529,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void resetTopicConfig_nonExistingTopic_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void resetTopicConfig_nonExistingTopic_throwsNotFound(String quorum) {
     String clusterId = getClusterId();
 
     Response response =
@@ -524,8 +541,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void resetTopicConfig_nonExistingCluster_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void resetTopicConfig_nonExistingCluster_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(MediaType.APPLICATION_JSON)
@@ -533,15 +551,17 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void resetTopicConfig_nonExistingCluster_noContentType_throwsNotFound() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void resetTopicConfig_nonExistingCluster_noContentType_throwsNotFound(String quorum) {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy").delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void alterConfigBatch_withExistingConfig() {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void alterConfigBatch_withExistingConfig(String quorum) {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 

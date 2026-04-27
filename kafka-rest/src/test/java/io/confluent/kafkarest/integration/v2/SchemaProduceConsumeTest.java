@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v2;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,7 +44,8 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,8 +72,9 @@ public abstract class SchemaProduceConsumeTest extends ClusterTestHarness {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ true);
   }
 
-  @Test
-  public void produceThenConsume_returnsExactlyProduced() throws Exception {
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft", "zk"})
+  public void produceThenConsume_returnsExactlyProduced(String quorum) throws Exception {
     createTopic(TOPIC, /* numPartitions= */ 1, /* replicationFactor= */ (short) 1);
 
     Response createConsumerInstanceResponse =
