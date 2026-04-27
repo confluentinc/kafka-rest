@@ -69,4 +69,25 @@ public interface TopicConfigManager {
   // changes (e.g. by avoiding the need to heavily refactor tests).
   CompletableFuture<Void> alterTopicConfigs(
       String clusterId, String topicName, List<AlterConfigCommand> commands, boolean validateOnly);
+
+  /**
+   * Alter the Kafka {@link TopicConfig Topic Configs} for multiple topics according to {@code
+   * commandsByTopic}. Returns a map of topic name to exception for each per-topic failure; an empty
+   * map means all topics succeeded. Cluster-not-found and config-name-not-found errors fail the
+   * returned future exceptionally.
+   */
+  CompletableFuture<Map<String, Throwable>> alterMultipleTopicsConfigs(
+      String clusterId, Map<String, List<AlterConfigCommand>> commandsByTopic);
+
+  /**
+   * Alter the Kafka {@link TopicConfig Topic Configs} for multiple topics according to {@code
+   * commandsByTopic}. Returns a map of topic name to exception for each per-topic failure; an empty
+   * map means all topics succeeded. Cluster-not-found and config-name-not-found errors fail the
+   * returned future exceptionally. If the {@code validateOnly} flag is set, the operation is only
+   * dry-ran (the configs do not get altered as a result).
+   */
+  CompletableFuture<Map<String, Throwable>> alterMultipleTopicsConfigs(
+      String clusterId,
+      Map<String, List<AlterConfigCommand>> commandsByTopic,
+      boolean validateOnly);
 }

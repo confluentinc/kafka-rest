@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.kafkarest.entities.ConfigSource;
+import io.confluent.kafkarest.entities.v3.AlterMultipleTopicsConfigsBatchResponse;
 import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
@@ -42,6 +43,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
   private static final String TOPIC_1 = "topic-1";
+  private static final String TOPIC_2 = "topic-2";
 
   public TopicConfigsResourceIntegrationTest() {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
@@ -53,6 +55,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     super.setUp(testInfo);
 
     createTopic(TOPIC_1, 1, (short) 1);
+    createTopic(TOPIC_2, 1, (short) 1);
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
@@ -690,5 +693,206 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
               responseAfterUpdate2.readEntity(GetTopicConfigResponse.class);
           assertEquals(expectedAfterUpdate2, actualResponseAfterUpdate2);
         });
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_validateOnly_returnsNoContentWithoutChangingConfig(
+      String quorum) {
+    String clusterId = getClusterId();
+
+    // First get the current value of cleanup.policy for TOPIC_1
+    Response beforeResponse =
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), beforeResponse.getStatus());
+    String originalValue =
+        beforeResponse.readEntity(GetTopicConfigResponse.class).getValue().getValue().orElse(null);
+
+    // Dry-run: validate_only=true should not change the config
+    Response validateResponse =
+        request("/v3/clusters/" + clusterId + "/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"validate_only\":true,\"data\":["
+                        + "{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"configs\":["
+                        + "{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NO_CONTENT.getStatusCode(), validateResponse.getStatus());
+
+    // Verify config was NOT changed
+    testWithRetry(
+        () -> {
+          Response afterResponse =
+              request(
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_1
+                          + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), afterResponse.getStatus());
+          GetTopicConfigResponse actual = afterResponse.readEntity(GetTopicConfigResponse.class);
+          assertEquals(originalValue, actual.getValue().getValue().orElse(null));
+        });
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_withExistingConfigs(String quorum) {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+
+    Response updateResponse =
+        request("/v3/clusters/" + clusterId + "/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":["
+                        + "{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"configs\":["
+                        + "{\"name\":\"cleanup.policy\",\"value\":\"compact\"},"
+                        + "{\"name\":\"compression.type\",\"value\":\"gzip\"}]},"
+                        + "{\"topic_name\":\""
+                        + TOPIC_2
+                        + "\",\"configs\":["
+                        + "{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
+
+    // Verify TOPIC_1 cleanup.policy
+    testWithRetry(
+        () -> {
+          Response response =
+              request(
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_1
+                          + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+          GetTopicConfigResponse actual = response.readEntity(GetTopicConfigResponse.class);
+          assertEquals("compact", actual.getValue().getValue().orElse(null));
+        });
+
+    // Verify TOPIC_1 compression.type
+    testWithRetry(
+        () -> {
+          Response response =
+              request(
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_1
+                          + "/configs/compression.type")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+          GetTopicConfigResponse actual = response.readEntity(GetTopicConfigResponse.class);
+          assertEquals("gzip", actual.getValue().getValue().orElse(null));
+        });
+
+    // Verify TOPIC_2 cleanup.policy
+    testWithRetry(
+        () -> {
+          Response response =
+              request(
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/topics/"
+                          + TOPIC_2
+                          + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+          GetTopicConfigResponse actual = response.readEntity(GetTopicConfigResponse.class);
+          assertEquals("compact", actual.getValue().getValue().orElse(null));
+        });
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_partialInvalidConfig_returns207(String quorum) {
+    String clusterId = getClusterId();
+
+    // TOPIC_1 gets a valid alter; TOPIC_2 gets an invalid config value that Kafka rejects,
+    // triggering a per-topic Kafka-level failure → 207 Multi-Status.
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":["
+                        + "{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"configs\":[{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]},"
+                        + "{\"topic_name\":\""
+                        + TOPIC_2
+                        + "\",\"configs\":[{\"name\":\"cleanup.policy\",\"value\":\"invalid_xyz\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+
+    assertEquals(207, response.getStatus());
+    AlterMultipleTopicsConfigsBatchResponse body =
+        response.readEntity(AlterMultipleTopicsConfigsBatchResponse.class);
+    assertEquals(1, body.getFailures().size());
+    assertEquals(TOPIC_2, body.getFailures().get(0).getTopicName());
+    assertTrue(body.getFailures().get(0).getMessage().isPresent());
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_nonExistingCluster_throwsNotFound(String quorum) {
+    Response response =
+        request("/v3/clusters/foobar/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":[{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"configs\":[{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_nonExistingConfig_throwsNotFound(String quorum) {
+    String clusterId = getClusterId();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":[{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"configs\":"
+                        + "[{\"name\":\"non-existing-config\",\"value\":\"val\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void alterMultipleTopicsConfigsBatch_nonExistingTopic_throwsNotFound(String quorum) {
+    String clusterId = getClusterId();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/-/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":[{\"topic_name\":\"foobar\",\"configs\":"
+                        + "[{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 }
