@@ -21,11 +21,14 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.TopicView;
+import io.confluent.kafkarest.entities.v3.TopicType;
 import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,16 +56,19 @@ final class TopicManagerImpl implements TopicManager {
 
   private final Admin adminClient;
   private final ClusterManager clusterManager;
+  private final TopicViewLookup topicViewLookup;
 
   @Inject
-  TopicManagerImpl(Admin adminClient, ClusterManager clusterManager) {
+  TopicManagerImpl(
+      Admin adminClient, ClusterManager clusterManager, TopicViewLookup topicViewLookup) {
     this.adminClient = requireNonNull(adminClient);
     this.clusterManager = requireNonNull(clusterManager);
+    this.topicViewLookup = requireNonNull(topicViewLookup);
   }
 
   @Override
   public CompletableFuture<List<Topic>> listTopics(
-      String clusterId, boolean includeAuthorizedOperations) {
+      String clusterId, boolean includeAuthorizedOperations, TopicType topicType) {
     return clusterManager
         .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
@@ -77,7 +83,52 @@ final class TopicManagerImpl implements TopicManager {
                   clusterId,
                   topicListings.stream().map(TopicListing::name).collect(Collectors.toList()),
                   includeAuthorizedOperations);
-            });
+            })
+        .thenCompose(topics -> enrichWithViewsAndFilter(clusterId, topics, topicType));
+  }
+
+  /**
+   * Attaches each source topic's views (looked up via {@link TopicViewLookup}) and applies the
+   * {@code topic_type} filter. With the no-op lookup (vanilla kafka-rest), {@code views} is empty
+   * for every topic, no topic is classified as a view, so STANDARD/ALL return all topics and VIEW
+   * returns empty.
+   */
+  private CompletableFuture<List<Topic>> enrichWithViewsAndFilter(
+      String clusterId, List<Topic> topics, TopicType topicType) {
+    return topicViewLookup
+        .lookupViewsBySource(clusterId)
+        .thenApply(viewsBySource -> mergeViewsAndFilter(topics, viewsBySource, topicType));
+  }
+
+  static List<Topic> mergeViewsAndFilter(
+      List<Topic> topics,
+      Map<String, ImmutableList<TopicView>> viewsBySource,
+      TopicType topicType) {
+    Set<String> viewTopicNames = new HashSet<>();
+    viewsBySource
+        .values()
+        .forEach(list -> list.forEach(v -> viewTopicNames.add(v.getViewTopicName())));
+    return topics.stream()
+        .map(
+            t ->
+                t.toBuilder()
+                    .setViews(viewsBySource.getOrDefault(t.getName(), ImmutableList.of()))
+                    .build())
+        .filter(t -> matchesTopicType(t, viewTopicNames, topicType))
+        .collect(Collectors.toList());
+  }
+
+  private static boolean matchesTopicType(
+      Topic topic, Set<String> viewTopicNames, TopicType topicType) {
+    switch (topicType) {
+      case VIEW:
+        return viewTopicNames.contains(topic.getName());
+      case STANDARD:
+        return !viewTopicNames.contains(topic.getName());
+      case ALL:
+      default:
+        return true;
+    }
   }
 
   @Override

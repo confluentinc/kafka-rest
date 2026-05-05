@@ -16,11 +16,16 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Topic;
+import jakarta.annotation.Nullable;
+import java.util.List;
 import java.util.Set;
 
 // CHECKSTYLE:OFF:ParameterNumber
@@ -56,8 +61,12 @@ public abstract class TopicData extends Resource {
   @JsonProperty("authorized_operations")
   public abstract ImmutableSet<Acl.Operation> getAuthorizedOperations();
 
+  @JsonProperty("views")
+  @JsonInclude(Include.NON_EMPTY)
+  public abstract ImmutableList<TopicViewInfo> getViews();
+
   public static Builder builder() {
-    return new AutoValue_TopicData.Builder().setKind("KafkaTopic");
+    return new AutoValue_TopicData.Builder().setKind("KafkaTopic").setViews(ImmutableList.of());
   }
 
   public static Builder fromTopic(Topic topic) {
@@ -67,7 +76,11 @@ public abstract class TopicData extends Resource {
         .setInternal(topic.isInternal())
         .setReplicationFactor(topic.getReplicationFactor())
         .setPartitionsCount(topic.getPartitions().size())
-        .setAuthorizedOperations(topic.getAuthorizedOperations());
+        .setAuthorizedOperations(topic.getAuthorizedOperations())
+        .setViews(
+            topic.getViews().stream()
+                .map(TopicViewInfo::fromTopicView)
+                .collect(ImmutableList.toImmutableList()));
   }
 
   @JsonCreator
@@ -82,7 +95,8 @@ public abstract class TopicData extends Resource {
       @JsonProperty("partitions") Relationship partitions,
       @JsonProperty("authorized_operations") ImmutableSet<Acl.Operation> authorizedOperations,
       @JsonProperty("configs") Relationship configs,
-      @JsonProperty("partition_reassignments") Relationship partitionReassignments) {
+      @JsonProperty("partition_reassignments") Relationship partitionReassignments,
+      @JsonProperty("views") @Nullable ImmutableList<TopicViewInfo> views) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -95,6 +109,7 @@ public abstract class TopicData extends Resource {
         .setConfigs(configs)
         .setPartitionReassignments(partitionReassignments)
         .setAuthorizedOperations(authorizedOperations)
+        .setViews(views == null ? ImmutableList.of() : views)
         .build();
   }
 
@@ -120,6 +135,8 @@ public abstract class TopicData extends Resource {
     public abstract Builder setPartitionReassignments(Relationship partitionReassignments);
 
     public abstract Builder setAuthorizedOperations(Set<Acl.Operation> authorizedOperations);
+
+    public abstract Builder setViews(List<TopicViewInfo> views);
 
     public abstract TopicData build();
   }
