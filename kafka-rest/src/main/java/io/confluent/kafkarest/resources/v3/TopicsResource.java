@@ -32,6 +32,7 @@ import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.entities.v3.TopicDataList;
+import io.confluent.kafkarest.entities.v3.TopicType;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
@@ -90,11 +91,12 @@ public final class TopicsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @QueryParam("includeAuthorizedOperations") @DefaultValue("false")
-          boolean includeAuthorizedOperations) {
+          boolean includeAuthorizedOperations,
+      @QueryParam("topic_type") @DefaultValue("all") String topicType) {
     CompletableFuture<ListTopicsResponse> response =
         topicManagerProvider
             .get()
-            .listTopics(clusterId, includeAuthorizedOperations)
+            .listTopics(clusterId, includeAuthorizedOperations, TopicType.fromString(topicType))
             .thenApply(
                 topics ->
                     ListTopicsResponse.create(
