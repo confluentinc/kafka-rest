@@ -77,7 +77,10 @@ public abstract class TopicData extends Resource {
         .setReplicationFactor(topic.getReplicationFactor())
         .setPartitionsCount(topic.getPartitions().size())
         .setAuthorizedOperations(topic.getAuthorizedOperations())
-        .setViews(topic.getViews());
+        .setViews(
+            topic.getViews().stream()
+                .map(TopicViewInfo::fromTopicView)
+                .collect(ImmutableList.toImmutableList()));
   }
 
   @JsonCreator

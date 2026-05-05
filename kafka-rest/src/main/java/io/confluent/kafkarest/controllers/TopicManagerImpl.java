@@ -27,6 +27,7 @@ import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.TopicView;
 import io.confluent.kafkarest.entities.v3.TopicType;
 import jakarta.inject.Inject;
 import java.util.ArrayList;
@@ -96,21 +97,25 @@ final class TopicManagerImpl implements TopicManager {
       String clusterId, List<Topic> topics, TopicType topicType) {
     return topicViewLookup
         .lookupViewsBySource(clusterId)
-        .thenApply(
-            viewsBySource -> {
-              Set<String> viewTopicNames = new HashSet<>();
-              viewsBySource
-                  .values()
-                  .forEach(list -> list.forEach(v -> viewTopicNames.add(v.getViewTopicName())));
-              return topics.stream()
-                  .map(
-                      t ->
-                          t.toBuilder()
-                              .setViews(viewsBySource.getOrDefault(t.getName(), ImmutableList.of()))
-                              .build())
-                  .filter(t -> matchesTopicType(t, viewTopicNames, topicType))
-                  .collect(Collectors.toList());
-            });
+        .thenApply(viewsBySource -> mergeViewsAndFilter(topics, viewsBySource, topicType));
+  }
+
+  static List<Topic> mergeViewsAndFilter(
+      List<Topic> topics,
+      Map<String, ImmutableList<TopicView>> viewsBySource,
+      TopicType topicType) {
+    Set<String> viewTopicNames = new HashSet<>();
+    viewsBySource
+        .values()
+        .forEach(list -> list.forEach(v -> viewTopicNames.add(v.getViewTopicName())));
+    return topics.stream()
+        .map(
+            t ->
+                t.toBuilder()
+                    .setViews(viewsBySource.getOrDefault(t.getName(), ImmutableList.of()))
+                    .build())
+        .filter(t -> matchesTopicType(t, viewTopicNames, topicType))
+        .collect(Collectors.toList());
   }
 
   private static boolean matchesTopicType(

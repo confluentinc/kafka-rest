@@ -18,6 +18,7 @@ package io.confluent.kafkarest.entities.v3;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import io.confluent.kafkarest.entities.TopicView;
 import jakarta.annotation.Nullable;
 
 @AutoValue
@@ -52,6 +53,20 @@ public abstract class TopicViewInfo {
 
   public static Builder builder() {
     return new AutoValue_TopicViewInfo.Builder();
+  }
+
+  /** Maps the internal {@link TopicView} domain entity to its v3 wire-format DTO. */
+  public static TopicViewInfo fromTopicView(TopicView view) {
+    return builder()
+        .setViewTopicName(view.getViewTopicName())
+        .setViewTopicId(view.getViewTopicId())
+        .setViewFilter(view.getViewFilter())
+        .setFlinkStatementId(view.getFlinkStatementId())
+        .setFlinkComputePoolId(view.getFlinkComputePoolId())
+        .setViewStatus(view.getViewStatus())
+        .setViewStatusMessage(view.getViewStatusMessage())
+        .setStatusChangedAt(view.getStatusChangedAt())
+        .build();
   }
 
   @JsonCreator

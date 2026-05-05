@@ -19,7 +19,6 @@ import static java.util.Collections.emptySet;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import io.confluent.kafkarest.entities.v3.TopicViewInfo;
 import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +44,7 @@ public abstract class Topic {
    * Topic views derived from this topic (i.e. this topic is the {@code source}). Empty when the
    * topic has no associated views.
    */
-  public abstract ImmutableList<TopicViewInfo> getViews();
+  public abstract ImmutableList<TopicView> getViews();
 
   public static Builder builder() {
     return new AutoValue_Topic.Builder().setViews(ImmutableList.of());
@@ -110,7 +109,7 @@ public abstract class Topic {
 
     public abstract Builder setAuthorizedOperations(Set<Acl.Operation> authorizedOperations);
 
-    public abstract Builder setViews(List<TopicViewInfo> views);
+    public abstract Builder setViews(List<TopicView> views);
 
     public abstract Topic build();
   }

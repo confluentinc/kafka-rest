@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.entities.v3;
 
 import jakarta.ws.rs.BadRequestException;
+import java.util.Locale;
 
 /**
  * Filter values for the {@code topic_type} query parameter on the list-topics endpoint. Used to
@@ -40,7 +41,7 @@ public enum TopicType {
       return ALL;
     }
     try {
-      return TopicType.valueOf(value.toUpperCase());
+      return TopicType.valueOf(value.toUpperCase(Locale.ROOT));
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(
           "Invalid topic_type '" + value + "'. Expected one of: all, standard, view.");

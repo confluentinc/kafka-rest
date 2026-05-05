@@ -17,7 +17,7 @@ package io.confluent.kafkarest.controllers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import io.confluent.kafkarest.entities.v3.TopicViewInfo;
+import io.confluent.kafkarest.entities.TopicView;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -31,8 +31,7 @@ public interface TopicViewLookup {
    * Returns a mapping from <em>source-topic name</em> to its derived views. Source topics with no
    * derived views may be omitted.
    */
-  CompletableFuture<Map<String, ImmutableList<TopicViewInfo>>> lookupViewsBySource(
-      String clusterId);
+  CompletableFuture<Map<String, ImmutableList<TopicView>>> lookupViewsBySource(String clusterId);
 
   /** Default no-op implementation: returns an empty map. */
   TopicViewLookup NO_OP = clusterId -> CompletableFuture.completedFuture(ImmutableMap.of());
