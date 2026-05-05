@@ -40,8 +40,14 @@ public abstract class Topic {
 
   public abstract Set<Acl.Operation> getAuthorizedOperations();
 
+  /**
+   * Topic views derived from this topic (i.e. this topic is the {@code source}). Empty when the
+   * topic has no associated views.
+   */
+  public abstract ImmutableList<TopicView> getViews();
+
   public static Builder builder() {
-    return new AutoValue_Topic.Builder();
+    return new AutoValue_Topic.Builder().setViews(ImmutableList.of());
   }
 
   public static Topic create(
@@ -77,7 +83,8 @@ public abstract class Topic {
         .addAllPartitions(getPartitions())
         .setReplicationFactor(getReplicationFactor())
         .setInternal(isInternal())
-        .setAuthorizedOperations(getAuthorizedOperations());
+        .setAuthorizedOperations(getAuthorizedOperations())
+        .setViews(getViews());
   }
 
   @AutoValue.Builder
@@ -101,6 +108,8 @@ public abstract class Topic {
     public abstract Builder setInternal(boolean isInternal);
 
     public abstract Builder setAuthorizedOperations(Set<Acl.Operation> authorizedOperations);
+
+    public abstract Builder setViews(List<TopicView> views);
 
     public abstract Topic build();
   }
