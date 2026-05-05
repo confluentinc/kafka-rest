@@ -40,6 +40,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Properties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -250,6 +251,90 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
     Response response =
         request("/v3/clusters/foobar/topics").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listTopics_omitsViewsFieldWithDefaultLookup(String quorum) {
+    // Vanilla kafka-rest binds a no-op TopicViewLookup, so every topic's `views` field
+    // is empty and gets stripped from JSON by @JsonInclude(NON_EMPTY).
+    String clusterId = getClusterId();
+
+    testWithRetry(
+        () -> {
+          Response response =
+              request("/v3/clusters/" + clusterId + "/topics")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+
+          // Read as a raw String to inspect on-the-wire JSON; the `views` key must not appear.
+          String json = response.readEntity(String.class);
+          assertFalse(
+              json.contains("\"views\""),
+              "views should be omitted from listTopics JSON when no views exist, got: " + json);
+        });
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listTopics_topicTypeView_returnsEmptyDataWithDefaultLookup(String quorum) {
+    // No-op TopicViewLookup classifies no topic as a view, so VIEW returns an empty list.
+    String clusterId = getClusterId();
+
+    testWithRetry(
+        () -> {
+          Response response =
+              request(
+                      "/v3/clusters/" + clusterId + "/topics",
+                      Collections.singletonMap("topic_type", "view"))
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+
+          ListTopicsResponse actual = response.readEntity(ListTopicsResponse.class);
+          assertTrue(
+              actual.getValue().getData().isEmpty(),
+              "topic_type=view should return empty data when there are no view topics");
+        });
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listTopics_topicTypeStandard_returnsAllTopicsWithDefaultLookup(String quorum) {
+    // No-op TopicViewLookup classifies no topic as a view, so STANDARD returns every topic
+    // (it only filters out views; sources and unrelated topics stay).
+    String clusterId = getClusterId();
+
+    testWithRetry(
+        () -> {
+          Response response =
+              request(
+                      "/v3/clusters/" + clusterId + "/topics",
+                      Collections.singletonMap("topic_type", "standard"))
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+
+          ListTopicsResponse actual = response.readEntity(ListTopicsResponse.class);
+          assertEquals(3, actual.getValue().getData().size());
+        });
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void listTopics_topicTypeInvalid_returnsBadRequest(String quorum) {
+    String clusterId = getClusterId();
+    Response response =
+        request(
+                "/v3/clusters/" + clusterId + "/topics",
+                Collections.singletonMap("topic_type", "garbage"))
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)

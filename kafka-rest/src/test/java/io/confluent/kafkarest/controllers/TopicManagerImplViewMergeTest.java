@@ -43,31 +43,14 @@ public class TopicManagerImplViewMergeTest {
   private static final String REGULAR_TOPIC_NAME = "topic-3";
 
   private static final Topic SOURCE_TOPIC =
-      Topic.create(
-          CLUSTER_ID,
-          SOURCE_TOPIC_NAME,
-          ImmutableList.of(),
-          (short) 3,
-          false,
-          emptySet());
+      Topic.create(CLUSTER_ID, SOURCE_TOPIC_NAME, ImmutableList.of(), (short) 3, false, emptySet());
 
   private static final Topic VIEW_TOPIC =
-      Topic.create(
-          CLUSTER_ID,
-          VIEW_TOPIC_NAME,
-          ImmutableList.of(),
-          (short) 3,
-          false,
-          emptySet());
+      Topic.create(CLUSTER_ID, VIEW_TOPIC_NAME, ImmutableList.of(), (short) 3, false, emptySet());
 
   private static final Topic REGULAR_TOPIC =
       Topic.create(
-          CLUSTER_ID,
-          REGULAR_TOPIC_NAME,
-          ImmutableList.of(),
-          (short) 3,
-          false,
-          emptySet());
+          CLUSTER_ID, REGULAR_TOPIC_NAME, ImmutableList.of(), (short) 3, false, emptySet());
 
   private static final TopicView VIEW_OF_SOURCE =
       TopicView.builder()
