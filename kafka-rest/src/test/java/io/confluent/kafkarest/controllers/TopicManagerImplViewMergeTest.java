@@ -42,34 +42,31 @@ public class TopicManagerImplViewMergeTest {
   private static final String VIEW_TOPIC_NAME = "topic-2";
   private static final String REGULAR_TOPIC_NAME = "topic-3";
 
-  /** Plain non-view topic; the lookup map will mark it as having a derived view. */
   private static final Topic SOURCE_TOPIC =
       Topic.create(
           CLUSTER_ID,
           SOURCE_TOPIC_NAME,
           ImmutableList.of(),
           (short) 3,
-          /* isInternal= */ false,
+          false,
           emptySet());
 
-  /** Plain non-view topic; becomes the view of {@link #SOURCE_TOPIC} via the lookup map. */
   private static final Topic VIEW_TOPIC =
       Topic.create(
           CLUSTER_ID,
           VIEW_TOPIC_NAME,
           ImmutableList.of(),
           (short) 3,
-          /* isInternal= */ false,
+          false,
           emptySet());
 
-  /** Plain non-view topic; unrelated to the view. */
   private static final Topic REGULAR_TOPIC =
       Topic.create(
           CLUSTER_ID,
           REGULAR_TOPIC_NAME,
           ImmutableList.of(),
           (short) 3,
-          /* isInternal= */ false,
+          false,
           emptySet());
 
   private static final TopicView VIEW_OF_SOURCE =
