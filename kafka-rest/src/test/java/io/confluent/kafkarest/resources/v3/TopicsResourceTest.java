@@ -43,6 +43,7 @@ import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.entities.v3.TopicDataList;
+import io.confluent.kafkarest.entities.v3.TopicType;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -373,12 +374,12 @@ public class TopicsResourceTest {
 
   @Test
   public void listTopics_existingCluster_returnsTopics() {
-    expect(topicManager.listTopics(CLUSTER_ID, false))
+    expect(topicManager.listTopics(CLUSTER_ID, false, TopicType.ALL))
         .andReturn(completedFuture(Arrays.asList(TOPIC_1, TOPIC_2, TOPIC_3)));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicsResource.listTopics(response, CLUSTER_ID, false);
+    topicsResource.listTopics(response, CLUSTER_ID, false, "all");
 
     ListTopicsResponse expected =
         ListTopicsResponse.create(
@@ -399,24 +400,24 @@ public class TopicsResourceTest {
 
   @Test
   public void listTopics_timeoutException_returnsTimeoutException() {
-    expect(topicManager.listTopics(CLUSTER_ID, false))
+    expect(topicManager.listTopics(CLUSTER_ID, false, TopicType.ALL))
         .andReturn(failedFuture(new TimeoutException()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicsResource.listTopics(response, CLUSTER_ID, false);
+    topicsResource.listTopics(response, CLUSTER_ID, false, "all");
 
     assertEquals(TimeoutException.class, response.getException().getClass());
   }
 
   @Test
   public void listTopics_nonExistingCluster_returnsNotFound() {
-    expect(topicManager.listTopics(CLUSTER_ID, false))
+    expect(topicManager.listTopics(CLUSTER_ID, false, TopicType.ALL))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicsResource.listTopics(response, CLUSTER_ID, false);
+    topicsResource.listTopics(response, CLUSTER_ID, false, "all");
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

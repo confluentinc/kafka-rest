@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.v3.TopicType;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,7 +38,20 @@ public interface TopicManager {
    * io.confluent.kafkarest.entities.Cluster} with the given {@code clusterId} and a flag to
    * determine whether to return authorised operations: {@code includeAuthorizedOperations}.
    */
-  CompletableFuture<List<Topic>> listTopics(String clusterId, boolean includeAuthorizedOperations);
+  default CompletableFuture<List<Topic>> listTopics(
+      String clusterId, boolean includeAuthorizedOperations) {
+    return listTopics(clusterId, includeAuthorizedOperations, TopicType.ALL);
+  }
+
+  /**
+   * Returns the list of Kafka {@link Topic Topics} matching the given {@code topicType}, belonging
+   * to the {@link io.confluent.kafkarest.entities.Cluster} with the given {@code clusterId}. {@code
+   * topicType} selects between all topics, only non-view topics, or only view topics.
+   * Implementations that are unaware of view topics treat {@link TopicType#STANDARD} the same as
+   * {@link TopicType#ALL} and return an empty list for {@link TopicType#VIEW}.
+   */
+  CompletableFuture<List<Topic>> listTopics(
+      String clusterId, boolean includeAuthorizedOperations, TopicType topicType);
 
   /**
    * Returns the list of Kafka {@link Topic Topics} belonging to the {@link

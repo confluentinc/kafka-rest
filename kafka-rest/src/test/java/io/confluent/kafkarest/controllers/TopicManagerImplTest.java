@@ -476,7 +476,7 @@ public class TopicManagerImplTest {
 
   @BeforeEach
   public void setUp() {
-    topicManager = new TopicManagerImpl(adminClient, clusterManager);
+    topicManager = new TopicManagerImpl(adminClient, clusterManager, TopicViewLookup.NO_OP);
   }
 
   @Test
