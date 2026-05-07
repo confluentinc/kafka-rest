@@ -63,6 +63,17 @@ blocks:
             - mvn -U -Dmaven.wagon.http.retryHandler.count=10 --batch-mode 
               -DaltDeploymentRepository=confluent-codeartifact-internal::default::https://confluent-519856050701.d.codeartifact.us-west-2.amazonaws.com/maven/maven-snapshots/ 
               -DrepositoryId=confluent-codeartifact-internal deploy -DskipTests
+  # Claude Code based code review in PRs.
+  - name: R2 Code Review
+    dependencies: []
+    run:
+      when: "pull_request =~ '.+'"
+    task:
+      jobs:
+        - name: R2 Code Review
+          commands:
+            # || true: code review failures are unrelated to the codebase and should not block CI. Please report issues to Slack channel #r2.
+            - r2 code-review --verbose --timeout=900s || true
 
 after_pipeline:
   task:
