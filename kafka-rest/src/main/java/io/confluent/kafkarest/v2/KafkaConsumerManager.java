@@ -271,6 +271,7 @@ public class KafkaConsumerManager {
         props.put(
             "value.deserializer",
             "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer");
+        props.put("json.type.allowed.packages", "");
         break;
       case PROTOBUF:
         props.put(
