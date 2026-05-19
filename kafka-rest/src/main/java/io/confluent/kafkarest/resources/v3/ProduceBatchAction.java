@@ -261,7 +261,7 @@ public final class ProduceBatchAction {
               (result, error) -> {
                 if (error != null) {
                   long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
-                  recordErrorMetrics(metrics, latency);
+                  recordErrorMetrics(metrics, latency, httpStatusCodeFromError(error));
                   throw new StacklessCompletionException(error);
                 }
                 return result;
@@ -392,8 +392,8 @@ public final class ProduceBatchAction {
     metrics.recordRequestLatency(latencyMs);
   }
 
-  private void recordErrorMetrics(ProducerMetrics metrics, long latencyMs) {
-    metrics.recordError();
+  private void recordErrorMetrics(ProducerMetrics metrics, long latencyMs, int httpStatusCode) {
+    metrics.recordError(httpStatusCode);
     metrics.recordRequestLatency(latencyMs);
   }
 
@@ -405,5 +405,15 @@ public final class ProduceBatchAction {
     metrics.recordRequest();
     // record request size
     metrics.recordRequestSize(size);
+  }
+
+  // Resolve an HTTP status code for the throwable in the same way StreamingResponse does for
+  // the response — keeps the metric's http_status_code tag consistent with what the client sees.
+  private static int httpStatusCodeFromError(Throwable error) {
+    Throwable cause = error;
+    if (error instanceof CompletionException && error.getCause() != null) {
+      cause = error.getCause();
+    }
+    return StreamingResponse.toErrorResponse(cause).getErrorCode();
   }
 }
