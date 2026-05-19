@@ -50,6 +50,7 @@ import org.apache.kafka.common.metrics.stats.Max;
 import org.apache.kafka.common.metrics.stats.Rate;
 import org.apache.kafka.common.metrics.stats.WindowedCount;
 import org.apache.kafka.common.utils.Time;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -88,6 +89,23 @@ public class ProducerMetricsTest {
     config.setMetrics(metrics);
 
     producerMetrics = new ProducerMetrics(config, tags);
+  }
+
+  // ProducerMetrics now registers one MBean per http_status_code bucket (and one base bean), so
+  // each test creates multiple beans on the platform MBeanServer. Without explicit cleanup the
+  // beans leak across tests and risk InstanceAlreadyExistsException on re-registration or flaky
+  // queryNames() counts in tests that check bean cardinality.
+  @AfterEach
+  public void tearDown() throws Exception {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    for (ObjectName beanName :
+        mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null)) {
+      try {
+        mBeanServer.unregisterMBean(beanName);
+      } catch (InstanceNotFoundException ignored) {
+        // already gone — fine
+      }
+    }
   }
 
   @Test

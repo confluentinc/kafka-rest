@@ -361,10 +361,12 @@ final class ProducerMetrics {
   }
 
   void recordError(int httpStatusCode) {
-    String sensorName = recordErrorSensorNames.get(httpStatusCodeBucket(httpStatusCode));
-    if (sensorName != null) {
-      recordMetric(sensorName, 1.0);
-    }
+    String bucket = httpStatusCodeBucket(httpStatusCode);
+    String sensorName =
+        requireNonNull(
+            recordErrorSensorNames.get(bucket),
+            () -> "No error sensor registered for http_status_code bucket " + bucket);
+    recordMetric(sensorName, 1.0);
   }
 
   void recordRateLimited() {
