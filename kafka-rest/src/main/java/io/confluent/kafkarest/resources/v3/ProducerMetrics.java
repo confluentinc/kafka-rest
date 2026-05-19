@@ -18,8 +18,11 @@ package io.confluent.kafkarest.resources.v3;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -43,6 +46,19 @@ final class ProducerMetrics {
 
   private static final String GROUP_NAME = "produce-api-metrics";
   public static final long EXPIRY_SECONDS = TimeUnit.HOURS.toSeconds(1);
+
+  // KNET-19593: the produce_request_error 5xx and request_error_rate 429 monitors filter on
+  // http_status_code, but the error and rate-limited metrics never carried that tag, so the
+  // queries never matched any series. Tag both metrics with bucketed status codes so the
+  // existing monitor queries (http_status_code=~"5xx|unknown", http_status_code="429") work.
+  @VisibleForTesting static final String HTTP_STATUS_CODE_TAG = "http_status_code";
+  @VisibleForTesting static final String STATUS_CODE_BUCKET_4XX = "4xx";
+  @VisibleForTesting static final String STATUS_CODE_BUCKET_5XX = "5xx";
+  @VisibleForTesting static final String STATUS_CODE_BUCKET_UNKNOWN = "unknown";
+  @VisibleForTesting static final String STATUS_CODE_BUCKET_429 = "429";
+
+  private static final List<String> ERROR_STATUS_CODE_BUCKETS =
+      ImmutableList.of(STATUS_CODE_BUCKET_4XX, STATUS_CODE_BUCKET_5XX, STATUS_CODE_BUCKET_UNKNOWN);
 
   /*
    * Rate, Average and Percentile metrics use underlying SampledStat and are therefore over a window
@@ -108,7 +124,9 @@ final class ProducerMetrics {
   private final String requestSensorName;
   private final String requestSizeSensorName;
   private final String responseSensorName;
-  private final String recordErrorSensorName;
+  // Per-status-code-bucket sensor names. Each entry is keyed by an entry of
+  // ERROR_STATUS_CODE_BUCKETS and points at a sensor tagged with that http_status_code value.
+  private final Map<String, String> recordErrorSensorNames;
   private final String recordRateLimitedSensorName;
   private final String requestLatencySensorName;
 
@@ -128,15 +146,48 @@ final class ProducerMetrics {
     this.metrics = requireNonNull(config.getMetrics());
     this.jmxPrefix = config.getString(KafkaRestConfig.METRICS_JMX_PREFIX_CONFIG);
     String sensorNamePrefix = jmxPrefix + ":" + GROUP_NAME + ":";
-    this.recordErrorSensorName = sensorNamePrefix + RECORD_ERROR_SENSOR_NAME + sensorTags;
+    this.recordErrorSensorNames = new HashMap<>();
+    for (String bucket : ERROR_STATUS_CODE_BUCKETS) {
+      this.recordErrorSensorNames.put(
+          bucket,
+          sensorNamePrefix + RECORD_ERROR_SENSOR_NAME + bucketSensorTagSuffix(sensorTags, bucket));
+    }
     this.recordRateLimitedSensorName =
-        sensorNamePrefix + RECORD_RATE_LIMITED_SENSOR_NAME + sensorTags;
+        sensorNamePrefix
+            + RECORD_RATE_LIMITED_SENSOR_NAME
+            + bucketSensorTagSuffix(sensorTags, STATUS_CODE_BUCKET_429);
     this.requestSensorName = sensorNamePrefix + REQUEST_SENSOR_NAME + sensorTags;
     this.requestLatencySensorName = sensorNamePrefix + REQUEST_LATENCY_SENSOR_NAME + sensorTags;
     this.requestSizeSensorName = sensorNamePrefix + REQUEST_SIZE_SENSOR_NAME + sensorTags;
     this.responseSensorName = sensorNamePrefix + RESPONSE_SENSOR_NAME + sensorTags;
 
     setupSensors(sortedMetricsTags, sensorTags);
+  }
+
+  // Build the sensor-tag suffix for a given http_status_code bucket. http_status_code sorts
+  // before "tenant" alphabetically, so the bucket value goes first to match how MetricName
+  // tags are ordered downstream.
+  private static String bucketSensorTagSuffix(String baseSensorTags, String bucket) {
+    return ":" + bucket + baseSensorTags;
+  }
+
+  private static Map<String, String> tagsWithStatusCode(
+      Map<String, String> metricsTags, String bucket) {
+    Map<String, String> tagsWithStatus = new TreeMap<>(metricsTags);
+    tagsWithStatus.put(HTTP_STATUS_CODE_TAG, bucket);
+    return tagsWithStatus;
+  }
+
+  // Map an HTTP status code to one of the buckets used in monitor queries.
+  @VisibleForTesting
+  static String httpStatusCodeBucket(int httpStatusCode) {
+    if (httpStatusCode >= 500 && httpStatusCode < 600) {
+      return STATUS_CODE_BUCKET_5XX;
+    }
+    if (httpStatusCode >= 400 && httpStatusCode < 500) {
+      return STATUS_CODE_BUCKET_4XX;
+    }
+    return STATUS_CODE_BUCKET_UNKNOWN;
   }
 
   private void setupSensors(Map<String, String> metricsTags, String sensorTags) {
@@ -194,31 +245,39 @@ final class ProducerMetrics {
   }
 
   private void setupRecordErrorSensor(Map<String, String> metricsTags, String sensorTags) {
-    Sensor recordErrorSensor = createSensor(RECORD_ERROR_SENSOR_NAME, sensorTags);
-    addRate(
-        recordErrorSensor,
-        RECORD_ERROR_RATE_METRIC_NAME,
-        RECORD_ERROR_RATE_METRIC_DOC,
-        metricsTags);
-    addWindowedCount(
-        recordErrorSensor,
-        RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
-        RECORD_ERROR_COUNT_WINDOWED_METRIC_DOC,
-        metricsTags);
+    for (String bucket : ERROR_STATUS_CODE_BUCKETS) {
+      Sensor recordErrorSensor =
+          createSensor(RECORD_ERROR_SENSOR_NAME, bucketSensorTagSuffix(sensorTags, bucket));
+      Map<String, String> bucketTags = tagsWithStatusCode(metricsTags, bucket);
+      addRate(
+          recordErrorSensor,
+          RECORD_ERROR_RATE_METRIC_NAME,
+          RECORD_ERROR_RATE_METRIC_DOC,
+          bucketTags);
+      addWindowedCount(
+          recordErrorSensor,
+          RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
+          RECORD_ERROR_COUNT_WINDOWED_METRIC_DOC,
+          bucketTags);
+    }
   }
 
   private void setupRecordRateLimitedSensor(Map<String, String> metricsTags, String sensorTags) {
-    Sensor recordRateLimitedSensor = createSensor(RECORD_RATE_LIMITED_SENSOR_NAME, sensorTags);
+    Sensor recordRateLimitedSensor =
+        createSensor(
+            RECORD_RATE_LIMITED_SENSOR_NAME,
+            bucketSensorTagSuffix(sensorTags, STATUS_CODE_BUCKET_429));
+    Map<String, String> rateLimitedTags = tagsWithStatusCode(metricsTags, STATUS_CODE_BUCKET_429);
     addRate(
         recordRateLimitedSensor,
         RECORD_RATE_LIMITED_RATE_METRIC_NAME,
         RECORD_RATE_LIMITED_RATE_METRIC_DOC,
-        metricsTags);
+        rateLimitedTags);
     addWindowedCount(
         recordRateLimitedSensor,
         RECORD_RATE_LIMITED_COUNT_WINDOWED_METRIC_NAME,
         RECORD_RATE_LIMITED_COUNT_WINDOWED_METRIC_DOC,
-        metricsTags);
+        rateLimitedTags);
   }
 
   private void setupRequestLatencySensor(Map<String, String> metricsTags, String sensorTags) {
@@ -301,8 +360,11 @@ final class ProducerMetrics {
     recordMetric(requestLatencySensorName, valueMs);
   }
 
-  void recordError() {
-    recordMetric(recordErrorSensorName, 1.0);
+  void recordError(int httpStatusCode) {
+    String sensorName = recordErrorSensorNames.get(httpStatusCodeBucket(httpStatusCode));
+    if (sensorName != null) {
+      recordMetric(sensorName, 1.0);
+    }
   }
 
   void recordRateLimited() {

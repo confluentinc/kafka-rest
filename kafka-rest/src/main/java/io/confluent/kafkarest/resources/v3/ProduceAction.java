@@ -42,6 +42,7 @@ import io.confluent.kafkarest.requestlog.CustomLog.ProduceRecordErrorCounter;
 import io.confluent.kafkarest.requestlog.CustomLogRequestAttributes;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.JsonStream;
+import io.confluent.kafkarest.response.StreamingResponse;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import jakarta.inject.Inject;
@@ -59,6 +60,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -226,7 +228,7 @@ public final class ProduceAction {
             (result, error) -> {
               if (error != null) {
                 long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
-                recordErrorMetrics(metrics, latency);
+                recordErrorMetrics(metrics, latency, httpStatusCodeFromError(error));
                 throw new StacklessCompletionException(error);
               }
               return result;
@@ -329,8 +331,8 @@ public final class ProduceAction {
     metrics.recordRequestLatency(latencyMs);
   }
 
-  private void recordErrorMetrics(ProducerMetrics metrics, long latencyMs) {
-    metrics.recordError();
+  private void recordErrorMetrics(ProducerMetrics metrics, long latencyMs, int httpStatusCode) {
+    metrics.recordError(httpStatusCode);
     metrics.recordRequestLatency(latencyMs);
   }
 
@@ -342,5 +344,15 @@ public final class ProduceAction {
     metrics.recordRequest();
     // record request size
     metrics.recordRequestSize(size);
+  }
+
+  // Resolve an HTTP status code for the throwable in the same way StreamingResponse does for
+  // the response — keeps the metric's http_status_code tag consistent with what the client sees.
+  private static int httpStatusCodeFromError(Throwable error) {
+    Throwable cause = error;
+    if (error instanceof CompletionException && error.getCause() != null) {
+      cause = error.getCause();
+    }
+    return StreamingResponse.toErrorResponse(cause).getErrorCode();
   }
 }
