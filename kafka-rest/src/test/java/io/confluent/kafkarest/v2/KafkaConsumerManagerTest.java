@@ -176,6 +176,46 @@ public class KafkaConsumerManagerTest {
     EasyMock.verify(consumerFactory);
   }
 
+  @Test
+  public void createConsumer_jsonSchemaFormat_disablesJavaTypeResolution() {
+    // INC-10321 / KSECURITY-2716: the JSONSCHEMA consumer must be created with
+    // json.type.allowed.packages="" so KafkaJsonSchemaDeserializer refuses to resolve
+    // arbitrary classes from the schema's javaType property.
+    final Capture<Properties> consumerConfig = Capture.newInstance();
+    EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(consumerConfig)))
+        .andReturn(consumer);
+    EasyMock.replay(consumerFactory);
+
+    consumerManager.createConsumer(
+        groupName, ConsumerInstanceConfig.create(EmbeddedFormat.JSONSCHEMA));
+
+    Properties props = consumerConfig.getValue();
+    assertEquals("", props.get("json.type.allowed.packages"));
+    assertEquals(
+        "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer",
+        props.get("key.deserializer"));
+    assertEquals(
+        "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer",
+        props.get("value.deserializer"));
+
+    EasyMock.verify(consumerFactory);
+  }
+
+  @Test
+  public void createConsumer_nonJsonSchemaFormat_doesNotSetJavaTypeAllowedPackages() {
+    // The new config is scoped to JSONSCHEMA only; other formats should be unaffected.
+    final Capture<Properties> consumerConfig = Capture.newInstance();
+    EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(consumerConfig)))
+        .andReturn(consumer);
+    EasyMock.replay(consumerFactory);
+
+    consumerManager.createConsumer(groupName, ConsumerInstanceConfig.create(EmbeddedFormat.BINARY));
+
+    assertNull(consumerConfig.getValue().get("json.type.allowed.packages"));
+
+    EasyMock.verify(consumerFactory);
+  }
+
   /** Response should return no sooner than KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG */
   @Test
   public void testConsumerRequestTimeoutms() throws Exception {
