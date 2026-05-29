@@ -41,6 +41,33 @@ public abstract class TopicConfig extends AbstractConfig {
       boolean isSensitive,
       ConfigSource source,
       List<ConfigSynonym> synonyms) {
+    return create(
+        clusterId,
+        topicName,
+        name,
+        value,
+        isDefault,
+        isReadOnly,
+        isSensitive,
+        source,
+        synonyms,
+        null,
+        null);
+  }
+
+  // CHECKSTYLE:OFF:ParameterNumber
+  public static TopicConfig create(
+      String clusterId,
+      String topicName,
+      String name,
+      @Nullable String value,
+      boolean isDefault,
+      boolean isReadOnly,
+      boolean isSensitive,
+      ConfigSource source,
+      List<ConfigSynonym> synonyms,
+      @Nullable Integer schemaErrorCode,
+      @Nullable String message) {
     return builder()
         .setClusterId(clusterId)
         .setName(name)
@@ -51,8 +78,11 @@ public abstract class TopicConfig extends AbstractConfig {
         .setSource(source)
         .setSynonyms(synonyms)
         .setTopicName(topicName)
+        .setSchemaErrorCode(schemaErrorCode)
+        .setSchemaErrorMessage(message)
         .build();
   }
+  // CHECKSTYLE:ON:ParameterNumber
 
   /** A builder for {@link TopicConfig}. */
   @AutoValue.Builder

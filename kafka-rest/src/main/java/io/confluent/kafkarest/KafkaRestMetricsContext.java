@@ -17,7 +17,7 @@ package io.confluent.kafkarest;
 
 import io.confluent.rest.metrics.RestMetricsContext;
 import java.util.Map;
-import org.apache.kafka.common.utils.AppInfoParser;
+import org.apache.kafka.common.utils.internals.AppInfoParser;
 
 public final class KafkaRestMetricsContext {
   /** MetricsContext Label's for use by Confluent's TelemetryReporter */
