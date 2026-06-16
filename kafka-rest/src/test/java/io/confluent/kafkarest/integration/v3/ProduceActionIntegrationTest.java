@@ -410,7 +410,7 @@ public class ProduceActionIntegrationTest {
         "Unrecognized field \"records\" "
             + "(class io.confluent.kafkarest.entities.v3.AutoValue_ProduceRequest$Builder), "
             + "not marked as ignorable (6 known properties: \"value\", \"originalSize\", "
-            + "\"partitionId\", \"headers\", \"key\", \"timestamp\"])",
+            + "\"partitionId\", \"headers\", \"key\", \"timestamp\")",
         actual.getMessage());
   }
 
