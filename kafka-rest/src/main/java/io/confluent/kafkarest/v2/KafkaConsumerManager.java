@@ -388,12 +388,19 @@ public class KafkaConsumerManager {
 
     public RunnableReadTask(ReadTaskState taskState, KafkaRestConfig config) {
       this.taskState = taskState;
+      // An instance-level consumer.request.timeout.ms set at consumer creation takes
+      // precedence over the proxy-wide setting, mirroring how KafkaConsumerReadTask
+      // resolves its own request timeout.
+      Integer requestWaitMs =
+          taskState.consumerState.getConsumerInstanceConfig().getRequestWaitMs();
       this.requestExpiration =
           clock
               .instant()
               .plus(
                   Duration.ofMillis(
-                      config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)));
+                      requestWaitMs != null
+                          ? requestWaitMs
+                          : config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)));
       this.backoff =
           Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG));
       this.waitExpiration = Instant.EPOCH;
