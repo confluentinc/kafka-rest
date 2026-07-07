@@ -238,6 +238,69 @@ public class KafkaConsumerManagerTest {
     assertNull(actualException, "No exception in callback");
   }
 
+  /**
+   * A consumer created with an instance-level consumer.request.timeout.ms larger than the
+   * proxy-wide setting should wait the full instance-level timeout instead of being cut off at the
+   * proxy-wide value. Regression test: the KREST-297 refactor made RunnableReadTask expire reads at
+   * the proxy-wide timeout regardless of the instance-level setting.
+   */
+  @Test
+  public void testConsumerRequestTimeoutmsIsRaisablePerConsumer() throws Exception {
+    Properties props = setUpProperties(new Properties());
+    props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "500");
+    setUpConsumer(props);
+
+    expectCreate(consumer);
+    String cid =
+        consumerManager.createConsumer(groupName, consumerInstanceConfigWithRequestWaitMs(2500));
+    consumerManager.subscribe(
+        groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
+
+    readFromDefault(cid);
+    Thread.sleep(1000); // twice the proxy-wide timeout
+    assertFalse(
+        sawCallback, "Read returned at the proxy-wide timeout instead of the consumer's timeout");
+    Thread.sleep(2000); // instance-level timeout (2500ms) plus slack
+    assertTrue(sawCallback, "Callback failed to fire");
+    assertNull(actualException, "No exception in callback");
+  }
+
+  /**
+   * A consumer created with an instance-level consumer.request.timeout.ms smaller than the
+   * proxy-wide setting should return at the instance-level timeout.
+   */
+  @Test
+  public void testConsumerRequestTimeoutmsIsLowerablePerConsumer() throws Exception {
+    Properties props = setUpProperties(new Properties());
+    props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "5000");
+    setUpConsumer(props);
+
+    expectCreate(consumer);
+    String cid =
+        consumerManager.createConsumer(groupName, consumerInstanceConfigWithRequestWaitMs(1000));
+    consumerManager.subscribe(
+        groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
+
+    readFromDefault(cid);
+    Thread.sleep(500);
+    assertFalse(sawCallback, "Callback failed early");
+    Thread.sleep(1200); // instance-level timeout (1000ms) plus slack
+    assertTrue(sawCallback, "Read did not return at the instance-level timeout");
+    assertNull(actualException, "No exception in callback");
+  }
+
+  private static ConsumerInstanceConfig consumerInstanceConfigWithRequestWaitMs(
+      Integer requestWaitMs) {
+    return ConsumerInstanceConfig.create(
+        /* id= */ null,
+        /* name= */ null,
+        EmbeddedFormat.BINARY,
+        /* autoOffsetReset= */ null,
+        /* autoCommitEnable= */ null,
+        /* responseMinBytes= */ null,
+        requestWaitMs);
+  }
+
   /** Response should return no sooner than KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG */
   @Test
   public void testConsumerWaitMs() throws Exception {
