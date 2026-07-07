@@ -256,12 +256,13 @@ public class KafkaConsumerManagerTest {
     consumerManager.subscribe(
         groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
 
-    readFromDefault(cid);
-    Thread.sleep(1000); // twice the proxy-wide timeout
+    CountDownLatch completed = readFromDefaultAndSignal(cid);
     assertFalse(
-        sawCallback, "Read returned at the proxy-wide timeout instead of the consumer's timeout");
-    Thread.sleep(2000); // instance-level timeout (2500ms) plus slack
-    assertTrue(sawCallback, "Callback failed to fire");
+        completed.await(1000, TimeUnit.MILLISECONDS), // twice the proxy-wide timeout
+        "Read returned at the proxy-wide timeout instead of the consumer's timeout");
+    assertTrue(
+        completed.await(2500, TimeUnit.MILLISECONDS), // instance-level timeout plus slack
+        "Callback failed to fire");
     assertNull(actualException, "No exception in callback");
   }
 
@@ -281,11 +282,11 @@ public class KafkaConsumerManagerTest {
     consumerManager.subscribe(
         groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
 
-    readFromDefault(cid);
-    Thread.sleep(500);
-    assertFalse(sawCallback, "Callback failed early");
-    Thread.sleep(1200); // instance-level timeout (1000ms) plus slack
-    assertTrue(sawCallback, "Read did not return at the instance-level timeout");
+    CountDownLatch completed = readFromDefaultAndSignal(cid);
+    assertFalse(completed.await(500, TimeUnit.MILLISECONDS), "Callback failed early");
+    assertTrue(
+        completed.await(1700, TimeUnit.MILLISECONDS), // instance-level timeout plus slack
+        "Read did not return at the instance-level timeout");
     assertNull(actualException, "No exception in callback");
   }
 
@@ -299,6 +300,30 @@ public class KafkaConsumerManagerTest {
         /* autoCommitEnable= */ null,
         /* responseMinBytes= */ null,
         requestWaitMs);
+  }
+
+  /**
+   * Like {@link #readFromDefault(String)}, but returns a latch that is counted down when the read
+   * completes, so tests can await completion without racing on the shared callback fields.
+   */
+  private CountDownLatch readFromDefaultAndSignal(String cid) {
+    CountDownLatch completed = new CountDownLatch(1);
+    consumerManager.readRecords(
+        groupName,
+        cid,
+        BinaryKafkaConsumerState.class,
+        Duration.ofMillis(-1),
+        Long.MAX_VALUE,
+        new ConsumerReadCallback<ByteString, ByteString>() {
+          @Override
+          public void onCompletion(
+              List<ConsumerRecord<ByteString, ByteString>> records, Exception e) {
+            actualException = e;
+            actualRecords = records;
+            completed.countDown();
+          }
+        });
+    return completed;
   }
 
   /** Response should return no sooner than KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG */
