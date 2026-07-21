@@ -798,7 +798,8 @@ public abstract class ClusterTestHarness {
           JavaConverters.mapAsScalaMapConverter(
                   convertReplicasAssignmentToScalaCompatibleType(replicasAssignments))
               .asScala(),
-          topicConfig);
+          topicConfig.stringPropertyNames().stream()
+              .collect(Collectors.toMap(name -> name, topicConfig::getProperty)));
     }
   }
 

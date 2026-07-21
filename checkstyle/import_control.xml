@@ -69,7 +69,7 @@
   <allow class="org.apache.kafka.common.requests.DescribeLogDirsResponse.LogDirInfo" />
   <allow class="org.apache.kafka.common.requests.DescribeLogDirsResponse.ReplicaInfo" />
   <!-- Non-public APIs that are better imported than reimplemented -->
-  <allow class="org.apache.kafka.common.utils.AppInfoParser" />
+  <allow class="org.apache.kafka.common.utils.internals.AppInfoParser" />
   <allow class="org.apache.kafka.common.internals.KafkaFutureImpl" />
   <allow class="org.apache.kafka.common.header.internals.RecordHeader" />
 
