@@ -1,36 +1,37 @@
 # Kafka REST Proxy
 
 <!-- hy-mt2-i18n:start -->
-**English** · [中文](./README_zh-CN.md) · [日本語](./README_ja.md) · [Español](./README_es.md)
+[English](./README.md) | [中文](./README_zh-CN.md) | **日本語** | [Español](./README_es.md)
 <!-- hy-mt2-i18n:end -->
 
-The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes it easy to produce and consume data, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients. Examples of use cases include reporting data to Kafka from any front-end app built in any language, ingesting data into a stream processing framework that doesn't yet support Kafka, and scripting administrative actions.
 
-## Installation
+Kafka REST Proxyは、KafkaクラスターへのRESTfulなインターフェースを提供します。これにより、ネイティブなKafkaプロトコルやクライアントを使用することなく、データの生成や消費、クラスターの状態の確認、および管理操作を簡単に行うことができます。利用事例としては、あらゆる言語で構築されたフロントエンドアプリからKafkaにデータを報告したり、まだKafkaをサポートしていないストリーム処理フレームワークにデータを取り込んだり、管理操作をスクリプト化したりすることが挙げられます。
 
-You can download prebuilt versions of the Kafka REST Proxy as part of the [Confluent Platform](https://www.confluent.io/product/confluent-platform/). 
+## インストール
 
-You can read our full [installation instructions](http://docs.confluent.io/current/installation.html#installation) and the complete [documentation](http://docs.confluent.io/current/kafka-rest/docs/).
+[Confluent Platform](https://www.confluent.io/product/confluent-platform/) の一部として、Kafka REST Proxy の事前構築済みバージョンをダウンロードできます。
+
+完全な[インストール手順](http://docs.confluent.io/current/installation.html#installation)や包括的な[ドキュメント](http://docs.confluent.io/current/kafka-rest/docs/)は、こちらでご覧いただけます。
 
 
-To install from source, follow the instructions in the Development section below.
+ソースからインストールするには、以下の「開発」セクションに記載されている手順に従ってください。
 
-## Deployment
+## 配置展開
 
-The Kafka REST Proxy includes a built-in Jetty server and can be deployed after being configured to connect to an existing Kafka cluster.
+Kafka REST Proxyには組み込みのJettyサーバーが含まれており、既存のKafkaクラスターに接続するよう設定した後でデプロイすることができます。
 
-Running ``mvn clean package`` runs all 3 of its assembly targets.
-- The ``development`` target assembles all necessary dependencies in a ``kafka-rest/target`` subfolder without packaging them in a distributable format. The wrapper scripts ``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` can then be used to start and stop the service.
-- The ``package`` target is meant to be used in shared dependency environments and omits some dependencies expected to be provided externally. It assembles the other dependencies in a ``kafka-rest/target`` subfolder as well as in distributable archives. The wrapper scripts ``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` can then be used to start and stop the service.
-- The ``standalone`` target packages all necessary dependencies as a distributable JAR that can be run as standard (``java -jar $base-dir/kafka-rest/target/kafka-rest-X.Y.Z-standalone.jar``).
+``mvn clean package`` を実行すると、3つのアセンブリターゲットがすべて実行されます。
+- ``development`` ターゲットでは、必要なすべての依存関係が ``kafka-rest/target`` というサブフォルダ内にまとめられますが、配布可能な形式でパッケージ化されることはありません。その後、ラッパースクリプトである ``bin/kafka-rest-start`` および ``bin/kafka-rest-stop`` を使用してサービスの起動・停止を行えます。
+- ``package`` ターゲットは共有依存関係環境で使用されることを想定しており、外部から提供されると想定される一部の依存関係は除外されます。他の依存関係も ``kafka-rest/target`` というサブフォルダ内および配布可能なアーカイブ内にまとめられます。その後、ラッパースクリプトである ``bin/kafka-rest-start`` および ``bin/kafka-rest-stop`` を使用してサービスの起動・停止を行えます。
+- ``standalone`` ターゲットでは、必要なすべての依存関係が標準的に実行可能な配布可能な JAR 形式（``java -jar $base-dir/kafka-rest/target/kafka-rest-X.Y.Z-standalone.jar``）でパッケージ化されます。
 
-## Quickstart (v3 API)
+## クイックスタート (v3 API)
 
-The following assumes you have Kafka and an instance of the REST Proxy running using the default settings and some topics already created.
+以下の内容は、Kafkaおよびデフォルト設定で動作しているREST Proxyのインスタンスが既に存在し、いくつかのトピックも作成済みであることを前提としています。
 
-The v3 API is the latest version of the API. The cluster ID is a path parameter to enable a REST Proxy to work with multiple Kafka clusters. API responses often contain links to related resources, such as the list of a topic's partitions. The content type is always `application/json`.
+v3 APIはこのAPIの最新バージョンです。クラスターIDは、REST Proxyが複数のKafkaクラスターを扱えるようにするためのパスパラメーターです。APIの応答には、トピックのパーティション一覧など、関連するリソースへのリンクが含まれることが多いです。コンテンツタイプは常に`application/json`です。
 
-### Get the local cluster information
+### ローカルクラスター情報の取得
 ```bash
 $ curl http://localhost:8082/v3/clusters
 
@@ -54,9 +55,9 @@ Response:
   }
 ```
 
-The cluster ID in the output is `xFhUvurESIeeCI87SXWR-Q`.
+出力されるクラスターIDは`xFhUvurESIeeCI87SXWR-Q`です。
 
-### Get a list of topics
+### トピックの一覧を取得する
 ```bash
 $ curl http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics
 
@@ -80,12 +81,12 @@ Response:
   }
 ```
 
-### Create a topic
+### トピックの作成
 ```bash
 $ curl -X POST -H "Content-Type:application/json" -d '{"topic_name":"jsontest"}' \
        http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics
 
-Response:
+応答:
   {"kind":"KafkaTopic",
    "metadata":{"self":"http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics/jsontest",
    "resource_name":"crn:///kafka=xFhUvurESIeeCI87SXWR-Q/topic=jsontest"},
@@ -100,7 +101,7 @@ Response:
   }
 ```
 
-### Produce records with JSON data
+### JSONデータを使用してレコードをプロデュースする
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
        -d '{"value":{"type":"JSON","data":{"name":"testUser"}}}' \
@@ -117,7 +118,7 @@ Response:
   }
 ```
 
-In the response, the `error_code` of 200 is an HTTP status code (OK) which indicates the operation was successful. Because you can use this API to stream multiple records into a topic as part of the same request, each record produced has its own error code. To send multiple records, simply concatentate the records like this: 
+応答内の`error_code`が200である場合、これは操作が成功したことを示すHTTPステータスコード（OK）です。このAPIを使用して同じリクエスト内で複数のレコードをトピックにストリーミングできるため、生成される各レコードにはそれぞれ独自のエラーコードが設定されます。複数のレコードを送信するには、このようにレコードを連結するだけです。
 
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
@@ -143,7 +144,7 @@ Response:
   }
 ```
 
-### Produce records with string data
+### 文字列データを持つレコードの生成
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
        -d '{"value":{"type":"STRING","data":"REST"}}' \
@@ -160,13 +161,13 @@ Response:
   }
 ```
 
-The data is treated as a string in UTF-8 encoding and follows JSON rules for escaping special characters.
+データはUTF-8エンコーディングされた文字列として扱われ、特殊文字のエスケープにはJSONの規則が適用されます。
 
-### Produce records in a batch
+### バッチでレコードを生成する
 
-As an alternative to streaming mode, you can produce multiple records in a batch. This is not streaming, but it is easier to use with HTTP libraries that expect a straightforward request-response behavior.
+ストリーミングモードの代替として、複数のレコードをバッチで生成することもできます。これはストリーミングではありませんが、シンプルなリクエスト・レスポンス動作を期待するHTTPライブラリを使用する際により使いやすくなります。
 
-Each entry in the batch has a unique identifier (a string of up to 80 characters) which can be used to correlate the responses. The identifiers of the entries in a batch must be unique.
+バッチ内の各エントリーには一意な識別子（80文字までの文字列）が付けられており、これを使ってレスポンスを照合することができます。バッチ内のすべてのエントリーの識別子は一意でなければなりません。
 
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
@@ -196,7 +197,7 @@ Response:
   }
 ```
 
-Successes and failures are returned in the response in separate arrays like this:
+応答において、成功例と失敗例はこのように別々の配列として返されます：
 
 ```json
 {
@@ -218,24 +219,24 @@ Successes and failures are returned in the response in separate arrays like this
     {
       "id": "2",
       "error_code": 400,
-      "message": "Bad Request: data=\"Message$\" is not a valid base64 string."
+      "message": "Bad Request: data=\"Message$\" は有効な base64 文字列ではありません。"
     }
   ]
 }
 ```
 
-## Quickstart (v2 API)
-The earlier v2 API is a bit more concise.
+## クイックスタート (v2 API)
+以前のv2 APIの方がより簡潔です。
 
-### Get a list of topics
+### トピックの一覧を取得する
 ```bash
 $ curl http://localhost:8082/topics
-  
-Response:
+
+応答:
   ["__consumer_offsets","jsontest"]
 ```
 
-### Get info about one topic
+### 1つのトピックに関する情報を取得する
 ```bash
 $ curl http://localhost:8082/topics/jsontest
 
@@ -256,7 +257,7 @@ Response:
   }
 ```
 
-### Produce records with JSON data
+### JSONデータを使ってレコードをプロデュースする
 ```bash
 $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v2+json" \
        -d '{"records":[{"value":{"name": "testUser"}}]}' \
@@ -275,8 +276,8 @@ Response:
   }
 ```
 
-### Consume JSON data
-First, create a consumer for JSON data, starting at the beginning of the topic. The consumer group is called `my_json_consumer` and the instance is `my_consumer_instance`.
+### JSONデータの消費
+まず、トピックの先頭からJSONデータを消費するためのコンシューマーを作成します。このコンシューマーグループの名前は`my_json_consumer`で、インスタンス名は`my_consumer_instance`です。
 
 ```bash
 $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" -H "Accept: application/vnd.kafka.v2+json" \
@@ -289,7 +290,7 @@ Response:
   }
 ```
 
-Subscribe the consumer to a topic.
+コンシューマをトピックにサブスクライブします。
 
 ```bash
 $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" \
@@ -297,10 +298,10 @@ $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" \
       http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/subscription
 
 Response:
-  # No content in response
+  # 応答に内容はありません
 ```
 
-Then consume some data from a topic using the base URL in the first response.
+次に、最初の応答に含まれるベースURLを使用して、トピックからデータを取得します。
 
 ```bash
 $ curl -X GET -H "Accept: application/vnd.kafka.json.v2+json" \
@@ -315,9 +316,9 @@ Response:
     "topic":"jsontest"
    }
   ]
-```   
+```
 
-Finally, close the consumer with a DELETE to make it leave the group and clean up its resources.  
+最後に、DELETEリクエストを送信してコンシューマーを終了させ、グループから外れてリソースを解放します。  
 ```bash    
 $ curl -X DELETE -H "Accept: application/vnd.kafka.v2+json" \
        http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance
@@ -326,17 +327,17 @@ Response:
   # No content in response
 ```
 
-## Development
+## 開発版
 
-To build a development version, you may need development versions of [common](https://github.com/confluentinc/common), [rest-utils](https://github.com/confluentinc/rest-utils), and [schema-registry](https://github.com/confluentinc/schema-registry).  After installing these, you can build the Kafka REST Proxy with Maven. All the standard lifecycle phases work.
+開発版をビルドするには、[common](https://github.com/confluentinc/common)、[rest-utils](https://github.com/confluentinc/rest-utils)、[schema-registry](https://github.com/confluentinc/schema-registry) の開発版が必要になる場合があります。これらをインストールした後、Maven を使って Kafka REST Proxy をビルドできます。すべての標準的なライフサイクルフェーズが正常に動作します。
 
-You can avoid building development versions of dependencies by building on the latest (or earlier) release tag, or `<release>-post` branch, which will reference dependencies available pre-built from the [public repository](http://packages.confluent.io/maven/).  For example, branch `7.3.0-post` can be used as a base for patches for this version.
+[public repository](http://packages.confluent.io/maven/) から事前にビルド済みの依存関係を参照する、最新（またはそれ以前の）リリースタグや `<release>-post` ブランチを基にビルドすることで、依存関係の開発版を自動的にビルドする必要を避けることができます。例えば、ブランチ `7.3.0-post` をこのバージョン向けパッチのベースとして使用できます。
 
-## Contribute
+## 貢献するには
 
-- Source Code: https://github.com/confluentinc/kafka-rest
-- Issue Tracker: https://github.com/confluentinc/kafka-rest/issues
+- ソースコード: https://github.com/confluentinc/kafka-rest
+- 問題追跡ツール: https://github.com/confluentinc/kafka-rest/issues
 
-## License
+## ライセンス
 
-This project is licensed under the [Confluent Community License](LICENSE).
+このプロジェクトは、[Confluent Community License](LICENSE) のもとでライセンスされています。

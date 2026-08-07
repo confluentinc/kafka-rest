@@ -1,40 +1,41 @@
 # Kafka REST Proxy
 
 <!-- hy-mt2-i18n:start -->
-**English** · [中文](./README_zh-CN.md) · [日本語](./README_ja.md) · [Español](./README_es.md)
+[English](./README.md) | **中文** | [日本語](./README_ja.md) | [Español](./README_es.md)
 <!-- hy-mt2-i18n:end -->
 
-The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes it easy to produce and consume data, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients. Examples of use cases include reporting data to Kafka from any front-end app built in any language, ingesting data into a stream processing framework that doesn't yet support Kafka, and scripting administrative actions.
 
-## Installation
+Kafka REST Proxy 为 Kafka 集群提供了 RESTful 接口。借助该接口，无需使用原生 Kafka 协议或客户端，即可轻松地生成和消费数据、查看集群状态以及执行管理操作。其应用场景包括从任何语言编写的任何前端应用向 Kafka 导出数据、将数据导入尚未支持 Kafka 的流处理框架，以及通过脚本实现管理操作。
 
-You can download prebuilt versions of the Kafka REST Proxy as part of the [Confluent Platform](https://www.confluent.io/product/confluent-platform/). 
+## 安装
 
-You can read our full [installation instructions](http://docs.confluent.io/current/installation.html#installation) and the complete [documentation](http://docs.confluent.io/current/kafka-rest/docs/).
+您可以从 [Confluent Platform](https://www.confluent.io/product/confluent-platform/) 中下载已预构建好的 Kafka REST Proxy 版本。
+
+您可以阅读完整的[安装指南](http://docs.confluent.io/current/installation.html#installation)以及全部的[文档](http://docs.confluent.io/current/kafka-rest/docs/)。
 
 
-To install from source, follow the instructions in the Development section below.
+如需从源码安装，请按照下方“开发”部分中的说明操作。
 
-## Deployment
+## 部署
 
-The Kafka REST Proxy includes a built-in Jetty server and can be deployed after being configured to connect to an existing Kafka cluster.
+Kafka REST Proxy 内置了 Jetty 服务器，经过配置后可连接到现有的 Kafka 集群，从而完成部署。
 
-Running ``mvn clean package`` runs all 3 of its assembly targets.
-- The ``development`` target assembles all necessary dependencies in a ``kafka-rest/target`` subfolder without packaging them in a distributable format. The wrapper scripts ``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` can then be used to start and stop the service.
-- The ``package`` target is meant to be used in shared dependency environments and omits some dependencies expected to be provided externally. It assembles the other dependencies in a ``kafka-rest/target`` subfolder as well as in distributable archives. The wrapper scripts ``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` can then be used to start and stop the service.
-- The ``standalone`` target packages all necessary dependencies as a distributable JAR that can be run as standard (``java -jar $base-dir/kafka-rest/target/kafka-rest-X.Y.Z-standalone.jar``).
+运行 ``mvn clean package`` 命令会执行其全部的 3 个构建目标。
+- ``development`` 目标会将所有必要的依赖项组装到 ``kafka-rest/target`` 子文件夹中，但不会以可分发格式进行打包。随后即可使用封装脚本 ``bin/kafka-rest-start`` 和 ``bin/kafka-rest-stop`` 来启动和停止该服务。
+- ``package`` 目标适用于共享依赖环境，会省略一些预期由外部提供的依赖项。它同样会将其他依赖项组装到 ``kafka-rest/target`` 子文件夹中，同时生成可分发的归档文件。之后也可通过封装脚本 ``bin/kafka-rest-start`` 和 ``bin/kafka-rest-stop`` 来启动和停止服务。
+- ``standalone`` 目标会将所有必要依赖项打包为可分发的 JAR 文件，可直接按常规方式运行（``java -jar $base-dir/kafka-rest/target/kafka-rest-X.Y.Z-standalone.jar``）。
 
-## Quickstart (v3 API)
+## 快速入门（v3 API）
 
-The following assumes you have Kafka and an instance of the REST Proxy running using the default settings and some topics already created.
+以下内容的前提是：您已安装了 Kafka，REST Proxy 已按默认设置运行，且已创建了若干主题。
 
-The v3 API is the latest version of the API. The cluster ID is a path parameter to enable a REST Proxy to work with multiple Kafka clusters. API responses often contain links to related resources, such as the list of a topic's partitions. The content type is always `application/json`.
+v3 API 是该 API 的最新版本。集群 ID 是一个路径参数，用于让 REST Proxy 能够同时处理多个 Kafka 集群。API 响应通常会包含指向相关资源的链接，例如某个主题的分区列表。其内容类型始终为 `application/json`。
 
-### Get the local cluster information
+### 获取本地集群信息
 ```bash
 $ curl http://localhost:8082/v3/clusters
 
-Response:
+响应：
   {"kind":"KafkaClusterList",
    "metadata":{"self":"http://localhost:8082/v3/clusters","next":null},
    "data":[
@@ -54,13 +55,13 @@ Response:
   }
 ```
 
-The cluster ID in the output is `xFhUvurESIeeCI87SXWR-Q`.
+输出中的集群编号为 `xFhUvurESIeeCI87SXWR-Q`。
 
-### Get a list of topics
+### 获取主题列表
 ```bash
 $ curl http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics
 
-Response:
+响应：
   {"kind":"KafkaTopicList",
    "metadata":{"self":"http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics","next":null},
    "data":[
@@ -80,12 +81,12 @@ Response:
   }
 ```
 
-### Create a topic
+### 创建主题
 ```bash
 $ curl -X POST -H "Content-Type:application/json" -d '{"topic_name":"jsontest"}' \
        http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics
 
-Response:
+响应：
   {"kind":"KafkaTopic",
    "metadata":{"self":"http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics/jsontest",
    "resource_name":"crn:///kafka=xFhUvurESIeeCI87SXWR-Q/topic=jsontest"},
@@ -100,7 +101,7 @@ Response:
   }
 ```
 
-### Produce records with JSON data
+### 使用 JSON 数据发送记录
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
        -d '{"value":{"type":"JSON","data":{"name":"testUser"}}}' \
@@ -117,7 +118,7 @@ Response:
   }
 ```
 
-In the response, the `error_code` of 200 is an HTTP status code (OK) which indicates the operation was successful. Because you can use this API to stream multiple records into a topic as part of the same request, each record produced has its own error code. To send multiple records, simply concatentate the records like this: 
+在响应中，`error_code` 的值为 200，这是一个表示操作成功的 HTTP 状态码（OK）。由于你可以使用该 API 在同一请求中向主题批量发送多条记录，因此每条生成的记录都会有各自的错误代码。若要发送多条记录，只需像这样将它们拼接起来即可：
 
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
@@ -143,13 +144,13 @@ Response:
   }
 ```
 
-### Produce records with string data
+### 使用字符串数据生成记录
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
        -d '{"value":{"type":"STRING","data":"REST"}}' \
        http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics/jsontest/records
 
-Response:
+响应：
   {"error_code":200,
    "cluster_id":"xFhUvurESIeeCI87SXWR-Q",
    "topic_name":"jsontest",
@@ -160,20 +161,20 @@ Response:
   }
 ```
 
-The data is treated as a string in UTF-8 encoding and follows JSON rules for escaping special characters.
+该数据会被视为UTF-8编码的字符串，并遵循JSON的规则来转义特殊字符。
 
-### Produce records in a batch
+### 批量生成记录
 
-As an alternative to streaming mode, you can produce multiple records in a batch. This is not streaming, but it is easier to use with HTTP libraries that expect a straightforward request-response behavior.
+作为流式模式的替代方案，您也可以批量生成多条记录。虽然这种方式并非流式处理，但对于那些期望简单请求-响应行为的 HTTP 库来说，使用起来更为便捷。
 
-Each entry in the batch has a unique identifier (a string of up to 80 characters) which can be used to correlate the responses. The identifiers of the entries in a batch must be unique.
+批量中的每个条目都有一个唯一的标识符（长度最多为80个字符的字符串），可用于关联相应的响应。同一批次中各条目的标识符必须互不相同。
 
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
        -d '{"entries":[{"id":"first","value":{"type":"JSON","data":"ONE"}}, {"id":"second","value":{"type":"JSON","data":"TWO"}}]}' \
        http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics/jsontest/records:batch
 
-Response:
+响应：
   {"successes":[
     {"id":"first",
      "cluster_id":"xFhUvurESIeeCI87SXWR-Q",
@@ -196,7 +197,7 @@ Response:
   }
 ```
 
-Successes and failures are returned in the response in separate arrays like this:
+响应中的成功与失败结果会以这样的形式分别存储在独立的数组中：
 
 ```json
 {
@@ -218,28 +219,28 @@ Successes and failures are returned in the response in separate arrays like this
     {
       "id": "2",
       "error_code": 400,
-      "message": "Bad Request: data=\"Message$\" is not a valid base64 string."
+      "message": "请求错误：数据\"Message$\"并非有效的 Base64 字符串。"
     }
   ]
 }
 ```
 
-## Quickstart (v2 API)
-The earlier v2 API is a bit more concise.
+## 快速入门（v2 API）
+早期的v2 API更为简洁。
 
-### Get a list of topics
+### 获取主题列表
 ```bash
 $ curl http://localhost:8082/topics
-  
-Response:
+
+响应：
   ["__consumer_offsets","jsontest"]
 ```
 
-### Get info about one topic
+### 获取某个主题的信息
 ```bash
 $ curl http://localhost:8082/topics/jsontest
 
-Response:
+响应：
   {"name":"jsontest",
    "configs":{},
    "partitions":[
@@ -256,13 +257,13 @@ Response:
   }
 ```
 
-### Produce records with JSON data
+### 使用 JSON 数据发送记录
 ```bash
 $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v2+json" \
        -d '{"records":[{"value":{"name": "testUser"}}]}' \
        http://localhost:8082/topics/jsontest
 
-Response:
+响应：
   {"offsets":[
     {"partition":0,
      "offset":0,
@@ -275,32 +276,32 @@ Response:
   }
 ```
 
-### Consume JSON data
-First, create a consumer for JSON data, starting at the beginning of the topic. The consumer group is called `my_json_consumer` and the instance is `my_consumer_instance`.
+### 消费 JSON 数据
+首先，创建一个用于消费 JSON 数据的消费者，从主题的开头开始读取数据。该消费者组名为 `my_json_consumer`，实例名为 `my_consumer_instance`。
 
 ```bash
 $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" -H "Accept: application/vnd.kafka.v2+json" \
        -d '{"name": "my_consumer_instance", "format": "json", "auto.offset.reset": "earliest"}' \
        http://localhost:8082/consumers/my_json_consumer
 
-Response:
+响应：
   {"instance_id":"my_consumer_instance",
    "base_uri":"http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance"
   }
 ```
 
-Subscribe the consumer to a topic.
+将该消费者订阅到某个主题上。
 
 ```bash
 $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" \
        -d '{"topics":["jsontest"]}' \
       http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/subscription
 
-Response:
-  # No content in response
+响应：
+  # 响应中无内容
 ```
 
-Then consume some data from a topic using the base URL in the first response.
+接着使用首次响应中的基础URL从该主题中获取一些数据。
 
 ```bash
 $ curl -X GET -H "Accept: application/vnd.kafka.json.v2+json" \
@@ -315,9 +316,9 @@ Response:
     "topic":"jsontest"
    }
   ]
-```   
+```
 
-Finally, close the consumer with a DELETE to make it leave the group and clean up its resources.  
+最后，通过发送 DELETE 请求关闭该消费者，使其退出集群并释放相关资源。  
 ```bash    
 $ curl -X DELETE -H "Accept: application/vnd.kafka.v2+json" \
        http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance
@@ -326,17 +327,17 @@ Response:
   # No content in response
 ```
 
-## Development
+## 开发版本构建
 
-To build a development version, you may need development versions of [common](https://github.com/confluentinc/common), [rest-utils](https://github.com/confluentinc/rest-utils), and [schema-registry](https://github.com/confluentinc/schema-registry).  After installing these, you can build the Kafka REST Proxy with Maven. All the standard lifecycle phases work.
+若要构建开发版本，您可能需要 [common](https://github.com/confluentinc/common)、[rest-utils](https://github.com/confluentinc/rest-utils) 以及 [schema-registry](https://github.com/confluentinc/schema-registry) 的开发版本。安装这些依赖后，即可使用 Maven 构建 Kafka REST Proxy，所有的标准生命周期阶段均能正常运行。
 
-You can avoid building development versions of dependencies by building on the latest (or earlier) release tag, or `<release>-post` branch, which will reference dependencies available pre-built from the [public repository](http://packages.confluent.io/maven/).  For example, branch `7.3.0-post` can be used as a base for patches for this version.
+您可以通过基于最新的（或更早的）发布标签，或是 `<release>-post` 分支进行构建，从而避免自行编译依赖项的开发版本——这些分支会引用从[公共仓库](http://packages.confluent.io/maven/)预先构建好的依赖项。例如，`7.3.0-post` 分支即可作为该版本补丁开发的基准。
 
-## Contribute
+## 贡献代码
 
-- Source Code: https://github.com/confluentinc/kafka-rest
-- Issue Tracker: https://github.com/confluentinc/kafka-rest/issues
+- 源代码：https://github.com/confluentinc/kafka-rest
+- 问题追踪器：https://github.com/confluentinc/kafka-rest/issues
 
-## License
+## 许可证
 
-This project is licensed under the [Confluent Community License](LICENSE).
+本项目采用 [Confluent Community License](LICENSE) 进行许可。
