@@ -226,7 +226,8 @@ public final class ProduceAction {
             (result, error) -> {
               if (error != null) {
                 long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
-                recordErrorMetrics(metrics, latency);
+                recordErrorMetrics(
+                    metrics, latency, ProduceMetricErrorCodes.httpStatusCodeFromError(error));
                 throw new StacklessCompletionException(error);
               }
               return result;
@@ -329,8 +330,8 @@ public final class ProduceAction {
     metrics.recordRequestLatency(latencyMs);
   }
 
-  private void recordErrorMetrics(ProducerMetrics metrics, long latencyMs) {
-    metrics.recordError();
+  private void recordErrorMetrics(ProducerMetrics metrics, long latencyMs, int httpStatusCode) {
+    metrics.recordError(httpStatusCode);
     metrics.recordRequestLatency(latencyMs);
   }
 

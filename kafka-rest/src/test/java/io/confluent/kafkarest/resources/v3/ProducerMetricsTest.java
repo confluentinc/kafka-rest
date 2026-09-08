@@ -27,8 +27,6 @@ import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.rest.RestConfig;
 import java.lang.management.ManagementFactory;
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -52,6 +50,7 @@ import org.apache.kafka.common.metrics.stats.Max;
 import org.apache.kafka.common.metrics.stats.Rate;
 import org.apache.kafka.common.metrics.stats.WindowedCount;
 import org.apache.kafka.common.utils.Time;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -92,6 +91,23 @@ public class ProducerMetricsTest {
     producerMetrics = new ProducerMetrics(config, tags);
   }
 
+  // ProducerMetrics now registers one MBean per http_status_code bucket (and one base bean), so
+  // each test creates multiple beans on the platform MBeanServer. Without explicit cleanup the
+  // beans leak across tests and risk InstanceAlreadyExistsException on re-registration or flaky
+  // queryNames() counts in tests that check bean cardinality.
+  @AfterEach
+  public void tearDown() throws Exception {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    for (ObjectName beanName :
+        mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null)) {
+      try {
+        mBeanServer.unregisterMBean(beanName);
+      } catch (InstanceNotFoundException ignored) {
+        // already gone — fine
+      }
+    }
+  }
+
   @Test
   public void testAvgMetrics() throws Exception {
     String[] avgMetrics = new String[] {ProducerMetrics.REQUEST_LATENCY_AVG_METRIC_NAME};
@@ -99,43 +115,53 @@ public class ProducerMetricsTest {
     LongStream.range(0L, 10L).forEach(producerMetrics::recordRequestLatency);
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1, beanNames.size());
+    // Latency metrics live on the base MBean (no http_status_code tag).
+    ObjectName baseBean = new ObjectName("kafka.rest:type=produce-api-metrics,tag=value");
 
     for (String metric : avgMetrics) {
-      assertEquals(4.5, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
+      assertEquals(4.5, mBeanServer.getAttribute(baseBean, metric));
     }
   }
 
   @Test
   public void testRateMetrics() throws Exception {
-    String[] rateMetrics =
-        new String[] {
-          ProducerMetrics.RECORD_ERROR_RATE_METRIC_NAME,
-          ProducerMetrics.REQUEST_RATE_METRIC_NAME,
-          ProducerMetrics.RESPONSE_RATE_METRIC_NAME
-        };
-
     IntStream.range(0, 30)
         .forEach(
             n -> {
-              producerMetrics.recordError();
+              producerMetrics.recordError(500);
               producerMetrics.recordRateLimited();
               producerMetrics.recordRequest();
               producerMetrics.recordResponse();
             });
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1, beanNames.size());
 
-    // rate() uses the 30 second window we defined when creating the Metrics here so one per second
-    // is correct
-    for (String metric : rateMetrics) {
-      assertThat(
-          (Double) mBeanServer.getAttribute(beanNames.iterator().next(), metric),
-          closeTo(1.0, 0.01));
-    }
+    // request/response rate live on the base MBean (no http_status_code tag)
+    ObjectName baseBean = new ObjectName("kafka.rest:type=produce-api-metrics,tag=value");
+    assertThat(
+        (Double) mBeanServer.getAttribute(baseBean, ProducerMetrics.REQUEST_RATE_METRIC_NAME),
+        closeTo(1.0, 0.01));
+    assertThat(
+        (Double) mBeanServer.getAttribute(baseBean, ProducerMetrics.RESPONSE_RATE_METRIC_NAME),
+        closeTo(1.0, 0.01));
+
+    // error rate lives on the per-status-code MBean — we recorded 500s so only the 5xx bean gets
+    // increments; the 4xx and unknown beans should report ~0.
+    ObjectName error5xxBean =
+        new ObjectName("kafka.rest:type=produce-api-metrics,http_status_code=5xx,tag=value");
+    assertThat(
+        (Double)
+            mBeanServer.getAttribute(error5xxBean, ProducerMetrics.RECORD_ERROR_RATE_METRIC_NAME),
+        closeTo(1.0, 0.01));
+
+    // rate-limited rate lives on the 429 MBean
+    ObjectName rateLimited429Bean =
+        new ObjectName("kafka.rest:type=produce-api-metrics,http_status_code=429,tag=value");
+    assertThat(
+        (Double)
+            mBeanServer.getAttribute(
+                rateLimited429Bean, ProducerMetrics.RECORD_RATE_LIMITED_RATE_METRIC_NAME),
+        closeTo(1.0, 0.01));
   }
 
   @Test
@@ -145,11 +171,10 @@ public class ProducerMetricsTest {
     LongStream.range(0L, 10L).forEach(producerMetrics::recordRequestLatency);
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1, beanNames.size());
+    ObjectName baseBean = new ObjectName("kafka.rest:type=produce-api-metrics,tag=value");
 
     for (String metric : maxMetrics) {
-      assertEquals(9.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
+      assertEquals(9.0, mBeanServer.getAttribute(baseBean, metric));
     }
   }
 
@@ -165,39 +190,105 @@ public class ProducerMetricsTest {
     LongStream.range(0L, 1000L).forEach(producerMetrics::recordRequestLatency);
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1, beanNames.size());
+    ObjectName baseBean = new ObjectName("kafka.rest:type=produce-api-metrics,tag=value");
 
     for (String metric : percentileMetrics) {
-      assertEquals(9.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
+      assertEquals(9.0, mBeanServer.getAttribute(baseBean, metric));
     }
   }
 
   @Test
   public void testWindowedCountMetrics() throws Exception {
-    String[] maxMetrics =
-        new String[] {
-          ProducerMetrics.REQUEST_COUNT_WINDOWED_METRIC_NAME,
-          ProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
-          ProducerMetrics.RESPONSE_COUNT_WINDOWED_METRIC_NAME
-        };
-
     IntStream.range(0, 10)
         .forEach(
             n -> {
               producerMetrics.recordRequest();
-              producerMetrics.recordError();
+              producerMetrics.recordError(500);
               producerMetrics.recordRateLimited();
               producerMetrics.recordResponse();
             });
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1, beanNames.size());
 
-    for (String metric : maxMetrics) {
-      assertEquals(10.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
-    }
+    ObjectName baseBean = new ObjectName("kafka.rest:type=produce-api-metrics,tag=value");
+    assertEquals(
+        10.0,
+        mBeanServer.getAttribute(baseBean, ProducerMetrics.REQUEST_COUNT_WINDOWED_METRIC_NAME));
+    assertEquals(
+        10.0,
+        mBeanServer.getAttribute(baseBean, ProducerMetrics.RESPONSE_COUNT_WINDOWED_METRIC_NAME));
+
+    ObjectName error5xxBean =
+        new ObjectName("kafka.rest:type=produce-api-metrics,http_status_code=5xx,tag=value");
+    assertEquals(
+        10.0,
+        mBeanServer.getAttribute(
+            error5xxBean, ProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME));
+
+    // 4xx and unknown buckets exist but were not incremented in this test
+    ObjectName error4xxBean =
+        new ObjectName("kafka.rest:type=produce-api-metrics,http_status_code=4xx,tag=value");
+    assertEquals(
+        0.0,
+        mBeanServer.getAttribute(
+            error4xxBean, ProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME));
+
+    ObjectName rateLimited429Bean =
+        new ObjectName("kafka.rest:type=produce-api-metrics,http_status_code=429,tag=value");
+    assertEquals(
+        10.0,
+        mBeanServer.getAttribute(
+            rateLimited429Bean, ProducerMetrics.RECORD_RATE_LIMITED_COUNT_WINDOWED_METRIC_NAME));
+  }
+
+  @Test
+  public void testRecordErrorBucketing() throws Exception {
+    // 4xx (other than 429) routes to the 4xx bucket; 5xx routes to 5xx; codes outside 400-599
+    // (e.g. 0 = no response code) route to the "unknown" bucket.
+    producerMetrics.recordError(400);
+    producerMetrics.recordError(404);
+    producerMetrics.recordError(429);
+    producerMetrics.recordError(500);
+    producerMetrics.recordError(503);
+    producerMetrics.recordError(0);
+    producerMetrics.recordError(200);
+
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+
+    // 400, 404, 429 → 4xx bucket (3 increments)
+    assertEquals(
+        3.0,
+        mBeanServer.getAttribute(
+            new ObjectName("kafka.rest:type=produce-api-metrics,http_status_code=4xx,tag=value"),
+            ProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME));
+    // 500, 503 → 5xx bucket (2 increments)
+    assertEquals(
+        2.0,
+        mBeanServer.getAttribute(
+            new ObjectName("kafka.rest:type=produce-api-metrics,http_status_code=5xx,tag=value"),
+            ProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME));
+    // 0, 200 → unknown bucket (2 increments)
+    assertEquals(
+        2.0,
+        mBeanServer.getAttribute(
+            new ObjectName(
+                "kafka.rest:type=produce-api-metrics,http_status_code=unknown,tag=value"),
+            ProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME));
+  }
+
+  @Test
+  public void testHttpStatusCodeBucketing() {
+    assertEquals(ProducerMetrics.STATUS_CODE_BUCKET_4XX, ProducerMetrics.httpStatusCodeBucket(400));
+    assertEquals(ProducerMetrics.STATUS_CODE_BUCKET_4XX, ProducerMetrics.httpStatusCodeBucket(429));
+    assertEquals(ProducerMetrics.STATUS_CODE_BUCKET_4XX, ProducerMetrics.httpStatusCodeBucket(499));
+    assertEquals(ProducerMetrics.STATUS_CODE_BUCKET_5XX, ProducerMetrics.httpStatusCodeBucket(500));
+    assertEquals(ProducerMetrics.STATUS_CODE_BUCKET_5XX, ProducerMetrics.httpStatusCodeBucket(599));
+    assertEquals(
+        ProducerMetrics.STATUS_CODE_BUCKET_UNKNOWN, ProducerMetrics.httpStatusCodeBucket(200));
+    assertEquals(
+        ProducerMetrics.STATUS_CODE_BUCKET_UNKNOWN, ProducerMetrics.httpStatusCodeBucket(600));
+    assertEquals(
+        ProducerMetrics.STATUS_CODE_BUCKET_UNKNOWN, ProducerMetrics.httpStatusCodeBucket(0));
   }
 
   @Test
@@ -205,23 +296,25 @@ public class ProducerMetricsTest {
     LongStream.iterate(1L, identity()).limit(30).forEach(producerMetrics::recordRequestSize);
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1, beanNames.size());
+    ObjectName baseBean = new ObjectName("kafka.rest:type=produce-api-metrics,tag=value");
 
-    assertEquals(30.0, mBeanServer.getAttribute(beanNames.iterator().next(), "request-byte-total"));
+    assertEquals(30.0, mBeanServer.getAttribute(baseBean, "request-byte-total"));
     // Time window is 30000ms, so this is one request per second across the window.
     assertThat(
-        (Double) mBeanServer.getAttribute(beanNames.iterator().next(), "request-byte-rate"),
-        closeTo(1.0, 0.01));
+        (Double) mBeanServer.getAttribute(baseBean, "request-byte-rate"), closeTo(1.0, 0.01));
   }
 
   @Test
   public void testTenantTag() throws Exception {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    // After KNET-19593 the producer metrics produce one base MBean (request/response/latency)
+    // plus per-status-code MBeans for error (4xx/5xx/unknown) and rate-limited (429). Every
+    // bean must carry the tenant tag.
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1, beanNames.size());
-    String tenantId = beanNames.stream().iterator().next().getKeyPropertyList().get("tag");
-    assertEquals("value", tenantId);
+    assertEquals(5, beanNames.size());
+    for (ObjectName beanName : beanNames) {
+      assertEquals("value", beanName.getKeyPropertyList().get("tag"));
+    }
   }
 
   @Test
@@ -235,18 +328,6 @@ public class ProducerMetricsTest {
     producerMetrics2.recordRequest();
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(2, beanNames.size());
-    Iterator<ObjectName> i = beanNames.stream().iterator();
-    String tenantId = i.next().getKeyPropertyList().get("tag");
-
-    Hashtable<String, String> object2 = i.next().getKeyPropertyList();
-    String tenantId2 = object2.get("tag");
-    String otherValue2 = object2.get("otherTag");
-
-    assertEquals("value", tenantId);
-    assertEquals("value2", tenantId2);
-    assertEquals("otherValue2", otherValue2);
 
     assertEquals(
         1.0,
@@ -273,10 +354,6 @@ public class ProducerMetricsTest {
         mBeanServer.getAttribute(
             new ObjectName("kafka.rest:type=produce-api-metrics,otherTag=otherValue2,tag=value2"),
             "request-count-windowed"));
-
-    mBeanServer.unregisterMBean(new ObjectName("kafka.rest:type=produce-api-metrics,tag=value"));
-    mBeanServer.unregisterMBean(
-        new ObjectName("kafka.rest:type=produce-api-metrics," + "otherTag=otherValue2,tag=value2"));
   }
 
   @Test
@@ -325,28 +402,47 @@ public class ProducerMetricsTest {
 
   @Test
   public void test_recordErrorSensor_hasCorrectMetricObjectTypeSetup() {
-    {
-      MetricName name = producerMetrics.getMetricName("record-error-rate", "", tags);
-      KafkaMetric metric = config.getMetrics().metric(name);
-      assertTrue(metric.measurable() instanceof Rate);
-    }
-    {
-      MetricName name = producerMetrics.getMetricName("error-count-windowed", "", tags);
-      KafkaMetric metric = config.getMetrics().metric(name);
-      assertTrue(metric.measurable() instanceof WindowedCount);
+    // Error metrics are registered once per http_status_code bucket (4xx, 5xx, unknown).
+    for (String bucket :
+        new String[] {
+          ProducerMetrics.STATUS_CODE_BUCKET_4XX,
+          ProducerMetrics.STATUS_CODE_BUCKET_5XX,
+          ProducerMetrics.STATUS_CODE_BUCKET_UNKNOWN
+        }) {
+      Map<String, String> tagsWithStatus =
+          ImmutableMap.<String, String>builder()
+              .putAll(tags)
+              .put(ProducerMetrics.HTTP_STATUS_CODE_TAG, bucket)
+              .build();
+      {
+        MetricName name = producerMetrics.getMetricName("record-error-rate", "", tagsWithStatus);
+        KafkaMetric metric = config.getMetrics().metric(name);
+        assertTrue(metric.measurable() instanceof Rate);
+      }
+      {
+        MetricName name = producerMetrics.getMetricName("error-count-windowed", "", tagsWithStatus);
+        KafkaMetric metric = config.getMetrics().metric(name);
+        assertTrue(metric.measurable() instanceof WindowedCount);
+      }
     }
   }
 
   @Test
   public void test_recordRateLimitedSensor_hasCorrectMetricObjectTypeSetup() {
+    Map<String, String> tagsWithStatus =
+        ImmutableMap.<String, String>builder()
+            .putAll(tags)
+            .put(ProducerMetrics.HTTP_STATUS_CODE_TAG, ProducerMetrics.STATUS_CODE_BUCKET_429)
+            .build();
     {
-      MetricName name = producerMetrics.getMetricName("record-rate-limited-rate", "", tags);
+      MetricName name =
+          producerMetrics.getMetricName("record-rate-limited-rate", "", tagsWithStatus);
       KafkaMetric metric = config.getMetrics().metric(name);
       assertTrue(metric.measurable() instanceof Rate);
     }
     {
       MetricName name =
-          producerMetrics.getMetricName("record-rate-limited-count-windowed", "", tags);
+          producerMetrics.getMetricName("record-rate-limited-count-windowed", "", tagsWithStatus);
       KafkaMetric metric = config.getMetrics().metric(name);
       assertTrue(metric.measurable() instanceof WindowedCount);
     }
