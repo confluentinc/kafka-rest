@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.v2;
 
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
@@ -26,7 +27,17 @@ import org.apache.kafka.common.errors.SerializationException;
 
 public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], Object, Object> {
 
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper objectMapper = newObjectMapper();
+
+  private static ObjectMapper newObjectMapper() {
+    ObjectMapper mapper = new ObjectMapper();
+    // Same override as KafkaRestApplication.getJsonMapper(); see INC-13627.
+    mapper
+        .getFactory()
+        .setStreamReadConstraints(
+            StreamReadConstraints.builder().maxStringLength(Integer.MAX_VALUE).build());
+    return mapper;
+  }
 
   public JsonKafkaConsumerState(
       KafkaRestConfig config,
