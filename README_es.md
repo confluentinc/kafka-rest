@@ -1,40 +1,41 @@
 # Kafka REST Proxy
 
 <!-- hy-mt2-i18n:start -->
-**English** · [中文](./README_zh-CN.md) · [日本語](./README_ja.md) · [Español](./README_es.md)
+[English](./README.md) | [中文](./README_zh-CN.md) | [日本語](./README_ja.md) | **Español**
 <!-- hy-mt2-i18n:end -->
 
-The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes it easy to produce and consume data, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients. Examples of use cases include reporting data to Kafka from any front-end app built in any language, ingesting data into a stream processing framework that doesn't yet support Kafka, and scripting administrative actions.
 
-## Installation
+Kafka REST Proxy ofrece una interfaz RESTful para un clúster de Kafka. Permite producir y consumir datos, ver el estado del clúster y realizar acciones administrativas de manera sencilla, sin necesidad de utilizar el protocolo o clientes nativos de Kafka. Algunos ejemplos de casos de uso incluyen enviar datos a Kafka desde cualquier aplicación frontend desarrollada en cualquier lenguaje, ingresar datos en un marco de trabajo de procesamiento en tiempo real que aún no soporta Kafka, y crear scripts para realizar acciones administrativas.
 
-You can download prebuilt versions of the Kafka REST Proxy as part of the [Confluent Platform](https://www.confluent.io/product/confluent-platform/). 
+## Instalación
 
-You can read our full [installation instructions](http://docs.confluent.io/current/installation.html#installation) and the complete [documentation](http://docs.confluent.io/current/kafka-rest/docs/).
+Puede descargar versiones ya compiladas del Kafka REST Proxy como parte de la [Confluent Platform](https://www.confluent.io/product/confluent-platform/).
+
+Puede consultar nuestras completas [instrucciones de instalación](http://docs.confluent.io/current/installation.html#installation) y toda la [documentación](http://docs.confluent.io/current/kafka-rest/docs/).
 
 
-To install from source, follow the instructions in the Development section below.
+Para instalar desde el código fuente, siga las instrucciones de la sección de Desarrollo a continuación.
 
-## Deployment
+## Despliegue
 
-The Kafka REST Proxy includes a built-in Jetty server and can be deployed after being configured to connect to an existing Kafka cluster.
+Kafka REST Proxy incluye un servidor Jetty integrado y puede ser desplegado una vez configurado para conectarse a un clúster Kafka existente.
 
-Running ``mvn clean package`` runs all 3 of its assembly targets.
-- The ``development`` target assembles all necessary dependencies in a ``kafka-rest/target`` subfolder without packaging them in a distributable format. The wrapper scripts ``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` can then be used to start and stop the service.
-- The ``package`` target is meant to be used in shared dependency environments and omits some dependencies expected to be provided externally. It assembles the other dependencies in a ``kafka-rest/target`` subfolder as well as in distributable archives. The wrapper scripts ``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` can then be used to start and stop the service.
-- The ``standalone`` target packages all necessary dependencies as a distributable JAR that can be run as standard (``java -jar $base-dir/kafka-rest/target/kafka-rest-X.Y.Z-standalone.jar``).
+Al ejecutar ``mvn clean package`` se ejecutan los 3 objetivos de compilación.
+- El objetivo ``development`` compila todas las dependencias necesarias en una subcarpeta ``kafka-rest/target`` sin empaquetarlas en un formato distribuible. A continuación, se pueden utilizar los scripts de envoltura ``bin/kafka-rest-start`` y ``bin/kafka-rest-stop`` para iniciar y detener el servicio.
+- El objetivo ``package`` está diseñado para ser utilizado en entornos con dependencias compartidas y omite algunas dependencias que se supone deben proporcionarse desde el exterior. Compila las demás dependencias tanto en una subcarpeta ``kafka-rest/target`` como en archivos archivados distribuibles. Luego, se pueden utilizar los scripts de envoltura ``bin/kafka-rest-start`` y ``bin/kafka-rest-stop`` para iniciar y detener el servicio.
+- El objetivo ``standalone`` empaqueta todas las dependencias necesarias en un JAR distribuible que se puede ejecutar de forma estándar (``java -jar $base-dir/kafka-rest/target/kafka-rest-X.Y.Z-standalone.jar``).
 
-## Quickstart (v3 API)
+## Inicio rápido (API v3)
 
-The following assumes you have Kafka and an instance of the REST Proxy running using the default settings and some topics already created.
+Lo que sigue parte del supuesto de que ya cuenta con Kafka y una instancia del REST Proxy en ejecución con la configuración predeterminada, además de que ya se hayan creado algunos temas.
 
-The v3 API is the latest version of the API. The cluster ID is a path parameter to enable a REST Proxy to work with multiple Kafka clusters. API responses often contain links to related resources, such as the list of a topic's partitions. The content type is always `application/json`.
+La API v3 es la versión más reciente de la API. El ID del clúster es un parámetro de ruta que permite que el REST Proxy funcione con múltiples clústeres de Kafka. Las respuestas de la API suelen contener enlaces a recursos relacionados, como la lista de particiones de un tema. El tipo de contenido siempre es `application/json`.
 
-### Get the local cluster information
+### Obtener la información del clúster local
 ```bash
 $ curl http://localhost:8082/v3/clusters
 
-Response:
+Respuesta:
   {"kind":"KafkaClusterList",
    "metadata":{"self":"http://localhost:8082/v3/clusters","next":null},
    "data":[
@@ -54,13 +55,13 @@ Response:
   }
 ```
 
-The cluster ID in the output is `xFhUvurESIeeCI87SXWR-Q`.
+El ID del clúster en la salida es `xFhUvurESIeeCI87SXWR-Q`.
 
-### Get a list of topics
+### Obtener una lista de temas
 ```bash
 $ curl http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics
 
-Response:
+Respuesta:
   {"kind":"KafkaTopicList",
    "metadata":{"self":"http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics","next":null},
    "data":[
@@ -80,12 +81,12 @@ Response:
   }
 ```
 
-### Create a topic
+### Crear un tema
 ```bash
 $ curl -X POST -H "Content-Type:application/json" -d '{"topic_name":"jsontest"}' \
        http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics
 
-Response:
+Respuesta:
   {"kind":"KafkaTopic",
    "metadata":{"self":"http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics/jsontest",
    "resource_name":"crn:///kafka=xFhUvurESIeeCI87SXWR-Q/topic=jsontest"},
@@ -100,7 +101,7 @@ Response:
   }
 ```
 
-### Produce records with JSON data
+### Producir registros con datos JSON
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
        -d '{"value":{"type":"JSON","data":{"name":"testUser"}}}' \
@@ -117,7 +118,7 @@ Response:
   }
 ```
 
-In the response, the `error_code` of 200 is an HTTP status code (OK) which indicates the operation was successful. Because you can use this API to stream multiple records into a topic as part of the same request, each record produced has its own error code. To send multiple records, simply concatentate the records like this: 
+En la respuesta, el código de error 200 es un código de estado HTTP (OK) que indica que la operación tuvo éxito. Dado que se puede utilizar esta API para enviar múltiples registros a un tema como parte de la misma solicitud, cada registro generado cuenta con su propio código de error. Para enviar varios registros, basta con concatenarlos de la siguiente manera:
 
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
@@ -143,7 +144,7 @@ Response:
   }
 ```
 
-### Produce records with string data
+### Generar registros con datos de tipo cadena
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
        -d '{"value":{"type":"STRING","data":"REST"}}' \
@@ -160,13 +161,13 @@ Response:
   }
 ```
 
-The data is treated as a string in UTF-8 encoding and follows JSON rules for escaping special characters.
+Los datos se tratan como una cadena en codificación UTF-8 y siguen las reglas de JSON para escapar caracteres especiales.
 
-### Produce records in a batch
+### Generar registros por lotes
 
-As an alternative to streaming mode, you can produce multiple records in a batch. This is not streaming, but it is easier to use with HTTP libraries that expect a straightforward request-response behavior.
+Como alternativa al modo de transmisión en tiempo real, puede generar varios registros de forma por lotes. Aunque esto no se considera transmisión en tiempo real, resulta más sencillo de utilizar con bibliotecas HTTP que esperan un comportamiento de solicitud-respuesta directo.
 
-Each entry in the batch has a unique identifier (a string of up to 80 characters) which can be used to correlate the responses. The identifiers of the entries in a batch must be unique.
+Cada entrada del lote cuenta con un identificador único (una cadena de hasta 80 caracteres) que se puede utilizar para relacionar las respuestas. Los identificadores de las entradas dentro de un lote deben ser exclusivos.
 
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
@@ -196,7 +197,7 @@ Response:
   }
 ```
 
-Successes and failures are returned in the response in separate arrays like this:
+Los éxitos y los fracasos se devuelven en la respuesta en arrays separados de esta manera:
 
 ```json
 {
@@ -218,28 +219,28 @@ Successes and failures are returned in the response in separate arrays like this
     {
       "id": "2",
       "error_code": 400,
-      "message": "Bad Request: data=\"Message$\" is not a valid base64 string."
+      "message": "Solicitud inválida: el dato \"Message$\" no es una cadena base64 válida."
     }
   ]
 }
 ```
 
-## Quickstart (v2 API)
-The earlier v2 API is a bit more concise.
+## Inicio rápido (API v2)
+La anterior API v2 es un poco más concisa.
 
-### Get a list of topics
+### Obtener una lista de temas
 ```bash
 $ curl http://localhost:8082/topics
   
-Response:
+Respuesta:
   ["__consumer_offsets","jsontest"]
 ```
 
-### Get info about one topic
+### Obtener información sobre un tema
 ```bash
 $ curl http://localhost:8082/topics/jsontest
 
-Response:
+Respuesta:
   {"name":"jsontest",
    "configs":{},
    "partitions":[
@@ -256,7 +257,7 @@ Response:
   }
 ```
 
-### Produce records with JSON data
+### Producir registros con datos JSON
 ```bash
 $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v2+json" \
        -d '{"records":[{"value":{"name": "testUser"}}]}' \
@@ -275,8 +276,8 @@ Response:
   }
 ```
 
-### Consume JSON data
-First, create a consumer for JSON data, starting at the beginning of the topic. The consumer group is called `my_json_consumer` and the instance is `my_consumer_instance`.
+### Consumir datos JSON
+Primero, cree un consumidor para datos JSON que comience desde el principio del tema. El grupo de consumidores se llama `my_json_consumer` y la instancia es `my_consumer_instance`.
 
 ```bash
 $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" -H "Accept: application/vnd.kafka.v2+json" \
@@ -289,7 +290,7 @@ Response:
   }
 ```
 
-Subscribe the consumer to a topic.
+Suscriba al consumidor a un tema.
 
 ```bash
 $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" \
@@ -297,10 +298,10 @@ $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" \
       http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/subscription
 
 Response:
-  # No content in response
+  # No hay contenido en la respuesta
 ```
 
-Then consume some data from a topic using the base URL in the first response.
+Luego, consuma algunos datos de un tema utilizando la URL base que se muestra en la primera respuesta.
 
 ```bash
 $ curl -X GET -H "Accept: application/vnd.kafka.json.v2+json" \
@@ -315,9 +316,9 @@ Response:
     "topic":"jsontest"
    }
   ]
-```   
+```
 
-Finally, close the consumer with a DELETE to make it leave the group and clean up its resources.  
+Finalmente, cierre el consumidor con una solicitud DELETE para que abandone el grupo y libere sus recursos.  
 ```bash    
 $ curl -X DELETE -H "Accept: application/vnd.kafka.v2+json" \
        http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance
@@ -326,17 +327,17 @@ Response:
   # No content in response
 ```
 
-## Development
+## Desarrollo
 
-To build a development version, you may need development versions of [common](https://github.com/confluentinc/common), [rest-utils](https://github.com/confluentinc/rest-utils), and [schema-registry](https://github.com/confluentinc/schema-registry).  After installing these, you can build the Kafka REST Proxy with Maven. All the standard lifecycle phases work.
+Para compilar una versión de desarrollo, es posible que necesite las versiones de desarrollo de [common](https://github.com/confluentinc/common), [rest-utils](https://github.com/confluentinc/rest-utils) y [schema-registry](https://github.com/confluentinc/schema-registry). Una vez instaladas estas dependencias, podrá compilar el Kafka REST Proxy con Maven. Todas las fases estándar del ciclo de vida funcionan normalmente.
 
-You can avoid building development versions of dependencies by building on the latest (or earlier) release tag, or `<release>-post` branch, which will reference dependencies available pre-built from the [public repository](http://packages.confluent.io/maven/).  For example, branch `7.3.0-post` can be used as a base for patches for this version.
+Puede evitar compilar versiones de desarrollo de las dependencias al trabajar con la etiqueta de versión más reciente (o anterior), o con la rama `<release>-post`, las cuales harán referencia a dependencias ya compiladas y disponibles en el [repositorio público](http://packages.confluent.io/maven/). Por ejemplo, la rama `7.3.0-post` puede utilizarse como base para los parches de esta versión.
 
-## Contribute
+## Contribuir
 
-- Source Code: https://github.com/confluentinc/kafka-rest
-- Issue Tracker: https://github.com/confluentinc/kafka-rest/issues
+- Código fuente: https://github.com/confluentinc/kafka-rest
+- Seguimiento de problemas: https://github.com/confluentinc/kafka-rest/issues
 
-## License
+## Licencia
 
-This project is licensed under the [Confluent Community License](LICENSE).
+Este proyecto está licenciado bajo la [Confluent Community License](LICENSE).
