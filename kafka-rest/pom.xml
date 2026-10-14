@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>kafka-rest-parent</artifactId>
-        <version>8.4.0-0</version>
+        <version>8.5.0-0</version>
     </parent>
 
     <artifactId>kafka-rest</artifactId>
@@ -56,6 +56,46 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-protobuf-serializer</artifactId>
+            <version>${io.confluent.schema-registry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-schema-rules</artifactId>
+            <version>${io.confluent.schema-registry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-schema-registry-client-encryption-tink</artifactId>
+            <version>${io.confluent.schema-registry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>dek-registry-client</artifactId>
+            <version>${io.confluent.schema-registry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-schema-registry-client-encryption</artifactId>
+            <version>${io.confluent.schema-registry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-schema-registry-client-encryption-aws</artifactId>
+            <version>${io.confluent.schema-registry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-schema-registry-client-encryption-azure</artifactId>
+            <version>${io.confluent.schema-registry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-schema-registry-client-encryption-gcp</artifactId>
+            <version>${io.confluent.schema-registry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-schema-registry-client-encryption-hcvault</artifactId>
             <version>${io.confluent.schema-registry.version}</version>
         </dependency>
         <dependency>
@@ -153,6 +193,13 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-server-common</artifactId>
+            <version>${kafka.version}</version>
+            <classifier>test-fixtures</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-server</artifactId>
             <version>${kafka.version}</version>
             <classifier>test-fixtures</classifier>
             <scope>test</scope>
