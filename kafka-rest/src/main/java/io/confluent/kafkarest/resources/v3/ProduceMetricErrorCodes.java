@@ -22,12 +22,17 @@ final class ProduceMetricErrorCodes {
 
   private ProduceMetricErrorCodes() {}
 
-  /** Resolves the HTTP status code StreamingResponse would return for the error. */
+  /**
+   * Resolves the HTTP status StreamingResponse would return for the error. Its error codes are
+   * either three-digit statuses or five-digit REST codes (e.g. 40301) whose first three digits are
+   * the status.
+   */
   static int httpStatusCodeFromError(Throwable error) {
     Throwable cause = error;
     if (error instanceof CompletionException && error.getCause() != null) {
       cause = error.getCause();
     }
-    return StreamingResponse.toErrorResponse(cause).getErrorCode();
+    int errorCode = StreamingResponse.toErrorResponse(cause).getErrorCode();
+    return errorCode >= 1000 ? errorCode / 100 : errorCode;
   }
 }
