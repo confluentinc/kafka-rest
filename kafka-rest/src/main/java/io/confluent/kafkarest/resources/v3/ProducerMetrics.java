@@ -47,10 +47,6 @@ final class ProducerMetrics {
   private static final String GROUP_NAME = "produce-api-metrics";
   public static final long EXPIRY_SECONDS = TimeUnit.HOURS.toSeconds(1);
 
-  // KNET-19593: the produce_request_error 5xx and request_error_rate 429 monitors filter on
-  // http_status_code, but the error and rate-limited metrics never carried that tag, so the
-  // queries never matched any series. Tag both metrics with bucketed status codes so the
-  // existing monitor queries (http_status_code=~"5xx|unknown", http_status_code="429") work.
   @VisibleForTesting static final String HTTP_STATUS_CODE_TAG = "http_status_code";
   @VisibleForTesting static final String STATUS_CODE_BUCKET_4XX = "4xx";
   @VisibleForTesting static final String STATUS_CODE_BUCKET_5XX = "5xx";
@@ -124,8 +120,6 @@ final class ProducerMetrics {
   private final String requestSensorName;
   private final String requestSizeSensorName;
   private final String responseSensorName;
-  // Per-status-code-bucket sensor names. Each entry is keyed by an entry of
-  // ERROR_STATUS_CODE_BUCKETS and points at a sensor tagged with that http_status_code value.
   private final Map<String, String> recordErrorSensorNames;
   private final String recordRateLimitedSensorName;
   private final String requestLatencySensorName;
@@ -164,9 +158,6 @@ final class ProducerMetrics {
     setupSensors(sortedMetricsTags, sensorTags);
   }
 
-  // Build the sensor-tag suffix for a given http_status_code bucket. http_status_code sorts
-  // before "tenant" alphabetically, so the bucket value goes first to match how MetricName
-  // tags are ordered downstream.
   private static String bucketSensorTagSuffix(String baseSensorTags, String bucket) {
     return ":" + bucket + baseSensorTags;
   }
@@ -178,7 +169,6 @@ final class ProducerMetrics {
     return tagsWithStatus;
   }
 
-  // Map an HTTP status code to one of the buckets used in monitor queries.
   @VisibleForTesting
   static String httpStatusCodeBucket(int httpStatusCode) {
     if (httpStatusCode >= 500 && httpStatusCode < 600) {

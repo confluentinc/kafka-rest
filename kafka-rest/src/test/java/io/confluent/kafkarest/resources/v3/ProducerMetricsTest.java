@@ -91,10 +91,7 @@ public class ProducerMetricsTest {
     producerMetrics = new ProducerMetrics(config, tags);
   }
 
-  // ProducerMetrics now registers one MBean per http_status_code bucket (and one base bean), so
-  // each test creates multiple beans on the platform MBeanServer. Without explicit cleanup the
-  // beans leak across tests and risk InstanceAlreadyExistsException on re-registration or flaky
-  // queryNames() counts in tests that check bean cardinality.
+  // Unregisters MBeans so bean-count assertions are not affected by other tests.
   @AfterEach
   public void tearDown() throws Exception {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -145,8 +142,6 @@ public class ProducerMetricsTest {
         (Double) mBeanServer.getAttribute(baseBean, ProducerMetrics.RESPONSE_RATE_METRIC_NAME),
         closeTo(1.0, 0.01));
 
-    // error rate lives on the per-status-code MBean — we recorded 500s so only the 5xx bean gets
-    // increments; the 4xx and unknown beans should report ~0.
     ObjectName error5xxBean =
         new ObjectName("kafka.rest:type=produce-api-metrics,http_status_code=5xx,tag=value");
     assertThat(
@@ -243,8 +238,6 @@ public class ProducerMetricsTest {
 
   @Test
   public void testRecordErrorBucketing() throws Exception {
-    // 4xx (other than 429) routes to the 4xx bucket; 5xx routes to 5xx; codes outside 400-599
-    // (e.g. 0 = no response code) route to the "unknown" bucket.
     producerMetrics.recordError(400);
     producerMetrics.recordError(404);
     producerMetrics.recordError(429);
@@ -255,19 +248,16 @@ public class ProducerMetricsTest {
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
-    // 400, 404, 429 → 4xx bucket (3 increments)
     assertEquals(
         3.0,
         mBeanServer.getAttribute(
             new ObjectName("kafka.rest:type=produce-api-metrics,http_status_code=4xx,tag=value"),
             ProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME));
-    // 500, 503 → 5xx bucket (2 increments)
     assertEquals(
         2.0,
         mBeanServer.getAttribute(
             new ObjectName("kafka.rest:type=produce-api-metrics,http_status_code=5xx,tag=value"),
             ProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME));
-    // 0, 200 → unknown bucket (2 increments)
     assertEquals(
         2.0,
         mBeanServer.getAttribute(
@@ -307,9 +297,6 @@ public class ProducerMetricsTest {
   @Test
   public void testTenantTag() throws Exception {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    // After KNET-19593 the producer metrics produce one base MBean (request/response/latency)
-    // plus per-status-code MBeans for error (4xx/5xx/unknown) and rate-limited (429). Every
-    // bean must carry the tenant tag.
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
     assertEquals(5, beanNames.size());
     for (ObjectName beanName : beanNames) {

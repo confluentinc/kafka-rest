@@ -22,12 +22,7 @@ final class ProduceMetricErrorCodes {
 
   private ProduceMetricErrorCodes() {}
 
-  /**
-   * Resolve an HTTP status code for the throwable in the same way StreamingResponse does for the
-   * response, so the produce-api metric's http_status_code tag stays consistent with what the
-   * client actually sees. Unwraps a single layer of CompletionException to match how
-   * StreamingResponse itself handles errors handed off from the CompletableFuture chain.
-   */
+  /** Resolves the HTTP status code StreamingResponse would return for the error. */
   static int httpStatusCodeFromError(Throwable error) {
     Throwable cause = error;
     if (error instanceof CompletionException && error.getCause() != null) {
