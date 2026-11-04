@@ -18,6 +18,7 @@ package io.confluent.kafkarest.integration;
 import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
@@ -31,12 +32,19 @@ import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.avro.Schema;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -202,5 +210,44 @@ public class AvroProducerTest extends ClusterTestHarness {
   @ValueSource(strings = {"kraft"})
   public void testProduceToPartitionOnlyValues(String quorum) {
     testProduceToPartition(partitionRecordsOnlyValues, producePartitionOffsetOnlyValues);
+  }
+
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void testProduceToTopicNullKeyWithNullKeySchema_publishesKafkaNullKey(String quorum) {
+    SchemaTopicProduceRequest payload =
+        SchemaTopicProduceRequest.create(
+            Arrays.asList(
+                new SchemaTopicProduceRecord(/* key= */ null, testValues[0], /* partition= */ 0),
+                new SchemaTopicProduceRecord(
+                    TestUtils.jsonTree("null"), testValues[1], /* partition= */ 0)),
+            /* keySchema= */ "{\"type\": \"null\"}",
+            /* keySchemaId= */ null,
+            valueSchemaStr,
+            /* valueSchemaId= */ null);
+    Response response =
+        request("/topics/" + topicName).post(Entity.entity(payload, Versions.KAFKA_V2_JSON_AVRO));
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
+    ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
+    TestUtils.assertPartitionOffsetsEqual(
+        Arrays.asList(
+            new PartitionOffset(0, 0L, null, null), new PartitionOffset(0, 1L, null, null)),
+        produceResponse.getOffsets());
+
+    Properties props = new Properties();
+    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, plaintextBrokerList);
+    try (KafkaConsumer<byte[], byte[]> consumer =
+        new KafkaConsumer<>(props, new ByteArrayDeserializer(), new ByteArrayDeserializer())) {
+      TopicPartition tp = new TopicPartition(topicName, 0);
+      consumer.assign(Collections.singletonList(tp));
+      consumer.seekToBeginning(Collections.singletonList(tp));
+      List<ConsumerRecord<byte[], byte[]>> records = new ArrayList<>();
+      long deadline = System.currentTimeMillis() + 20_000;
+      while (records.size() < 2 && System.currentTimeMillis() < deadline) {
+        consumer.poll(Duration.ofMillis(100)).forEach(records::add);
+      }
+      assertEquals(2, records.size());
+      records.forEach(r -> assertNull(r.key(), "key must be a Kafka null, not an encoded null"));
+    }
   }
 }
