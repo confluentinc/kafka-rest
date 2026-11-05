@@ -15,18 +15,41 @@
 
 package io.confluent.kafkarest.integration.v2;
 
+import static io.confluent.kafkarest.TestUtils.TEST_WITH_PARAMETERIZED_QUORUM_NAME;
+import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.json.JsonSchema;
+import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.JsonSchemaConverter;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.ProduceResponse;
+import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public final class JsonSchemaProduceConsumeTest extends SchemaProduceConsumeTest {
 
@@ -82,5 +105,46 @@ public final class JsonSchemaProduceConsumeTest extends SchemaProduceConsumeTest
   @Override
   protected List<SchemaTopicProduceRecord> getProduceRecords() {
     return PRODUCE_RECORDS;
+  }
+
+  // A null key/value whose JSON Schema accepts null must be published as a Kafka null (no bytes),
+  // not as an encoded JSON null. Read the record back as raw bytes to tell the two apart.
+  @ParameterizedTest(name = TEST_WITH_PARAMETERIZED_QUORUM_NAME)
+  @ValueSource(strings = {"kraft"})
+  public void produceNullWithNullableSchema_publishesKafkaNull(String quorum) {
+    String topic = "topic-nullable";
+    createTopic(topic, /* numPartitions= */ 1, /* replicationFactor= */ (short) 1);
+    SchemaTopicProduceRequest request =
+        SchemaTopicProduceRequest.create(
+            singletonList(
+                new SchemaTopicProduceRecord(
+                    NullNode.getInstance(), NullNode.getInstance(), /* partition= */ 0)),
+            /* keySchema= */ "{\"type\": \"null\"}",
+            /* keySchemaId= */ null,
+            /* valueSchema= */ "{\"type\": [\"null\", \"object\"]}",
+            /* valueSchemaId= */ null);
+
+    Response response = request("/topics/" + topic).post(Entity.entity(request, getContentType()));
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
+    ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
+    TestUtils.assertPartitionOffsetsEqual(
+        singletonList(new PartitionOffset(0, 0L, null, null)), produceResponse.getOffsets());
+
+    Properties props = new Properties();
+    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, plaintextBrokerList);
+    try (KafkaConsumer<byte[], byte[]> consumer =
+        new KafkaConsumer<>(props, new ByteArrayDeserializer(), new ByteArrayDeserializer())) {
+      TopicPartition tp = new TopicPartition(topic, 0);
+      consumer.assign(singletonList(tp));
+      consumer.seekToBeginning(singletonList(tp));
+      List<ConsumerRecord<byte[], byte[]>> records = new ArrayList<>();
+      long deadline = System.currentTimeMillis() + 20_000;
+      while (records.isEmpty() && System.currentTimeMillis() < deadline) {
+        consumer.poll(Duration.ofMillis(100)).forEach(records::add);
+      }
+      assertEquals(1, records.size());
+      assertNull(records.get(0).key(), "key must be a Kafka null, not an encoded null");
+      assertNull(records.get(0).value(), "value must be a Kafka null (a tombstone)");
+    }
   }
 }
