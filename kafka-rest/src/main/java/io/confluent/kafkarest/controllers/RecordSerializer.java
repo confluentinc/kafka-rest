@@ -28,7 +28,9 @@ public interface RecordSerializer {
    * Serializes the given {@code data} into a {@link ByteString}.
    *
    * <p>Returns {@link Optional#empty()} if {@code data} {@link JsonNode#isNull() is null}. If a
-   * schema is given, it must allow null; otherwise this throws a {@code BadRequestException}.
+   * schema is given, it must allow null; otherwise this throws a {@code BadRequestException}. The
+   * exception is when {@code null.request.body.always.publishes.empty.record} is enabled: a null is
+   * then published as an empty record without checking the schema.
    */
   Optional<ByteString> serialize(
       EmbeddedFormat format,
