@@ -27,7 +27,8 @@ public interface RecordSerializer {
   /**
    * Serializes the given {@code data} into a {@link ByteString}.
    *
-   * <p>Returns {@link Optional#empty()} if {@code data} {@link JsonNode#isNull() is null}.
+   * <p>Returns {@link Optional#empty()} if {@code data} {@link JsonNode#isNull() is null}. If a
+   * schema is given, it must allow null; otherwise this throws a {@code BadRequestException}.
    */
   Optional<ByteString> serialize(
       EmbeddedFormat format,
