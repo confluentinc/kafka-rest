@@ -807,7 +807,7 @@ public class RecordSerializerFacadeTest {
   }
 
   @Test
-  public void serializeNullAvroKeyNullableSchema_allowsNullAndSerializes() throws Exception {
+  public void serializeAvroKeyRecordWithNullField_returnsSerialized() throws Exception {
     String schemaString =
         "{\"type\":\"record\",\"name\":\"MyRecord\",\"namespace\":\"com.example\",\""
             + "fields\":[{\"name\":\"myNullableInt\","
@@ -854,6 +854,42 @@ public class RecordSerializerFacadeTest {
                     /* isKey= */ true));
 
     assertEquals("Expected int. Got VALUE_NULL", badRequestException.getMessage());
+  }
+
+  // A null key/value whose Avro schema accepts null must publish a Kafka null. The Avro
+  // serializer returns null bytes for a null datum, which used to cause an NPE (HTTP 500).
+  @Test
+  public void serializeNullAvroKeyNullTypeSchema_returnsEmpty() throws Exception {
+    AvroSchema schema = new AvroSchema("{\"type\": \"null\"}");
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
+
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.AVRO,
+            TOPIC_NAME,
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+            NullNode.getInstance(),
+            /* isKey= */ true);
+
+    assertFalse(serialized.isPresent());
+  }
+
+  @Test
+  public void serializeNullAvroValueNullableUnionSchema_returnsEmpty() throws Exception {
+    AvroSchema schema = new AvroSchema("[\"null\", \"string\"]");
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
+
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.AVRO,
+            TOPIC_NAME,
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+            NullNode.getInstance(),
+            /* isKey= */ false);
+
+    assertFalse(serialized.isPresent());
   }
 
   @Test
@@ -1403,6 +1439,13 @@ public class RecordSerializerFacadeTest {
     assertEquals("#: expected type: Integer, found: null", badRequestException.getMessage());
   }
 
+  // A null key/value whose JSON Schema accepts null must publish a Kafka null (no bytes), the same
+  // as Avro, not an encoded JSON null.
+  @Test
+  public void serializeNullJsonschemaKeyNullTypeSchema_returnsEmpty() throws Exception {
+    assertNullJsonschemaReturnsEmpty("{\"type\": \"null\"}", /* isKey= */ true);
+  }
+
   @Test
   public void serializeNonNullJsonschemaKeyNullSchema_throwsSerializationException() {
     assertThrows(
@@ -1617,6 +1660,61 @@ public class RecordSerializerFacadeTest {
                     /* isKey= */ false));
 
     assertEquals("#: expected type: Integer, found: null", badRequestException.getMessage());
+  }
+
+  @Test
+  public void serializeNullJsonschemaValueNullableTypeSchema_returnsEmpty() throws Exception {
+    assertNullJsonschemaReturnsEmpty("{\"type\": [\"null\", \"object\"]}", /* isKey= */ false);
+  }
+
+  @Test
+  public void serializeNullJsonschemaValueAnyOfNullSchema_returnsEmpty() throws Exception {
+    assertNullJsonschemaReturnsEmpty(
+        "{\"anyOf\": [{\"type\": \"null\"}, {\"type\": \"string\"}]}", /* isKey= */ false);
+  }
+
+  @Test
+  public void serializeNullJsonschemaValueEmptySchema_returnsEmpty() throws Exception {
+    assertNullJsonschemaReturnsEmpty("{}", /* isKey= */ false);
+  }
+
+  @Test
+  public void serializeStringJsonschemaValueNullableTypeSchema_returnsSerialized()
+      throws Exception {
+    JsonSchema schema = new JsonSchema("{\"type\": [\"null\", \"string\"]}");
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
+
+    ByteString serialized =
+        recordSerializer
+            .serialize(
+                EmbeddedFormat.JSONSCHEMA,
+                TOPIC_NAME,
+                Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ false)
+            .get();
+
+    KafkaJsonSchemaDeserializer<Object> deserializer = new KafkaJsonSchemaDeserializer<>();
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
+    assertEquals("foobar", deserializer.deserialize(TOPIC_NAME, serialized.toByteArray()));
+  }
+
+  private void assertNullJsonschemaReturnsEmpty(String schemaString, boolean isKey)
+      throws Exception {
+    JsonSchema schema = new JsonSchema(schemaString);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, isKey, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
+
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.JSONSCHEMA,
+            TOPIC_NAME,
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+            NullNode.getInstance(),
+            isKey);
+
+    assertFalse(serialized.isPresent());
   }
 
   @Test
