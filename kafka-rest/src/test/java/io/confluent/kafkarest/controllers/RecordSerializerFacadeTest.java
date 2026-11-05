@@ -20,7 +20,6 @@ import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHE
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.USE_LATEST_VERSION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -1440,27 +1439,11 @@ public class RecordSerializerFacadeTest {
     assertEquals("#: expected type: Integer, found: null", badRequestException.getMessage());
   }
 
+  // A null key/value whose JSON Schema accepts null must publish a Kafka null (no bytes), the same
+  // as Avro, not an encoded JSON null.
   @Test
-  public void serializeNullJsonschemaKeyNullTypeSchema_returnsEncodedNull() throws Exception {
-    // Unlike Avro, JSON Schema wraps the data in an envelope, so the serializer sees a NullNode
-    // (not a Java null) and encodes it. Pin this so any change to it is deliberate.
-    JsonSchema schema = new JsonSchema("{\"type\": \"null\"}");
-    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
-    int schemaId = schemaRegistryClient.register(subject, schema);
-
-    ByteString serialized =
-        recordSerializer
-            .serialize(
-                EmbeddedFormat.JSONSCHEMA,
-                TOPIC_NAME,
-                Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-                NullNode.getInstance(),
-                /* isKey= */ true)
-            .get();
-
-    KafkaJsonSchemaDeserializer<Object> deserializer = new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
-    assertNull(deserializer.deserialize(TOPIC_NAME, serialized.toByteArray()));
+  public void serializeNullJsonschemaKeyNullTypeSchema_returnsEmpty() throws Exception {
+    assertNullJsonschemaReturnsEmpty("{\"type\": \"null\"}", /* isKey= */ true);
   }
 
   @Test
@@ -1677,6 +1660,61 @@ public class RecordSerializerFacadeTest {
                     /* isKey= */ false));
 
     assertEquals("#: expected type: Integer, found: null", badRequestException.getMessage());
+  }
+
+  @Test
+  public void serializeNullJsonschemaValueNullableTypeSchema_returnsEmpty() throws Exception {
+    assertNullJsonschemaReturnsEmpty("{\"type\": [\"null\", \"object\"]}", /* isKey= */ false);
+  }
+
+  @Test
+  public void serializeNullJsonschemaValueAnyOfNullSchema_returnsEmpty() throws Exception {
+    assertNullJsonschemaReturnsEmpty(
+        "{\"anyOf\": [{\"type\": \"null\"}, {\"type\": \"string\"}]}", /* isKey= */ false);
+  }
+
+  @Test
+  public void serializeNullJsonschemaValueEmptySchema_returnsEmpty() throws Exception {
+    assertNullJsonschemaReturnsEmpty("{}", /* isKey= */ false);
+  }
+
+  @Test
+  public void serializeStringJsonschemaValueNullableTypeSchema_returnsSerialized()
+      throws Exception {
+    JsonSchema schema = new JsonSchema("{\"type\": [\"null\", \"string\"]}");
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
+
+    ByteString serialized =
+        recordSerializer
+            .serialize(
+                EmbeddedFormat.JSONSCHEMA,
+                TOPIC_NAME,
+                Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ false)
+            .get();
+
+    KafkaJsonSchemaDeserializer<Object> deserializer = new KafkaJsonSchemaDeserializer<>();
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
+    assertEquals("foobar", deserializer.deserialize(TOPIC_NAME, serialized.toByteArray()));
+  }
+
+  private void assertNullJsonschemaReturnsEmpty(String schemaString, boolean isKey)
+      throws Exception {
+    JsonSchema schema = new JsonSchema(schemaString);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, isKey, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
+
+    Optional<ByteString> serialized =
+        recordSerializer.serialize(
+            EmbeddedFormat.JSONSCHEMA,
+            TOPIC_NAME,
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+            NullNode.getInstance(),
+            isKey);
+
+    assertFalse(serialized.isPresent());
   }
 
   @Test
