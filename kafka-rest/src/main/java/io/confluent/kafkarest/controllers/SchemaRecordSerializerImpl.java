@@ -85,10 +85,10 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
 
     switch (format) {
       case AVRO:
-        return Optional.of(serializeAvro(schema.get().getSubject(), schema.get(), data));
+        return serializeAvro(schema.get().getSubject(), schema.get(), data);
 
       case JSONSCHEMA:
-        return Optional.of(serializeJsonschema(schema.get().getSubject(), schema.get(), data));
+        return serializeJsonschema(schema.get().getSubject(), schema.get(), data);
 
       case PROTOBUF:
         return Optional.of(
@@ -99,7 +99,8 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
     }
   }
 
-  private ByteString serializeAvro(String subject, RegisteredSchema schema, JsonNode data) {
+  private Optional<ByteString> serializeAvro(
+      String subject, RegisteredSchema schema, JsonNode data) {
     AvroSchema avroSchema = (AvroSchema) schema.getSchema();
     Object record;
     try {
@@ -107,10 +108,16 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
     } catch (AvroTypeException | IOException e) {
       throw new BadRequestException(e.getMessage(), e);
     }
-    return ByteString.copyFrom(avroSerializer.serialize(subject, avroSchema, record));
+    if (record == null) {
+      // The schema accepts null (e.g. "null" or ["null", ...]). Publish a Kafka null, as
+      // KafkaAvroSerializer does; it returns null for a null datum rather than encoding it.
+      return Optional.empty();
+    }
+    return Optional.of(ByteString.copyFrom(avroSerializer.serialize(subject, avroSchema, record)));
   }
 
-  private ByteString serializeJsonschema(String subject, RegisteredSchema schema, JsonNode data) {
+  private Optional<ByteString> serializeJsonschema(
+      String subject, RegisteredSchema schema, JsonNode data) {
     JsonSchema jsonSchema = (JsonSchema) schema.getSchema();
     Object record;
     try {
@@ -118,7 +125,14 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
     } catch (IOException | ValidationException e) {
       throw new BadRequestException(e.getMessage(), e);
     }
-    return ByteString.copyFrom(jsonschemaSerializer.serialize(subject, jsonSchema, record));
+    if (data.isNull()) {
+      // The schema accepts null (e.g. {"type": "null"} or {"type": ["null", ...]}). Publish a
+      // Kafka null, as Avro does. toObject wraps the value in an envelope, so the serializer would
+      // otherwise get a NullNode rather than a Java null and write an encoded JSON null.
+      return Optional.empty();
+    }
+    return Optional.of(
+        ByteString.copyFrom(jsonschemaSerializer.serialize(subject, jsonSchema, record)));
   }
 
   private ByteString serializeProtobuf(
