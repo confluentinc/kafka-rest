@@ -77,7 +77,7 @@ public final class SslFixture implements BeforeEachCallback, AfterEachCallback {
       KeyPair keyPair = TestSslUtils.generateKeyPair("RSA");
       X509Certificate certificate =
           TestSslUtils.generateCertificate(
-              "CN=localhost, O=" + keyName, keyPair, 30, "SHA1withRSA");
+              "CN=localhost, O=" + keyName, keyPair, 30, "SHA256withRSA");
       Path keyStoreLocation = createTempFile(keyName + "-keystore", ".jks");
       String keyStorePassword = keyName + "-pass";
       String keyPassword = keyName + "-pass";
