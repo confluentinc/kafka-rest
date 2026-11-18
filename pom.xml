@@ -51,6 +51,7 @@
         <io.confluent.kafka-rest.version>8.0.2</io.confluent.kafka-rest.version>
         <!-- Allow enough heap space for integration tests with Kraft -->
         <argLine>-Xmx4g -Xms2g</argLine>
+        <guava.version>33.7.2-jre</guava.version>
     </properties>
 
     <repositories>
