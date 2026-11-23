@@ -83,6 +83,7 @@
   <allow pkg="com.fasterxml.jackson" />
   <allow pkg="com.google.auto.value" />
   <allow pkg="com.google.common" />
+  <allow pkg="com.google.errorprone.annotations" />
   <allow pkg="com.google.protobuf" />
   <allow pkg="io.github.resilience4j" />
   <allow pkg="java" />
