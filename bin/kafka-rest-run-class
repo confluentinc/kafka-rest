@@ -96,22 +96,14 @@ fi
 
 # OpenJ9 writes a system core, heap dump, javacore and snap trace on OutOfMemoryError by default,
 # into the working directory or /tmp. Match HotSpot: write nothing on OOM, and send crash dumps to
-# LOG_DIR when it exists. These are command-line options, so they would override the same settings
-# made anywhere else; they are therefore added only when the user has set no dump option
-# (-Xdump, -XX:[+-]HeapDumpOnOutOfMemoryError, -XX:HeapDumpPath or -Xoptionsfile) in
-#   KAFKAREST_HEAP_OPTS, KAFKAREST_JVM_PERFORMANCE_OPTS, KAFKAREST_JMX_OPTS, KAFKAREST_LOG4J_OPTS, KAFKAREST_OPTS,
-#   or the launcher variables JAVA_TOOL_OPTIONS, JDK_JAVA_OPTIONS, OPENJ9_JAVA_OPTIONS, IBM_JAVA_OPTIONS.
+# LOG_DIR when it exists. Placed first on the java command line, so the same options set in the
+# script's *_OPTS variables or arguments override it.
+OPENJ9_DEFAULT_OPTS=""
 if [ "$JAVA_VM_OPENJ9" = "true" ]; then
-  JAVA_OPTS_TO_CHECK=" ${KAFKAREST_HEAP_OPTS:-} ${KAFKAREST_JVM_PERFORMANCE_OPTS:-} ${KAFKAREST_JMX_OPTS:-} ${KAFKAREST_LOG4J_OPTS:-} ${KAFKAREST_OPTS:-} ${JAVA_TOOL_OPTIONS:-} ${JDK_JAVA_OPTIONS:-} ${OPENJ9_JAVA_OPTIONS:-} ${IBM_JAVA_OPTIONS:-} "
-  case "$JAVA_OPTS_TO_CHECK" in
-    *-Xdump*|*HeapDumpOnOutOfMemoryError*|*HeapDumpPath*|*-Xoptionsfile*) ;;
-    *)
-      KAFKAREST_OPTS="-XX:-HeapDumpOnOutOfMemoryError $KAFKAREST_OPTS"
-      if [ -d "$LOG_DIR" ]; then
-        KAFKAREST_OPTS="-Xdump:directory=$LOG_DIR $KAFKAREST_OPTS"
-      fi
-      ;;
-  esac
+  OPENJ9_DEFAULT_OPTS="-XX:-HeapDumpOnOutOfMemoryError"
+  if [ -d "$LOG_DIR" ]; then
+    OPENJ9_DEFAULT_OPTS="-Xdump:directory=$LOG_DIR $OPENJ9_DEFAULT_OPTS"
+  fi
 fi
 
 MAIN=$1
@@ -141,7 +133,9 @@ fi
 
 # Launch mode
 if [ "x$DAEMON_MODE" = "xtrue" ]; then
-  nohup $JAVA $KAFKAREST_HEAP_OPTS $KAFKAREST_JVM_PERFORMANCE_OPTS $KAFKAREST_JMX_OPTS $KAFKAREST_LOG4J_OPTS -cp $CLASSPATH $KAFKAREST_OPTS "$MAIN" "$@" 2>&1 < /dev/null &
+  # shellcheck disable=SC2086
+  nohup $JAVA $OPENJ9_DEFAULT_OPTS $KAFKAREST_HEAP_OPTS $KAFKAREST_JVM_PERFORMANCE_OPTS $KAFKAREST_JMX_OPTS $KAFKAREST_LOG4J_OPTS -cp $CLASSPATH $KAFKAREST_OPTS "$MAIN" "$@" 2>&1 < /dev/null &
 else
-  exec $JAVA $KAFKAREST_HEAP_OPTS $KAFKAREST_JVM_PERFORMANCE_OPTS $KAFKAREST_JMX_OPTS $KAFKAREST_LOG4J_OPTS -cp $CLASSPATH $KAFKAREST_OPTS "$MAIN" "$@"
+  # shellcheck disable=SC2086
+  exec $JAVA $OPENJ9_DEFAULT_OPTS $KAFKAREST_HEAP_OPTS $KAFKAREST_JVM_PERFORMANCE_OPTS $KAFKAREST_JMX_OPTS $KAFKAREST_LOG4J_OPTS -cp $CLASSPATH $KAFKAREST_OPTS "$MAIN" "$@"
 fi
