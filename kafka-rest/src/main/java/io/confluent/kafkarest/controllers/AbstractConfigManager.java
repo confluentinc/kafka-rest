@@ -50,6 +50,14 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 abstract class AbstractConfigManager<
     T extends AbstractConfig, B extends AbstractConfig.Builder<T, B>> {
 
+  /**
+   * Schema association configs. The broker no longer returns these from a default DescribeConfigs
+   * call (they need an explicit association fetch mode, which costs a Schema Registry round trip),
+   * so they cannot be used for the existence pre-check. The broker validates them on alter.
+   */
+  private static final Set<String> ASSOCIATION_CONFIG_NAMES =
+      Set.of("confluent.key.association", "confluent.value.association");
+
   private final Admin adminClient;
   private final ClusterManager clusterManager;
 
@@ -117,6 +125,10 @@ abstract class AbstractConfigManager<
             });
   }
 
+  private static boolean isAssociationConfig(String name) {
+    return ASSOCIATION_CONFIG_NAMES.contains(name);
+  }
+
   final CompletableFuture<Optional<T>> getConfig(
       String clusterId, ConfigResource resourceId, B prototype, String name) {
     return listConfigs(clusterId, resourceId, prototype)
@@ -128,6 +140,9 @@ abstract class AbstractConfigManager<
    */
   final CompletableFuture<Void> safeUpdateConfig(
       String clusterId, ConfigResource resourceId, B prototype, String name, String newValue) {
+    if (isAssociationConfig(name)) {
+      return unsafeUpdateConfig(clusterId, resourceId, name, newValue);
+    }
     return getConfig(clusterId, resourceId, prototype, name)
         .thenApply(
             config ->
@@ -160,6 +175,9 @@ abstract class AbstractConfigManager<
   /** Resets the config {@code name} to its default value, checking if the config exists first. */
   final CompletableFuture<Void> safeResetConfig(
       String clusterId, ConfigResource resourceId, B prototype, String name) {
+    if (isAssociationConfig(name)) {
+      return unsafeResetConfig(clusterId, resourceId, name);
+    }
     return getConfig(clusterId, resourceId, prototype, name)
         .thenApply(
             config ->
@@ -220,7 +238,8 @@ abstract class AbstractConfigManager<
               Set<String> configNames =
                   configs.stream().map(AbstractConfig::getName).collect(Collectors.toSet());
               for (AlterConfigCommand command : commands) {
-                if (!configNames.contains(command.getName())) {
+                if (!isAssociationConfig(command.getName())
+                    && !configNames.contains(command.getName())) {
                   throw new NotFoundException(
                       String.format(
                           "Config %s cannot be found for %s %s in cluster %s.",
@@ -330,7 +349,8 @@ abstract class AbstractConfigManager<
                         .map(configEntry -> configEntry.name())
                         .collect(Collectors.toSet());
                 for (AlterConfigCommand command : entry.getValue()) {
-                  if (!configNames.contains(command.getName())) {
+                  if (!isAssociationConfig(command.getName())
+                      && !configNames.contains(command.getName())) {
                     throw new NotFoundException(
                         String.format(
                             "Config %s cannot be found for %s %s in cluster %s.",
