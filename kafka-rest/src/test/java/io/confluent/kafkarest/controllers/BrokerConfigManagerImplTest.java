@@ -344,6 +344,36 @@ public class BrokerConfigManagerImplTest {
   }
 
   @Test
+  public void updateBrokerConfig_associationConfigName_stillThrowsNotFound() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+            adminClient.describeConfigs(
+                eq(
+                    singletonList(
+                        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+                anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all())
+        .andReturn(
+            KafkaFuture.completedFuture(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                    CONFIG)));
+    replay(clusterManager, adminClient, describeConfigsResult);
+
+    try {
+      brokerConfigManager
+          .updateBrokerConfig(CLUSTER_ID, BROKER_ID, "confluent.value.association", "new-value")
+          .get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
+
+    verify(adminClient);
+  }
+
+  @Test
   public void updateBrokerConfig_nonExistingBroker_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
