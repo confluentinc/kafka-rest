@@ -70,7 +70,8 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     this.maxResponseBytes =
         Math.min(maxBytes, config.getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG));
     Duration defaultRequestTimeout =
-        parent.getConsumerInstanceConfig().getRequestWaitMs() != null
+        parent.getConsumerInstanceConfig().getRequestWaitMs() != null 
+        && parent.getConsumerInstanceConfig().getRequestWaitMs() > 0
             ? Duration.ofMillis(parent.getConsumerInstanceConfig().getRequestWaitMs())
             : Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG));
     this.requestTimeout =
