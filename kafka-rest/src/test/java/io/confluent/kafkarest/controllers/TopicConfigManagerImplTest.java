@@ -20,8 +20,10 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.newCapture;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,6 +57,7 @@ import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.errors.InvalidConfigurationException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
+import org.easymock.Capture;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.junit.jupiter.api.BeforeEach;
@@ -770,6 +773,153 @@ public class TopicConfigManagerImplTest {
     topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commandsByTopic, true).get();
 
     verify(adminClient);
+  }
+
+  private static final String VALUE_ASSOCIATION = "confluent.value.association";
+  private static final String KEY_ASSOCIATION = "confluent.key.association";
+  private static final ConfigResource TOPIC_RESOURCE =
+      new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME);
+
+  private void expectAlter(AlterConfigOp... ops) {
+    expect(adminClient.incrementalAlterConfigs(singletonMap(TOPIC_RESOURCE, Arrays.asList(ops))))
+        .andReturn(alterConfigsResult);
+    expect(alterConfigsResult.values())
+        .andReturn(singletonMap(TOPIC_RESOURCE, KafkaFuture.completedFuture(null)));
+  }
+
+  @Test
+  public void updateTopicConfig_associationConfig_skipsDescribeAndAlters() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expectAlter(
+        new AlterConfigOp(new ConfigEntry(VALUE_ASSOCIATION, "v"), AlterConfigOp.OpType.SET));
+    replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
+
+    topicConfigManager.updateTopicConfig(CLUSTER_ID, TOPIC_NAME, VALUE_ASSOCIATION, "v").get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void resetTopicConfig_associationConfig_skipsDescribeAndAlters() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expectAlter(
+        new AlterConfigOp(new ConfigEntry(KEY_ASSOCIATION, null), AlterConfigOp.OpType.DELETE));
+    replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
+
+    topicConfigManager.resetTopicConfig(CLUSTER_ID, TOPIC_NAME, KEY_ASSOCIATION).get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void alterTopicConfigs_mixedOrdinaryAndAssociation_alters() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+            adminClient.describeConfigs(
+                eq(singletonList(TOPIC_RESOURCE)), anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all())
+        .andReturn(KafkaFuture.completedFuture(singletonMap(TOPIC_RESOURCE, CONFIG)));
+    expectAlter(
+        new AlterConfigOp(new ConfigEntry(CONFIG_1.getName(), "n"), AlterConfigOp.OpType.SET),
+        new AlterConfigOp(new ConfigEntry(VALUE_ASSOCIATION, "v"), AlterConfigOp.OpType.SET));
+    replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
+
+    topicConfigManager
+        .alterTopicConfigs(
+            CLUSTER_ID,
+            TOPIC_NAME,
+            Arrays.asList(
+                AlterConfigCommand.set(CONFIG_1.getName(), "n"),
+                AlterConfigCommand.set(VALUE_ASSOCIATION, "v")))
+        .get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void alterTopicConfigs_associationDeleteValidateOnly_validates() throws Exception {
+    Capture<AlterConfigsOptions> options = newCapture();
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+            adminClient.describeConfigs(
+                eq(singletonList(TOPIC_RESOURCE)), anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all())
+        .andReturn(KafkaFuture.completedFuture(singletonMap(TOPIC_RESOURCE, CONFIG)));
+    expect(
+            adminClient.incrementalAlterConfigs(
+                eq(
+                    singletonMap(
+                        TOPIC_RESOURCE,
+                        singletonList(
+                            new AlterConfigOp(
+                                new ConfigEntry(KEY_ASSOCIATION, null),
+                                AlterConfigOp.OpType.DELETE)))),
+                capture(options)))
+        .andReturn(alterConfigsResult);
+    expect(alterConfigsResult.values())
+        .andReturn(singletonMap(TOPIC_RESOURCE, KafkaFuture.completedFuture(null)));
+    replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
+
+    topicConfigManager
+        .alterTopicConfigs(
+            CLUSTER_ID, TOPIC_NAME, singletonList(AlterConfigCommand.delete(KEY_ASSOCIATION)), true)
+        .get();
+
+    verify(adminClient);
+    assertTrue(options.getValue().shouldValidateOnly());
+  }
+
+  @Test
+  public void alterMultipleTopicsConfigs_associationConfig_alters() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.describeConfigs(anyObject(), anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all())
+        .andReturn(KafkaFuture.completedFuture(singletonMap(TOPIC_RESOURCE, CONFIG)));
+    expect(adminClient.incrementalAlterConfigs(anyObject(), anyObject(AlterConfigsOptions.class)))
+        .andReturn(alterConfigsResult);
+    expect(alterConfigsResult.values())
+        .andReturn(singletonMap(TOPIC_RESOURCE, KafkaFuture.completedFuture(null)));
+    replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
+
+    Map<String, List<AlterConfigCommand>> commands = new HashMap<>();
+    commands.put(
+        TOPIC_NAME,
+        Arrays.asList(
+            AlterConfigCommand.set(CONFIG_1.getName(), "n"),
+            AlterConfigCommand.set(KEY_ASSOCIATION, "v")));
+
+    topicConfigManager.alterMultipleTopicsConfigs(CLUSTER_ID, commands).get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void alterTopicConfigs_unknownNonAssociationConfig_stillThrowsNotFound() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+            adminClient.describeConfigs(
+                eq(singletonList(TOPIC_RESOURCE)), anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.all())
+        .andReturn(KafkaFuture.completedFuture(singletonMap(TOPIC_RESOURCE, CONFIG)));
+    replay(clusterManager, adminClient, describeConfigsResult);
+
+    try {
+      topicConfigManager
+          .alterTopicConfigs(
+              CLUSTER_ID,
+              TOPIC_NAME,
+              Arrays.asList(
+                  AlterConfigCommand.set(VALUE_ASSOCIATION, "v"),
+                  AlterConfigCommand.set("confluent.value.associationx", "v")))
+          .get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
   }
 
   @Test
