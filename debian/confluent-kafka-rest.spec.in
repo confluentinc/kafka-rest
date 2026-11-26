@@ -92,6 +92,7 @@ fi
 /usr/share/doc/kafka-rest
 
 %config(noreplace) /etc/kafka-rest/*
+%config(noreplace) /etc/sysconfig/confluent-kafka-rest
 
 %clean
 #used to cleanup things outside the build area and possibly inside.
